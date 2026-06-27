@@ -1,0 +1,16 @@
+On branch develop
+Your branch is behind 'origin/develop' by 3 commits, and can be fast-forwarded.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   README.md
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+	modified:   pom.xml
+	modified:   src/main/java/com/example/Core.java
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	scratch.txt
+	temp/

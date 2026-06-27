@@ -1,0 +1,7 @@
+On branch feature/new-filter
+Your branch is ahead of 'origin/feature/new-filter' by 1 commit.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   src/main/java/com/example/NewFilter.java
+	modified:   pom.xml
