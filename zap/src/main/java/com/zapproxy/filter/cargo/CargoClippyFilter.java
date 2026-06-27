@@ -2,7 +2,6 @@ package com.zapproxy.filter.cargo;
 
 import com.zapproxy.annotation.CommandFilter;
 import com.zapproxy.core.*;
-import com.zapproxy.filter.strategy.DeduplicationStrategy;
 import com.zapproxy.filter.strategy.GroupingStrategy;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;

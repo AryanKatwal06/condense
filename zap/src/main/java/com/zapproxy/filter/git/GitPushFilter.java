@@ -3,7 +3,6 @@ package com.zapproxy.filter.git;
 import com.zapproxy.annotation.CommandFilter;
 import com.zapproxy.core.*;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.logging.Logger;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,7 +11,6 @@ import java.util.regex.Pattern;
 @ApplicationScoped
 public class GitPushFilter implements FilterStrategy {
 
-    private static final Logger log = Logger.getLogger(GitPushFilter.class);
 
     private static final Pattern BRANCH_PATTERN =
         Pattern.compile("\\s+(\\S+)\\s+->\\s+(\\S+)");

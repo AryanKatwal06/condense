@@ -16,7 +16,6 @@ public class JestFilter implements FilterStrategy {
     private static final Logger log = Logger.getLogger(JestFilter.class);
 
     private static final Pattern FAIL_SUITE  = Pattern.compile("^\\s*FAIL\\s+(.+)$");
-    private static final Pattern PASS_SUITE  = Pattern.compile("^\\s*PASS\\s+");
     private static final Pattern SUMMARY     = Pattern.compile("^Tests:\\s+");
     private static final Pattern TEST_SUITES = Pattern.compile("^Test Suites:");
 

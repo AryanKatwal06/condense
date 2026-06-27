@@ -6,6 +6,7 @@ import com.zapproxy.core.*;
 import com.zapproxy.filter.strategy.AnsiStripStrategy;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,8 +17,7 @@ import java.util.regex.Pattern;
 @ApplicationScoped
 public class CargoInstallFilter implements FilterStrategy {
 
-    private static final Pattern INSTALLED =
-        Pattern.compile("Installed package `(.+?)`|Compiling (.+?) v");
+
     private static final Pattern FINISHED =
         Pattern.compile("Finished .+ in (.+)");
     private static final Pattern ERROR_LINE =
@@ -45,7 +45,5 @@ public class CargoInstallFilter implements FilterStrategy {
         return FilterResult.of(raw, "✓ " + command.split(" ")[1] + " complete");
     }
 
-    private java.util.List<String> List(java.util.stream.Stream<String> stream) {
-        return stream.toList();
-    }
+
 }
