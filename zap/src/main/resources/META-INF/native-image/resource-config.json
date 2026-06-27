@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "includes": [
+      { "pattern": "com/zapproxy/version\\.properties" },
+      { "pattern": "filters/.*\\.toml" },
+      { "pattern": "hooks/.*" },
+      { "pattern": "application\\.properties" }
+    ]
+  }
+}
