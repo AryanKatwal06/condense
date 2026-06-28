@@ -189,7 +189,19 @@
             <properties>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
                 <quarkus.native.additional-build-args>
-                    --no-fallback,--static,--libc=musl,-H:+ReportExceptionStackTraces
+                    --no-fallback,--static,--libc=musl
+                </quarkus.native.additional-build-args>
+            </properties>
+        </profile>
+        <profile>
+            <id>native-debug</id>
+            <activation>
+                <property><name>native.debug</name></property>
+            </activation>
+            <properties>
+                <quarkus.native.enabled>true</quarkus.native.enabled>
+                <quarkus.native.additional-build-args>
+                    --no-fallback,-H:+ReportExceptionStackTraces
                 </quarkus.native.additional-build-args>
             </properties>
         </profile>
