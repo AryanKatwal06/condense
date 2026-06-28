@@ -52,8 +52,6 @@ public final class HookTemplate {
         if (excludeCommands == null || excludeCommands.isEmpty()) {
             return template;
         }
-        // Remove excluded commands from the ZAP_COMMANDS variable
-        String excluded = String.join("|", excludeCommands);
         // Simple sed-like replacement: strip excluded commands from the ZAP_COMMANDS line
         String result = template;
         for (String cmd : excludeCommands) {

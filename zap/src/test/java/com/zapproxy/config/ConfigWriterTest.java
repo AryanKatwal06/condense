@@ -1,6 +1,5 @@
 package com.zapproxy.config;
 
-import com.zapproxy.core.TeeMode;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
