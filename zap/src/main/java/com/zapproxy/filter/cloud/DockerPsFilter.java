@@ -18,7 +18,7 @@ public class DockerPsFilter implements FilterStrategy {
 
         String raw = result.stdout();
         List<String> lines = raw.lines().toList();
-        if (lines.isEmpty()) return FilterResult.of(raw, "(no containers running)");
+        if (lines.size() <= 1) return FilterResult.of(raw, "(no containers running)");
 
         // Parse docker ps tabular output: CONTAINER ID | IMAGE | STATUS | NAMES
         List<String> compact = new ArrayList<>();

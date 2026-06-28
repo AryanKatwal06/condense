@@ -1,0 +1,3 @@
+CONTAINER ID   IMAGE                COMMAND                  CREATED         STATUS         PORTS      NAMES
+a1b2c3d4e5f6   nginx:latest         "/docker-entrypoint.…"   2 minutes ago   Up 2 minutes   80/tcp     web-server
+b2c3d4e5f6a1   postgres:13-alpine   "docker-entrypoint.s…"   5 hours ago     Up 5 hours     5432/tcp   database
