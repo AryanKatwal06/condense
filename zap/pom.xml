@@ -196,7 +196,7 @@
                 <skipITs>false</skipITs>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
                 <quarkus.native.additional-build-args>
-                    --no-fallback,--strip-debug,--initialize-at-build-time=com.zapproxy,--gc=epsilon,-H:ExcludeResources=${sqlite.native.exclude}
+                    --no-fallback,--strip-debug,--initialize-at-build-time=com.zapproxy,-H:ExcludeResources=${sqlite.native.exclude}
                 </quarkus.native.additional-build-args>
             </properties>
         </profile>
@@ -208,7 +208,7 @@
             <properties>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
                 <quarkus.native.additional-build-args>
-                    --no-fallback,--static,--libc=musl,--strip-debug,--initialize-at-build-time=com.zapproxy,--gc=epsilon,-H:ExcludeResources=${sqlite.native.exclude}
+                    --no-fallback,--static,--libc=musl,--strip-debug,--initialize-at-build-time=com.zapproxy,-H:ExcludeResources=${sqlite.native.exclude}
                 </quarkus.native.additional-build-args>
             </properties>
         </profile>
@@ -220,7 +220,7 @@
             <properties>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
                 <quarkus.native.additional-build-args>
-                    --no-fallback,-H:+ReportExceptionStackTraces,--initialize-at-build-time=com.zapproxy,--gc=epsilon,-H:ExcludeResources=${sqlite.native.exclude}
+                    --no-fallback,-H:+ReportExceptionStackTraces,--initialize-at-build-time=com.zapproxy,-H:ExcludeResources=${sqlite.native.exclude}
                 </quarkus.native.additional-build-args>
             </properties>
         </profile>
