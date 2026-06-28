@@ -1,0 +1,8 @@
+{
+  "_comment": "Installed by: zap init -g — do not edit manually",
+  "_tool": "Cline",
+  "zap": {
+    "enabled": true,
+    "commands": ["git", "cargo", "pytest", "go", "npm", "docker", "kubectl", "aws", "ls", "grep", "rg", "find", "cat", "make", "mvn", "gradle"]
+  }
+}

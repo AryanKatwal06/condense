@@ -315,5 +315,20 @@
     "name": "com.zapproxy.filter.strategy.StateMachineStrategy",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
-  }
+  },
+  { "name": "com.zapproxy.analytics.GainCommand",       "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.zapproxy.analytics.GainReport",        "allDeclaredConstructors": true, "allDeclaredMethods": true },
+  { "name": "com.zapproxy.analytics.GainRepository",    "allDeclaredConstructors": true, "allDeclaredMethods": true },
+  { "name": "com.zapproxy.analytics.AsciiGraphRenderer","allDeclaredMethods": true },
+  { "name": "com.zapproxy.hooks.InitCommand",           "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.zapproxy.hooks.HookInstaller",         "allDeclaredConstructors": true, "allDeclaredMethods": true },
+  { "name": "com.zapproxy.hooks.HookTemplate",          "allDeclaredMethods": true },
+  { "name": "com.zapproxy.hooks.HookTool",              "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.zapproxy.config.ConfigCommand",        "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.zapproxy.config.ConfigWriter",         "allDeclaredConstructors": true, "allDeclaredMethods": true },
+  { "name": "com.zapproxy.core.TrackingRepository$AggregateStats", "allDeclaredConstructors": true, "allDeclaredMethods": true },
+  { "name": "com.zapproxy.core.TrackingRepository$DailyStat",      "allDeclaredConstructors": true, "allDeclaredMethods": true },
+  { "name": "com.zapproxy.core.TrackingRepository$WeeklyStat",     "allDeclaredConstructors": true, "allDeclaredMethods": true },
+  { "name": "com.zapproxy.core.TrackingRepository$TopCommand",     "allDeclaredConstructors": true, "allDeclaredMethods": true },
+  { "name": "com.zapproxy.core.TrackingRepository$RecentCommand",  "allDeclaredConstructors": true, "allDeclaredMethods": true }
 ]

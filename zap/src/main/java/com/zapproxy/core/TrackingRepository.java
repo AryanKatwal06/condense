@@ -11,6 +11,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Persists command execution records to a local SQLite database for
@@ -94,6 +96,238 @@ public class TrackingRepository {
             log.warnf("Failed to count commands: %s", e.getMessage());
             return 0L;
         }
+    }
+
+    /**
+     * Returns aggregate statistics for all commands within the given time window.
+     *
+     * @param sinceEpoch  unix timestamp lower bound (inclusive); 0 = all time
+     * @param projectHash 12-char project fingerprint to filter by; null = global
+     * @return aggregate stats, never null
+     */
+    public AggregateStats queryAggregate(long sinceEpoch, String projectHash) {
+        String sql = buildAggregateQuery(sinceEpoch, projectHash);
+        try (PreparedStatement ps = connection().prepareStatement(sql)) {
+            bindParams(ps, sinceEpoch, projectHash);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new AggregateStats(
+                        rs.getLong("total_commands"),
+                        rs.getLong("sum_raw"),
+                        rs.getLong("sum_out"),
+                        rs.getLong("sum_exec_ms")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            log.warnf("queryAggregate failed: %s", e.getMessage());
+        }
+        return new AggregateStats(0, 0, 0, 0);
+    }
+
+    /**
+     * Returns per-day token savings for the last {@code days} days.
+     * Used by {@code zap gain --graph}.
+     */
+    public List<DailyStat> queryDaily(int days, String projectHash) {
+        long since = System.currentTimeMillis() / 1000L - (long) days * 86400;
+        String projectFilter = projectHash != null
+            ? " AND project = ?" : "";
+        String sql = """
+            SELECT
+                date(ts, 'unixepoch') AS day,
+                COUNT(*)              AS total,
+                SUM(raw_tokens)       AS sum_raw,
+                SUM(out_tokens)       AS sum_out
+            FROM commands
+            WHERE ts >= ?
+            """ + projectFilter + """
+            GROUP BY day
+            ORDER BY day ASC
+            """;
+        List<DailyStat> result = new ArrayList<>();
+        try (PreparedStatement ps = connection().prepareStatement(sql)) {
+            ps.setLong(1, since);
+            if (projectHash != null) ps.setString(2, projectHash);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new DailyStat(
+                        rs.getString("day"),
+                        rs.getLong("total"),
+                        rs.getLong("sum_raw"),
+                        rs.getLong("sum_out")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            log.warnf("queryDaily failed: %s", e.getMessage());
+        }
+        return result;
+    }
+
+    /**
+     * Returns per-week token savings for the last {@code weeks} weeks.
+     */
+    public List<WeeklyStat> queryWeekly(int weeks, String projectHash) {
+        long since = System.currentTimeMillis() / 1000L - (long) weeks * 7 * 86400;
+        String projectFilter = projectHash != null ? " AND project = ?" : "";
+        String sql = """
+            SELECT
+                strftime('%Y-W%W', ts, 'unixepoch') AS week,
+                COUNT(*)                             AS total,
+                SUM(raw_tokens)                      AS sum_raw,
+                SUM(out_tokens)                      AS sum_out
+            FROM commands
+            WHERE ts >= ?
+            """ + projectFilter + """
+            GROUP BY week
+            ORDER BY week ASC
+            """;
+        List<WeeklyStat> result = new ArrayList<>();
+        try (PreparedStatement ps = connection().prepareStatement(sql)) {
+            ps.setLong(1, since);
+            if (projectHash != null) ps.setString(2, projectHash);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new WeeklyStat(
+                        rs.getString("week"),
+                        rs.getLong("total"),
+                        rs.getLong("sum_raw"),
+                        rs.getLong("sum_out")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            log.warnf("queryWeekly failed: %s", e.getMessage());
+        }
+        return result;
+    }
+
+    /**
+     * Returns the top N commands by total tokens saved.
+     */
+    public List<TopCommand> queryTopCommands(int limit, long sinceEpoch, String projectHash) {
+        String projectFilter = projectHash != null ? " AND project = ?" : "";
+        String sql = """
+            SELECT
+                command,
+                COUNT(*)              AS uses,
+                SUM(raw_tokens)       AS sum_raw,
+                SUM(out_tokens)       AS sum_out
+            FROM commands
+            WHERE ts >= ?
+            """ + projectFilter + """
+            GROUP BY command
+            ORDER BY (SUM(raw_tokens) - SUM(out_tokens)) DESC
+            LIMIT ?
+            """;
+        List<TopCommand> result = new ArrayList<>();
+        try (PreparedStatement ps = connection().prepareStatement(sql)) {
+            int idx = 1;
+            ps.setLong(idx++, sinceEpoch);
+            if (projectHash != null) ps.setString(idx++, projectHash);
+            ps.setInt(idx, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new TopCommand(
+                        rs.getString("command"),
+                        rs.getLong("uses"),
+                        rs.getLong("sum_raw"),
+                        rs.getLong("sum_out")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            log.warnf("queryTopCommands failed: %s", e.getMessage());
+        }
+        return result;
+    }
+
+    /**
+     * Returns the last N command executions with their token data.
+     */
+    public List<RecentCommand> queryRecent(int limit, String projectHash) {
+        String projectFilter = projectHash != null ? " AND project = ?" : "";
+        String sql = """
+            SELECT ts, command, raw_tokens, out_tokens, exec_ms
+            FROM commands
+            WHERE 1=1
+            """ + projectFilter + """
+            ORDER BY ts DESC
+            LIMIT ?
+            """;
+        List<RecentCommand> result = new ArrayList<>();
+        try (PreparedStatement ps = connection().prepareStatement(sql)) {
+            int idx = 1;
+            if (projectHash != null) ps.setString(idx++, projectHash);
+            ps.setInt(idx, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new RecentCommand(
+                        rs.getLong("ts"),
+                        rs.getString("command"),
+                        rs.getInt("raw_tokens"),
+                        rs.getInt("out_tokens"),
+                        rs.getLong("exec_ms")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            log.warnf("queryRecent failed: %s", e.getMessage());
+        }
+        return result;
+    }
+
+    // ── Helper records (inner) ────────────────────────────────────────────────────
+
+    public record AggregateStats(
+        long totalCommands, long sumRaw, long sumOut, long sumExecMs) {
+        public long tokensSaved() { return sumRaw - sumOut; }
+        public int savingsPct() {
+            return sumRaw == 0 ? 0 : (int)(100L * (sumRaw - sumOut) / sumRaw);
+        }
+        public long avgExecMs() {
+            return totalCommands == 0 ? 0 : sumExecMs / totalCommands;
+        }
+    }
+
+    public record DailyStat(String day, long count, long sumRaw, long sumOut) {
+        public long saved() { return sumRaw - sumOut; }
+    }
+
+    public record WeeklyStat(String week, long count, long sumRaw, long sumOut) {
+        public long saved() { return sumRaw - sumOut; }
+    }
+
+    public record TopCommand(String command, long uses, long sumRaw, long sumOut) {
+        public long saved() { return sumRaw - sumOut; }
+        public int savingsPct() {
+            return sumRaw == 0 ? 0 : (int)(100L * (sumRaw - sumOut) / sumRaw);
+        }
+    }
+
+    public record RecentCommand(
+        long ts, String command, int rawTokens, int outTokens, long execMs) {
+        public int savingsPct() {
+            return rawTokens == 0 ? 0 : (int)(100L * (rawTokens - outTokens) / rawTokens);
+        }
+    }
+
+    // ── SQL helpers ───────────────────────────────────────────────────────────────
+
+    private String buildAggregateQuery(long sinceEpoch, String projectHash) {
+        return "SELECT COUNT(*) AS total_commands, " +
+               "COALESCE(SUM(raw_tokens),0) AS sum_raw, " +
+               "COALESCE(SUM(out_tokens),0) AS sum_out, " +
+               "COALESCE(SUM(exec_ms),0) AS sum_exec_ms " +
+               "FROM commands WHERE ts >= ?" +
+               (projectHash != null ? " AND project = ?" : "");
+    }
+
+    private void bindParams(PreparedStatement ps, long sinceEpoch,
+                            String projectHash) throws SQLException {
+        ps.setLong(1, sinceEpoch);
+        if (projectHash != null) ps.setString(2, projectHash);
     }
 
     @PreDestroy

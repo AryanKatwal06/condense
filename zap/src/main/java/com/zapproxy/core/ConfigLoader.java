@@ -40,8 +40,8 @@ public class ConfigLoader {
         return cached;
     }
 
-    /** Clears the config cache. Used in tests. */
-    void invalidateCache() {
+    /** Clears the config cache. Used in tests and writers. */
+    public void invalidateCache() {
         synchronized (this) {
             cached = null;
         }

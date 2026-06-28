@@ -15,6 +15,11 @@ import java.util.List;
     name = "zap",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
+    subcommands = {
+        com.zapproxy.analytics.GainCommand.class,
+        com.zapproxy.hooks.InitCommand.class,
+        com.zapproxy.config.ConfigCommand.class
+    },
     description = {
         "High-performance CLI proxy that filters command output to save 60-90%% AI tokens.",
         "",
@@ -39,6 +44,7 @@ import java.util.List;
     }
 )
 @jakarta.enterprise.context.Dependent
+@io.quarkus.picocli.runtime.annotations.TopCommand
 public class ZapRootCommand implements Runnable {
 
     @Spec
