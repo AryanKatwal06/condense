@@ -1,6 +1,6 @@
 package com.zapproxy.core;
 
-import jakarta.annotation.PreDestroy;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
@@ -330,8 +330,7 @@ public class TrackingRepository {
         if (projectHash != null) ps.setString(2, projectHash);
     }
 
-    @PreDestroy
-    void close() {
+    public void close() {
         if (connection != null) {
             try {
                 connection.close();

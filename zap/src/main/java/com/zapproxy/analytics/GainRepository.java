@@ -72,6 +72,10 @@ public class GainRepository {
         return tracking.queryTopCommands(n, sinceEpoch(sinceDays), resolveProjectHash(scope));
     }
 
+    public void close() {
+        tracking.close();
+    }
+
     // ── private ──────────────────────────────────────────────────────────────
 
     private String resolveProjectHash(String scope) {

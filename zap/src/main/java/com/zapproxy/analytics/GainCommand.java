@@ -134,6 +134,8 @@ public class GainCommand implements Runnable {
 
         } catch (Exception e) {
             System.err.println("zap gain: error: " + e.getMessage());
+        } finally {
+            gainRepo.close();
         }
     }
 

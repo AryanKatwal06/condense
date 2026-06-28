@@ -137,6 +137,8 @@ public class ZapRootCommand implements Runnable {
         } catch (Exception e) {
             System.err.println("zap: error executing command: " + e.getMessage());
             spec.commandLine().setExecutionResult(1);
+        } finally {
+            tracking.close();
         }
     }
 

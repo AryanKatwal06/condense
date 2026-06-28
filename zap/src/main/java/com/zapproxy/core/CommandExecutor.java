@@ -169,7 +169,7 @@ public class CommandExecutor {
         private volatile boolean truncated = false;
 
         void drain(InputStream in) {
-            try {
+            try (in) {
                 byte[] chunk = new byte[8192];
                 int read;
                 while ((read = in.read(chunk)) != -1) {
