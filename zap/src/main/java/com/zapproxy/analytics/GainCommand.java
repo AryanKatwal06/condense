@@ -1,7 +1,6 @@
 package com.zapproxy.analytics;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.zapproxy.core.TrackingRepository.*;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;

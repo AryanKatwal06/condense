@@ -71,7 +71,6 @@ public class GoTestFilter implements FilterStrategy {
             .filter(l -> l.startsWith("--- FAIL:") || l.startsWith("FAIL"))
             .limit(20)
             .toList();
-        String lastLine = raw.lines().filter(l -> !l.isBlank()).reduce("", (a, b) -> b);
 
         if (failures.isEmpty()) {
             return FilterResult.passthrough(result); // Using passthrough as fallback if nothing is found

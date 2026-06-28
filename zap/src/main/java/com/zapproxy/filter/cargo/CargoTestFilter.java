@@ -7,8 +7,6 @@ import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @CommandFilter("cargo test")
 @ApplicationScoped
@@ -16,12 +14,6 @@ public class CargoTestFilter implements FilterStrategy {
 
     private static final Logger log = Logger.getLogger(CargoTestFilter.class);
 
-    private static final Pattern FAILED_TEST =
-        Pattern.compile("^test (.+) \\.\\.\\.\\s+FAILED", Pattern.MULTILINE);
-    private static final Pattern TEST_RESULT =
-        Pattern.compile("^test result: (ok|FAILED)\\. (\\d+) passed.*", Pattern.MULTILINE);
-    private static final Pattern COMPILING =
-        Pattern.compile("^\\s*Compiling ", Pattern.MULTILINE);
 
     @Override
     public FilterResult apply(String command, ExecutionResult result,

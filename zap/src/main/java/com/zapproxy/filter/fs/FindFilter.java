@@ -4,9 +4,7 @@ import com.zapproxy.annotation.CommandFilter;
 import com.zapproxy.core.*;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @CommandFilter("find")
 @ApplicationScoped

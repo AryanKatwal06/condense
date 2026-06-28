@@ -10,7 +10,6 @@ import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -36,12 +35,6 @@ import java.util.regex.Pattern;
 public class GitStatusFilter implements FilterStrategy {
 
     private static final Logger log = Logger.getLogger(GitStatusFilter.class);
-
-    private static final Pattern BRANCH_PATTERN =
-        Pattern.compile("^On branch (.+)$", Pattern.MULTILINE);
-
-    private static final Pattern DETACHED_PATTERN =
-        Pattern.compile("^HEAD detached at (.+)$", Pattern.MULTILINE);
 
     private static final Pattern CLEAN_PATTERN =
         Pattern.compile("nothing to commit", Pattern.CASE_INSENSITIVE);

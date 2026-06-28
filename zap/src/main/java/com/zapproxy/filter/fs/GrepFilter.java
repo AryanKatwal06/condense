@@ -6,7 +6,6 @@ import com.zapproxy.core.*;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 @CommandFilters({
