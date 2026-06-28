@@ -103,16 +103,6 @@ public class ZapRootCommand implements Runnable {
             FilterResult filtered = strategy.apply(
                 commandStr, result, config, verbosityLevel(), ultraCompact);
 
-            // Record analytics
-            tracking.insert(
-                commandStr,
-                ProjectFingerprint.ofCurrentDir(),
-                System.getProperty("user.dir"),
-                filtered.rawTokens(),
-                filtered.outTokens(),
-                result.durationMs()
-            );
-
             // Maybe save raw output to tee file
             Path teePath = teeWriter.maybeDump(commandStr, result);
 
@@ -125,10 +115,25 @@ public class ZapRootCommand implements Runnable {
                 System.out.println("[raw output saved to: " + teePath + "]");
             }
 
+            // Flush output so caller (AI) gets it immediately
+            System.out.flush();
+
+            // Synchronous analytics insertion AFTER output is flushed
+            tracking.insert(
+                commandStr,
+                ProjectFingerprint.ofCurrentDir(),
+                System.getProperty("user.dir"),
+                filtered.rawTokens(),
+                filtered.outTokens(),
+                result.durationMs()
+            );
+
             // CRITICAL: propagate the original exit code
-            // picocli reads the return value of run() via CommandLine.execute()
-            // We store it so main() can exit with it
             spec.commandLine().setExecutionResult(result.exitCode());
+
+
+
+
 
         } catch (IllegalStateException e) {
             // Infinite loop guard triggered

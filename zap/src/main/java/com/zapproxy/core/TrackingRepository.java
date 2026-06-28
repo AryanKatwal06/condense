@@ -345,9 +345,13 @@ public class TrackingRepository {
 
     private Connection connection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            String url = "jdbc:sqlite:" + platformDirs.getDatabaseFile().toAbsolutePath();
+            java.nio.file.Path dbFile = platformDirs.getDatabaseFile();
+            boolean dbExists = java.nio.file.Files.exists(dbFile);
+            String url = "jdbc:sqlite:" + dbFile.toAbsolutePath();
             connection = DriverManager.getConnection(url);
-            initSchema();
+            if (!dbExists) {
+                initSchema();
+            }
         }
         return connection;
     }
