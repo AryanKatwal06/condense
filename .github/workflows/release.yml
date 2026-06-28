@@ -136,6 +136,7 @@ jobs:
       - name: Build native image
         run: |
           mvn package -Pnative -DskipTests \
+            -Dquarkus.native.native-image-xmx=5g \
             -Dquarkus.native.additional-build-args="${{ matrix.native_args }}" \
             --no-transfer-progress -B
 

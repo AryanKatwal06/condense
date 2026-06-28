@@ -73,7 +73,7 @@ jobs:
           restore-keys: ${{ runner.os }}-maven-
 
       - name: Build native image
-        run: mvn package -Pnative -DskipTests --no-transfer-progress -B
+        run: mvn package -Pnative -DskipTests -Dquarkus.native.native-image-xmx=5g --no-transfer-progress -B
 
       - name: Verify no fallback
         run: |
