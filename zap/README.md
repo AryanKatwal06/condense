@@ -1,70 +1,235 @@
-# Zap (Java + GraalVM Port)
+# Zap
 
-Java + GraalVM Native Image port of [bitan-del/zap](https://github.com/bitan-del/zap) — a high-performance CLI proxy that filters command output to save 60–90% of AI tokens.
+> Filter AI command output. Save 60–90% of tokens. Run faster, spend less.
 
-## Prerequisites
+Zap is a CLI proxy that sits between your AI coding assistant and the shell. When
+your AI runs `git status`, it gets hundreds of lines of raw output. With Zap, it
+gets a compact summary: `[main] staged: 2 | modified: 1 | untracked: 3`.
 
-- **GraalVM JDK 21** with `native-image` on PATH (`GRAALVM_HOME` must be set)
-- **Maven 3.9+**
-- **Git**
+**Java + GraalVM port** of [bitan-del/zap](https://github.com/bitan-del/zap).
 
-## Build
+---
 
-### JVM mode (development)
+## Install
 
 ```bash
-mvn verify
+curl -fsSL https://raw.githubusercontent.com/YOUR_ORG/zap/main/install.sh | sh
 ```
 
-### Native binary
+Or download a binary directly from the [Releases](https://github.com/YOUR_ORG/zap/releases) page.
+
+**Supported platforms**: Linux x64, Linux aarch64, macOS x64 (Intel), macOS aarch64 (Apple Silicon)
+
+### Verify checksum (recommended)
 
 ```bash
-mvn package -Pnative
+curl -LO https://github.com/YOUR_ORG/zap/releases/download/v0.1.0/zap-linux-x64
+curl -LO https://github.com/YOUR_ORG/zap/releases/download/v0.1.0/zap-linux-x64.sha256
+echo "$(cat zap-linux-x64.sha256)  zap-linux-x64" | sha256sum --check
+chmod +x zap-linux-x64 && mv zap-linux-x64 ~/.local/bin/zap
+```
+
+---
+
+## Quick Start
+
+```bash
+# Without Zap: AI sees 40+ lines of raw git output
+git status
+
+# With Zap: AI sees one line
+zap git status
+# → [main] staged: 2 | modified: 1 | untracked: 3
+
+# Ultra-compact mode (-u)
+zap -u git status
+# → [main] ↑S:2 M:1 ?:3
+
+# Verbose mode (-vv): summary + file list
+zap -vv git status
+```
+
+---
+
+## Supported Commands
+
+| Category | Commands |
+|---|---|
+| **Git** | `git status`, `git diff`, `git log`, `git push`, `git commit`, `git add` |
+| **Rust / Cargo** | `cargo test`, `cargo clippy`, `cargo build`, `cargo install` |
+| **Python** | `pytest`, `ruff`, `pip install`, `python -m pytest` |
+| **Go** | `go test`, `golangci-lint run` |
+| **Node** | `npm install`, `jest`, `vitest`, `eslint`, `tsc` |
+| **Cloud** | `docker ps`, `docker build`, `docker logs`, `kubectl`, `aws` |
+| **File system** | `ls`, `find`, `grep`, `rg`, `cat` |
+| **Build tools** | `make`, `mvn`, `gradle` |
+
+---
+
+## Install AI Tool Hooks
+
+Install hooks so your AI coding tools automatically use Zap without typing `zap` prefix:
+
+```bash
+# Install hooks for all supported tools
+zap init -g
+
+# Check which hooks are installed
+zap init --show
+
+# Remove all hooks
+zap init --remove
+```
+
+**Supported tools**: Claude Code, Cursor, Gemini CLI, Windsurf, GitHub Copilot, Cline
+
+---
+
+## Token Savings Dashboard
+
+```bash
+# Summary panel
+zap gain
+
+# 30-day bar chart
+zap gain --graph
+
+# Recent command history with savings %
+zap gain --history 20
+
+# Top commands by tokens saved
+zap gain --top 10
+
+# Project-specific stats
+zap gain --scope project
+
+# Machine-readable JSON
+zap gain --format json
+```
+
+---
+
+## Configuration
+
+```bash
+# View all settings
+zap config --list
+
+# Set a value
+zap config --set tee.mode=always
+
+# Get a value
+zap config --get tee.mode
+
+# Reset to defaults
+zap config --reset
+```
+
+Config file: `~/.config/zap/config.toml` (Linux) · `~/Library/Application Support/zap/config.toml` (macOS)
+
+---
+
+## Build from Source
+
+**Prerequisites**: GraalVM JDK 21 with `native-image` on PATH, Maven 3.9+
+
+```bash
+git clone https://github.com/YOUR_ORG/zap.git
+cd zap
+
+# JVM mode (fast iteration)
+mvn verify
+
+# Native binary (~50ms startup)
+mvn package -Pnative -DskipTests
 ./target/zap-runner --version
 ```
 
-## Usage
-
+For static Linux binaries (runs on any distro):
 ```bash
-zap --help          # Show help and available commands
-zap --version       # Print version information
-zap git status      # Filtered git status (Phase 2+)
-zap gain            # Token savings report (Phase 4+)
+sudo apt-get install musl-tools
+mvn package -Pnative -DskipTests \
+  -Dquarkus.native.additional-build-args="--static,--libc=musl"
 ```
+
+---
 
 ## Project Structure
 
 ```
-com.zapproxy/
-├── ZapMain.java                  — QuarkusApplication entry point
-├── ZapRootCommand.java           — picocli @Command root
-├── VersionProvider.java          — reads version from version.properties
-├── commands/                     — picocli subcommands (Phase 2+)
+src/main/java/com/zapproxy/
+├── ZapMain.java                   — Quarkus entry point
+├── ZapRootCommand.java            — Root picocli command + passthrough dispatch
+├── VersionProvider.java           — Version from version.properties
+├── annotation/
+│   ├── CommandFilter.java         — CDI qualifier for filter registration
+│   └── CommandFilters.java        — Repeatable container
 ├── core/
-│   ├── ConfigLoader.java         — loads config.toml via Jackson TOML
-│   ├── ZapConfig.java            — root config record
-│   ├── TeeMode.java              — enum: FAILURES | ALWAYS | NEVER
-│   ├── PlatformDirs.java         — OS-specific path resolution
-│   └── TrackingRepository.java   — SQLite analytics storage
-├── filters/                      — command filter strategies (Phase 3+)
-├── hooks/                        — AI tool hook installer (Phase 4+)
-└── analytics/                    — gain command analytics (Phase 4+)
+│   ├── CommandExecutor.java       — Child process execution (deadlock-safe)
+│   ├── ConfigLoader.java          — TOML config loading
+│   ├── ExecutionResult.java       — Process output record
+│   ├── FilterResult.java          — Filter output record
+│   ├── FilterStrategy.java        — Filter interface
+│   ├── PassthroughStrategy.java   — Default (no-op) filter
+│   ├── PlatformDirs.java          — XDG/macOS/Windows path resolution
+│   ├── ProjectFingerprint.java    — SHA-256 project directory fingerprint
+│   ├── StrategyRegistry.java      — CDI-based filter discovery + dispatch
+│   ├── TeeMode.java               — Tee mode enum
+│   ├── TeeWriter.java             — Raw output dump system
+│   ├── TokenCounter.java          — Token estimation utility
+│   ├── TrackingRepository.java    — SQLite analytics write + query
+│   └── ZapConfig.java             — Config record
+├── filter/
+│   ├── git/                       — GitStatus, GitDiff, GitLog, GitPush, GitCommit, GitAdd
+│   ├── cargo/                     — CargoTest, CargoClippy, CargoInstall
+│   ├── python/                    — Pytest, Ruff, PipInstall, Python
+│   ├── golang/                    — GoTest, GolangciLint
+│   ├── node/                      — Jest, Vitest, ESLint, Tsc, NpmInstall
+│   ├── fs/                        — Ls, Find, Grep, Cat
+│   ├── cloud/                     — DockerPs, DockerBuild, Docker, Kubectl, Aws
+│   ├── build/                     — Make, Mvn, Gradle
+│   └── strategy/                  — Deduplication, Grouping, AnsiStrip, JsonStructure, TreeCompression, StateMachine
+├── analytics/
+│   ├── AsciiGraphRenderer.java    — All terminal rendering
+│   ├── GainCommand.java           — zap gain subcommand
+│   ├── GainReport.java            — JSON-serializable report record
+│   └── GainRepository.java        — Query orchestration
+├── hooks/
+│   ├── HookInstaller.java         — Install/show/remove hooks
+│   ├── HookTemplate.java          — Template loading + sentinel detection
+│   ├── HookTool.java              — Supported AI tool enum
+│   └── InitCommand.java           — zap init subcommand
+└── config/
+    ├── ConfigCommand.java         — zap config subcommand
+    └── ConfigWriter.java          — Atomic TOML write-back
 ```
 
-## Phase Status
+---
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| 1 | Foundation: skeleton, build pipeline, GraalVM baseline | ✅ Complete |
-| 2 | Command Execution Engine and Filter Architecture | ⬜ Pending |
-| 3 | All 42 Command Filter Modules | ⬜ Pending |
-| 4 | Analytics Engine, Hook Installer, Configuration Polish | ⬜ Pending |
-| 5 | Packaging, Cross-Platform Builds, and Release | ⬜ Pending |
+## Performance
+
+| Metric | Value |
+|---|---|
+| Cold start | ~50ms (Linux), ~100ms (macOS) |
+| Filter overhead | 2–15ms |
+| Memory (RSS) | ~25MB |
+| Binary size | ~35–50MB (static Linux), ~45MB (macOS) |
+
+Linux binaries are fully static (musl) — no glibc dependency, runs on any distro.
+
+---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines, how to run tests, and how to add new command filters.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new command filters and the
+full development guide.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the security policy and how to report vulnerabilities.
 
 ## License
 
-See the original [bitan-del/zap](https://github.com/bitan-del/zap) for license information.
+[Apache License 2.0](LICENSE)
+
+Original Rust implementation: [bitan-del/zap](https://github.com/bitan-del/zap)

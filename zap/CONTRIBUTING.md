@@ -1,59 +1,157 @@
-# Contributing to Zap (Java Port)
+# Contributing to Zap
 
-Thank you for your interest in contributing to Zap!
+Thank you for your interest in contributing to Zap! This guide explains how to add
+new command filters, run tests, and submit pull requests.
 
 ## Prerequisites
 
-- **GraalVM JDK 21** with `native-image` on PATH
-- **Maven 3.9+**
-- **Git**
+- GraalVM JDK 21 with `native-image` on PATH
+- Maven 3.9+
+- Git
+- (Linux only for static builds) `musl-tools`: `sudo apt-get install musl-tools`
 
-## Development Workflow
-
-### Running Tests
-
-```bash
-mvn verify
-```
-
-All tests must pass before submitting a PR.
-
-### Building the Native Image
+## Development Setup
 
 ```bash
-mvn package -Pnative
-./target/zap-runner --version
+git clone https://github.com/YOUR_ORG/zap.git
+cd zap
+mvn verify          # builds, tests, confirms everything works
 ```
 
-The native binary must build without fallback warnings.
+## Running Tests
 
-## Code Style
-
-- **Java 21** — use modern Java features (records, sealed classes, switch expressions, text blocks)
-- Follow existing patterns in the codebase
-- No wildcard imports (`import java.util.*` is forbidden)
-- All public API must have Javadoc
-- Use `org.jboss.logging.Logger` for logging (not SLF4J directly)
+```bash
+mvn test                          # unit tests (JVM)
+mvn verify                        # full build + test suite
+mvn package -Pnative -DskipTests  # native image build (takes 2-5 minutes)
+```
 
 ## Adding a New Command Filter
 
-> **Note:** See Phase 3 of the implementation plan — not yet implemented.
+Adding support for a new command (e.g. `helm`) takes four steps:
 
-When Phase 3 begins, adding a new filter will follow this process:
+### 1. Create the filter class
 
-1. Create `src/main/java/com/zapproxy/filters/YourCommandFilter.java` implementing `FilterStrategy`
-2. Annotate with `@CommandFilter("your command")`
-3. Add fixture files in `src/test/resources/fixtures/your-command/`
-4. Write tests using `FixtureTestSupport`
-5. Run `mvn verify` to confirm all tests pass
+```java
+// src/main/java/com/zapproxy/filter/cloud/HelmFilter.java
+package com.zapproxy.filter.cloud;
 
-## PR Checklist
+import com.zapproxy.annotation.CommandFilter;
+import com.zapproxy.core.*;
+import jakarta.enterprise.context.ApplicationScoped;
 
-Before submitting a pull request, verify:
+@CommandFilter("helm")
+@ApplicationScoped
+public class HelmFilter implements FilterStrategy {
 
-- [ ] `mvn verify` passes with zero test failures
-- [ ] `mvn package -Pnative -DskipTests` builds without fallback warning
-- [ ] No new reflection added without updating `reflect-config.json`
-- [ ] All new public API has Javadoc
-- [ ] No wildcard imports
-- [ ] No hardcoded version strings in Java source
+    @Override
+    public FilterResult apply(String command, ExecutionResult result,
+                              ZapConfig config, int verbose, boolean ultraCompact) {
+        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+
+        // Your filtering logic here
+        String raw = result.stdout();
+        String filtered = /* compress output */;
+        return FilterResult.of(raw, filtered);
+    }
+}
+```
+
+**Rules for implementations**:
+- Always return `FilterResult.passthrough(result.combined())` on non-zero exit
+  (unless your filter specifically handles failures, like test runners)
+- Never throw — wrap parsing logic in try/catch and fall back to passthrough
+- Never modify the exit code — that's the caller's job
+- Keep the class stateless — one instance is reused for all invocations
+
+### 2. Create fixture files
+
+```
+src/test/resources/fixtures/helm/typical.txt   — real helm output (copy from terminal)
+src/test/resources/fixtures/helm/failure.txt   — failed command output
+```
+
+### 3. Write tests
+
+```java
+// src/test/java/com/zapproxy/filter/cloud/HelmFilterTest.java
+package com.zapproxy.filter.cloud;
+
+import com.zapproxy.core.*;
+import com.zapproxy.filter.FilterTestSupport;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+
+class HelmFilterTest extends FilterTestSupport {
+
+    private HelmFilter filter;
+    private ZapConfig config;
+
+    @BeforeEach
+    void setUp() { filter = new HelmFilter(); config = ZapConfig.defaults(); }
+
+    @Test
+    void typicalOutput_isCompressed() throws Exception {
+        FilterResult r = filter.apply("helm",
+            success(fixture("helm", "typical")), config, 0, false);
+        assertCompressed(r);
+    }
+
+    @Test
+    void failureOutput_isPassedThrough() {
+        FilterResult r = filter.apply("helm",
+            failure(1, "Error: no releases found"), config, 0, false);
+        assertPassthrough(r);
+    }
+}
+```
+
+### 4. Add to reflect-config.json
+
+Add this entry to `src/main/resources/META-INF/native-image/reflect-config.json`:
+```json
+{ "name": "com.zapproxy.filter.cloud.HelmFilter",
+  "allDeclaredConstructors": true, "allDeclaredMethods": true }
+```
+
+### 5. Verify and submit
+
+```bash
+mvn verify                            # all tests must pass
+mvn package -Pnative -DskipTests      # native image must build
+./target/zap-runner helm list         # smoke test with a real helm install
+```
+
+Then open a pull request. The PR template will ask you to confirm:
+- [ ] Filter class implemented with `@CommandFilter` and `@ApplicationScoped`
+- [ ] Fixture files created with real command output
+- [ ] Tests written covering typical + failure cases
+- [ ] reflect-config.json updated
+- [ ] `mvn verify` passes
+- [ ] Native image builds without fallback
+
+## Code Style
+
+- Java 21, no wildcard imports
+- All public methods have Javadoc
+- Records for data carriers (`ExecutionResult`, `FilterResult`, etc.)
+- Try-with-resources for all SQL and I/O
+- `@ApplicationScoped` for CDI beans, never `@Singleton`
+
+## Pull Request Process
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/helm-filter`
+3. Implement, test, and verify (see above)
+4. Open a PR against `main`
+5. CI must be green (JVM tests + native image build)
+6. One approving review required
+
+## Reporting Issues
+
+Use GitHub Issues for:
+- Bug reports (include `zap --version` output and steps to reproduce)
+- Feature requests (new command filters, analytics features)
+
+For security issues, see [SECURITY.md](SECURITY.md).
