@@ -15,7 +15,7 @@ import java.util.List;
 public class GoTestFilter implements FilterStrategy {
 
     private static final Logger log = Logger.getLogger(GoTestFilter.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = com.zapproxy.core.Mappers.JSON;
 
     @Override
     public FilterResult apply(String command, ExecutionResult result,

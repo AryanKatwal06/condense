@@ -80,8 +80,7 @@ public class GainCommand implements Runnable {
 
     // ── Jackson for JSON output ───────────────────────────────────────────────
 
-    private static final ObjectMapper JSON = new ObjectMapper()
-        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+    private static final ObjectMapper JSON = com.zapproxy.core.Mappers.JSON;
 
     // ── Entry point ───────────────────────────────────────────────────────────
 

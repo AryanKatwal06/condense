@@ -20,7 +20,7 @@ import java.nio.file.Path;
 public class ConfigLoader {
 
     private static final Logger log = Logger.getLogger(ConfigLoader.class);
-    private static final TomlMapper TOML = new TomlMapper();
+    private static final TomlMapper TOML = com.zapproxy.core.Mappers.TOML;
 
     @Inject
     PlatformDirs platformDirs;

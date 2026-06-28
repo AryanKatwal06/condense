@@ -33,7 +33,7 @@ import java.util.List;
 public class ConfigWriter {
 
     private static final Logger log = Logger.getLogger(ConfigWriter.class);
-    private static final TomlMapper TOML = new TomlMapper();
+    private static final TomlMapper TOML = com.zapproxy.core.Mappers.TOML;
 
     @Inject
     PlatformDirs platformDirs;

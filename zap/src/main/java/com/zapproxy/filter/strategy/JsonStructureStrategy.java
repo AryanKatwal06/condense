@@ -22,7 +22,7 @@ public final class JsonStructureStrategy {
 
     private JsonStructureStrategy() {}
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = com.zapproxy.core.Mappers.JSON;
     private static final int MAX_DEPTH = 6;
 
     /**
