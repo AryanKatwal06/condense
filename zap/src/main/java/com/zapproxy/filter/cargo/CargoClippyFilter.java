@@ -26,8 +26,10 @@ public class CargoClippyFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
-            List<String> lines = raw.lines().toList();
+            List<String> lines;
+            try (java.util.stream.Stream<String> stream = result.hasStderr() ? result.stderrLines() : result.stdoutLines()) {
+                lines = stream.toList();
+            }
 
             // Extract lint rule names from #[warn(...)] annotations
             Map<String, Integer> groups = GroupingStrategy.group(lines, LINT_NAME, false);

@@ -71,6 +71,7 @@ public class CommandExecutor {
 
         long startMs = System.currentTimeMillis();
         Process process = pb.start();
+        process.getOutputStream().close();
 
         // Start two threads to drain both streams concurrently.
         // This prevents the deadlock that occurs when one pipe's OS buffer fills

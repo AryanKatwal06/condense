@@ -22,16 +22,17 @@ public class VitestFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
             List<String> failures = new ArrayList<>();
             List<String> summary  = new ArrayList<>();
 
-            for (String line : raw.lines().toList()) {
-                if (FAIL_LINE.matcher(line).find()
-                        && !line.contains("passed") && !line.isBlank()) {
-                    failures.add("  " + line.trim());
-                } else if (SUMMARY_LINE.matcher(line).find()) {
-                    summary.add(line.trim());
+            try (java.util.stream.Stream<String> stream = result.hasStderr() ? result.stderrLines() : result.stdoutLines()) {
+                for (String line : (Iterable<String>) stream::iterator) {
+                    if (FAIL_LINE.matcher(line).find()
+                            && !line.contains("passed") && !line.isBlank()) {
+                        failures.add("  " + line.trim());
+                    } else if (SUMMARY_LINE.matcher(line).find()) {
+                        summary.add(line.trim());
+                    }
                 }
             }
 

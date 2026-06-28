@@ -24,23 +24,35 @@ public class MvnFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
-        List<String> lines = raw.lines().toList();
+        boolean isSuccess = false;
+        boolean isFailure = false;
+        String testLine = "";
+        List<String> errors = new ArrayList<>();
 
-        if (BUILD_SUCCESS.matcher(raw).find()) {
-            // Count test results if any
-            String testLine = lines.stream()
-                .filter(l -> l.contains("Tests run:"))
-                .reduce("", (a, b) -> b);
+        try (java.util.stream.Stream<String> stream = result.hasStderr() ? result.stderrLines() : result.stdoutLines()) {
+            for (String line : (Iterable<String>) stream::iterator) {
+                if (BUILD_SUCCESS.matcher(line).find()) {
+                    isSuccess = true;
+                }
+                if (BUILD_FAILURE.matcher(line).find()) {
+                    isFailure = true;
+                }
+                if (line.contains("Tests run:")) {
+                    testLine = line;
+                }
+                if (ERROR_LINE.matcher(line).find() || TEST_FAIL.matcher(line).find()) {
+                    errors.add(line.trim());
+                }
+            }
+        } catch (java.io.IOException e) {
+            return FilterResult.passthrough(result);
+        }
+
+        if (isSuccess) {
             return FilterResult.of(result, "✓ BUILD SUCCESS" + (testLine.isBlank() ? "" : " — " + testLine.trim()));
         }
 
-        if (BUILD_FAILURE.matcher(raw).find()) {
-            List<String> errors = new ArrayList<>();
-            for (String line : lines) {
-                if (ERROR_LINE.matcher(line).find()) errors.add(line.trim());
-                if (TEST_FAIL.matcher(line).find()) errors.add(line.trim());
-            }
+        if (isFailure) {
             errors = errors.subList(0, Math.min(20, errors.size()));
             return FilterResult.of(result, "✗ BUILD FAILURE\n" + String.join("\n", errors));
         }

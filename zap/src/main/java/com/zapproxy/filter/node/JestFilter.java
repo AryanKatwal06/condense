@@ -23,15 +23,16 @@ public class JestFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
             List<String> failedSuites = new ArrayList<>();
             List<String> summaryLines = new ArrayList<>();
 
-            for (String line : raw.lines().toList()) {
-                var fm = FAIL_SUITE.matcher(line);
-                if (fm.find()) { failedSuites.add("  FAIL: " + fm.group(1).trim()); continue; }
-                if (SUMMARY.matcher(line).find() || TEST_SUITES.matcher(line).find()) {
-                    summaryLines.add(line.trim());
+            try (java.util.stream.Stream<String> stream = result.hasStderr() ? result.stderrLines() : result.stdoutLines()) {
+                for (String line : (Iterable<String>) stream::iterator) {
+                    var fm = FAIL_SUITE.matcher(line);
+                    if (fm.find()) { failedSuites.add("  FAIL: " + fm.group(1).trim()); continue; }
+                    if (SUMMARY.matcher(line).find() || TEST_SUITES.matcher(line).find()) {
+                        summaryLines.add(line.trim());
+                    }
                 }
             }
 

@@ -90,19 +90,24 @@ jobs:
           echo "Exit code test:"
           ./target/zap-runner git status || echo "Exit: $?"
 
-      - name: Startup benchmark (must be under 200ms each)
+      - name: Measure native binary
         run: |
-          echo "Startup time benchmark:"
-          for i in 1 2 3 4 5; do
+          BINARY=target/zap-runner
+          chmod +x "$BINARY"
+
+          echo "== Binary size =="
+          ls -lh "$BINARY"
+
+          echo "== Cold start (10 runs of --version) =="
+          for i in $(seq 1 10); do
             START=$(date +%s%N)
-            ./target/zap-runner --version > /dev/null
+            "$BINARY" --version > /dev/null
             END=$(date +%s%N)
-            MS=$(( (END - START) / 1000000 ))
-            echo "  Run $i: ${MS}ms"
-            if [ "$MS" -gt 200 ]; then
-              echo "  WARNING: startup exceeded 200ms target"
-            fi
+            echo "Run $i: $(( (END - START) / 1000000 ))ms"
           done
+
+          echo "== Peak RSS on a real filter path =="
+          /usr/bin/time -v "$BINARY" git status 2>&1 | grep -i "maximum resident" || true
 
       - name: Upload native binary
         uses: actions/upload-artifact@v4

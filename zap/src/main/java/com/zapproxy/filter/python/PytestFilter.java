@@ -24,38 +24,39 @@ public class PytestFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
-            List<String> lines  = raw.lines().toList();
             List<String> output = new ArrayList<>();
-
             boolean inShortSummary = false;
+            String lastLineStr = "";
 
-            for (String line : lines) {
-                if (SHORT_TEST_SUMMARY.matcher(line).find()) {
-                    inShortSummary = true;
-                    continue;
-                }
-                if (inShortSummary) {
-                    if (FAILED_LINE.matcher(line).find() || ERROR_LINE.matcher(line).find()) {
-                        output.add(line.trim());
-                    } else if (SUMMARY_LINE.matcher(line).find()) {
-                        // Final summary line (passed/failed count)
-                        output.add(line.trim());
-                        inShortSummary = false;
+            try (java.util.stream.Stream<String> stream = result.hasStderr() ? result.stderrLines() : result.stdoutLines()) {
+                for (String line : (Iterable<String>) stream::iterator) {
+                    if (!line.isBlank()) {
+                        lastLineStr = line;
                     }
-                } else if (SUMMARY_LINE.matcher(line).find()
-                        && (line.contains("passed") || line.contains("failed")
-                            || line.contains("error"))) {
-                    // Final result line — always emit
-                    output.add(line.trim());
+                    if (SHORT_TEST_SUMMARY.matcher(line).find()) {
+                        inShortSummary = true;
+                        continue;
+                    }
+                    if (inShortSummary) {
+                        if (FAILED_LINE.matcher(line).find() || ERROR_LINE.matcher(line).find()) {
+                            output.add(line.trim());
+                        } else if (SUMMARY_LINE.matcher(line).find()) {
+                            // Final summary line (passed/failed count)
+                            output.add(line.trim());
+                            inShortSummary = false;
+                        }
+                    } else if (SUMMARY_LINE.matcher(line).find()
+                            && (line.contains("passed") || line.contains("failed")
+                                || line.contains("error"))) {
+                        // Final result line — always emit
+                        output.add(line.trim());
+                    }
                 }
             }
 
             if (output.isEmpty()) {
                 // No failures found
-                String lastLine = lines.stream().filter(l -> !l.isBlank())
-                    .reduce("", (a, b) -> b);
-                return FilterResult.of(result, lastLine.isBlank() ? "✓ all tests passed" : lastLine);
+                return FilterResult.of(result, lastLineStr.isBlank() ? "✓ all tests passed" : lastLineStr);
             }
 
             return FilterResult.of(result, String.join("\n", output));
