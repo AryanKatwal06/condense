@@ -178,7 +178,9 @@
             <properties>
                 <skipITs>false</skipITs>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
-                <quarkus.native.additional-build-args>--no-fallback</quarkus.native.additional-build-args>
+                <quarkus.native.additional-build-args>
+                    --no-fallback,--strip-debug,--initialize-at-build-time=com.zapproxy,--gc=epsilon
+                </quarkus.native.additional-build-args>
             </properties>
         </profile>
         <profile>
@@ -189,7 +191,7 @@
             <properties>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
                 <quarkus.native.additional-build-args>
-                    --no-fallback,--static,--libc=musl
+                    --no-fallback,--static,--libc=musl,--strip-debug,--initialize-at-build-time=com.zapproxy,--gc=epsilon
                 </quarkus.native.additional-build-args>
             </properties>
         </profile>
@@ -201,7 +203,7 @@
             <properties>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
                 <quarkus.native.additional-build-args>
-                    --no-fallback,-H:+ReportExceptionStackTraces
+                    --no-fallback,-H:+ReportExceptionStackTraces,--initialize-at-build-time=com.zapproxy,--gc=epsilon
                 </quarkus.native.additional-build-args>
             </properties>
         </profile>
