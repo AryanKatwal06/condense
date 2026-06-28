@@ -6,10 +6,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @CommandFilter("docker ps")
 @ApplicationScoped
 public class DockerPsFilter implements FilterStrategy {
+
+    private static final Pattern COLUMNS_PATTERN = Pattern.compile("\\s{2,}");
 
     @Override
     public FilterResult apply(String command, ExecutionResult result,
@@ -28,7 +31,7 @@ public class DockerPsFilter implements FilterStrategy {
         for (int i = 1; i < lines.size(); i++) {   // skip header
             String line = lines.get(i);
             if (line.isBlank()) continue;
-            String[] cols = line.split("\\s{2,}");
+            String[] cols = COLUMNS_PATTERN.split(line);
             if (cols.length < 7) {
                 compact.add(line.trim());
                 continue;

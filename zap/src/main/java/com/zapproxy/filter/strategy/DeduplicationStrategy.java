@@ -18,6 +18,8 @@ public final class DeduplicationStrategy {
 
     private DeduplicationStrategy() {}
 
+    private static final java.util.regex.Pattern MULTIPLIER_PATTERN = java.util.regex.Pattern.compile("\\s+\\(×\\d+\\)$");
+
     /**
      * Deduplicates lines within a sliding window of {@code windowSize} lines.
      *
@@ -48,7 +50,7 @@ public final class DeduplicationStrategy {
                 // Update the result line in-place with new count
                 String base = result.get(resultIdx);
                 // Strip old "(×N)" suffix if present
-                String stripped = base.replaceAll("\\s+\\(×\\d+\\)$", "").stripTrailing();
+                String stripped = MULTIPLIER_PATTERN.matcher(base).replaceAll("").stripTrailing();
                 result.set(resultIdx, stripped + " (×" + count + ")");
             } else {
                 int[] entry = {result.size(), 1};
