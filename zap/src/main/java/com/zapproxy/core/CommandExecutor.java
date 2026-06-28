@@ -104,6 +104,13 @@ public class CommandExecutor {
         stdoutThread.join(5_000);
         stderrThread.join(5_000);
 
+        if (stdoutCapture.error != null) {
+            throw new IllegalStateException(stdoutCapture.error.getMessage(), stdoutCapture.error);
+        }
+        if (stderrCapture.error != null) {
+            throw new IllegalStateException(stderrCapture.error.getMessage(), stderrCapture.error);
+        }
+
         long durationMs = System.currentTimeMillis() - startMs;
         int exitCode = process.exitValue();
 
@@ -159,44 +166,44 @@ public class CommandExecutor {
         });
     }
 
-    /**
-     * Thread-safe output buffer for capturing a single process stream.
-     * Enforces {@link #MAX_STREAM_BYTES} to prevent OOM on unexpectedly large output.
-     */
     private static final class StreamCapture {
+        private final Path tempFile;
+        private int bytesWritten = 0;
+        private volatile Exception error = null;
 
-        private final ByteArrayOutputStream buf = new ByteArrayOutputStream(4096);
-        private volatile boolean truncated = false;
+        StreamCapture() throws IOException {
+            tempFile = java.nio.file.Files.createTempFile("zap-stream-", ".log");
+            tempFile.toFile().deleteOnExit();
+        }
 
         void drain(InputStream in) {
-            try (in) {
+            try (in; java.io.OutputStream out = java.nio.file.Files.newOutputStream(tempFile)) {
                 byte[] chunk = new byte[8192];
                 int read;
                 while ((read = in.read(chunk)) != -1) {
-                    synchronized (buf) {
-                        if (buf.size() + read > MAX_STREAM_BYTES) {
-                            truncated = true;
-                            break;
-                        }
-                        buf.write(chunk, 0, read);
+                    if (bytesWritten + read > MAX_STREAM_BYTES) {
+                        error = new IllegalStateException("zap: command output exceeded 10MB limit and was aborted");
+                        break;
                     }
+                    out.write(chunk, 0, read);
+                    bytesWritten += read;
                 }
-            } catch (IOException ignored) {
-                // Stream closed when process exits — normal
+            } catch (Exception e) {
+                error = e;
             }
         }
 
         int size() {
-            return buf.size();
+            return bytesWritten;
         }
 
         @Override
         public String toString() {
-            String result = buf.toString(java.nio.charset.StandardCharsets.UTF_8);
-            if (truncated) {
-                result += "\n[zap: output truncated at 10MB]";
+            try {
+                return java.nio.file.Files.readString(tempFile, java.nio.charset.StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                return "";
             }
-            return result;
         }
     }
 }
