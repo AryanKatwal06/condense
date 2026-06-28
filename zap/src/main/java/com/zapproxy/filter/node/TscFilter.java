@@ -21,7 +21,7 @@ public class TscFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
         List<String> lines = raw.lines().toList();
 
         Map<String, Integer> byFile = new LinkedHashMap<>();
@@ -30,12 +30,12 @@ public class TscFilter implements FilterStrategy {
             if (m.find()) byFile.merge(m.group(1), 1, Integer::sum);
         }
 
-        if (byFile.isEmpty() && result.succeeded()) return FilterResult.of(raw, "✓ no type errors");
+        if (byFile.isEmpty() && result.succeeded()) return FilterResult.of(result, "✓ no type errors");
 
         long total = byFile.values().stream().mapToLong(Integer::longValue).sum();
         StringBuilder sb = new StringBuilder("tsc: ").append(total).append(" error(s)\n");
         byFile.forEach((f, c) -> sb.append("  ").append(f).append(": ").append(c).append('\n'));
 
-        return FilterResult.of(raw, sb.toString().stripTrailing());
+        return FilterResult.of(result, sb.toString().stripTrailing());
     }
 }

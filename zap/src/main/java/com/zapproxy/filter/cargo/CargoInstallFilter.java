@@ -26,7 +26,7 @@ public class CargoInstallFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
         String clean = AnsiStripStrategy.strip(raw);
 
         if (!result.succeeded()) {
@@ -36,13 +36,13 @@ public class CargoInstallFilter implements FilterStrategy {
                 .limit(15)
                 .toList();
             String errOut = errors.isEmpty() ? clean : String.join("\n", errors);
-            return FilterResult.of(raw, errOut);
+            return FilterResult.of(result, errOut);
         }
 
         Matcher fin = FINISHED.matcher(clean);
-        if (fin.find()) return FilterResult.of(raw, "✓ " + fin.group(0).trim());
+        if (fin.find()) return FilterResult.of(result, "✓ " + fin.group(0).trim());
 
-        return FilterResult.of(raw, "✓ " + command.split(" ")[1] + " complete");
+        return FilterResult.of(result, "✓ " + command.split(" ")[1] + " complete");
     }
 
 

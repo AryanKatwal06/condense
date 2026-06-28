@@ -24,16 +24,16 @@ public class RuffFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
         List<String> lines = raw.lines().toList();
 
         Map<String, Integer> groups = GroupingStrategy.group(lines, RULE_PATTERN, false);
         long total = groups.values().stream().mapToLong(Integer::longValue).sum();
 
-        if (total == 0 && result.succeeded()) return FilterResult.of(raw, "✓ no lint issues");
+        if (total == 0 && result.succeeded()) return FilterResult.of(result, "✓ no lint issues");
 
         StringBuilder sb = new StringBuilder("ruff: ").append(total).append(" issue(s)\n");
         sb.append(GroupingStrategy.format(groups));
-        return FilterResult.of(raw, sb.toString().stripTrailing());
+        return FilterResult.of(result, sb.toString().stripTrailing());
     }
 }

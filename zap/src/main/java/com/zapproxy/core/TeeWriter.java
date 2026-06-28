@@ -74,10 +74,35 @@ public class TeeWriter {
             String filename = hash + "-" + ts + ".txt";
             Path file = teeDir.resolve(filename);
 
-            String content = buildContent(command, result);
-            Files.writeString(file, content, StandardCharsets.UTF_8);
+            try (java.io.OutputStream out = Files.newOutputStream(file, java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                 java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(out, StandardCharsets.UTF_8))) {
+                writer.write("# zap tee dump\n");
+                writer.write("# command: " + command + "\n");
+                writer.write("# exit:    " + result.exitCode() + "\n");
+                writer.write("# elapsed: " + result.durationMs() + "ms\n");
+                writer.write("# timestamp: " + Instant.now() + "\n");
+                writer.write("#\n");
 
-            log.debugf("Tee file written: %s (%d bytes)", file, content.length());
+                if (result.stdoutFile() != null && Files.size(result.stdoutFile()) > 0) {
+                    writer.write("## stdout\n");
+                    writer.flush();
+                    try (java.io.InputStream in = result.stdoutStream()) {
+                        in.transferTo(out);
+                    }
+                    writer.write("\n");
+                }
+
+                if (result.stderrFile() != null && Files.size(result.stderrFile()) > 0) {
+                    writer.write("## stderr\n");
+                    writer.flush();
+                    try (java.io.InputStream in = result.stderrStream()) {
+                        in.transferTo(out);
+                    }
+                    writer.write("\n");
+                }
+            }
+
+            log.debugf("Tee file written: %s", file);
             return file;
 
         } catch (IOException e) {
@@ -86,27 +111,5 @@ public class TeeWriter {
         }
     }
 
-    private String buildContent(String command, ExecutionResult result) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("# zap tee dump\n");
-        sb.append("# command: ").append(command).append('\n');
-        sb.append("# exit:    ").append(result.exitCode()).append('\n');
-        sb.append("# elapsed: ").append(result.durationMs()).append("ms\n");
-        sb.append("# timestamp: ").append(Instant.now()).append('\n');
-        sb.append("#\n");
 
-        if (!result.stdout().isBlank()) {
-            sb.append("## stdout\n");
-            sb.append(result.stdout());
-            if (!result.stdout().endsWith("\n")) sb.append('\n');
-        }
-
-        if (!result.stderr().isBlank()) {
-            sb.append("## stderr\n");
-            sb.append(result.stderr());
-            if (!result.stderr().endsWith("\n")) sb.append('\n');
-        }
-
-        return sb.toString();
-    }
 }

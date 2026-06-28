@@ -20,37 +20,60 @@ public class CatFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
-        String raw = result.stdout();
+        long size = 0;
+        try {
+            size = java.nio.file.Files.size(result.stdoutFile());
+        } catch (java.io.IOException e) {}
 
         // Small output — pass through as-is
-        if (raw.length() <= CHAR_LIMIT_BEFORE_COMPRESS || verbose >= 2) {
-            return FilterResult.passthrough(raw);
+        if (size <= CHAR_LIMIT_BEFORE_COMPRESS || verbose >= 2) {
+            return FilterResult.passthrough(result);
         }
 
-        String trimmed = raw.trim();
+        java.util.List<String> first20 = new java.util.ArrayList<>();
+        java.util.List<String> last20 = new java.util.ArrayList<>();
+        int[] count = {0};
 
-        // JSON content — show schema skeleton
-        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-            try {
-                String skeleton = JsonStructureStrategy.skeleton(trimmed);
-                return FilterResult.of(raw, skeleton);
-            } catch (Exception e) {
-                log.debugf("CatFilter JSON parse failed: %s", e.getMessage());
+        try (java.util.stream.Stream<String> stream = result.stdoutLines()) {
+            stream.forEach(line -> {
+                if (count[0] < 20) {
+                    first20.add(line);
+                }
+                if (last20.size() >= 20) {
+                    last20.remove(0);
+                }
+                last20.add(line);
+                count[0]++;
+            });
+        } catch (java.io.IOException e) {
+            return FilterResult.passthrough(result);
+        }
+
+        if (count[0] > 0) {
+            String trimmed = first20.get(0).trim();
+            // JSON content — show schema skeleton
+            if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+                try {
+                    String raw = result.readStdout();
+                    String skeleton = JsonStructureStrategy.skeleton(raw.trim());
+                    return FilterResult.of(result, skeleton);
+                } catch (Exception e) {
+                    log.debugf("CatFilter JSON parse failed: %s", e.getMessage());
+                }
             }
         }
 
         // Large text — show first + last section
-        String[] lines = raw.split("\n");
-        if (lines.length > 40) {
+        if (count[0] > 40) {
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 20; i++) sb.append(lines[i]).append('\n');
-            sb.append("... (").append(lines.length - 40).append(" lines omitted) ...\n");
-            for (int i = lines.length - 20; i < lines.length; i++) sb.append(lines[i]).append('\n');
-            return FilterResult.of(raw, sb.toString().stripTrailing());
+            for (String l : first20) sb.append(l).append('\n');
+            sb.append("... (").append(count[0] - 40).append(" lines omitted) ...\n");
+            for (String l : last20) sb.append(l).append('\n');
+            return FilterResult.of(result, sb.toString().stripTrailing());
         }
 
-        return FilterResult.passthrough(raw);
+        return FilterResult.passthrough(result);
     }
 }

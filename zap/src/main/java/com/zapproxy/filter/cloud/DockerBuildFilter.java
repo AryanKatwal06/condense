@@ -20,9 +20,9 @@ public class DockerBuildFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
-        String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
         String clean = AnsiStripStrategy.strip(raw);
 
         StringBuilder sb = new StringBuilder("✓ docker build");
@@ -31,6 +31,6 @@ public class DockerBuildFilter implements FilterStrategy {
         Matcher tag = TAGGED.matcher(clean);
         if (tag.find()) sb.append(" → ").append(tag.group(1).trim());
 
-        return FilterResult.of(raw, sb.toString());
+        return FilterResult.of(result, sb.toString());
     }
 }

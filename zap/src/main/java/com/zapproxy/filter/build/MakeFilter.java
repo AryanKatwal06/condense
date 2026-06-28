@@ -20,11 +20,11 @@ public class MakeFilter implements FilterStrategy {
                 .filter(l -> l.startsWith("make") || l.contains("Error") || l.contains("error:"))
                 .limit(15)
                 .toList();
-            return FilterResult.of(raw, errors.isEmpty() ? raw : String.join("\n", errors));
+            return FilterResult.of(result, errors.isEmpty() ? raw : String.join("\n", errors));
         }
 
-        String raw = result.stdout();
+        String raw = result.readStdout();
         String lastLine = raw.lines().filter(l -> !l.isBlank()).reduce("", (a, b) -> b);
-        return FilterResult.of(raw, "✓ make: " + (lastLine.isBlank() ? "done" : lastLine.trim()));
+        return FilterResult.of(result, "✓ make: " + (lastLine.isBlank() ? "done" : lastLine.trim()));
     }
 }

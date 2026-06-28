@@ -23,7 +23,7 @@ public class JestFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+            String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
             List<String> failedSuites = new ArrayList<>();
             List<String> summaryLines = new ArrayList<>();
 
@@ -38,7 +38,7 @@ public class JestFilter implements FilterStrategy {
             if (failedSuites.isEmpty() && result.succeeded()) {
                 String summary = summaryLines.isEmpty() ? "✓ all tests passed"
                     : String.join("\n", summaryLines);
-                return FilterResult.of(raw, summary);
+                return FilterResult.of(result, summary);
             }
 
             StringBuilder sb = new StringBuilder();
@@ -48,11 +48,11 @@ public class JestFilter implements FilterStrategy {
             }
             summaryLines.forEach(l -> sb.append(l).append('\n'));
 
-            return FilterResult.of(raw, sb.toString().stripTrailing());
+            return FilterResult.of(result, sb.toString().stripTrailing());
 
         } catch (Exception e) {
             log.warnf("JestFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result.stdout());
+            return FilterResult.passthrough(result);
         }
     }
 }

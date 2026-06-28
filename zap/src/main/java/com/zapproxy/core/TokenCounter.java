@@ -12,6 +12,10 @@ package com.zapproxy.core;
  * <p>This class is stateless and has no public constructor — use the static
  * {@link #count(String)} method directly.
  */
+import java.nio.file.Path;
+import java.nio.file.Files;
+import java.io.IOException;
+
 public final class TokenCounter {
 
     private TokenCounter() {}
@@ -26,6 +30,15 @@ public final class TokenCounter {
         if (text == null || text.isEmpty()) return 0;
         // Integer ceiling division: (n + 3) / 4
         return (text.length() + 3) / 4;
+    }
+
+    public static int count(Path file) {
+        if (file == null) return 0;
+        try {
+            return (int) ((Files.size(file) + 3) / 4);
+        } catch (IOException e) {
+            return 0;
+        }
     }
 
     /**

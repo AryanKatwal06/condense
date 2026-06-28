@@ -24,7 +24,7 @@ public class MvnFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
         List<String> lines = raw.lines().toList();
 
         if (BUILD_SUCCESS.matcher(raw).find()) {
@@ -32,8 +32,7 @@ public class MvnFilter implements FilterStrategy {
             String testLine = lines.stream()
                 .filter(l -> l.contains("Tests run:"))
                 .reduce("", (a, b) -> b);
-            return FilterResult.of(raw,
-                "✓ BUILD SUCCESS" + (testLine.isBlank() ? "" : " — " + testLine.trim()));
+            return FilterResult.of(result, "✓ BUILD SUCCESS" + (testLine.isBlank() ? "" : " — " + testLine.trim()));
         }
 
         if (BUILD_FAILURE.matcher(raw).find()) {
@@ -43,10 +42,9 @@ public class MvnFilter implements FilterStrategy {
                 if (TEST_FAIL.matcher(line).find()) errors.add(line.trim());
             }
             errors = errors.subList(0, Math.min(20, errors.size()));
-            return FilterResult.of(raw,
-                "✗ BUILD FAILURE\n" + String.join("\n", errors));
+            return FilterResult.of(result, "✗ BUILD FAILURE\n" + String.join("\n", errors));
         }
 
-        return FilterResult.passthrough(raw);
+        return FilterResult.passthrough(result);
     }
 }

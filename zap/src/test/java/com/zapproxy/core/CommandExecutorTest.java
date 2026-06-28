@@ -23,8 +23,8 @@ class CommandExecutorTest {
     void capturesStdout() throws Exception {
         ExecutionResult r = executor.execute("echo", "hello zap");
         assertThat(r.exitCode()).isZero();
-        assertThat(r.stdout().trim()).isEqualTo("hello zap");
-        assertThat(r.stderr()).isBlank();
+        assertThat(r.readStdout().trim()).isEqualTo("hello zap");
+        assertThat(r.readStderr()).isBlank();
         assertThat(r.succeeded()).isTrue();
     }
 
@@ -42,8 +42,8 @@ class CommandExecutorTest {
     void capturesStderrSeparately() throws Exception {
         ExecutionResult r = executor.execute("sh", "-c", "echo err >&2");
         assertThat(r.exitCode()).isZero();
-        assertThat(r.stdout()).isBlank();
-        assertThat(r.stderr().trim()).isEqualTo("err");
+        assertThat(r.readStdout()).isBlank();
+        assertThat(r.readStderr().trim()).isEqualTo("err");
         assertThat(r.hasStderr()).isTrue();
     }
 
@@ -52,8 +52,8 @@ class CommandExecutorTest {
     void capturesBothStreamsConcurrently() throws Exception {
         // Writes to both stdout and stderr — validates deadlock prevention
         ExecutionResult r = executor.execute("sh", "-c", "echo out; echo err >&2");
-        assertThat(r.stdout().trim()).isEqualTo("out");
-        assertThat(r.stderr().trim()).isEqualTo("err");
+        assertThat(r.readStdout().trim()).isEqualTo("out");
+        assertThat(r.readStderr().trim()).isEqualTo("err");
     }
 
     @Test
@@ -69,7 +69,7 @@ class CommandExecutorTest {
         ExecutionResult r = executor.execute(
             List.of("sleep", "30"), Duration.ofMillis(200));
         assertThat(r.exitCode()).isEqualTo(-1);
-        assertThat(r.stderr()).contains("timed out");
+        assertThat(r.readStderr()).contains("timed out");
         assertThat(r.durationMs()).isLessThan(5_000);
     }
 

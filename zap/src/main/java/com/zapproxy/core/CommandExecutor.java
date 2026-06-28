@@ -92,10 +92,13 @@ public class CommandExecutor {
             stderrThread.interrupt();
             long elapsed = System.currentTimeMillis() - startMs;
             log.warnf("Command '%s' timed out after %dms", String.join(" ", args), elapsed);
+            try {
+                java.nio.file.Files.writeString(stderrCapture.tempFile, String.format("zap: command timed out after %ds", timeout.toSeconds()), java.nio.charset.StandardCharsets.UTF_8);
+            } catch (java.io.IOException ignored) {}
             return new ExecutionResult(
                 -1,
-                stdoutCapture.toString(),
-                String.format("zap: command timed out after %ds", timeout.toSeconds()),
+                stdoutCapture.tempFile,
+                stderrCapture.tempFile,
                 elapsed
             );
         }
@@ -105,9 +108,15 @@ public class CommandExecutor {
         stderrThread.join(5_000);
 
         if (stdoutCapture.error != null) {
+            if (stdoutCapture.error instanceof OutputLimitExceededException) {
+                throw (OutputLimitExceededException) stdoutCapture.error;
+            }
             throw new IllegalStateException(stdoutCapture.error.getMessage(), stdoutCapture.error);
         }
         if (stderrCapture.error != null) {
+            if (stderrCapture.error instanceof OutputLimitExceededException) {
+                throw (OutputLimitExceededException) stderrCapture.error;
+            }
             throw new IllegalStateException(stderrCapture.error.getMessage(), stderrCapture.error);
         }
 
@@ -120,8 +129,8 @@ public class CommandExecutor {
 
         return new ExecutionResult(
             exitCode,
-            stdoutCapture.toString(),
-            stderrCapture.toString(),
+            stdoutCapture.tempFile,
+            stderrCapture.tempFile,
             durationMs
         );
     }
@@ -182,7 +191,7 @@ public class CommandExecutor {
                 int read;
                 while ((read = in.read(chunk)) != -1) {
                     if (bytesWritten + read > MAX_STREAM_BYTES) {
-                        error = new IllegalStateException("zap: command output exceeded 10MB limit and was aborted");
+                        error = new OutputLimitExceededException("zap: command output exceeded 10MB limit and was aborted");
                         break;
                     }
                     out.write(chunk, 0, read);
@@ -195,15 +204,6 @@ public class CommandExecutor {
 
         int size() {
             return bytesWritten;
-        }
-
-        @Override
-        public String toString() {
-            try {
-                return java.nio.file.Files.readString(tempFile, java.nio.charset.StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                return "";
-            }
         }
     }
 }

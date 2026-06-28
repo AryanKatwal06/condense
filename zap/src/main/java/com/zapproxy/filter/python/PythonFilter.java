@@ -24,6 +24,6 @@ public class PythonFilter implements FilterStrategy {
             return pytestFilter.apply(command, result, config, verbose, ultraCompact);
         }
         // For python -c: passthrough (output is intentional)
-        return FilterResult.passthrough(result.stdout());
+        return FilterResult.passthrough(result);
     }
 }

@@ -17,28 +17,28 @@ public class KubectlFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
-        String raw = result.stdout();
+        String raw = result.readStdout();
         List<String> lines = raw.lines().toList();
-        if (lines.isEmpty()) return FilterResult.passthrough(raw);
+        if (lines.isEmpty()) return FilterResult.passthrough(result);
 
         // For 'kubectl get pods' style: compact table
         if (command.contains("get") || command.contains("describe")) {
-            return compactTable(raw, lines);
+            return compactTable(result, raw, lines);
         }
 
         // For 'kubectl logs': tail last 20 lines
         if (command.contains("logs")) {
             List<String> tail = lines.subList(Math.max(0, lines.size() - 20), lines.size());
             String note = lines.size() > 20 ? "... (showing last 20 of " + lines.size() + " lines)\n" : "";
-            return FilterResult.of(raw, note + String.join("\n", tail));
+            return FilterResult.of(result, note + String.join("\n", tail));
         }
 
-        return FilterResult.passthrough(raw);
+        return FilterResult.passthrough(result);
     }
 
-    private FilterResult compactTable(String raw, List<String> lines) {
+    private FilterResult compactTable(ExecutionResult result, String raw, List<String> lines) {
         // Surface non-Running pods prominently
         List<String> unhealthy = new ArrayList<>();
         List<String> healthy   = new ArrayList<>();
@@ -60,6 +60,6 @@ public class KubectlFilter implements FilterStrategy {
             sb.append('\n');
         }
         healthy.forEach(l -> sb.append(l).append('\n'));
-        return FilterResult.of(raw, sb.toString().stripTrailing());
+        return FilterResult.of(result, sb.toString().stripTrailing());
     }
 }

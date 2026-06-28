@@ -22,13 +22,13 @@ public class GradleFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
 
         if (BUILD_SUCCESSFUL.matcher(raw).find()) {
             String duration = raw.lines()
                 .filter(l -> l.contains("BUILD SUCCESSFUL"))
                 .findFirst().map(String::trim).orElse("BUILD SUCCESSFUL");
-            return FilterResult.of(raw, "✓ " + duration);
+            return FilterResult.of(result, "✓ " + duration);
         }
 
         if (BUILD_FAILED.matcher(raw).find()) {
@@ -36,10 +36,9 @@ public class GradleFilter implements FilterStrategy {
                 .filter(l -> FAILURE_DETAIL.matcher(l).find() || l.startsWith("FAILURE:"))
                 .limit(15)
                 .toList();
-            return FilterResult.of(raw,
-                "✗ BUILD FAILED\n" + String.join("\n", details));
+            return FilterResult.of(result, "✗ BUILD FAILED\n" + String.join("\n", details));
         }
 
-        return FilterResult.passthrough(raw);
+        return FilterResult.passthrough(result);
     }
 }

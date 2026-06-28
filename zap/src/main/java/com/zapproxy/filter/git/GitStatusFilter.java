@@ -57,28 +57,23 @@ public class GitStatusFilter implements FilterStrategy {
         // Non-zero exit: git error (not-a-repo, permission denied, etc.)
         if (!result.succeeded()) {
             log.debugf("git status exited %d — passing through", result.exitCode());
-            return FilterResult.passthrough(result.combined());
+            return FilterResult.passthrough(result);
         }
 
         try {
-            return filter(result.stdout(), verbose, ultraCompact);
+            return filter(result, verbose, ultraCompact);
         } catch (Exception e) {
             log.warnf("GitStatusFilter parse error: %s — falling back to passthrough",
                 e.getMessage());
-            return FilterResult.passthrough(result.stdout());
+            return FilterResult.passthrough(result);
         }
     }
 
     // ── private ──────────────────────────────────────────────────────────────
 
-    private FilterResult filter(String stdout, int verbose, boolean ultraCompact) {
-        String branch = extractBranch(stdout);
-        String prefix = branch != null ? "[" + branch + "] " : "";
-
-        // Clean working tree
-        if (CLEAN_PATTERN.matcher(stdout).find()) {
-            return FilterResult.of(stdout, prefix + "✓ clean");
-        }
+    private FilterResult filter(ExecutionResult result, int verbose, boolean ultraCompact) {
+        String branch = null;
+        boolean isClean = false;
 
         int staged    = 0;
         int modified  = 0;
@@ -88,34 +83,51 @@ public class GitStatusFilter implements FilterStrategy {
         enum Section { NONE, STAGED, UNSTAGED, UNTRACKED }
         Section currentSection = Section.NONE;
 
-        for (String line : stdout.lines().toList()) {
-            if (line.startsWith("Changes to be committed:")) {
-                currentSection = Section.STAGED;
-                continue;
-            } else if (line.startsWith("Changes not staged for commit:")) {
-                currentSection = Section.UNSTAGED;
-                continue;
-            } else if (line.startsWith("Untracked files:")) {
-                currentSection = Section.UNTRACKED;
-                continue;
-            } else if (line.isEmpty()) {
-                currentSection = Section.NONE;
-                continue;
-            }
+        try (java.util.stream.Stream<String> stream = result.stdoutLines()) {
+            for (String line : (Iterable<String>) stream::iterator) {
+                if (branch == null) {
+                    if (line.startsWith("On branch ")) branch = line.substring(10).trim();
+                    else if (line.startsWith("HEAD detached at ")) branch = "detached@" + line.substring(17).trim();
+                }
+                if (CLEAN_PATTERN.matcher(line).find()) isClean = true;
 
-            if (line.startsWith("\t")) {
-                String fileLine = line.substring(1).trim();
-                if (currentSection == Section.STAGED) {
-                    staged++;
-                    changedFiles.add("S " + fileLine);
-                } else if (currentSection == Section.UNSTAGED) {
-                    modified++;
-                    changedFiles.add("M " + fileLine);
-                } else if (currentSection == Section.UNTRACKED) {
-                    untracked++;
-                    changedFiles.add("? " + fileLine);
+                if (line.startsWith("Changes to be committed:")) {
+                    currentSection = Section.STAGED;
+                    continue;
+                } else if (line.startsWith("Changes not staged for commit:")) {
+                    currentSection = Section.UNSTAGED;
+                    continue;
+                } else if (line.startsWith("Untracked files:")) {
+                    currentSection = Section.UNTRACKED;
+                    continue;
+                } else if (line.isEmpty()) {
+                    currentSection = Section.NONE;
+                    continue;
+                }
+
+                if (line.startsWith("\t")) {
+                    String fileLine = line.substring(1).trim();
+                    if (currentSection == Section.STAGED) {
+                        staged++;
+                        changedFiles.add("S " + fileLine);
+                    } else if (currentSection == Section.UNSTAGED) {
+                        modified++;
+                        changedFiles.add("M " + fileLine);
+                    } else if (currentSection == Section.UNTRACKED) {
+                        untracked++;
+                        changedFiles.add("? " + fileLine);
+                    }
                 }
             }
+        } catch (java.io.IOException e) {
+            return FilterResult.passthrough(result);
+        }
+
+        String prefix = branch != null ? "[" + branch + "] " : "";
+
+        // Clean working tree
+        if (isClean) {
+            return FilterResult.of(result, prefix + "✓ clean");
         }
 
         String summary = buildSummary(prefix, staged, modified, untracked, ultraCompact);
@@ -125,18 +137,10 @@ public class GitStatusFilter implements FilterStrategy {
             for (String file : changedFiles) {
                 sb.append("  ").append(file).append('\n');
             }
-            return FilterResult.of(stdout, sb.toString().stripTrailing());
+            return FilterResult.of(result, sb.toString().stripTrailing());
         }
 
-        return FilterResult.of(stdout, summary);
-    }
-
-    private String extractBranch(String stdout) {
-        Matcher m = BRANCH_PATTERN.matcher(stdout);
-        if (m.find()) return m.group(1).trim();
-        Matcher d = DETACHED_PATTERN.matcher(stdout);
-        if (d.find()) return "detached@" + d.group(1).trim();
-        return null;
+        return FilterResult.of(result, summary);
     }
 
     private String buildSummary(String prefix, int staged, int modified,

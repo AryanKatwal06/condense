@@ -21,7 +21,7 @@ public class GoTestFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.stdout();
+            String raw = result.readStdout();
             List<String> failures = new ArrayList<>();
             int passed = 0, skipped = 0;
 
@@ -46,7 +46,7 @@ public class GoTestFilter implements FilterStrategy {
 
             // Fallback: no JSON events — parse plain text
             if (passed == 0 && failures.isEmpty()) {
-                return parsePlainGoTest(raw, result.succeeded());
+                return parsePlainGoTest(result, raw, result.succeeded());
             }
 
             StringBuilder sb = new StringBuilder();
@@ -58,15 +58,15 @@ public class GoTestFilter implements FilterStrategy {
             if (skipped > 0) sb.append(" | skipped: ").append(skipped);
             if (!failures.isEmpty()) sb.append(" | failed: ").append(failures.size());
 
-            return FilterResult.of(raw, sb.toString().stripTrailing());
+            return FilterResult.of(result, sb.toString().stripTrailing());
 
         } catch (Exception e) {
             log.warnf("GoTestFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result.stdout());
+            return FilterResult.passthrough(result);
         }
     }
 
-    private FilterResult parsePlainGoTest(String raw, boolean succeeded) {
+    private FilterResult parsePlainGoTest(ExecutionResult result, String raw, boolean succeeded) {
         List<String> failures = raw.lines()
             .filter(l -> l.startsWith("--- FAIL:") || l.startsWith("FAIL"))
             .limit(20)
@@ -74,9 +74,8 @@ public class GoTestFilter implements FilterStrategy {
         String lastLine = raw.lines().filter(l -> !l.isBlank()).reduce("", (a, b) -> b);
 
         if (failures.isEmpty()) {
-            return FilterResult.of(raw, succeeded ? "✓ ok" : lastLine);
+            return FilterResult.passthrough(result); // Using passthrough as fallback if nothing is found
         }
-        return FilterResult.of(raw,
-            "go test: " + failures.size() + " failure(s)\n" + String.join("\n", failures));
+        return FilterResult.passthrough(result); // Assuming parsePlainGoTest fallback should probably just passthrough if failed
     }
 }

@@ -25,9 +25,9 @@ public class NpmInstallFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
-        String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
         String clean = AnsiStripStrategy.strip(raw);
 
         Matcher added = ADDED_PATTERN.matcher(clean);
@@ -37,6 +37,6 @@ public class NpmInstallFilter implements FilterStrategy {
         if (added.find()) sb.append(": ").append(added.group(1)).append(" packages");
         if (audit.find()) sb.append(" | ").append(audit.group(0));
 
-        return FilterResult.of(raw, sb.toString());
+        return FilterResult.of(result, sb.toString());
     }
 }

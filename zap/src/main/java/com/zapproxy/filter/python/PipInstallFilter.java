@@ -18,9 +18,9 @@ public class PipInstallFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
-        String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
         String clean = AnsiStripStrategy.strip(raw);
 
         List<String> installed = clean.lines()
@@ -29,9 +29,9 @@ public class PipInstallFilter implements FilterStrategy {
 
         if (installed.isEmpty()) {
             String lastLine = AnsiStripStrategy.lastMeaningfulLine(clean);
-            return FilterResult.of(raw, lastLine.isBlank() ? "✓ pip install" : lastLine);
+            return FilterResult.of(result, lastLine.isBlank() ? "✓ pip install" : lastLine);
         }
 
-        return FilterResult.of(raw, installed.get(installed.size() - 1).trim());
+        return FilterResult.of(result, installed.get(installed.size() - 1).trim());
     }
 }

@@ -22,10 +22,10 @@ public class GitLogFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
         try {
-            String stdout = result.stdout();
+            String stdout = result.readStdout();
             List<String> lines = stdout.lines().toList();
             List<String> commits = new ArrayList<>();
 
@@ -44,18 +44,18 @@ public class GitLogFilter implements FilterStrategy {
                 }
             }
 
-            if (commits.isEmpty()) return FilterResult.of(stdout, "(no commits)");
+            if (commits.isEmpty()) return FilterResult.of(result, "(no commits)");
 
             int limit = verbose >= 2 ? commits.size() : Math.min(10, commits.size());
             String out = String.join("\n", commits.subList(0, limit));
             if (!ultraCompact && commits.size() > limit) {
                 out += "\n(+" + (commits.size() - limit) + " more)";
             }
-            return FilterResult.of(stdout, out);
+            return FilterResult.of(result, out);
 
         } catch (Exception e) {
             log.warnf("GitLogFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result.stdout());
+            return FilterResult.passthrough(result);
         }
     }
 }

@@ -11,13 +11,13 @@ public class GitAddFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
         // git add normally produces no output on success
-        String raw = result.stdout();
-        if (raw.isBlank()) return FilterResult.of("", "✓ staged");
+        String raw = result.readStdout();
+        if (raw.isBlank()) return FilterResult.of(result, "✓ staged");
 
         long fileCount = raw.lines().filter(l -> !l.isBlank()).count();
-        return FilterResult.of(raw, "✓ staged " + fileCount + " file(s)");
+        return FilterResult.of(result, "✓ staged " + fileCount + " file(s)");
     }
 }

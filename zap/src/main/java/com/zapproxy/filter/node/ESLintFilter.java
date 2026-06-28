@@ -28,14 +28,14 @@ public class ESLintFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+            String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
             List<String> lines = raw.lines().toList();
 
             long errors   = lines.stream().filter(l -> l.contains("  error  ")).count();
             long warnings = lines.stream().filter(l -> l.contains("  warning  ")).count();
 
             if (errors == 0 && warnings == 0 && result.succeeded()) {
-                return FilterResult.of(raw, "✓ no lint issues");
+                return FilterResult.of(result, "✓ no lint issues");
             }
 
             Map<String, Integer> groups = GroupingStrategy.group(lines, RULE_PATTERN, false);
@@ -45,10 +45,10 @@ public class ESLintFilter implements FilterStrategy {
               .append(warnings).append(" warning(s)\n");
             sb.append(GroupingStrategy.format(groups));
 
-            return FilterResult.of(raw, sb.toString().stripTrailing());
+            return FilterResult.of(result, sb.toString().stripTrailing());
         } catch (Exception e) {
             log.warnf("ESLintFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result.stdout());
+            return FilterResult.passthrough(result);
         }
     }
 }

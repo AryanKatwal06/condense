@@ -24,7 +24,7 @@ public class PytestFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+            String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
             List<String> lines  = raw.lines().toList();
             List<String> output = new ArrayList<>();
 
@@ -55,14 +55,14 @@ public class PytestFilter implements FilterStrategy {
                 // No failures found
                 String lastLine = lines.stream().filter(l -> !l.isBlank())
                     .reduce("", (a, b) -> b);
-                return FilterResult.of(raw, lastLine.isBlank() ? "✓ all tests passed" : lastLine);
+                return FilterResult.of(result, lastLine.isBlank() ? "✓ all tests passed" : lastLine);
             }
 
-            return FilterResult.of(raw, String.join("\n", output));
+            return FilterResult.of(result, String.join("\n", output));
 
         } catch (Exception e) {
             log.warnf("PytestFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result.stdout());
+            return FilterResult.passthrough(result);
         }
     }
 }

@@ -21,25 +21,28 @@ public class GrepFilter implements FilterStrategy {
                               ZapConfig config, int verbose, boolean ultraCompact) {
         if (result.exitCode() == 1) {
             // grep exits 1 when no matches — not an error
-            return FilterResult.of(result.stdout(), "(no matches)");
+            return FilterResult.of(result, "(no matches)");
         }
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
-        String raw = result.stdout();
-        List<String> lines = raw.lines().filter(l -> !l.isBlank()).toList();
-
-        if (lines.isEmpty()) return FilterResult.of(raw, "(no matches)");
-        if (lines.size() <= 10 || verbose >= 2) return FilterResult.passthrough(raw);
-
-        // Count matches per file
         Map<String, Integer> byFile = new LinkedHashMap<>();
-        for (String line : lines) {
-            int colon = line.indexOf(':');
-            String file = colon > 0 ? line.substring(0, colon) : "(stdin)";
-            byFile.merge(file, 1, Integer::sum);
+        int[] lineCount = {0};
+
+        try (java.util.stream.Stream<String> stream = result.stdoutLines()) {
+            stream.filter(l -> !l.isBlank()).forEach(line -> {
+                lineCount[0]++;
+                int colon = line.indexOf(':');
+                String file = colon > 0 ? line.substring(0, colon) : "(stdin)";
+                byFile.merge(file, 1, Integer::sum);
+            });
+        } catch (java.io.IOException e) {
+            return FilterResult.passthrough(result);
         }
 
-        StringBuilder sb = new StringBuilder(lines.size() + " match(es) in ")
+        if (lineCount[0] == 0) return FilterResult.of(result, "(no matches)");
+        if (lineCount[0] <= 10 || verbose >= 2) return FilterResult.passthrough(result);
+
+        StringBuilder sb = new StringBuilder(lineCount[0] + " match(es) in ")
             .append(byFile.size()).append(" file(s)\n");
         byFile.entrySet().stream()
             .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
@@ -47,6 +50,6 @@ public class GrepFilter implements FilterStrategy {
             .forEach(e -> sb.append("  ").append(e.getKey()).append(": ")
                 .append(e.getValue()).append('\n'));
 
-        return FilterResult.of(raw, sb.toString().stripTrailing());
+        return FilterResult.of(result, sb.toString().stripTrailing());
     }
 }

@@ -22,7 +22,7 @@ public class VitestFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+            String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
             List<String> failures = new ArrayList<>();
             List<String> summary  = new ArrayList<>();
 
@@ -36,8 +36,7 @@ public class VitestFilter implements FilterStrategy {
             }
 
             if (failures.isEmpty() && result.succeeded()) {
-                return FilterResult.of(raw,
-                    summary.isEmpty() ? "✓ all tests passed" : String.join("\n", summary));
+                return FilterResult.of(result, summary.isEmpty() ? "✓ all tests passed" : String.join("\n", summary));
             }
 
             StringBuilder sb = new StringBuilder();
@@ -47,10 +46,10 @@ public class VitestFilter implements FilterStrategy {
             }
             summary.forEach(l -> sb.append(l).append('\n'));
 
-            return FilterResult.of(raw, sb.toString().stripTrailing());
+            return FilterResult.of(result, sb.toString().stripTrailing());
         } catch (Exception e) {
             log.warnf("VitestFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result.stdout());
+            return FilterResult.passthrough(result);
         }
     }
 }

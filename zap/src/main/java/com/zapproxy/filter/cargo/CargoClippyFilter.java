@@ -26,7 +26,7 @@ public class CargoClippyFilter implements FilterStrategy {
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
         try {
-            String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+            String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
             List<String> lines = raw.lines().toList();
 
             // Extract lint rule names from #[warn(...)] annotations
@@ -39,17 +39,17 @@ public class CargoClippyFilter implements FilterStrategy {
 
             long warnings = groups.values().stream().mapToLong(Integer::longValue).sum();
             if (warnings == 0 && result.succeeded()) {
-                return FilterResult.of(raw, "✓ no clippy warnings");
+                return FilterResult.of(result, "✓ no clippy warnings");
             }
 
             StringBuilder sb = new StringBuilder("cargo clippy: ")
                 .append(warnings).append(" warning(s)\n");
             sb.append(GroupingStrategy.format(groups));
 
-            return FilterResult.of(raw, sb.toString().stripTrailing());
+            return FilterResult.of(result, sb.toString().stripTrailing());
         } catch (Exception e) {
             log.warnf("CargoClippyFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result.stdout());
+            return FilterResult.passthrough(result);
         }
     }
 }

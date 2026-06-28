@@ -27,18 +27,28 @@ public record FilterResult(
      * Convenience factory: build a FilterResult for a passthrough (no filtering).
      * rawTokens == outTokens, wasFiltered == false.
      */
-    public static FilterResult passthrough(String output) {
-        int tokens = TokenCounter.count(output);
-        return new FilterResult(output, tokens, tokens, false);
+    public static FilterResult passthrough(ExecutionResult result) {
+        int tokens = 0;
+        try {
+            if (result.stdoutFile() != null) tokens += TokenCounter.count(result.stdoutFile());
+            if (result.stderrFile() != null) tokens += TokenCounter.count(result.stderrFile());
+        } catch (Exception e) {}
+        return new FilterResult(result.combined(), tokens, tokens, false);
     }
 
     /**
      * Convenience factory: build a FilterResult for a successfully compressed output.
      */
-    public static FilterResult of(String rawInput, String filteredOutput) {
+    public static FilterResult of(ExecutionResult result, String filteredOutput) {
+        int rawTokens = 0;
+        try {
+            if (result.stdoutFile() != null) rawTokens += TokenCounter.count(result.stdoutFile());
+            if (result.stderrFile() != null) rawTokens += TokenCounter.count(result.stderrFile());
+        } catch (Exception e) {}
+        
         return new FilterResult(
             filteredOutput,
-            TokenCounter.count(rawInput),
+            rawTokens,
             TokenCounter.count(filteredOutput),
             true
         );

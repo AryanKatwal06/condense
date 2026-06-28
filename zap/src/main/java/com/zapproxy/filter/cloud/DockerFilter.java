@@ -20,16 +20,16 @@ public class DockerFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
-        String raw = result.stdout().isBlank() ? result.stderr() : result.stdout();
+        String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
         List<String> lines = raw.lines().filter(l -> !l.isBlank()).toList();
 
-        if (lines.size() <= MAX_LOG_LINES || verbose >= 2) return FilterResult.passthrough(raw);
+        if (lines.size() <= MAX_LOG_LINES || verbose >= 2) return FilterResult.passthrough(result);
 
         // Tail last MAX_LOG_LINES lines
         List<String> tail = lines.subList(lines.size() - MAX_LOG_LINES, lines.size());
         String header = "... (showing last " + MAX_LOG_LINES + " of " + lines.size() + " lines)\n";
-        return FilterResult.of(raw, header + String.join("\n", tail));
+        return FilterResult.of(result, header + String.join("\n", tail));
     }
 }

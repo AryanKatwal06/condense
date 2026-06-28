@@ -18,9 +18,9 @@ public class GitCommitFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
-        String raw = result.stdout();
+        String raw = result.readStdout();
         Matcher m = COMMIT_LINE.matcher(raw);
         if (m.find()) {
             String branch  = m.group(1).trim();
@@ -29,9 +29,9 @@ public class GitCommitFilter implements FilterStrategy {
             String out = ultraCompact
                 ? "[" + branch + "] " + hash + " " + message
                 : "✓ committed [" + branch + "] " + hash + " — " + message;
-            return FilterResult.of(raw, out);
+            return FilterResult.of(result, out);
         }
 
-        return FilterResult.of(raw, "✓ committed");
+        return FilterResult.of(result, "✓ committed");
     }
 }

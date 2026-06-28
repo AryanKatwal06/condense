@@ -10,7 +10,7 @@ class TokenCounterTest {
 
     @Test
     void nullReturnsZero() {
-        assertThat(TokenCounter.count(null)).isZero();
+        assertThat(TokenCounter.count((String) null)).isZero();
     }
 
     @Test

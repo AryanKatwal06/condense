@@ -25,13 +25,13 @@ public class GitDiffFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded() && result.stdout().isBlank()) {
-            return FilterResult.passthrough(result.combined());
+        if (!result.succeeded() && result.readStdout().isBlank()) {
+            return FilterResult.passthrough(result);
         }
 
         try {
-            String stdout = result.stdout();
-            String raw = stdout.isBlank() ? result.stderr() : stdout;
+            String stdout = result.readStdout();
+            String raw = stdout.isBlank() ? result.readStderr() : stdout;
 
             // Look for --stat summary line
             Matcher m = STAT_SUMMARY.matcher(raw);
@@ -43,9 +43,9 @@ public class GitDiffFilter implements FilterStrategy {
                     raw.lines()
                         .filter(l -> STAT_FILE_LINE.matcher(l).find())
                         .forEach(l -> sb.append("  ").append(l.trim()).append('\n'));
-                    return FilterResult.of(raw, sb.toString().stripTrailing());
+                    return FilterResult.of(result, sb.toString().stripTrailing());
                 }
-                return FilterResult.of(raw, summary);
+                return FilterResult.of(result, summary);
             }
 
             // Plain diff — count patch lines
@@ -53,15 +53,15 @@ public class GitDiffFilter implements FilterStrategy {
             long removed = raw.lines().filter(l -> l.startsWith("-") && !l.startsWith("---")).count();
 
             if (added == 0 && removed == 0) {
-                return FilterResult.of(raw, "no changes");
+                return FilterResult.of(result, "no changes");
             }
 
             String summary = "+" + added + " / -" + removed + " lines";
-            return FilterResult.of(raw, summary);
+            return FilterResult.of(result, summary);
 
         } catch (Exception e) {
             log.warnf("GitDiffFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result.stdout());
+            return FilterResult.passthrough(result);
         }
     }
 }

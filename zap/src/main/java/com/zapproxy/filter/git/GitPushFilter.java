@@ -26,22 +26,22 @@ public class GitPushFilter implements FilterStrategy {
 
         if (REJECTED.matcher(raw).find()) {
             // Push failed — return stderr so AI sees the rejection reason
-            return FilterResult.passthrough(result.stderr().isBlank() ? raw : result.stderr());
+            return FilterResult.passthrough(result);
         }
 
         if (UP_TO_DATE.matcher(raw).find()) {
-            return FilterResult.of(raw, "✓ up-to-date (nothing pushed)");
+            return FilterResult.of(result, "✓ up-to-date (nothing pushed)");
         }
 
         Matcher m = BRANCH_PATTERN.matcher(raw);
         if (m.find()) {
             String dest = m.group(2).trim();
-            return FilterResult.of(raw, "✓ pushed → " + dest);
+            return FilterResult.of(result, "✓ pushed → " + dest);
         }
 
         // Fallback: just confirm success
         return result.succeeded()
-            ? FilterResult.of(raw, "✓ pushed")
-            : FilterResult.passthrough(raw);
+            ? FilterResult.of(result, "✓ pushed")
+            : FilterResult.passthrough(result);
     }
 }

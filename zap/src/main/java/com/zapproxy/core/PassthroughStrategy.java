@@ -27,10 +27,6 @@ public class PassthroughStrategy implements FilterStrategy {
 
         // For passthrough: use combined stdout+stderr so the AI sees everything.
         // If exit is non-zero, stderr is the important content.
-        String output = result.succeeded()
-            ? result.stdout()
-            : result.combined();
-
-        return FilterResult.passthrough(output);
+        return FilterResult.passthrough(result);
     }
 }

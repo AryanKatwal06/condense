@@ -17,11 +17,11 @@ public class DockerPsFilter implements FilterStrategy {
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               ZapConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result.combined());
+        if (!result.succeeded()) return FilterResult.passthrough(result);
 
-        String raw = result.stdout();
+        String raw = result.readStdout();
         List<String> lines = raw.lines().toList();
-        if (lines.size() <= 1) return FilterResult.of(raw, "(no containers running)");
+        if (lines.size() <= 1) return FilterResult.of(result, "(no containers running)");
 
         // Parse docker ps tabular output: CONTAINER ID | IMAGE | STATUS | NAMES
         List<String> compact = new ArrayList<>();
@@ -43,6 +43,6 @@ public class DockerPsFilter implements FilterStrategy {
             compact.add(String.format("%-8s %-20s %-10s %s", id, image, status, name));
         }
 
-        return FilterResult.of(raw, String.join("\n", compact));
+        return FilterResult.of(result, String.join("\n", compact));
     }
 }
