@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "includes": [
+      { "pattern": "com/condense/version\\.properties" },
+      { "pattern": "filters/.*\\.toml" },
+      { "pattern": "hooks/.*" },
+      { "pattern": "application\\.properties" }
+    ]
+  }
+}

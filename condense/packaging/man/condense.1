@@ -1,0 +1,109 @@
+.TH CONDENSE 1 "2025-06-28" "0.1.0" "Condense Manual"
+.SH NAME
+condense \- high-performance CLI proxy that filters command output to save AI tokens
+.SH SYNOPSIS
+.B condense
+[\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR...]
+.br
+.B condense gain
+[\fIOPTIONS\fR]
+.br
+.B condense init
+[\fIOPTIONS\fR]
+.br
+.B condense config
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.B condense
+is a CLI proxy that sits between your AI coding assistant and the shell.
+It intercepts commands, executes the real binary, filters the output using
+one of 12 compression strategies, and returns a compact summary to the AI
+context window \- saving 60\-90% of tokens on typical workloads.
+.SH OPTIONS
+.TP
+.BR \-v ", " \-vv ", " \-vvv
+Increase verbosity. \fB\-v\fR shows normal summary with more detail,
+\fB\-vv\fR includes file lists, \fB\-vvv\fR shows maximum verbosity.
+.TP
+.BR \-u ", " \-\-ultra\-compact
+Maximum compression: single\-line ASCII icon output.
+.TP
+.BR \-\-version
+Print version information and exit.
+.TP
+.BR \-\-help
+Print help text and exit.
+.SH SUBCOMMANDS
+.TP
+.B condense gain
+Show token savings analytics. See
+.BR "condense gain \-\-help"
+for options including \fB\-\-graph\fR, \fB\-\-history\fR, \fB\-\-top N\fR,
+\fB\-\-scope project\fR, and \fB\-\-format json\fR.
+.TP
+.B condense init
+Install AI tool hooks. Use \fBcondense init \-g\fR to install for all supported
+tools, \fBcondense init \-\-show\fR to check status, \fBcondense init \-\-remove\fR
+to uninstall.
+.TP
+.B condense config
+Read and write Condense configuration. Use \fBcondense config \-\-list\fR,
+\fBcondense config \-\-get KEY\fR, \fBcondense config \-\-set KEY=VALUE\fR,
+or \fBcondense config \-\-reset\fR.
+.SH EXAMPLES
+.TP
+Filter git status:
+.B condense git status
+.TP
+Filter cargo test output (failures only):
+.B condense cargo test
+.TP
+Filter pytest (failures + summary):
+.B condense pytest
+.TP
+Ultra-compact mode:
+.B condense \-u git status
+.TP
+Verbose mode (includes file list):
+.B condense \-vv git status
+.TP
+Show token savings dashboard:
+.B condense gain
+.TP
+30\-day savings graph:
+.B condense gain \-\-graph
+.TP
+Install AI tool hooks:
+.B condense init \-g
+.TP
+Show config:
+.B condense config \-\-list
+.SH SUPPORTED COMMANDS
+git, cargo, pytest, go test, npm, jest, vitest, eslint, tsc, ruff,
+docker, kubectl, aws, ls, grep, rg, find, cat, make, mvn, gradle,
+pip install, golangci\-lint, and more.
+.SH FILES
+.TP
+.I ~/.config/condense/config.toml
+User configuration file (Linux/XDG).
+.TP
+.I ~/Library/Application\ Support/condense/config.toml
+User configuration file (macOS).
+.TP
+.I ~/.local/share/condense/condense.db
+SQLite analytics database (Linux/XDG).
+.TP
+.I ~/.local/share/condense/tee/
+Directory where raw command output is saved on failure.
+.SH EXIT STATUS
+Condense propagates the exit code of the proxied command verbatim. If git status
+exits 128 (not a git repository), condense also exits 128.
+.SH SEE ALSO
+.BR git (1),
+.BR cargo (1),
+.BR pytest (1)
+.SH AUTHORS
+Condense Java port. Original Rust implementation by bitan-del.
+https://github.com/bitan-del/condense
+.SH LICENSE
+Apache License 2.0

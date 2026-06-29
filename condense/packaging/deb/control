@@ -1,0 +1,12 @@
+Package: condense
+Version: 0.1.0
+Architecture: amd64
+Maintainer: Your Name <you@example.com>
+Description: High-performance CLI proxy for AI token savings
+ Condense filters shell command output to save 60-90% of AI context window tokens.
+ It sits between your AI coding assistant and the shell, compressing noisy
+ command output into compact summaries.
+Homepage: https://github.com/YOUR_ORG/condense
+Section: utils
+Priority: optional
+Installed-Size: 50000
