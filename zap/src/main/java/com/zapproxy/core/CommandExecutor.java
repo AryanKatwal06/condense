@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 public class CommandExecutor {
 
     private static final Logger log = Logger.getLogger(CommandExecutor.class);
+    private final java.util.Set<Process> activeProcesses = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /** Default maximum time to wait for a command to complete. */
     public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
@@ -72,25 +73,14 @@ public class CommandExecutor {
         long startMs = System.currentTimeMillis();
         Process process = pb.start();
         process.getOutputStream().close();
+        activeProcesses.add(process);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (process.isAlive()) {
-                process.destroy();
-                try {
-                    if (!process.waitFor(2, TimeUnit.SECONDS)) {
-                        process.destroyForcibly();
-                    }
-                } catch (InterruptedException ignored) {
-                    process.destroyForcibly();
-                }
-            }
-        }));
-
-        // Start two threads to drain both streams concurrently.
-        // This prevents the deadlock that occurs when one pipe's OS buffer fills
-        // while we're blocked reading the other.
-        var stdoutCapture = new StreamCapture();
-        var stderrCapture = new StreamCapture();
+        try {
+            // Start two threads to drain both streams concurrently.
+            // This prevents the deadlock that occurs when one pipe's OS buffer fills
+            // while we're blocked reading the other.
+            var stdoutCapture = new StreamCapture();
+            var stderrCapture = new StreamCapture();
 
         Thread stdoutThread = new Thread(() -> stdoutCapture.drain(process.getInputStream()), "zap-stdout");
         stdoutThread.start();
@@ -140,12 +130,33 @@ public class CommandExecutor {
             durationMs, exitCode,
             stdoutCapture.size(), stderrCapture.size());
 
-        return new ExecutionResult(
-            exitCode,
-            stdoutCapture.tempFile,
-            stderrCapture.tempFile,
-            durationMs
-        );
+            return new ExecutionResult(
+                exitCode,
+                stdoutCapture.tempFile,
+                stderrCapture.tempFile,
+                durationMs
+            );
+        } finally {
+            activeProcesses.remove(process);
+        }
+    }
+
+    void onStop(@jakarta.enterprise.event.Observes io.quarkus.runtime.ShutdownEvent ev) {
+        for (Process p : activeProcesses) {
+            if (p.isAlive()) {
+                p.descendants().forEach(ProcessHandle::destroy);
+                p.destroy();
+                try {
+                    if (!p.waitFor(2, TimeUnit.SECONDS)) {
+                        p.descendants().forEach(ProcessHandle::destroyForcibly);
+                        p.destroyForcibly();
+                    }
+                } catch (InterruptedException ignored) {
+                    p.descendants().forEach(ProcessHandle::destroyForcibly);
+                    p.destroyForcibly();
+                }
+            }
+        }
     }
 
     /**
