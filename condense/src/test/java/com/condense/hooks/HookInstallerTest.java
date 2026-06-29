@@ -2,7 +2,11 @@ package com.condense.hooks;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -12,6 +16,16 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 @QuarkusTest
 class HookInstallerTest {
+
+    @BeforeEach
+    void setUp(@TempDir Path tempHome) {
+        System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
+    }
+
+    @AfterEach
+    void tearDown() {
+        System.clearProperty("condense.test.home");
+    }
 
     @Inject
     HookInstaller installer;

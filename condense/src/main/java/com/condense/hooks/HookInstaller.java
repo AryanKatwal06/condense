@@ -422,6 +422,8 @@ public class HookInstaller {
                 beforeShellExecNode = hooksNode.putArray("beforeShellExecution");
             }
 
+            boolean hasExistingHooks = beforeShellExecNode.size() > 0;
+
             // Remove existing condense hook if it exists to avoid duplicates
             java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = beforeShellExecNode.elements();
             while (it.hasNext()) {
@@ -430,6 +432,9 @@ public class HookInstaller {
                     it.remove();
                 }
             }
+            
+            // Re-evaluate after removal (in case condense was the only one)
+            hasExistingHooks = beforeShellExecNode.size() > 0;
 
             // Create new hook entry
             com.fasterxml.jackson.databind.node.ObjectNode hookEntry = com.condense.core.Mappers.JSON.createObjectNode();
@@ -441,8 +446,17 @@ public class HookInstaller {
             Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
+            
+            String warningMsg = "";
+            if (hasExistingHooks) {
+                warningMsg = "\n    Note: an existing beforeShellExecution hook is already configured.\n" +
+                             "    Cursor resolves multiple shell-execution hooks in parallel and their\n" +
+                             "    composition order is not guaranteed. If another hook modifies commands,\n" +
+                             "    condense's interception may not reliably take effect.";
+            }
+
             return new InstallResult(tool, true,
-                "✓ Installed hook for " + tool.displayName + " → " + hookFile);
+                "✓ Installed hook for " + tool.displayName + " → " + hookFile + warningMsg);
         } catch (Exception e) {
             log.warnf("Failed to install hook for %s: %s", tool.displayName, e.getMessage());
             return new InstallResult(tool, false,
@@ -511,7 +525,11 @@ public class HookInstaller {
         return new RemoveResult(tool, true, "✓ Removed hook for " + tool.displayName);
     }
 
-    private static Path home() {
+    static Path home() {
+        String testHome = System.getProperty("condense.test.home");
+        if (testHome != null && !testHome.isBlank()) {
+            return Path.of(testHome);
+        }
         return Path.of(System.getProperty("user.home"));
     }
 }
