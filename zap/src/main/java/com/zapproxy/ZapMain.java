@@ -22,7 +22,9 @@ public class ZapMain implements QuarkusApplication {
                 c.getErr().println("zap: error: " + ex.getMessage());
                 return 1;
             })
-            .setCaseInsensitiveEnumValuesAllowed(true);
+            .setCaseInsensitiveEnumValuesAllowed(true)
+            .setUnmatchedArgumentsAllowed(true)
+            .setStopAtPositional(true);
 
         int exitCode = cmd.execute(args);
 

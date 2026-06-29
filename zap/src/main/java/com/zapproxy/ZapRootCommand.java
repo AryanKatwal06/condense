@@ -45,7 +45,7 @@ import java.util.List;
 )
 @jakarta.enterprise.context.Dependent
 @io.quarkus.picocli.runtime.annotations.TopCommand
-public class ZapRootCommand implements Runnable {
+public class ZapRootCommand implements java.util.concurrent.Callable<Integer> {
 
     @Spec
     CommandSpec spec;
@@ -81,24 +81,29 @@ public class ZapRootCommand implements Runnable {
     )
     boolean ultraCompact;
 
+    @picocli.CommandLine.Unmatched
+    List<String> remainder;
+
     @Override
-    public void run() {
-        if (passthroughArgs == null || passthroughArgs.length == 0) {
+    public Integer call() {
+        if ((passthroughArgs == null || passthroughArgs.length == 0) && (remainder == null || remainder.isEmpty())) {
             // No args: print help
             spec.commandLine().usage(System.out);
-            return;
+            return 0;
         }
 
         // Dispatch through filter pipeline
         try {
-            List<String> argList = Arrays.asList(passthroughArgs);
-            String commandStr = String.join(" ", passthroughArgs);
+            List<String> argList = new java.util.ArrayList<>();
+            if (passthroughArgs != null) argList.addAll(Arrays.asList(passthroughArgs));
+            if (remainder != null) argList.addAll(remainder);
+            String commandStr = String.join(" ", argList);
 
             // Execute the real command
             ExecutionResult result = executor.execute(argList);
 
             // Find and apply the appropriate filter
-            FilterStrategy strategy = registry.lookup(passthroughArgs);
+            FilterStrategy strategy = registry.lookup(argList.toArray(new String[0]));
             ZapConfig config = configLoader.load();
             FilterResult filtered = strategy.apply(
                 commandStr, result, config, verbosityLevel(), ultraCompact);
@@ -128,20 +133,16 @@ public class ZapRootCommand implements Runnable {
                 result.durationMs()
             );
 
-            // CRITICAL: propagate the original exit code
-            spec.commandLine().setExecutionResult(result.exitCode());
-
-
-
-
+            // Return the original exit code
+            return result.exitCode();
 
         } catch (IllegalStateException e) {
             // Infinite loop guard triggered
             System.err.println(e.getMessage());
-            spec.commandLine().setExecutionResult(1);
+            return 1;
         } catch (Exception e) {
             System.err.println("zap: error executing command: " + e.getMessage());
-            spec.commandLine().setExecutionResult(1);
+            return 1;
         } finally {
             tracking.close();
         }

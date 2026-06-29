@@ -73,6 +73,19 @@ public class CommandExecutor {
         Process process = pb.start();
         process.getOutputStream().close();
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (process.isAlive()) {
+                process.destroy();
+                try {
+                    if (!process.waitFor(2, TimeUnit.SECONDS)) {
+                        process.destroyForcibly();
+                    }
+                } catch (InterruptedException ignored) {
+                    process.destroyForcibly();
+                }
+            }
+        }));
+
         // Start two threads to drain both streams concurrently.
         // This prevents the deadlock that occurs when one pipe's OS buffer fills
         // while we're blocked reading the other.

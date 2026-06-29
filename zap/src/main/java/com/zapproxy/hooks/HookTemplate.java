@@ -48,19 +48,34 @@ public final class HookTemplate {
      * @param excludeCommands  commands the user has excluded from hook interception
      * @return final hook content ready to write to disk
      */
-    public static String apply(String template, List<String> excludeCommands) {
+    public static String apply(HookTool tool, String template, List<String> excludeCommands) {
         if (excludeCommands == null || excludeCommands.isEmpty()) {
             return template;
         }
-        // Simple sed-like replacement: strip excluded commands from the ZAP_COMMANDS line
-        String result = template;
-        for (String cmd : excludeCommands) {
-            result = result
-                .replace(" " + cmd.trim() + " ", " ")  // middle of list
-                .replace(" " + cmd.trim() + "\"", "\"") // end of list
-                .replace("\"" + cmd.trim() + " ", "\""); // start of list
+
+        if (tool.isJson) {
+            try {
+                com.fasterxml.jackson.databind.JsonNode root = com.zapproxy.core.Mappers.JSON.readTree(template);
+                com.fasterxml.jackson.databind.node.ObjectNode zapNode = (com.fasterxml.jackson.databind.node.ObjectNode) root.path("zap");
+                if (!zapNode.isMissingNode()) {
+                    com.fasterxml.jackson.databind.JsonNode excludeArray = com.zapproxy.core.Mappers.JSON.valueToTree(excludeCommands);
+                    zapNode.set("exclude_commands", excludeArray);
+                }
+                return com.zapproxy.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root);
+            } catch (Exception e) {
+                return template;
+            }
+        } else {
+            // Simple sed-like replacement: strip excluded commands from the ZAP_COMMANDS line
+            String result = template;
+            for (String cmd : excludeCommands) {
+                result = result
+                    .replace(" " + cmd.trim() + " ", " ")  // middle of list
+                    .replace(" " + cmd.trim() + "\"", "\"") // end of list
+                    .replace("\"" + cmd.trim() + " ", "\""); // start of list
+            }
+            return result;
         }
-        return result;
     }
 
     /**

@@ -101,7 +101,7 @@ public class HookInstaller {
         try {
             // Load and customise template
             String template = HookTemplate.load(tool);
-            String content  = HookTemplate.apply(template, excluded);
+            String content  = HookTemplate.apply(tool, template, excluded);
 
             // Create parent directories
             Files.createDirectories(hookFile.getParent());

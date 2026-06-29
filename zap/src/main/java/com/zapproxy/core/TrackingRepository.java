@@ -348,6 +348,11 @@ public class TrackingRepository {
             java.nio.file.Path dbFile = platformDirs.getDatabaseFile();
             boolean dbExists = java.nio.file.Files.exists(dbFile);
             String url = "jdbc:sqlite:" + dbFile.toAbsolutePath();
+            try {
+                Class.forName("org.sqlite.JDBC");
+            } catch (ClassNotFoundException e) {
+                throw new SQLException("SQLite driver not found", e);
+            }
             connection = DriverManager.getConnection(url);
             if (!dbExists) {
                 initSchema();

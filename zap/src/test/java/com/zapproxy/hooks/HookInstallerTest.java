@@ -57,7 +57,7 @@ class HookInstallerTest {
     @Test
     void templateApply_excludesCommandFromList() throws IOException {
         String template = HookTemplate.load(HookTool.CLAUDE_CODE);
-        String applied = HookTemplate.apply(template, List.of("curl", "playwright"));
+        String applied = HookTemplate.apply(HookTool.CLAUDE_CODE, template, List.of("curl", "playwright"));
         assertThat(applied).doesNotContain(" curl ");
     }
 
