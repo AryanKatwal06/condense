@@ -28,6 +28,10 @@ import java.util.List;
         "After running `zap init -g`, AI tools will automatically route matching",
         "commands through zap without any change to your workflow.",
         "",
+        "Note: Claude Code handles multiple hooks rewriting the same command",
+        "in parallel with no guaranteed order. If you have competing PreToolUse hooks,",
+        "zap's interception may not always take effect.",
+        "",
         "Hooks can be removed at any time with `zap init --remove`."
     }
 )

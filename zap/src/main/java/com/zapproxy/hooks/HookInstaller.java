@@ -97,6 +97,10 @@ public class HookInstaller {
     // ── Private implementation ────────────────────────────────────────────────
 
     private InstallResult install(HookTool tool, Path home, List<String> excluded) {
+        if (tool == HookTool.CLAUDE_CODE) {
+            return installClaudeCode(tool, home, excluded);
+        }
+
         Path hookFile = tool.hookFile(home);
         try {
             // Load and customise template
@@ -144,6 +148,10 @@ public class HookInstaller {
     }
 
     private StatusResult status(HookTool tool, Path home) {
+        if (tool == HookTool.CLAUDE_CODE) {
+            return statusClaudeCode(tool, home);
+        }
+
         Path hookFile = tool.hookFile(home);
         if (!Files.exists(hookFile)) {
             return new StatusResult(tool, false, hookFile);
@@ -158,6 +166,10 @@ public class HookInstaller {
     }
 
     private RemoveResult remove(HookTool tool, Path home) {
+        if (tool == HookTool.CLAUDE_CODE) {
+            return removeClaudeCode(tool, home);
+        }
+
         Path hookFile = tool.hookFile(home);
         if (!Files.exists(hookFile)) {
             return new RemoveResult(tool, false,
@@ -176,6 +188,181 @@ public class HookInstaller {
             return new RemoveResult(tool, false,
                 "✗ Failed to remove " + tool.displayName + ": " + e.getMessage());
         }
+    }
+
+    private InstallResult installClaudeCode(HookTool tool, Path home, List<String> excluded) {
+        Path hookFile = tool.hookFile(home); // ~/.claude/settings.json
+        Path scriptFile = home.resolve(".claude/hooks/zap-hook.sh");
+
+        try {
+            // 1. Write the script
+            String template = HookTemplate.load(tool);
+            String content = HookTemplate.apply(tool, template, excluded);
+            Files.createDirectories(scriptFile.getParent());
+            Files.writeString(scriptFile, content);
+            try {
+                Set<PosixFilePermission> perms = EnumSet.of(
+                    PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+                );
+                Files.setPosixFilePermissions(scriptFile, perms);
+            } catch (UnsupportedOperationException ignored) {}
+
+            // 2. Update settings.json
+            com.fasterxml.jackson.databind.node.ObjectNode root;
+            if (Files.exists(hookFile)) {
+                String existing = Files.readString(hookFile);
+                if (existing.trim().isEmpty()) {
+                    root = com.zapproxy.core.Mappers.JSON.createObjectNode();
+                } else {
+                    root = (com.fasterxml.jackson.databind.node.ObjectNode) com.zapproxy.core.Mappers.JSON.readTree(existing);
+                }
+            } else {
+                root = com.zapproxy.core.Mappers.JSON.createObjectNode();
+            }
+
+            com.fasterxml.jackson.databind.node.ObjectNode hooksNode;
+            if (root.has("hooks") && root.get("hooks").isObject()) {
+                hooksNode = (com.fasterxml.jackson.databind.node.ObjectNode) root.get("hooks");
+            } else {
+                hooksNode = root.putObject("hooks");
+            }
+
+            com.fasterxml.jackson.databind.node.ArrayNode preToolUseNode;
+            if (hooksNode.has("PreToolUse") && hooksNode.get("PreToolUse").isArray()) {
+                preToolUseNode = (com.fasterxml.jackson.databind.node.ArrayNode) hooksNode.get("PreToolUse");
+            } else {
+                preToolUseNode = hooksNode.putArray("PreToolUse");
+            }
+
+            // Remove existing zap hook if it exists to avoid duplicates
+            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = preToolUseNode.elements();
+            while (it.hasNext()) {
+                com.fasterxml.jackson.databind.JsonNode node = it.next();
+                if (node.has("hooks") && node.get("hooks").isArray()) {
+                    com.fasterxml.jackson.databind.JsonNode hooksArr = node.get("hooks");
+                    for (com.fasterxml.jackson.databind.JsonNode h : hooksArr) {
+                        if (h.has("command") && h.get("command").asText().contains("zap-hook.sh")) {
+                            it.remove();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Check for competing Bash hooks
+            boolean hasCompetingBashHook = false;
+            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> checkIt = preToolUseNode.elements();
+            while (checkIt.hasNext()) {
+                com.fasterxml.jackson.databind.JsonNode node = checkIt.next();
+                if (node.has("matcher")) {
+                    String matcherStr = node.get("matcher").asText("");
+                    if (matcherStr.contains("Bash") || matcherStr.contains("Edit")) {
+                        hasCompetingBashHook = true;
+                        break;
+                    }
+                }
+            }
+
+            // Create new hook entry
+            com.fasterxml.jackson.databind.node.ObjectNode hookEntry = com.zapproxy.core.Mappers.JSON.createObjectNode();
+            hookEntry.put("matcher", "Bash");
+            com.fasterxml.jackson.databind.node.ArrayNode innerHooks = hookEntry.putArray("hooks");
+            com.fasterxml.jackson.databind.node.ObjectNode innerHook = innerHooks.addObject();
+            innerHook.put("type", "command");
+            innerHook.put("command", scriptFile.toAbsolutePath().toString().replace("\\", "/"));
+            innerHook.put("timeout", 30);
+
+            preToolUseNode.add(hookEntry);
+
+            Files.createDirectories(hookFile.getParent());
+            Files.writeString(hookFile, com.zapproxy.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+
+            log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
+            
+            String warningMsg = "";
+            if (hasCompetingBashHook) {
+                warningMsg = "\n    Note: an existing Bash command hook is already configured in\n" +
+                             "    ~/.claude/settings.json. Claude Code resolves multiple hooks that rewrite the\n" +
+                             "    same command in parallel with no guaranteed order — if that hook also modifies\n" +
+                             "    commands, zap's interception may not always take effect.";
+            }
+            
+            return new InstallResult(tool, true,
+                "✓ Installed hook for " + tool.displayName + " → " + hookFile + warningMsg);
+        } catch (Exception e) {
+            log.warnf("Failed to install hook for %s: %s", tool.displayName, e.getMessage());
+            return new InstallResult(tool, false,
+                "✗ Failed: " + tool.displayName + " — " + e.getMessage());
+        }
+    }
+
+    private StatusResult statusClaudeCode(HookTool tool, Path home) {
+        Path hookFile = tool.hookFile(home);
+        if (!Files.exists(hookFile)) {
+            return new StatusResult(tool, false, hookFile);
+        }
+        try {
+            String existing = Files.readString(hookFile);
+            if (existing.contains("zap-hook.sh")) {
+                return new StatusResult(tool, true, hookFile);
+            }
+            return new StatusResult(tool, false, hookFile);
+        } catch (IOException e) {
+            return new StatusResult(tool, false, hookFile);
+        }
+    }
+
+    private RemoveResult removeClaudeCode(HookTool tool, Path home) {
+        Path hookFile = tool.hookFile(home);
+        Path scriptFile = home.resolve(".claude/hooks/zap-hook.sh");
+
+        boolean removedAnything = false;
+
+        if (Files.exists(scriptFile)) {
+            try { Files.delete(scriptFile); removedAnything = true; } catch (IOException ignored) {}
+        }
+
+        if (Files.exists(hookFile)) {
+            try {
+                String existing = Files.readString(hookFile);
+                com.fasterxml.jackson.databind.JsonNode rootNode = com.zapproxy.core.Mappers.JSON.readTree(existing);
+                if (rootNode.isObject()) {
+                    com.fasterxml.jackson.databind.node.ObjectNode root = (com.fasterxml.jackson.databind.node.ObjectNode) rootNode;
+                    if (root.has("hooks") && root.get("hooks").isObject()) {
+                        com.fasterxml.jackson.databind.node.ObjectNode hooksNode = (com.fasterxml.jackson.databind.node.ObjectNode) root.get("hooks");
+                        if (hooksNode.has("PreToolUse") && hooksNode.get("PreToolUse").isArray()) {
+                            com.fasterxml.jackson.databind.node.ArrayNode preToolUseNode = (com.fasterxml.jackson.databind.node.ArrayNode) hooksNode.get("PreToolUse");
+                            boolean found = false;
+                            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = preToolUseNode.elements();
+                            while (it.hasNext()) {
+                                com.fasterxml.jackson.databind.JsonNode node = it.next();
+                                if (node.has("hooks") && node.get("hooks").isArray()) {
+                                    com.fasterxml.jackson.databind.JsonNode hooksArr = node.get("hooks");
+                                    for (com.fasterxml.jackson.databind.JsonNode h : hooksArr) {
+                                        if (h.has("command") && h.get("command").asText().contains("zap-hook.sh")) {
+                                            it.remove();
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (found) {
+                                Files.writeString(hookFile, com.zapproxy.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+                                removedAnything = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (!removedAnything) {
+            return new RemoveResult(tool, false, "• " + tool.displayName + ": not installed");
+        }
+        return new RemoveResult(tool, true, "✓ Removed hook for " + tool.displayName);
     }
 
     private static Path home() {

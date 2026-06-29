@@ -83,6 +83,8 @@ zap init --remove
 
 **Supported tools**: Claude Code, Cursor, Gemini CLI, Windsurf, GitHub Copilot, Cline
 
+> **Note for Claude Code users**: Claude Code handles multiple hooks rewriting the same command in parallel with no guaranteed order. If you have competing `PreToolUse` hooks for Bash, zap's interception may not always take effect.
+
 ---
 
 ## Token Savings Dashboard

@@ -16,11 +16,18 @@ import java.nio.file.Path;
  */
 public enum HookTool {
 
+    GENERIC_BASH(
+        "Generic Bash (Fallback)",
+        ".zap/hooks",
+        "pre-tool-use.sh",
+        "/hooks/generic/pre-tool-use.sh",
+        false
+    ),
     CLAUDE_CODE(
         "Claude Code",
-        ".claude/hooks",
-        "pre-tool-use.sh",
-        "/hooks/claude-code/pre-tool-use.sh",
+        ".claude",
+        "settings.json",
+        "/hooks/claude-code/zap-hook.sh",
         false
     ),
     CURSOR(
