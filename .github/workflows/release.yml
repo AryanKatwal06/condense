@@ -1,0 +1,233 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Create the GitHub Release first ────────────────────────────────────────
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: condense
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          # Extract section for this version from CHANGELOG.md
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          NOTES=$(awk "/^## \[${VERSION}\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
+          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: "Condense ${{ github.ref_name }}"
+          body: |
+            ## Condense ${{ github.ref_name }}
+
+            ${{ steps.changelog.outputs.NOTES }}
+
+            ## Installation
+
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh
+            ```
+
+            Or download the binary for your platform below and verify the SHA-256 checksum.
+
+            ## Supported Platforms
+            | Platform       | Binary               |
+            |----------------|----------------------|
+            | Linux x64      | `condense-linux-x64`      |
+            | Linux aarch64  | `condense-linux-aarch64`  |
+            | macOS arm64    | `condense-macos-aarch64`  |
+            | macOS x64      | `condense-macos-x64`      |
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+  # ── Build native binaries for each platform ─────────────────────────────────
+  build-native:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    needs: create-release
+    defaults:
+      run:
+        working-directory: condense
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+            native_args: "--no-fallback,--static,--libc=musl"
+            binary_suffix: ""
+            sha_cmd: "sha256sum"
+
+          - os: ubuntu-24.04-arm64
+            target: linux-aarch64
+            native_args: "--no-fallback,--static,--libc=musl"
+            binary_suffix: ""
+            sha_cmd: "sha256sum"
+
+          - os: macos-14
+            target: macos-aarch64
+            native_args: "--no-fallback"
+            binary_suffix: ""
+            sha_cmd: "shasum -a 256"
+
+          - os: macos-13
+            target: macos-x64
+            native_args: "--no-fallback"
+            binary_suffix: ""
+            sha_cmd: "shasum -a 256"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up GraalVM JDK 21
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          native-image: 'true'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-${{ matrix.target }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-maven-
+            ${{ runner.os }}-maven-
+
+      - name: Install musl toolchain (Linux only)
+        if: startsWith(matrix.target, 'linux')
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y musl-tools
+          musl-gcc --version
+
+      - name: Build native image
+        run: |
+          mvn package -Pnative -DskipTests \
+            -Dquarkus.native.native-image-xmx=5g \
+            -Dquarkus.native.additional-build-args="${{ matrix.native_args }}" \
+            --no-transfer-progress -B
+
+      - name: Verify binary
+        run: |
+          ./target/condense-runner --version
+          echo "Binary size: $(du -sh target/condense-runner | cut -f1)"
+
+      - name: Rename binary
+        run: |
+          cp target/condense-runner "condense-${{ matrix.target }}"
+
+      - name: Generate SHA-256 checksum
+        run: |
+          ${{ matrix.sha_cmd }} "condense-${{ matrix.target }}" | \
+            awk '{print $1}' > "condense-${{ matrix.target }}.sha256"
+          echo "Checksum: $(cat condense-${{ matrix.target }}.sha256)"
+
+      - name: Startup benchmark
+        run: |
+          echo "Startup benchmark for ${{ matrix.target }}:"
+          for i in 1 2 3 4 5; do
+            START=$(date +%s%N 2>/dev/null || python3 -c "import time; print(int(time.time()*1e9))")
+            ./target/condense-runner --version > /dev/null
+            END=$(date +%s%N 2>/dev/null || python3 -c "import time; print(int(time.time()*1e9))")
+            MS=$(( (END - START) / 1000000 ))
+            echo "  Run $i: ${MS}ms"
+          done
+
+      - name: Upload binary to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: condense/condense-${{ matrix.target }}
+          asset_name: condense-${{ matrix.target }}
+          asset_content_type: application/octet-stream
+
+      - name: Upload checksum to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: condense/condense-${{ matrix.target }}.sha256
+          asset_name: condense-${{ matrix.target }}.sha256
+          asset_content_type: text/plain
+
+  # ── Build .deb package (Linux x64 only) ────────────────────────────────────
+  build-deb:
+    name: Build .deb Package
+    runs-on: ubuntu-latest
+    needs: build-native
+    defaults:
+      run:
+        working-directory: condense
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download linux-x64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: condense-linux-x64
+          path: /tmp/condense-artifacts/
+        continue-on-error: true
+
+      # Since the release already uploaded the binary, download from release
+      - name: Download from release
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          mkdir -p target
+          curl -fsSL \
+            "https://github.com/${{ github.repository }}/releases/download/${TAG}/condense-linux-x64" \
+            -o target/condense-runner
+          chmod +x target/condense-runner
+
+      - name: Install dpkg-dev
+        run: sudo apt-get install -y dpkg-dev
+
+      - name: Build .deb
+        run: |
+          chmod +x packaging/deb/build-deb.sh
+          ./packaging/deb/build-deb.sh target/condense-runner 0.1.0 amd64
+
+      - name: Upload .deb to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: condense/condense_0.1.0_amd64.deb
+          asset_name: condense_0.1.0_amd64.deb
+          asset_content_type: application/vnd.debian.binary-package
