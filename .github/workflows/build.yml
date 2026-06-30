@@ -145,22 +145,28 @@ jobs:
             echo "Run $i: $(( (END - START) / 1000000 ))ms"
           done
 
-      - name: Measure native binary (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
+      - name: Emit metrics as annotations
+        if: always()
+        shell: bash
         run: |
-          $BINARY = ".\target\${{ matrix.binary-name }}"
-          
-          Write-Host "== Binary size =="
-          Get-Item $BINARY | Select-Object Length
-
-          Write-Host "== Cold start (5 runs of --version) =="
-          for ($i = 1; $i -le 5; $i++) {
-            $sw = [Diagnostics.Stopwatch]::StartNew()
-            & $BINARY --version > $null
-            $sw.Stop()
-            Write-Host "Run ${i}: $($sw.ElapsedMilliseconds)ms"
-          }
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            pwsh -Command "\$BINARY = '.\target\${{ matrix.binary-name }}'; \$size = (Get-Item \$BINARY).Length ; Write-Host \"::notice::Windows uncompressed binary size: \$size bytes\" ; for (\$i = 1; \$i -le 5; \$i++) { \$sw = [Diagnostics.Stopwatch]::StartNew(); & \$BINARY --version > \$null; \$sw.Stop(); Write-Host \"::notice::Windows Cold Start Run \${i}: \$(\$sw.ElapsedMilliseconds)ms\" }"
+          else
+            if [[ "${{ runner.os }}" == "macOS" ]]; then
+              size=$(stat -f%z target/${{ matrix.binary-name }})
+            else
+              size=$(stat -c%s target/${{ matrix.binary-name }})
+            fi
+            echo "::notice::${{ runner.os }} uncompressed binary size: $size bytes"
+            python3 -c "
+import time, subprocess
+for i in range(1, 6):
+  start = time.time()
+  subprocess.run(['./target/${{ matrix.binary-name }}', '--version'], stdout=subprocess.DEVNULL)
+  end = time.time()
+  print(f'::notice::${{ runner.os }} Cold Start Run {i}: {int((end-start)*1000)}ms')
+"
+          fi
 
       - name: Upload native binary
         uses: actions/upload-artifact@v4
