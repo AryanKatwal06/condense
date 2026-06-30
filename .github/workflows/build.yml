@@ -149,7 +149,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $BINARY = "target\${{ matrix.binary-name }}"
+          $BINARY = ".\target\${{ matrix.binary-name }}"
           
           Write-Host "== Binary size =="
           Get-Item $BINARY | Select-Object Length
