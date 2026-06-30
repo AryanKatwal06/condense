@@ -83,23 +83,17 @@ jobs:
             binary_suffix: ""
             sha_cmd: "sha256sum"
 
-          - os: ubuntu-24.04-arm64
-            target: linux-aarch64
-            native_args: "--no-fallback,--static,--libc=musl"
-            binary_suffix: ""
-            sha_cmd: "sha256sum"
-
-          - os: macos-14
-            target: macos-aarch64
-            native_args: "--no-fallback"
-            binary_suffix: ""
-            sha_cmd: "shasum -a 256"
-
-          - os: macos-13
+          - os: macos-latest
             target: macos-x64
             native_args: "--no-fallback"
             binary_suffix: ""
             sha_cmd: "shasum -a 256"
+
+          - os: windows-latest
+            target: windows-x64
+            native_args: "--no-fallback"
+            binary_suffix: ".exe"
+            sha_cmd: "certutil -hashfile"
 
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
