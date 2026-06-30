@@ -168,3 +168,32 @@ jobs:
           name: ${{ matrix.artifact-name }}
           path: condense/target/${{ matrix.binary-name }}
           retention-days: 3
+
+      - name: Push metrics
+        if: always()
+        shell: bash
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin
+          # Create or checkout the metrics branch
+          git checkout -B ci-metrics
+          
+          # Append metrics
+          echo "=== Metrics for ${{ matrix.os }} ===" > metrics-${{ matrix.os }}.txt
+          echo "Active profiles:" >> metrics-${{ matrix.os }}.txt
+          mvn help:active-profiles -B >> metrics-${{ matrix.os }}.txt || true
+          
+          echo "Cold start and binary size:" >> metrics-${{ matrix.os }}.txt
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            pwsh -Command "\$BINARY = '.\target\${{ matrix.binary-name }}'; Get-Item \$BINARY | Select-Object Length ; for (\$i = 1; \$i -le 5; \$i++) { \$sw = [Diagnostics.Stopwatch]::StartNew(); & \$BINARY --version > \$null; \$sw.Stop(); Write-Host \"Run \${i}: \$(\$sw.ElapsedMilliseconds)ms\" }" >> metrics-${{ matrix.os }}.txt || true
+          else
+            ls -lh target/${{ matrix.binary-name }} >> metrics-${{ matrix.os }}.txt || true
+            for i in $(seq 1 5); do START=$(date +%s%N); target/${{ matrix.binary-name }} --version > /dev/null; END=$(date +%s%N); echo "Run $i: $(( (END - START) / 1000000 ))ms"; done >> metrics-${{ matrix.os }}.txt || true
+          fi
+          
+          git add metrics-${{ matrix.os }}.txt
+          git commit -m "Add metrics for ${{ matrix.os }}" || true
+          # Pull with rebase in case other matrix jobs pushed
+          git pull --rebase origin ci-metrics || true
+          git push origin ci-metrics || true
