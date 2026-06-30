@@ -151,21 +151,14 @@ jobs:
         run: |
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             pwsh -Command "\$BINARY = '.\target\${{ matrix.binary-name }}'; \$size = (Get-Item \$BINARY).Length ; Write-Host \"::notice::Windows uncompressed binary size: \$size bytes\" ; for (\$i = 1; \$i -le 5; \$i++) { \$sw = [Diagnostics.Stopwatch]::StartNew(); & \$BINARY --version > \$null; \$sw.Stop(); Write-Host \"::notice::Windows Cold Start Run \${i}: \$(\$sw.ElapsedMilliseconds)ms\" }"
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            size=$(stat -f%z target/${{ matrix.binary-name }})
+            echo "::notice::macOS uncompressed binary size: $size bytes"
+            ruby -e "5.times { |i| start = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond); system('./target/${{ matrix.binary-name }} --version > /dev/null'); puts %Q(::notice::macOS Cold Start Run #{i+1}: #{Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) - start}ms) }"
           else
-            if [[ "${{ runner.os }}" == "macOS" ]]; then
-              size=$(stat -f%z target/${{ matrix.binary-name }})
-            else
-              size=$(stat -c%s target/${{ matrix.binary-name }})
-            fi
-            echo "::notice::${{ runner.os }} uncompressed binary size: $size bytes"
-            python3 -c "
-import time, subprocess
-for i in range(1, 6):
-  start = time.time()
-  subprocess.run(['./target/${{ matrix.binary-name }}', '--version'], stdout=subprocess.DEVNULL)
-  end = time.time()
-  print(f'::notice::${{ runner.os }} Cold Start Run {i}: {int((end-start)*1000)}ms')
-"
+            size=$(stat -c%s target/${{ matrix.binary-name }})
+            echo "::notice::Linux uncompressed binary size: $size bytes"
+            for i in $(seq 1 5); do START=$(date +%s%N); target/${{ matrix.binary-name }} --version > /dev/null; END=$(date +%s%N); echo "::notice::Linux Cold Start Run $i: $(( (END - START) / 1000000 ))ms"; done
           fi
 
       - name: Upload native binary
