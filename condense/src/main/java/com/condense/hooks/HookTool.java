@@ -46,10 +46,10 @@ public enum HookTool {
     ),
     WINDSURF(
         "Windsurf",
-        ".codeium/windsurf/hooks",
-        "pre-tool-use.sh",
-        "/hooks/windsurf/pre-tool-use.sh",
-        false
+        ".codeium/windsurf",
+        "hooks.json",
+        "/hooks/windsurf/condense-hook.sh", // template for bash script
+        true
     ),
     COPILOT(
         "GitHub Copilot CLI",
