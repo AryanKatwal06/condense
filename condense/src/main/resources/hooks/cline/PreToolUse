@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Installed by: condense init
+# Tool: Cline (Script Hook)
+# Do not edit manually — run `condense init` to reinstall or `condense init --remove` to uninstall
+#
+# This script reads the JSON-over-stdin PreToolUse protocol from Cline.
+
+CONDENSE_COMMANDS="git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle"
+
+python3 -c '
+import sys, json
+
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+
+# We use this function as an isolated lookup because exact Cline hook field names
+# for its shell-execution tool are assumed (e.g., "execute_command").
+# If real testing reveals different field names, only this function needs updating.
+def extractShellCommand(preToolUse):
+    if preToolUse.get("toolName") == "execute_command" or preToolUse.get("toolName") == "run_terminal_cmd" or preToolUse.get("toolName") == "execute_terminal_cmd":
+        return preToolUse.get("parameters", {}).get("command", "")
+    return ""
+
+preToolUse = data.get("preToolUse", {})
+command = extractShellCommand(preToolUse).strip()
+
+if not command:
+    # Safe fallback, do not cancel
+    print(json.dumps({"cancel": False}))
+    sys.exit(0)
+
+condense_commands = "'"$CONDENSE_COMMANDS"'".split()
+
+parts = command.split()
+bare_cmd = parts[0].split("/")[-1]
+
+if bare_cmd in condense_commands:
+    print(json.dumps({
+        "cancel": True,
+        "errorMessage": "Use \"condense <command>\" instead to get filtered, token-efficient output."
+    }))
+else:
+    print(json.dumps({"cancel": False}))
+'

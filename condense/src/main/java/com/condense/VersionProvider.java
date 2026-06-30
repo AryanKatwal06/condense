@@ -23,10 +23,17 @@ public class VersionProvider implements IVersionProvider {
             // Fall through to default
         }
         String version = props.getProperty("version", "unknown");
-        return new String[]{
-            "condense " + version,
-            "Java " + System.getProperty("java.version"),
-            "Built with GraalVM Native Image"
-        };
+        String imageCode = System.getProperty("org.graalvm.nativeimage.imagecode");
+        if (imageCode != null) {
+            return new String[]{
+                "condense " + version,
+                "Built with GraalVM Native Image"
+            };
+        } else {
+            return new String[]{
+                "condense " + version,
+                "Running on JVM (Java " + System.getProperty("java.version") + ")"
+            };
+        }
     }
 }

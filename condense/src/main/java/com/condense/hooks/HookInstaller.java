@@ -103,6 +103,9 @@ public class HookInstaller {
         if (tool == HookTool.CURSOR) {
             return installCursor(tool, home, excluded);
         }
+        if (tool == HookTool.CLINE) {
+            return installCline(tool, home, excluded);
+        }
 
         Path hookFile = tool.hookFile(home);
         try {
@@ -523,6 +526,80 @@ public class HookInstaller {
             return new RemoveResult(tool, false, "• " + tool.displayName + ": not installed");
         }
         return new RemoveResult(tool, true, "✓ Removed hook for " + tool.displayName);
+    }
+
+    private InstallResult installCline(HookTool tool, Path home, List<String> excluded) {
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            return new InstallResult(tool, false,
+                "✗ Failed: " + tool.displayName + " — Cline hooks are not supported on Windows per Cline documentation.");
+        }
+
+        Path hookFile = tool.hookFile(home);
+        try {
+            if (Files.exists(hookFile)) {
+                String existingContent = Files.readString(hookFile);
+                if (!HookTemplate.isManagedByCondense(existingContent)) {
+                    String snippet = 
+                        "python3 -c '\n" +
+                        "import sys, json\n" +
+                        "try:\n" +
+                        "    data = json.load(sys.stdin)\n" +
+                        "    if data.get(\"preToolUse\", {}).get(\"toolName\") == \"execute_command\":\n" +
+                        "        cmd = data.get(\"preToolUse\", {}).get(\"parameters\", {}).get(\"command\", \"\")\n" +
+                        "        if cmd.strip().split()[0].split(\"/\")[-1] in \"git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle\".split():\n" +
+                        "            print(json.dumps({\"cancel\": True, \"errorMessage\": \"Use \\\"condense <command>\\\" instead to get filtered, token-efficient output.\"}))\n" +
+                        "            sys.exit(0)\n" +
+                        "except Exception:\n" +
+                        "    pass\n" +
+                        "print(json.dumps({\"cancel\": False}))\n" +
+                        "'";
+
+                    return new InstallResult(tool, false,
+                        "✗ Failed: " + tool.displayName + " — Refusing to overwrite existing unmanaged PreToolUse file at " + hookFile + ".\n" +
+                        "  Cline only supports one PreToolUse script. You must manually merge condense's logic into your script:\n\n" +
+                        "  # Add this snippet to your script to route commands to condense:\n" + snippet);
+                }
+            }
+
+            // Load and customise template
+            String template = HookTemplate.load(tool);
+            String content  = HookTemplate.apply(tool, template, excluded);
+
+            // Create parent directories
+            Files.createDirectories(hookFile.getParent());
+
+            // Write atomically
+            Path tmp = Files.createTempFile(hookFile.getParent(), ".condense-hook-", ".tmp");
+            Files.writeString(tmp, content);
+
+            try {
+                Set<PosixFilePermission> perms = EnumSet.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE
+                );
+                Files.setPosixFilePermissions(tmp, perms);
+            } catch (UnsupportedOperationException ignored) {
+                // Windows — no POSIX permissions, but we skip Windows above anyway.
+            }
+
+            Files.move(tmp, hookFile,
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+
+            log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
+            return new InstallResult(tool, true,
+                "✓ Installed hook for " + tool.displayName + " → " + hookFile);
+
+        } catch (IOException e) {
+            log.warnf("Failed to install hook for %s: %s", tool.displayName, e.getMessage());
+            return new InstallResult(tool, false,
+                "✗ Failed: " + tool.displayName + " — " + e.getMessage());
+        }
     }
 
     static Path home() {

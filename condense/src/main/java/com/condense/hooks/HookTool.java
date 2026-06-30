@@ -60,10 +60,10 @@ public enum HookTool {
     ),
     CLINE(
         "Cline",
-        ".vscode",
-        "condense-cline-settings.json",
-        "/hooks/cline/settings.json",
-        true
+        "Documents/Cline/Rules/Hooks",
+        "PreToolUse",
+        "/hooks/cline/PreToolUse",
+        false
     );
 
     public final String displayName;
