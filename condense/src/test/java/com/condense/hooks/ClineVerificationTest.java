@@ -63,14 +63,24 @@ public class ClineVerificationTest {
         
         System.out.println("Generated Script Content:\n" + Files.readString(expectedHookFile));
         
-        // Check permissions
+        // Check permissions programmatically
         try {
             Set<PosixFilePermission> perms = Files.getPosixFilePermissions(expectedHookFile);
             assertTrue(perms.contains(PosixFilePermission.OWNER_EXECUTE));
             System.out.println("Permissions: " + perms);
         } catch (UnsupportedOperationException e) {
-            // If running on Windows host, posix permissions might not be available, skip assertion
-            System.out.println("Posix permissions not supported on this host.");
+            System.out.println("Posix permissions not supported on this host programmatically.");
+        }
+        
+        // Execute literal ls -l for output
+        try {
+            Process p = Runtime.getRuntime().exec(new String[]{"ls", "-l", expectedHookFile.toString()});
+            p.waitFor();
+            byte[] bytes = p.getInputStream().readAllBytes();
+            System.out.println("LITERAL ls -l output:");
+            System.out.println(new String(bytes));
+        } catch (Exception e) {
+            System.out.println("Failed to run ls -l: " + e.getMessage());
         }
     }
 
