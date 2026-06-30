@@ -52,10 +52,10 @@ public enum HookTool {
         false
     ),
     COPILOT(
-        "GitHub Copilot",
-        ".vscode",
-        "condense-settings.json",
-        "/hooks/copilot/settings.json",
+        "GitHub Copilot CLI",
+        ".copilot/hooks",
+        "condense-hooks.json",
+        "/hooks/copilot/condense-hook.sh", // template for bash script (also used by installer as a base path)
         true
     ),
     CLINE(

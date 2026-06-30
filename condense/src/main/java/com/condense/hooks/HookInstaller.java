@@ -109,6 +109,9 @@ public class HookInstaller {
         if (tool == HookTool.CLINE) {
             return installCline(tool, home, excluded);
         }
+        if (tool == HookTool.COPILOT) {
+            return installCopilot(tool, home, excluded);
+        }
 
         Path hookFile = tool.hookFile(home);
         try {
@@ -166,6 +169,9 @@ public class HookInstaller {
         if (tool == HookTool.GEMINI) {
             return statusGemini(tool, home);
         }
+        if (tool == HookTool.COPILOT) {
+            return statusCopilot(tool, home);
+        }
 
         Path hookFile = tool.hookFile(home);
         if (!Files.exists(hookFile)) {
@@ -189,6 +195,9 @@ public class HookInstaller {
         }
         if (tool == HookTool.GEMINI) {
             return removeGemini(tool, home);
+        }
+        if (tool == HookTool.COPILOT) {
+            return removeCopilot(tool, home);
         }
 
         Path hookFile = tool.hookFile(home);
@@ -791,6 +800,175 @@ public class HookInstaller {
             return new InstallResult(tool, false,
                 "✗ Failed: " + tool.displayName + " — " + e.getMessage());
         }
+    }
+    private Path getCopilotHooksDir(Path home) {
+        String copilotHome = System.getenv("COPILOT_HOME");
+        if (copilotHome != null && !copilotHome.trim().isEmpty()) {
+            return Path.of(copilotHome).resolve("hooks");
+        }
+        return home.resolve(".copilot/hooks");
+    }
+
+    private InstallResult installCopilot(HookTool tool, Path home, List<String> excluded) {
+        Path hooksDir = getCopilotHooksDir(home);
+        Path hookFile = hooksDir.resolve(tool.hookFileName);
+        Path bashScript = hooksDir.resolve("condense-hook.sh");
+        Path psScript = hooksDir.resolve("condense-hook.ps1");
+
+        try {
+            String bashTemplate = HookTemplate.load(tool);
+            String bashContent = HookTemplate.apply(tool, bashTemplate, excluded);
+            Files.createDirectories(hooksDir);
+            Files.writeString(bashScript, bashContent);
+            try {
+                Set<PosixFilePermission> perms = EnumSet.of(
+                    PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+                );
+                Files.setPosixFilePermissions(bashScript, perms);
+            } catch (UnsupportedOperationException ignored) {}
+
+            try (java.io.InputStream in = getClass().getResourceAsStream("/hooks/copilot/condense-hook.ps1")) {
+                if (in != null) {
+                    String psTemplate = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    String psContent = HookTemplate.apply(tool, psTemplate, excluded);
+                    Files.writeString(psScript, psContent);
+                }
+            }
+
+            com.fasterxml.jackson.databind.node.ObjectNode root;
+            if (Files.exists(hookFile)) {
+                String existing = Files.readString(hookFile);
+                if (existing.trim().isEmpty()) {
+                    root = com.condense.core.Mappers.JSON.createObjectNode();
+                } else {
+                    root = (com.fasterxml.jackson.databind.node.ObjectNode) com.condense.core.Mappers.JSON.readTree(existing);
+                }
+            } else {
+                root = com.condense.core.Mappers.JSON.createObjectNode();
+            }
+
+            root.put("version", 1);
+
+            com.fasterxml.jackson.databind.node.ObjectNode hooksNode;
+            if (root.has("hooks") && root.get("hooks").isObject()) {
+                hooksNode = (com.fasterxml.jackson.databind.node.ObjectNode) root.get("hooks");
+            } else {
+                hooksNode = root.putObject("hooks");
+            }
+
+            com.fasterxml.jackson.databind.node.ArrayNode preToolUseNode;
+            if (hooksNode.has("preToolUse") && hooksNode.get("preToolUse").isArray()) {
+                preToolUseNode = (com.fasterxml.jackson.databind.node.ArrayNode) hooksNode.get("preToolUse");
+            } else {
+                preToolUseNode = hooksNode.putArray("preToolUse");
+            }
+
+            boolean hasExistingHooks = preToolUseNode.size() > 0;
+
+            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = preToolUseNode.elements();
+            while (it.hasNext()) {
+                com.fasterxml.jackson.databind.JsonNode node = it.next();
+                if (node.has("bash") && node.get("bash").asText().contains("condense-hook.sh")) {
+                    it.remove();
+                }
+            }
+            
+            hasExistingHooks = preToolUseNode.size() > 0;
+
+            com.fasterxml.jackson.databind.node.ObjectNode hookEntry = com.condense.core.Mappers.JSON.createObjectNode();
+            hookEntry.put("type", "command");
+            hookEntry.put("bash", bashScript.toAbsolutePath().toString().replace("\\", "/"));
+            hookEntry.put("powershell", psScript.toAbsolutePath().toString().replace("\\", "/"));
+            hookEntry.put("timeoutSec", 15);
+
+            preToolUseNode.add(hookEntry);
+
+            Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+
+            log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
+            
+            String warningMsg = "";
+            if (hasExistingHooks) {
+                warningMsg = "\n    Note: an existing preToolUse hook is already configured.\n" +
+                             "    GitHub Copilot runs multiple hooks in sequence, and any one returning deny blocks the call.\n" +
+                             "    Please confirm they do not conflict.";
+            }
+
+            return new InstallResult(tool, true,
+                "✓ Installed hook for " + tool.displayName + " → " + hookFile + warningMsg);
+        } catch (Exception e) {
+            log.warnf("Failed to install hook for %s: %s", tool.displayName, e.getMessage());
+            return new InstallResult(tool, false,
+                "✗ Failed: " + tool.displayName + " — " + e.getMessage());
+        }
+    }
+
+    private StatusResult statusCopilot(HookTool tool, Path home) {
+        Path hookFile = getCopilotHooksDir(home).resolve(tool.hookFileName);
+        if (!Files.exists(hookFile)) {
+            return new StatusResult(tool, false, hookFile);
+        }
+        try {
+            String existing = Files.readString(hookFile);
+            if (existing.contains("condense-hook.sh") || existing.contains("condense-hook.ps1")) {
+                return new StatusResult(tool, true, hookFile);
+            }
+            return new StatusResult(tool, false, hookFile);
+        } catch (IOException e) {
+            return new StatusResult(tool, false, hookFile);
+        }
+    }
+
+    private RemoveResult removeCopilot(HookTool tool, Path home) {
+        Path hooksDir = getCopilotHooksDir(home);
+        Path hookFile = hooksDir.resolve(tool.hookFileName);
+        Path bashScript = hooksDir.resolve("condense-hook.sh");
+        Path psScript = hooksDir.resolve("condense-hook.ps1");
+
+        boolean removedAnything = false;
+
+        if (Files.exists(bashScript)) {
+            try { Files.delete(bashScript); removedAnything = true; } catch (IOException ignored) {}
+        }
+        if (Files.exists(psScript)) {
+            try { Files.delete(psScript); removedAnything = true; } catch (IOException ignored) {}
+        }
+
+        if (Files.exists(hookFile)) {
+            try {
+                String existing = Files.readString(hookFile);
+                com.fasterxml.jackson.databind.JsonNode rootNode = com.condense.core.Mappers.JSON.readTree(existing);
+                if (rootNode.isObject()) {
+                    com.fasterxml.jackson.databind.node.ObjectNode root = (com.fasterxml.jackson.databind.node.ObjectNode) rootNode;
+                    if (root.has("hooks") && root.get("hooks").isObject()) {
+                        com.fasterxml.jackson.databind.node.ObjectNode hooksNode = (com.fasterxml.jackson.databind.node.ObjectNode) root.get("hooks");
+                        if (hooksNode.has("preToolUse") && hooksNode.get("preToolUse").isArray()) {
+                            com.fasterxml.jackson.databind.node.ArrayNode arrNode = (com.fasterxml.jackson.databind.node.ArrayNode) hooksNode.get("preToolUse");
+                            boolean found = false;
+                            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = arrNode.elements();
+                            while (it.hasNext()) {
+                                com.fasterxml.jackson.databind.JsonNode node = it.next();
+                                if (node.has("bash") && node.get("bash").asText().contains("condense-hook.sh")) {
+                                    it.remove();
+                                    found = true;
+                                }
+                            }
+                            if (found) {
+                                Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+                                removedAnything = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (!removedAnything) {
+            return new RemoveResult(tool, false, "• " + tool.displayName + ": not installed");
+        }
+        return new RemoveResult(tool, true, "✓ Removed hook for " + tool.displayName);
     }
 
     static Path home() {
