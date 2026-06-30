@@ -39,9 +39,9 @@ public enum HookTool {
     ),
     GEMINI(
         "Gemini CLI",
-        ".gemini/hooks",
-        "pre-tool-use.sh",
-        "/hooks/gemini/pre-tool-use.sh",
+        ".gemini",
+        "settings.json",
+        "/hooks/gemini/condense-hook.sh",
         false
     ),
     WINDSURF(

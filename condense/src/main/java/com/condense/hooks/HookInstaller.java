@@ -103,6 +103,9 @@ public class HookInstaller {
         if (tool == HookTool.CURSOR) {
             return installCursor(tool, home, excluded);
         }
+        if (tool == HookTool.GEMINI) {
+            return installGemini(tool, home, excluded);
+        }
         if (tool == HookTool.CLINE) {
             return installCline(tool, home, excluded);
         }
@@ -160,6 +163,9 @@ public class HookInstaller {
         if (tool == HookTool.CURSOR) {
             return statusCursor(tool, home);
         }
+        if (tool == HookTool.GEMINI) {
+            return statusGemini(tool, home);
+        }
 
         Path hookFile = tool.hookFile(home);
         if (!Files.exists(hookFile)) {
@@ -180,6 +186,9 @@ public class HookInstaller {
         }
         if (tool == HookTool.CURSOR) {
             return removeCursor(tool, home);
+        }
+        if (tool == HookTool.GEMINI) {
+            return removeGemini(tool, home);
         }
 
         Path hookFile = tool.hookFile(home);
@@ -510,6 +519,188 @@ public class HookInstaller {
                                 if (node.has("command") && node.get("command").asText().contains("condense-hook.sh")) {
                                     it.remove();
                                     found = true;
+                                }
+                            }
+                            if (found) {
+                                Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+                                removedAnything = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (!removedAnything) {
+            return new RemoveResult(tool, false, "• " + tool.displayName + ": not installed");
+        }
+        return new RemoveResult(tool, true, "✓ Removed hook for " + tool.displayName);
+    }
+
+    private InstallResult installGemini(HookTool tool, Path home, List<String> excluded) {
+        Path hookFile = tool.hookFile(home); // ~/.gemini/settings.json
+        Path scriptFile = home.resolve(".gemini/hooks/condense-hook.sh");
+
+        try {
+            // 1. Write the script
+            String template = HookTemplate.load(tool);
+            String content = HookTemplate.apply(tool, template, excluded);
+            Files.createDirectories(scriptFile.getParent());
+            Files.writeString(scriptFile, content);
+            try {
+                Set<PosixFilePermission> perms = EnumSet.of(
+                    PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+                );
+                Files.setPosixFilePermissions(scriptFile, perms);
+            } catch (UnsupportedOperationException ignored) {}
+
+            // 2. Update settings.json
+            com.fasterxml.jackson.databind.node.ObjectNode root;
+            if (Files.exists(hookFile)) {
+                String existing = Files.readString(hookFile);
+                if (existing.trim().isEmpty()) {
+                    root = com.condense.core.Mappers.JSON.createObjectNode();
+                } else {
+                    root = (com.fasterxml.jackson.databind.node.ObjectNode) com.condense.core.Mappers.JSON.readTree(existing);
+                }
+            } else {
+                root = com.condense.core.Mappers.JSON.createObjectNode();
+            }
+
+            com.fasterxml.jackson.databind.node.ObjectNode hooksNode;
+            if (root.has("hooks") && root.get("hooks").isObject()) {
+                hooksNode = (com.fasterxml.jackson.databind.node.ObjectNode) root.get("hooks");
+            } else {
+                hooksNode = root.putObject("hooks");
+            }
+
+            com.fasterxml.jackson.databind.node.ArrayNode beforeToolNode;
+            if (hooksNode.has("BeforeTool") && hooksNode.get("BeforeTool").isArray()) {
+                beforeToolNode = (com.fasterxml.jackson.databind.node.ArrayNode) hooksNode.get("BeforeTool");
+            } else {
+                beforeToolNode = hooksNode.putArray("BeforeTool");
+            }
+
+            // Remove existing condense hook to avoid duplicates
+            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = beforeToolNode.elements();
+            while (it.hasNext()) {
+                com.fasterxml.jackson.databind.JsonNode node = it.next();
+                if (node.has("hooks") && node.get("hooks").isArray()) {
+                    com.fasterxml.jackson.databind.JsonNode hooksArr = node.get("hooks");
+                    for (com.fasterxml.jackson.databind.JsonNode h : hooksArr) {
+                        if (h.has("name") && "condense-hook".equals(h.get("name").asText())) {
+                            it.remove();
+                            break;
+                        } else if (h.has("command") && h.get("command").asText().contains("condense-hook.sh")) {
+                            it.remove();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Check for competing hooks
+            boolean hasCompetingHook = false;
+            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> checkIt = beforeToolNode.elements();
+            while (checkIt.hasNext()) {
+                com.fasterxml.jackson.databind.JsonNode node = checkIt.next();
+                if (node.has("matcher")) {
+                    String matcherStr = node.get("matcher").asText("");
+                    if (matcherStr.equals("run_shell_command") || matcherStr.equals("*")) {
+                        hasCompetingHook = true;
+                        break;
+                    }
+                }
+            }
+
+            // Create new hook entry
+            com.fasterxml.jackson.databind.node.ObjectNode hookEntry = com.condense.core.Mappers.JSON.createObjectNode();
+            hookEntry.put("matcher", "run_shell_command");
+            com.fasterxml.jackson.databind.node.ArrayNode innerHooks = hookEntry.putArray("hooks");
+            com.fasterxml.jackson.databind.node.ObjectNode innerHook = innerHooks.addObject();
+            innerHook.put("name", "condense-hook");
+            innerHook.put("type", "command");
+            innerHook.put("command", scriptFile.toAbsolutePath().toString().replace("\\", "/"));
+            innerHook.put("timeout", 5000);
+
+            beforeToolNode.add(hookEntry);
+
+            Files.createDirectories(hookFile.getParent());
+            Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+
+            log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
+            
+            String warningMsg = "";
+            if (hasCompetingHook) {
+                warningMsg = "\n    Note: an existing BeforeTool hook matching 'run_shell_command' is already\n" +
+                             "    configured in ~/.gemini/settings.json. Gemini CLI runs multiple matching\n" +
+                             "    hooks in parallel — please confirm they do not conflict.";
+            }
+
+            return new InstallResult(tool, true,
+                "✓ Installed hook for " + tool.displayName + " → " + hookFile + warningMsg);
+        } catch (Exception e) {
+            log.warnf("Failed to install hook for %s: %s", tool.displayName, e.getMessage());
+            return new InstallResult(tool, false,
+                "✗ Failed: " + tool.displayName + " — " + e.getMessage());
+        }
+    }
+
+    private StatusResult statusGemini(HookTool tool, Path home) {
+        Path hookFile = tool.hookFile(home);
+        if (!Files.exists(hookFile)) {
+            return new StatusResult(tool, false, hookFile);
+        }
+        try {
+            String existing = Files.readString(hookFile);
+            if (existing.contains("condense-hook.sh") || existing.contains("\"condense-hook\"")) {
+                return new StatusResult(tool, true, hookFile);
+            }
+            return new StatusResult(tool, false, hookFile);
+        } catch (IOException e) {
+            return new StatusResult(tool, false, hookFile);
+        }
+    }
+
+    private RemoveResult removeGemini(HookTool tool, Path home) {
+        Path hookFile = tool.hookFile(home);
+        Path scriptFile = home.resolve(".gemini/hooks/condense-hook.sh");
+
+        boolean removedAnything = false;
+
+        if (Files.exists(scriptFile)) {
+            try { Files.delete(scriptFile); removedAnything = true; } catch (IOException ignored) {}
+        }
+
+        if (Files.exists(hookFile)) {
+            try {
+                String existing = Files.readString(hookFile);
+                com.fasterxml.jackson.databind.JsonNode rootNode = com.condense.core.Mappers.JSON.readTree(existing);
+                if (rootNode.isObject()) {
+                    com.fasterxml.jackson.databind.node.ObjectNode root = (com.fasterxml.jackson.databind.node.ObjectNode) rootNode;
+                    if (root.has("hooks") && root.get("hooks").isObject()) {
+                        com.fasterxml.jackson.databind.node.ObjectNode hooksNode = (com.fasterxml.jackson.databind.node.ObjectNode) root.get("hooks");
+                        if (hooksNode.has("BeforeTool") && hooksNode.get("BeforeTool").isArray()) {
+                            com.fasterxml.jackson.databind.node.ArrayNode beforeToolNode = (com.fasterxml.jackson.databind.node.ArrayNode) hooksNode.get("BeforeTool");
+                            boolean found = false;
+                            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = beforeToolNode.elements();
+                            while (it.hasNext()) {
+                                com.fasterxml.jackson.databind.JsonNode node = it.next();
+                                if (node.has("hooks") && node.get("hooks").isArray()) {
+                                    com.fasterxml.jackson.databind.JsonNode hooksArr = node.get("hooks");
+                                    for (com.fasterxml.jackson.databind.JsonNode h : hooksArr) {
+                                        if (h.has("name") && "condense-hook".equals(h.get("name").asText())) {
+                                            it.remove();
+                                            found = true;
+                                            break;
+                                        } else if (h.has("command") && h.get("command").asText().contains("condense-hook.sh")) {
+                                            it.remove();
+                                            found = true;
+                                            break;
+                                        }
+                                    }
                                 }
                             }
                             if (found) {
