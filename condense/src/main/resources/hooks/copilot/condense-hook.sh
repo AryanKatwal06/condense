@@ -8,40 +8,47 @@
 
 CONDENSE_COMMANDS="git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle"
 
-python3 -c "
+python3 -c '
 import sys, json
-
-CONDENSE_COMMANDS = '${CONDENSE_COMMANDS}'.split()
 
 try:
     data = json.load(sys.stdin)
-    if data.get('toolName') != 'bash':
-        print(json.dumps({'permissionDecision': 'allow'}))
-        sys.exit(0)
-    
-    tool_args_str = data.get('toolArgs')
-    if not tool_args_str:
-        print(json.dumps({'permissionDecision': 'allow'}))
-        sys.exit(0)
-        
+except Exception:
+    print(json.dumps({"permissionDecision": "allow"}))
+    sys.exit(0)
+
+tool_name = data.get("toolName")
+if tool_name != "bash":
+    print(json.dumps({"permissionDecision": "allow"}))
+    sys.exit(0)
+
+tool_args_str = data.get("toolArgs")
+if not tool_args_str:
+    print(json.dumps({"permissionDecision": "allow"}))
+    sys.exit(0)
+
+try:
     tool_args = json.loads(tool_args_str)
-    cmd = tool_args.get('command')
-    if not cmd:
-        print(json.dumps({'permissionDecision': 'allow'}))
-        sys.exit(0)
-    
-    cmd_name = cmd.strip().split()[0]
-    bare_cmd = cmd_name.split('/')[-1]
-    
-    if bare_cmd in CONDENSE_COMMANDS:
-        print(json.dumps({
-            'permissionDecision': 'deny',
-            'permissionDecisionReason': 'Use \"condense <command>\" instead to get filtered, token-efficient output.'
-        }))
-        sys.exit(0)
+except Exception:
+    print(json.dumps({"permissionDecision": "allow"}))
+    sys.exit(0)
 
-except Exception as e:
-    pass
+command = tool_args.get("command", "").strip()
 
-print(json.dumps({'permissionDecision': 'allow'}))
-"
+if not command:
+    print(json.dumps({"permissionDecision": "allow"}))
+    sys.exit(0)
+
+condense_commands = "'"$CONDENSE_COMMANDS"'".split()
+
+parts = command.split()
+bare_cmd = parts[0].split("/")[-1]
+
+if bare_cmd in condense_commands:
+    print(json.dumps({
+        "permissionDecision": "deny",
+        "permissionDecisionReason": "Use \"condense <command>\" instead to get filtered, token-efficient output."
+    }))
+else:
+    print(json.dumps({"permissionDecision": "allow"}))
+'
