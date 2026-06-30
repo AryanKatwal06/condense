@@ -159,7 +159,7 @@ jobs:
             $sw = [Diagnostics.Stopwatch]::StartNew()
             & $BINARY --version > $null
             $sw.Stop()
-            Write-Host "Run $i: $($sw.ElapsedMilliseconds)ms"
+            Write-Host "Run ${i}: $($sw.ElapsedMilliseconds)ms"
           }
 
       - name: Upload native binary
