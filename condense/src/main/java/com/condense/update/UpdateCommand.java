@@ -154,6 +154,8 @@ public class UpdateCommand implements Callable<Integer> {
                 Files.setPosixFilePermissions(currentExe, perms);
             }
             System.out.println("Successfully updated to " + latestVersionStr + "!");
+            System.out.println("The new version will be used the next time you run condense.");
+
         } catch (Exception e) {
             System.err.println("Failed to replace binary: " + e.getMessage());
             return 1;
