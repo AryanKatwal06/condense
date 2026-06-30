@@ -58,8 +58,15 @@ detect_platform() {
       esac
       ;;
     *)
+      case "$os" in
+        *MINGW*|*MSYS*|*CYGWIN*)
+          echo "It looks like you are on Windows." >&2
+          echo "Please use the PowerShell installer instead: iwr https://raw.githubusercontent.com/${REPO}/main/install.ps1 -useb | iex" >&2
+          exit 1
+          ;;
+      esac
       echo "Unsupported operating system: $os" >&2
-      echo "Condense supports Linux and macOS. Windows support is planned." >&2
+      echo "Condense supports Linux and macOS. For Windows, use install.ps1." >&2
       exit 1
       ;;
   esac

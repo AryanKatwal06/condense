@@ -46,16 +46,33 @@ jobs:
           path: condense/target/surefire-reports/
           retention-days: 7
 
-  # ── Native image build (Linux, non-static) ─────────────────────────────────
-  native-linux:
-    name: Native Image (Linux x64)
-    runs-on: ubuntu-latest
+  # ── Native image build (Matrix) ────────────────────────────────────────────
+  native-builds:
+    name: Native Image (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     needs: jvm-test
     defaults:
       run:
         working-directory: condense
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact-name: condense-linux-x64-dynamic
+            binary-name: condense-runner
+          - os: windows-latest
+            artifact-name: condense-windows-x64
+            binary-name: condense-runner.exe
+          - os: macos-latest
+            artifact-name: condense-macos-arch
+            binary-name: condense-runner
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup MSVC (Windows only)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Set up GraalVM JDK 21
         uses: graalvm/setup-graalvm@v1
@@ -72,10 +89,17 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven-
 
+      - name: Check Java and OS Arch Properties
+        run: java -XshowSettings:properties -version
+
+      - name: Check Active Maven Profiles
+        run: mvn help:active-profiles -B
+
       - name: Build native image
         run: mvn package -Pnative -DskipTests -Dquarkus.native.native-image-xmx=5g --no-transfer-progress -B
 
       - name: Verify no fallback
+        shell: bash
         run: |
           if grep -q "fallback" target/native.log 2>/dev/null; then
             echo "ERROR: native image fell back to JVM mode"
@@ -83,35 +107,64 @@ jobs:
           fi
           echo "✓ Native image built without fallback"
 
-      - name: Smoke tests
+      - name: Smoke tests (Unix)
+        if: runner.os != 'Windows'
         run: |
-          ./target/condense-runner --version
-          ./target/condense-runner --help
+          ./target/${{ matrix.binary-name }} --version
+          ./target/${{ matrix.binary-name }} --help
           echo "Exit code test:"
-          ./target/condense-runner git status || echo "Exit: $?"
+          ./target/${{ matrix.binary-name }} sh -c "exit 42" || echo "Exit: $?"
+          ./target/${{ matrix.binary-name }} git status || true
+          ./target/${{ matrix.binary-name }} gain
 
-      - name: Measure native binary
+      - name: Smoke tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          BINARY=target/condense-runner
+          .\target\${{ matrix.binary-name }} --version
+          .\target\${{ matrix.binary-name }} --help
+          Write-Host "Exit code test:"
+          .\target\${{ matrix.binary-name }} cmd /c "exit 42" ; Write-Host "Exit: $LASTEXITCODE"
+          .\target\${{ matrix.binary-name }} git status
+          .\target\${{ matrix.binary-name }} gain
+
+      - name: Measure native binary (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          BINARY=target/${{ matrix.binary-name }}
           chmod +x "$BINARY"
 
           echo "== Binary size =="
           ls -lh "$BINARY"
 
-          echo "== Cold start (10 runs of --version) =="
-          for i in $(seq 1 10); do
+          echo "== Cold start (5 runs of --version) =="
+          for i in $(seq 1 5); do
             START=$(date +%s%N)
             "$BINARY" --version > /dev/null
             END=$(date +%s%N)
             echo "Run $i: $(( (END - START) / 1000000 ))ms"
           done
 
-          echo "== Peak RSS on a real filter path =="
-          /usr/bin/time -v "$BINARY" git status 2>&1 | grep -i "maximum resident" || true
+      - name: Measure native binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $BINARY = "target\${{ matrix.binary-name }}"
+          
+          Write-Host "== Binary size =="
+          Get-Item $BINARY | Select-Object Length
+
+          Write-Host "== Cold start (5 runs of --version) =="
+          for ($i = 1; $i -le 5; $i++) {
+            $sw = [Diagnostics.Stopwatch]::StartNew()
+            & $BINARY --version > $null
+            $sw.Stop()
+            Write-Host "Run $i: $($sw.ElapsedMilliseconds)ms"
+          }
 
       - name: Upload native binary
         uses: actions/upload-artifact@v4
         with:
-          name: condense-linux-x64-dynamic
-          path: condense/target/condense-runner
+          name: ${{ matrix.artifact-name }}
+          path: condense/target/${{ matrix.binary-name }}
           retention-days: 3

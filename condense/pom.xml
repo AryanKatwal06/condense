@@ -127,6 +127,7 @@
                                     <directory>${project.basedir}</directory>
                                     <includes>
                                         <include>install.sh</include>
+                                        <include>install.ps1</include>
                                         <include>uninstall.sh</include>
                                     </includes>
                                     <filtering>true</filtering>
