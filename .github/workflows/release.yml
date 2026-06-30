@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   # ── Create the GitHub Release first ────────────────────────────────────────
@@ -20,7 +21,7 @@ jobs:
       release_id: ${{ steps.create_release.outputs.id }}
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
         with:
           fetch-depth: 0
 
@@ -31,7 +32,6 @@ jobs:
       - name: Extract changelog for this version
         id: changelog
         run: |
-          # Extract section for this version from CHANGELOG.md
           VERSION="${{ steps.version.outputs.VERSION }}"
           NOTES=$(awk "/^## \[${VERSION}\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
           echo "NOTES<<EOF" >> $GITHUB_OUTPUT
@@ -40,12 +40,10 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@a74c6b72af54cfa997e81df42d94703d6313a2d0 # v2.0.6
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: "Condense ${{ github.ref_name }}"
+          name: "Condense ${{ github.ref_name }}"
           body: |
             ## Condense ${{ github.ref_name }}
 
@@ -57,17 +55,14 @@ jobs:
             curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh
             ```
 
-            Or download the binary for your platform below and verify the SHA-256 checksum.
-
-            ## Supported Platforms
-            | Platform       | Binary               |
-            |----------------|----------------------|
-            | Linux x64      | `condense-linux-x64`      |
-            | Linux aarch64  | `condense-linux-aarch64`  |
-            | macOS arm64    | `condense-macos-aarch64`  |
-            | macOS x64      | `condense-macos-x64`      |
+            Or download the binary for your platform below and verify the SHA-256 checksum in `checksums.txt`.
+            All binaries are signed via Sigstore/cosign. You can verify provenance with:
+            ```bash
+            cosign verify-blob --certificate-identity-regexp "https://github.com/.*" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" --signature <binary>.sig <binary>
+            ```
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
+          make_latest: ${{ !contains(github.ref_name, '-') }}
 
   # ── Build native binaries for each platform ─────────────────────────────────
   build-native:
@@ -107,10 +102,10 @@ jobs:
             sha_cmd: "shasum -a 256"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Set up GraalVM JDK 21
-        uses: graalvm/setup-graalvm@v1
+        uses: graalvm/setup-graalvm@2911b2304bee2c2f59b9a67bf45f025a6b6de4b1 # v1
         with:
           java-version: '21'
           distribution: 'graalvm-community'
@@ -118,7 +113,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache Maven packages
-        uses: actions/cache@v4
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-${{ matrix.target }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -149,42 +144,12 @@ jobs:
         run: |
           cp target/condense-runner "condense-${{ matrix.target }}"
 
-      - name: Generate SHA-256 checksum
-        run: |
-          ${{ matrix.sha_cmd }} "condense-${{ matrix.target }}" | \
-            awk '{print $1}' > "condense-${{ matrix.target }}.sha256"
-          echo "Checksum: $(cat condense-${{ matrix.target }}.sha256)"
-
-      - name: Startup benchmark
-        run: |
-          echo "Startup benchmark for ${{ matrix.target }}:"
-          for i in 1 2 3 4 5; do
-            START=$(date +%s%N 2>/dev/null || python3 -c "import time; print(int(time.time()*1e9))")
-            ./target/condense-runner --version > /dev/null
-            END=$(date +%s%N 2>/dev/null || python3 -c "import time; print(int(time.time()*1e9))")
-            MS=$(( (END - START) / 1000000 ))
-            echo "  Run $i: ${MS}ms"
-          done
-
-      - name: Upload binary to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload artifact for signing
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: condense/condense-${{ matrix.target }}
-          asset_name: condense-${{ matrix.target }}
-          asset_content_type: application/octet-stream
-
-      - name: Upload checksum to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: condense/condense-${{ matrix.target }}.sha256
-          asset_name: condense-${{ matrix.target }}.sha256
-          asset_content_type: text/plain
+          name: condense-${{ matrix.target }}
+          path: condense/condense-${{ matrix.target }}
+          if-no-files-found: error
 
   # ── Build .deb package (Linux x64 only) ────────────────────────────────────
   build-deb:
@@ -195,23 +160,17 @@ jobs:
       run:
         working-directory: condense
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Download linux-x64 binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
         with:
           name: condense-linux-x64
-          path: /tmp/condense-artifacts/
-        continue-on-error: true
+          path: condense/target/
 
-      # Since the release already uploaded the binary, download from release
-      - name: Download from release
+      - name: Prepare binary
         run: |
-          TAG="${GITHUB_REF_NAME}"
-          mkdir -p target
-          curl -fsSL \
-            "https://github.com/${{ github.repository }}/releases/download/${TAG}/condense-linux-x64" \
-            -o target/condense-runner
+          mv target/condense-linux-x64 target/condense-runner
           chmod +x target/condense-runner
 
       - name: Install dpkg-dev
@@ -219,15 +178,59 @@ jobs:
 
       - name: Build .deb
         run: |
+          VERSION=${GITHUB_REF_NAME#v}
           chmod +x packaging/deb/build-deb.sh
-          ./packaging/deb/build-deb.sh target/condense-runner 0.1.0 amd64
+          ./packaging/deb/build-deb.sh target/condense-runner "$VERSION" amd64
 
-      - name: Upload .deb to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload .deb for signing
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: condense/condense_0.1.0_amd64.deb
-          asset_name: condense_0.1.0_amd64.deb
-          asset_content_type: application/vnd.debian.binary-package
+          name: condense-deb
+          path: condense/condense_*.deb
+
+  # ── Sign, SBOM, and Publish ─────────────────────────────────────────────────
+  publish-release:
+    name: Publish Release Artifacts
+    runs-on: ubuntu-latest
+    needs: [create-release, build-native, build-deb]
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3
+
+      - name: Generate Checksums
+        run: |
+          cd artifacts
+          sha256sum condense-* > checksums.txt
+          cat checksums.txt
+
+      - name: Sign artifacts and checksums
+        env:
+          COSIGN_YES: true
+        run: |
+          cd artifacts
+          for file in condense-linux-x64 condense-linux-aarch64 condense-macos-x64 condense-macos-aarch64 *.deb checksums.txt; do
+            if [ -f "$file" ]; then
+              cosign sign-blob --output-signature "${file}.sig" --output-certificate "${file}.cert" "$file"
+            fi
+          done
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@e8d2a6937ecead383dfe75190d104edd1f9c5751 # v0
+        with:
+          path: ./
+          format: cyclonedx-json
+          output-file: artifacts/sbom.cyclonedx.json
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@a74c6b72af54cfa997e81df42d94703d6313a2d0 # v2.0.6
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: artifacts/*

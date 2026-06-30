@@ -120,6 +120,16 @@ condense gain --format json
 
 ---
 
+## Privacy & Telemetry
+
+**Privacy Statement: Condense collects ZERO telemetry.** 
+
+All analytics data (`condense gain`) is stored entirely locally in a SQLite database located at your system's standard data directory (e.g., `~/.local/share/condense/condense.db` on Linux). This data is **never** transmitted anywhere.
+
+Condense makes **no network calls** during normal operation. The *only* exception is if you explicitly run `condense update`, which securely contacts the GitHub API to check for updates and downloads the new binary if one is available.
+
+---
+
 ## Configuration
 
 ```bash
@@ -137,6 +147,30 @@ condense config --reset
 ```
 
 Config file: `~/.config/condense/config.toml` (Linux) · `~/Library/Application Support/condense/config.toml` (macOS)
+
+---
+
+## Shell Completion
+
+Condense can generate completion scripts for Bash, Zsh, and Fish.
+
+### Bash
+```bash
+condense completion bash > ~/.local/share/bash-completion/completions/condense
+```
+
+### Zsh
+```bash
+condense completion zsh > ~/.zfunc/_condense
+# Ensure ~/.zfunc is in your fpath in ~/.zshrc:
+# fpath=(~/.zfunc $fpath)
+# autoload -Uz compinit && compinit
+```
+
+### Fish
+```bash
+condense completion fish > ~/.config/fish/completions/condense.fish
+```
 
 ---
 

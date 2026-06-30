@@ -18,7 +18,9 @@ import java.util.List;
     subcommands = {
         com.condense.analytics.GainCommand.class,
         com.condense.hooks.InitCommand.class,
-        com.condense.config.ConfigCommand.class
+        com.condense.config.ConfigCommand.class,
+        com.condense.CompletionCommand.class,
+        com.condense.update.UpdateCommand.class
     },
     description = {
         "High-performance CLI proxy that filters command output to save 60-90%% AI tokens.",

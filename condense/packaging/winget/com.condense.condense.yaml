@@ -1,0 +1,19 @@
+PackageIdentifier: com.condense.condense
+PackageVersion: 1.0.0
+PackageName: Condense
+Publisher: Aryan Katwal
+License: Apache-2.0
+ShortDescription: AI-focused command output condenser
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/aryanKatwal06/code-condenser/releases/download/v1.0.0/condense-windows-x64.exe
+    InstallerType: portable
+    Commands:
+      - condense
+  - Architecture: arm64
+    InstallerUrl: https://github.com/aryanKatwal06/code-condenser/releases/download/v1.0.0/condense-windows-aarch64.exe
+    InstallerType: portable
+    Commands:
+      - condense
+ManifestType: singleton
+ManifestVersion: 1.2.0

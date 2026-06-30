@@ -1,0 +1,28 @@
+{
+    "version": "1.0.0",
+    "description": "AI-focused command output condenser",
+    "homepage": "https://github.com/aryanKatwal06/code-condenser",
+    "license": "Apache-2.0",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/aryanKatwal06/code-condenser/releases/download/v1.0.0/condense-windows-x64.exe#/condense.exe",
+            "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "arm64": {
+            "url": "https://github.com/aryanKatwal06/code-condenser/releases/download/v1.0.0/condense-windows-aarch64.exe#/condense.exe",
+            "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+    },
+    "bin": "condense.exe",
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/aryanKatwal06/code-condenser/releases/download/v$version/condense-windows-x64.exe#/condense.exe"
+            },
+            "arm64": {
+                "url": "https://github.com/aryanKatwal06/code-condenser/releases/download/v$version/condense-windows-aarch64.exe#/condense.exe"
+            }
+        }
+    }
+}
