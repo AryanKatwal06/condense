@@ -12,13 +12,22 @@ gets a compact summary: `[main] staged: 2 | modified: 1 | untracked: 3`.
 
 ## Install
 
+### Linux and macOS (Shell Script)
 ```bash
 curl -fsSL https://raw.githubusercontent.com/YOUR_ORG/condense/main/install.sh | sh
 ```
 
+### Windows (PowerShell)
+```powershell
+iwr https://raw.githubusercontent.com/YOUR_ORG/condense/main/install.ps1 -useb | iex
+```
+
 Or download a binary directly from the [Releases](https://github.com/YOUR_ORG/condense/releases) page.
 
-**Supported platforms**: Linux x64, Linux aarch64, macOS x64 (Intel), macOS aarch64 (Apple Silicon)
+**Verified platforms**: 
+- **Linux x64**: Shell script install, manual download
+- **macOS (Apple Silicon & Intel)**: Shell script install, manual download 
+- **Windows x64**: PowerShell script install, manual download
 
 ### Verify checksum (recommended)
 
