@@ -79,7 +79,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'graalvm-community'
-          components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache Maven packages
@@ -96,6 +95,7 @@ jobs:
         run: mvn help:active-profiles -B
 
       - name: Build native image
+        shell: bash
         run: mvn package -Pnative -DskipTests -Dquarkus.native.native-image-xmx=5g --no-transfer-progress -B
 
       - name: Verify no fallback
