@@ -5,3 +5,9 @@ extract.py
 task.md
 implementation_plan.md
 walkthrough.md
+
+# Log files and Temp directories
+gh_logs.txt
+linux_job_log.txt
+temp-release/
+temp-release-rc2/

@@ -9,3 +9,11 @@ native-image-agent-output/
 *.jar
 !*-sources.jar
 .quarkus/
+
+# Test scripts and artifacts
+TestUpdate.java
+test_update.py
+checksums.txt
+release.json
+*.exe
+*.exe.old
