@@ -72,7 +72,9 @@ jobs:
 
       - name: Setup MSVC (Windows only)
         if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@053032274f22394d2fbe5a2f74beb908d2d6e31a # Node 24 PR
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: Set up GraalVM JDK 21
         uses: graalvm/setup-graalvm@v1
