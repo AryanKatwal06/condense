@@ -4,6 +4,14 @@ All notable changes to Condense (Java + GraalVM port) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] — 2026-07-03
+
+### Added
+- Official v1.0.0 initial stable release!
+- Contains all features from release candidates including 42 command filters, 12 filter strategies, and `condense gain` analytics.
+- Updated release pipeline to use Node.js 24-compatible GitHub Actions.
+- Full provenance verification via Sigstore/cosign and CycloneDX SBOM integration.
+
 ## [1.0.0-rc1] — 2026-06-30
 
 ### Added
@@ -37,4 +45,5 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Zero network dependencies during normal operation
 - Apache License 2.0
 
+[1.0.0]: https://github.com/AryanKatwal06/code-condenser/releases/tag/v1.0.0
 [1.0.0-rc1]: https://github.com/aryanKatwal06/code-condenser/releases/tag/v1.0.0-rc1
