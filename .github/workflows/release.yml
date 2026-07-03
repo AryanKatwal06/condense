@@ -98,6 +98,15 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
+      - name: Set up MSVC environment
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          echo INCLUDE=%INCLUDE%>> %GITHUB_ENV%
+          echo LIB=%LIB%>> %GITHUB_ENV%
+          echo PATH=%PATH%>> %GITHUB_ENV%
+
       - name: Set up GraalVM JDK 21
         uses: graalvm/setup-graalvm@2911b2304bee2c2f59b9a67bf45f025a6b6de4b1 # v1
         with:
