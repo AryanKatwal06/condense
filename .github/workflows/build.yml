@@ -70,12 +70,14 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Find vcvarsall
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
+      - name: Set up MSVC environment
+        if: runner.os == 'Windows'
+        shell: cmd
         run: |
-          Get-ChildItem "C:\Program Files\Microsoft Visual Studio" -Recurse -Filter vcvarsall.bat |
-          Select-Object FullName
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          echo INCLUDE=%INCLUDE%>> %GITHUB_ENV%
+          echo LIB=%LIB%>> %GITHUB_ENV%
+          echo PATH=%PATH%>> %GITHUB_ENV%
 
       - name: Set up GraalVM JDK 21
         uses: graalvm/setup-graalvm@v1
