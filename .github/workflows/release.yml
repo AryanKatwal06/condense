@@ -134,6 +134,7 @@ jobs:
           CC=musl-gcc ./configure --static --prefix=/usr/local/musl
           make
           sudo make install
+          sudo cp /usr/local/musl/lib/libz.a /usr/lib/x86_64-linux-musl/
           echo "C_INCLUDE_PATH=/usr/local/musl/include" >> $GITHUB_ENV
           echo "LIBRARY_PATH=/usr/local/musl/lib" >> $GITHUB_ENV
           musl-gcc --version
@@ -147,19 +148,21 @@ jobs:
             --no-transfer-progress -B
 
       - name: Verify binary
+        shell: bash
         run: |
           ./target/condense-runner --version
           echo "Binary size: $(du -sh target/condense-runner | cut -f1)"
 
       - name: Rename binary
+        shell: bash
         run: |
-          cp target/condense-runner "condense-${{ matrix.target }}"
+          cp target/condense-runner "condense-${{ matrix.target }}${{ matrix.binary_suffix }}"
 
       - name: Upload artifact for signing
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: condense-${{ matrix.target }}
-          path: condense/condense-${{ matrix.target }}
+          path: condense/condense-${{ matrix.target }}${{ matrix.binary_suffix }}
           if-no-files-found: error
 
   # ── Build .deb package (Linux x64 only) ────────────────────────────────────
@@ -227,7 +230,7 @@ jobs:
           COSIGN_YES: true
         run: |
           cd artifacts
-          for file in condense-linux-x64 condense-linux-aarch64 condense-macos-x64 condense-macos-aarch64 *.deb checksums.txt; do
+          for file in condense-linux-x64 condense-macos-x64 condense-windows-x64.exe *.deb checksums.txt; do
             if [ -f "$file" ]; then
               cosign sign-blob --output-signature "${file}.sig" --output-certificate "${file}.cert" "$file"
             fi
