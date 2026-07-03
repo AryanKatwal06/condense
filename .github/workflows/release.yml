@@ -138,6 +138,12 @@ jobs:
           echo "C_INCLUDE_PATH=/usr/local/musl/include" >> $GITHUB_ENV
           echo "LIBRARY_PATH=/usr/local/musl/lib" >> $GITHUB_ENV
           musl-gcc --version
+          
+          # Fix missing fstat64 in musl for sqlite-jdbc
+          sudo mv /usr/bin/x86_64-linux-musl-gcc /usr/bin/x86_64-linux-musl-gcc.real
+          sudo bash -c 'echo "#!/bin/bash" > /usr/bin/x86_64-linux-musl-gcc'
+          sudo bash -c 'echo "/usr/bin/x86_64-linux-musl-gcc.real \"\$@\" -Wl,--defsym=fstat64=fstat -Wl,--defsym=stat64=stat -Wl,--defsym=lstat64=lstat -Wl,--defsym=lseek64=lseek -Wl,--defsym=pread64=pread -Wl,--defsym=pwrite64=pwrite -Wl,--defsym=mmap64=mmap" >> /usr/bin/x86_64-linux-musl-gcc'
+          sudo chmod +x /usr/bin/x86_64-linux-musl-gcc
 
       - name: Build native image
         shell: bash
