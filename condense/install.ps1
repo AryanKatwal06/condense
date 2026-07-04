@@ -8,13 +8,39 @@ verifies its SHA-256 checksum, and places it in $env:USERPROFILE\.local\bin.
 It also checks if the directory is in your PATH.
 
 .EXAMPLE
-iwr https://raw.githubusercontent.com/YOUR_ORG/condense/main/install.ps1 -useb | iex
+iwr https://raw.githubusercontent.com/AryanKatwal06/code-condenser/main/install.ps1 -useb | iex
 #>
+
+param (
+    [switch]$Help
+)
+
+if ($Help) {
+    Write-Host "Usage: install.ps1 [-Help]"
+    Write-Host ""
+    Write-Host "Installs Condense, a high-performance CLI proxy for AI coding agents."
+    Write-Host ""
+    Write-Host "Parameters:"
+    Write-Host "  -Help    Show this help message"
+    Write-Host ""
+    Write-Host "Environment Variables:"
+    Write-Host "  CONDENSE_VERSION   Force install of a specific version (e.g. 1.0.1)"
+    Write-Host "                     If unset, defaults to the latest GitHub release."
+    exit 0
+}
 
 $ErrorActionPreference = 'Stop'
 
-$Repo = "YOUR_ORG/condense"
-$Version = "${project.version}"
+$Repo = "AryanKatwal06/code-condenser"
+$Version = $env:CONDENSE_VERSION
+if ([string]::IsNullOrWhiteSpace($Version) -or $Version -eq "`$`{project.version`}") {
+    try {
+        $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -UseBasicParsing
+        $Version = $Release.tag_name.TrimStart('v')
+    } catch {
+        $Version = "1.0.1"
+    }
+}
 $BaseUrl = "https://github.com/$Repo/releases/download/v$Version"
 $BinaryName = "condense.exe"
 
