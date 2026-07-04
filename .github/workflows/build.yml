@@ -64,7 +64,7 @@ jobs:
           - os: windows-latest
             artifact-name: condense-windows-x64
             binary-name: condense-runner.exe
-          - os: macos-latest
+          - os: macos-15 # Pinned to avoid silent macOS 26 migration — update intentionally after testing
             artifact-name: condense-macos-arch
             binary-name: condense-runner
     steps:

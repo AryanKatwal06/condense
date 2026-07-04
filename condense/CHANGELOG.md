@@ -4,6 +4,17 @@ All notable changes to Condense (Java + GraalVM port) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] — 2026-07-04
+
+### Fixed
+- Added Apache 2.0 LICENSE and NOTICE files for bitan-del/zap attribution
+- Cleaned up git repository (removed ~20 junk tracked files including large binaries)
+- Pinned `macos-latest` runners to `macos-15` to avoid silent migration issues
+- Documented Windsurf fail-open behavior and cascade retry caveat in README
+- Confirmed Gemini CLI and Windsurf hook installer idempotency
+- Fixed `YOUR_ORG` placeholders in documentation
+- Synchronized `version.properties` with pom.xml version
+
 ## [1.0.0] — 2026-07-03
 
 ### Added
