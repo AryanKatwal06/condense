@@ -4,7 +4,7 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.1.x   | ✅ Yes     |
+| 1.0.x   | ✅ Yes     |
 
 ## Reporting a Vulnerability
 
@@ -38,8 +38,8 @@ Every release binary has a corresponding `.sha256` checksum file. Verify before
 running:
 ```bash
 # Download binary and checksum
-curl -LO https://github.com/YOUR_ORG/condense/releases/download/v0.1.0/condense-linux-x64
-curl -LO https://github.com/YOUR_ORG/condense/releases/download/v0.1.0/condense-linux-x64.sha256
+curl -LO https://github.com/AryanKatwal06/code-condenser/releases/download/v1.0.1/condense-linux-x64
+curl -LO https://github.com/AryanKatwal06/code-condenser/releases/download/v1.0.1/condense-linux-x64.sha256
 
 # Verify
 echo "$(cat condense-linux-x64.sha256)  condense-linux-x64" | sha256sum --check

@@ -14,15 +14,15 @@ gets a compact summary: `[main] staged: 2 | modified: 1 | untracked: 3`.
 
 ### Linux and macOS (Shell Script)
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_ORG/condense/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/AryanKatwal06/code-condenser/main/install.sh | sh
 ```
 
 ### Windows (PowerShell)
 ```powershell
-iwr https://raw.githubusercontent.com/YOUR_ORG/condense/main/install.ps1 -useb | iex
+iwr https://raw.githubusercontent.com/AryanKatwal06/code-condenser/main/install.ps1 -useb | iex
 ```
 
-Or download a binary directly from the [Releases](https://github.com/YOUR_ORG/condense/releases) page.
+Or download a binary directly from the [Releases](https://github.com/AryanKatwal06/code-condenser/releases) page.
 
 **Verified platforms**: 
 - **Linux x64**: Shell script install, manual download
@@ -32,8 +32,8 @@ Or download a binary directly from the [Releases](https://github.com/YOUR_ORG/co
 ### Verify checksum (recommended)
 
 ```bash
-curl -LO https://github.com/YOUR_ORG/condense/releases/download/v0.1.0/condense-linux-x64
-curl -LO https://github.com/YOUR_ORG/condense/releases/download/v0.1.0/condense-linux-x64.sha256
+curl -LO https://github.com/AryanKatwal06/code-condenser/releases/download/v1.0.1/condense-linux-x64
+curl -LO https://github.com/AryanKatwal06/code-condenser/releases/download/v1.0.1/condense-linux-x64.sha256
 echo "$(cat condense-linux-x64.sha256)  condense-linux-x64" | sha256sum --check
 chmod +x condense-linux-x64 && mv condense-linux-x64 ~/.local/bin/condense
 ```
@@ -91,6 +91,8 @@ condense init --remove
 ```
 
 **Supported tools**: Claude Code, Cursor, Gemini CLI, Windsurf, GitHub Copilot, Cline
+
+> **Note for Windsurf users**: Windsurf support uses Windsurf's Beta Cascade Hooks feature (behavior may change without notice). When condense intercepts a command, it exits with code 2 and prints a redirect message. Whether Cascade automatically retries with the suggested `condense <command>` invocation depends on Windsurf's own behavior and has not been independently confirmed — if interception doesn't appear to be working, verify by running `condense init -g` and checking that a `pre_run_command` entry was added to `~/.codeium/windsurf/hooks.json`.
 
 > **Note for Claude Code users**: Claude Code handles multiple hooks rewriting the same command in parallel with no guaranteed order. If you have competing `PreToolUse` hooks for Bash, condense's interception may not always take effect.
 
@@ -179,7 +181,7 @@ condense completion fish > ~/.config/fish/completions/condense.fish
 **Prerequisites**: GraalVM JDK 21 with `native-image` on PATH, Maven 3.9+
 
 ```bash
-git clone https://github.com/YOUR_ORG/condense.git
+git clone https://github.com/AryanKatwal06/code-condenser.git
 cd condense
 
 # JVM mode (fast iteration)
@@ -275,6 +277,5 @@ See [SECURITY.md](SECURITY.md) for the security policy and how to report vulnera
 
 ## License
 
-[Apache License 2.0](LICENSE)
-
-Original Rust implementation: [bitan-del/condense](https://github.com/bitan-del/condense)
+Condense is licensed under the Apache License 2.0. See LICENSE for details.
+Condense is inspired by the original Rust implementation at github.com/bitan-del/zap.

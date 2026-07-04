@@ -83,7 +83,7 @@ jobs:
             binary_suffix: ""
             sha_cmd: "sha256sum"
 
-          - os: macos-latest
+          - os: macos-15 # Pinned to avoid silent macOS 26 migration — update intentionally after testing
             target: macos-x64
             native_args: "--no-fallback"
             binary_suffix: ""

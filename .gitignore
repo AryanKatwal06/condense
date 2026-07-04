@@ -11,3 +11,28 @@ gh_logs.txt
 linux_job_log.txt
 temp-release/
 temp-release-rc2/
+temp_repos/
+verify-rc5/
+run.json
+run2.json
+log.txt
+
+# Binaries and downloaded tools
+condense-linux-*
+condense-windows-*
+condense-macos-*
+*.sig
+*.cert
+cosign.exe
+*.exe
+*.exe.old
+
+# Scratch scripts
+find_tags.sh
+find_tags2.sh
+build.bat
+loop.bat
+test_update.py
+^{commit}; break; fi; done
+Test*.java
+Test*.class
