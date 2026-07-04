@@ -97,7 +97,7 @@ public class ConfigWriter {
         };
     }
 
-    // ── Private ───────────────────────────────────────────────────────────────
+
 
     private CondenseConfig applyMutation(CondenseConfig config, String keyPath, String value) {
         return switch (keyPath) {

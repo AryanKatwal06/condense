@@ -8,16 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 import java.util.Map;
 
-/**
- * Replaces JSON values with their type placeholders, producing a compact schema
- * skeleton that lets an AI understand the structure without reading the full data.
- *
- * <p>Example input (200 tokens):
- * <pre>{"user":{"name":"Alice","age":30,"roles":["admin","user"]}}</pre>
- *
- * <p>Example output (15 tokens):
- * <pre>{"user":{"name":"&lt;string&gt;","age":0,"roles":["&lt;string&gt;"]}}</pre>
- */
+
 public final class JsonStructureStrategy {
 
     private JsonStructureStrategy() {}

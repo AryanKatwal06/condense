@@ -14,31 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Resolves the correct {@link FilterStrategy} for a given shell command.
- *
- * <p>At CDI startup ({@link PostConstruct}), all {@code FilterStrategy} beans
- * annotated with {@link CommandFilter} are discovered and registered by their
- * declared command prefix. At runtime, {@link #lookup(String[])} performs
- * longest-prefix matching.
- *
- * <h2>Longest-prefix matching</h2>
- * For args {@code ["git", "status", "--short"]}, the registry tries:
- * <ol>
- *   <li>{@code "git status --short"} — no match</li>
- *   <li>{@code "git status"} — match → {@code GitStatusFilter}</li>
- * </ol>
- * Falls back to {@link PassthroughStrategy} if nothing matches.
- *
- * <h2>Extensibility</h2>
- * Adding a new filter in Phase 3 requires only:
- * <ol>
- *   <li>Create a new {@code @ApplicationScoped} class implementing
- *       {@link FilterStrategy}</li>
- *   <li>Annotate it with {@code @CommandFilter("your command")}</li>
- * </ol>
- * No changes to this class are needed.
- */
+
 @ApplicationScoped
 public class StrategyRegistry {
 

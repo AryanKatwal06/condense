@@ -12,27 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Executes shell commands as child processes, capturing stdout and stderr
- * separately via concurrent virtual-thread readers.
- *
- * <h2>Deadlock Prevention</h2>
- * Java's {@link ProcessBuilder} will deadlock if you read stdout on the main
- * thread while the child process fills the stderr pipe buffer (or vice versa).
- * This class uses two threads — one per stream — started before
- * {@code process.waitFor()}, so both pipes drain concurrently.
- *
- * <h2>Infinite Loop Prevention</h2>
- * When Condense is installed as a shell hook, commands like "git status" are rewritten
- * to "condense git status". If Condense's internal execution of "git" somehow resolved to
- * Condense itself, it would fork infinitely. This class detects that case by comparing
- * the resolved binary name against the current process command, and throws rather
- * than looping.
- *
- * <h2>Timeout</h2>
- * All executions are bounded by a configurable timeout (default: 60 seconds).
- * Timed-out processes are forcibly destroyed and an exit code of -1 is returned.
- */
+
 @ApplicationScoped
 public class CommandExecutor {
 
@@ -173,7 +153,7 @@ public class CommandExecutor {
         return execute(Arrays.asList(args), DEFAULT_TIMEOUT);
     }
 
-    // ── private ──────────────────────────────────────────────────────────────
+
 
     /**
      * Guards against Condense executing itself, which would cause an infinite fork loop

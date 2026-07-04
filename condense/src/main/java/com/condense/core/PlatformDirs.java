@@ -42,7 +42,7 @@ public class PlatformDirs {
         return getDataDir().resolve("condense.db");
     }
 
-    // ── private ──────────────────────────────────────────────────────────────
+
 
     private Path resolveConfigBase() {
         String os = os();

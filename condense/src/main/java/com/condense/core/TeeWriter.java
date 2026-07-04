@@ -62,7 +62,7 @@ public class TeeWriter {
         return dump(command, result);
     }
 
-    // ── private ──────────────────────────────────────────────────────────────
+
 
     private Path dump(String command, ExecutionResult result) {
         try {

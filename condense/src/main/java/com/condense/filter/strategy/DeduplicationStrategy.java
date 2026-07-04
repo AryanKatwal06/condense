@@ -3,17 +3,7 @@ package com.condense.filter.strategy;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Collapses consecutive and near-consecutive repeated lines into a single line
- * with a repetition count suffix.
- *
- * <p>Example: five identical "ERROR: connection refused" lines become:
- * <pre>ERROR: connection refused (×5)</pre>
- *
- * <p>"Near-consecutive" means within a configurable window (default 50 lines).
- * This handles log patterns where the same error repeats but is separated by
- * stack trace lines.
- */
+
 public final class DeduplicationStrategy {
 
     private DeduplicationStrategy() {}

@@ -76,7 +76,7 @@ public class GainRepository {
         tracking.close();
     }
 
-    // ── private ──────────────────────────────────────────────────────────────
+
 
     private String resolveProjectHash(String scope) {
         return "project".equalsIgnoreCase(scope)

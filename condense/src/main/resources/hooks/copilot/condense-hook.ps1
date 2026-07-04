@@ -48,7 +48,7 @@ try {
         exit 0
     }
 } catch {
-    # Fail-closed safety: if anything goes wrong, silently allow
+    # Fail-open safety: if anything goes wrong, silently allow
 }
 
 Write-Output '{"permissionDecision": "allow"}'

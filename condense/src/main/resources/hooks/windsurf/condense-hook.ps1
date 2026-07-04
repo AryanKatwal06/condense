@@ -44,7 +44,7 @@ try {
         exit 2
     }
 } catch {
-    # Fail-open safety: if anything goes wrong, silently allow
+
 }
 
 exit 0

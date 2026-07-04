@@ -6,19 +6,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * Groups lines by an extracted key and counts occurrences per key.
- *
- * <p>Used by lint filters (ESLint, TSC, ruff, clippy) to turn hundreds of
- * individual error lines into a compact frequency map:
- *
- * <pre>
- * no-unused-vars      : 14
- * no-console          :  8
- * prefer-const        :  3
- * (other)             :  2
- * </pre>
- */
+
 public final class GroupingStrategy {
 
     private GroupingStrategy() {}

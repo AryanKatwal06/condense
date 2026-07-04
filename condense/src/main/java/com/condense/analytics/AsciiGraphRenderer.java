@@ -27,7 +27,7 @@ public final class AsciiGraphRenderer {
 
     private AsciiGraphRenderer() {}
 
-    // ── Constants ─────────────────────────────────────────────────────────────
+
 
     private static final String FULL_BLOCK  = "█";
     private static final String HALF_BLOCK  = "▌";
@@ -37,7 +37,7 @@ public final class AsciiGraphRenderer {
     private static final String DIVIDER =
         "════════════════════════════════════════════════════════════";
 
-    // ── Default summary ───────────────────────────────────────────────────────
+
 
     /**
      * Renders the default {@code condense gain} output (no flags).
@@ -74,7 +74,7 @@ public final class AsciiGraphRenderer {
                    + String.format("%.1f", pct) + "%";
     }
 
-    // ── Efficiency meter ──────────────────────────────────────────────────────
+
 
     /**
      * Renders a 24-char wide Unicode block progress meter.
@@ -98,7 +98,7 @@ public final class AsciiGraphRenderer {
             + EMPTY_BLOCK.repeat(Math.max(0, emptyBlocks));
     }
 
-    // ── 30-day bar chart ──────────────────────────────────────────────────────
+
 
     /**
      * Renders a 30-day ASCII bar chart of daily token savings.
@@ -191,7 +191,7 @@ public final class AsciiGraphRenderer {
         return sb.toString().stripTrailing();
     }
 
-    // ── History table ─────────────────────────────────────────────────────────
+
 
     /**
      * Renders the {@code --history} table with per-row savings icons.
@@ -228,7 +228,7 @@ public final class AsciiGraphRenderer {
         return sb.toString().stripTrailing();
     }
 
-    // ── Top commands table ────────────────────────────────────────────────────
+
 
     /**
      * Renders the {@code --top N} table.
@@ -265,7 +265,7 @@ public final class AsciiGraphRenderer {
         return sb.toString().stripTrailing();
     }
 
-    // ── Daily / Weekly table ──────────────────────────────────────────────────
+
 
     public static String renderDailyTable(List<DailyStat> stats) {
         if (stats.isEmpty()) return "No daily data recorded.";
@@ -296,7 +296,7 @@ public final class AsciiGraphRenderer {
         return sb.toString().stripTrailing();
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+
 
     private static String line(String label, String value) {
         return String.format("%-18s %s%n", label + ":", value);

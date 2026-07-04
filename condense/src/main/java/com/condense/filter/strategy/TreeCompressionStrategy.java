@@ -2,23 +2,7 @@ package com.condense.filter.strategy;
 
 import java.util.*;
 
-/**
- * Converts a flat list of file paths into a compact directory tree.
- *
- * <p>Directories with more than {@link #MAX_FILES_PER_DIR} files show a summary
- * line instead of every file, keeping the output compact for large repos.
- *
- * <p>Example (50 paths → 8 lines):
- * <pre>
- * src/
- *   main/
- *     java/com/example/    (12 files)
- *   test/
- *     java/com/example/
- *       FooTest.java
- *       BarTest.java
- * </pre>
- */
+
 public final class TreeCompressionStrategy {
 
     private TreeCompressionStrategy() {}
