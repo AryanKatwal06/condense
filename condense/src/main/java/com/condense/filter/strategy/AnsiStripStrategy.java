@@ -2,12 +2,7 @@ package com.condense.filter.strategy;
 
 import java.util.regex.Pattern;
 
-/**
- * Strips ANSI escape sequences and carriage-return progress lines from text.
- *
- * <p>Used by install/download filters (npm install, pip install, cargo install,
- * docker build) that produce animated progress output not suitable for AI context.
- */
+
 public final class AnsiStripStrategy {
 
     private AnsiStripStrategy() {}

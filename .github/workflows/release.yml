@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 jobs:
-  # ── Create the GitHub Release first ────────────────────────────────────────
+
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
@@ -64,7 +64,7 @@ jobs:
           prerelease: ${{ contains(github.ref_name, '-') }}
           make_latest: ${{ !contains(github.ref_name, '-') }}
 
-  # ── Build native binaries for each platform ─────────────────────────────────
+
   build-native:
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
@@ -171,7 +171,7 @@ jobs:
           path: condense/condense-${{ matrix.target }}${{ matrix.binary_suffix }}
           if-no-files-found: error
 
-  # ── Build .deb package (Linux x64 only) ────────────────────────────────────
+
   build-deb:
     name: Build .deb Package
     runs-on: ubuntu-latest
@@ -208,7 +208,7 @@ jobs:
           name: condense-deb
           path: condense/condense_*.deb
 
-  # ── Sign, SBOM, and Publish ─────────────────────────────────────────────────
+
   publish-release:
     name: Publish Release Artifacts
     runs-on: ubuntu-latest

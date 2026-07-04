@@ -12,24 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * Filters {@code git status} output into a compact single-line summary.
- *
- * <h2>Output examples</h2>
- * <pre>
- * Normal:       [main] staged: 2 | modified: 1 | untracked: 3
- * Clean:        [main] ✓ clean
- * Ultra-compact: [main] ↑S:2 M:1 ?:3
- * Verbose:      [main] staged: 2 | modified: 1 | untracked: 3
- *                 A src/main/java/com/condense/NewFile.java
- *                 m pom.xml
- *                 ? notes.txt
- * </pre>
- *
- * <h2>Failure passthrough</h2>
- * Non-zero exit (e.g. exit 128: "fatal: not a git repository") is passed
- * through unchanged so the AI sees the actual git error.
- */
+
 @CommandFilter("git status")
 @ApplicationScoped
 public class GitStatusFilter implements FilterStrategy {
@@ -62,7 +45,7 @@ public class GitStatusFilter implements FilterStrategy {
         }
     }
 
-    // ── private ──────────────────────────────────────────────────────────────
+
 
     private FilterResult filter(ExecutionResult result, int verbose, boolean ultraCompact) {
         String branch = null;

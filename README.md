@@ -1,9 +1,8 @@
 # Condense
 
-![GitHub Release](https://img.shields.io/github/v/release/AryanKatwal06/code-condenser)
-![License](https://img.shields.io/github/license/AryanKatwal06/code-condenser)
-![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
-
+[![Release](https://img.shields.io/github/v/release/AryanKatwal06/code-condenser)](https://github.com/AryanKatwal06/code-condenser/releases/latest)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![Build](https://github.com/AryanKatwal06/code-condenser/actions/workflows/build.yml/badge.svg)](https://github.com/AryanKatwal06/code-condenser/actions/workflows/build.yml)
 **Condense** — A high-performance CLI proxy that reduces AI agent token usage by 60-92% by filtering and compressing command output before the AI ever sees it.
 
 ---
@@ -71,7 +70,7 @@ irm https://github.com/AryanKatwal06/code-condenser/releases/latest/download/ins
 Then run `condense --version` to verify.
 
 ### Manual Installation
-You can download the binary for your platform directly from the [GitHub Releases](https://github.com/AryanKatwal06/code-condenser/releases) page. Make it executable (`chmod +x` on Linux/macOS) and place it on your PATH (e.g., `~/.local/bin/` on Linux/macOS, or any directory on your PATH on Windows).
+You can download the binary for your platform directly from the [GitHub Releases](https://github.com/AryanKatwal06/code-condenser/releases) page. Make it executable (`chmod +x` on Linux/macOS) and place it on your PATH (e.g., `~/.local/bin/` on Linux/macOS, or any directory on your PATH on Windows). Then run `condense --version` to verify. Note that the install script requires internet access to download from GitHub Releases.
 
 ---
 
@@ -130,16 +129,18 @@ For any unrecognized command, condense passes output through unchanged — it is
 
 Running `condense init -g` installs hooks into your AI coding assistant. This means every shell command your AI runs is automatically intercepted and filtered by condense — the AI never has to know condense exists.
 
-| AI Tool | Hook Type | Status | Notes |
-|---|---|---|---|
-| Claude Code | PreToolUse (JSON stdin/stdout) | ✅ Verified | Rewrites command transparently |
-| Cursor | beforeShellExecution (deny+redirect) | ✅ Verified | AI retries with condense prefix |
-| GitHub Copilot CLI | preToolUse (deny+allow) | ✅ Verified | Cross-platform Bash+PowerShell |
-| Gemini CLI | BeforeTool (deny+redirect) | ✅ Verified | Requires paid API key (free tier deprecated Jun 2026) |
-| Cline | PreToolUse (executable script) | ✅ Verified | macOS/Linux only; Windows not supported by Cline |
-| Windsurf | pre_run_command (exit code 2) | ⚠️ Beta | Cascade Hooks are beta; auto-retry behavior unconfirmed |
+| Tool | Hook mechanism | Status |
+|---|---|---|
+| Claude Code | PreToolUse JSON stdin/stdout — silently rewrites command | ✅ Supported |
+| Cursor | beforeShellExecution — denies and suggests condense prefix | ✅ Supported |
+| GitHub Copilot CLI | preToolUse deny/allow — cross-platform Bash + PowerShell | ✅ Supported |
+| Gemini CLI | BeforeTool deny/redirect — requires paid API key (free tier ended Jun 2026) | ✅ Supported |
+| Cline | PreToolUse executable script — macOS/Linux only (Cline doesn't support Windows hooks) | ✅ Supported |
+| Windsurf | pre_run_command exit-code hook — Beta; auto-retry behavior unconfirmed | ⚠️ Beta |
 
-To verify hooks are working, run a few commands via your AI and then run `condense gain` to see the recorded commands. To remove hooks, run `condense init --remove`. For full details and troubleshooting, see [HOOKS.md](docs/HOOKS.md).
+`condense init --remove` removes all hooks. `condense init` (no -g) installs project-local hooks only.
+
+To verify hooks are working, run a few commands via your AI and then run `condense gain` to see the recorded commands. For full details and troubleshooting, see [HOOKS.md](docs/HOOKS.md).
 
 ---
 
@@ -147,11 +148,11 @@ To verify hooks are working, run a few commands via your AI and then run `conden
 
 Condense is built as a GraalVM native image for instant startup.
 
-| Platform | Cold start | Binary size | Peak RSS |
-|---|---|---|---|
-| Linux x64 | 8-11 ms | 54.6 MB | ~33 MB |
-| macOS arm64 (Apple Silicon) | 18-61 ms | 52.7 MB | ~30 MB |
-| Windows x64 | 34-61 ms | 54.5 MB | ~35 MB |
+| Platform | Startup | Binary size |
+|---|---|---|
+| Linux x64 | 6 ms | 52 MB |
+| macOS arm64 (Apple Silicon) | 43–58 ms | 50 MB |
+| Windows x64 | 34–54 ms | 52 MB |
 
 *(Note: "Cold start" is measured on each new command invocation since condense is a per-command proxy, not a persistent daemon. Linux performance is notably consistent due to better I/O characteristics on GitHub's Linux runners.)*
 
@@ -194,7 +195,7 @@ Top Commands by Tokens Saved:
 3. git status (115,000 saved)
 ...
 ```
-Other flags include `--daily`, `--weekly`, `--scope project`, and `--format json`.
+Other flags include `--daily`, `--weekly`, `--top 10`, `--scope project`, `--since 7`, and `--format json`.
 
 ---
 
@@ -207,6 +208,11 @@ Condense can be configured via a TOML file.
 
 Example configuration:
 ```toml
+# General settings
+[general]
+# Whether to check for updates automatically
+auto_update = true
+
 [hooks]
 # Commands to exclude from hook interception (passed through directly)
 exclude_commands = []

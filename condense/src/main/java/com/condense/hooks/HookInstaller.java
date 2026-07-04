@@ -15,16 +15,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Installs and manages Condense hooks for AI coding tools.
- *
- * <p>Each hook is a shell script (or JSON config) placed in the tool's hook
- * directory. The script intercepts shell commands and routes matching ones
- * through {@code condense} for output compression.
- *
- * <p>Hook files contain a sentinel comment {@link HookTemplate#SENTINEL} so
- * Condense can identify and remove them without disturbing other hook files.
- */
+
 @ApplicationScoped
 public class HookInstaller {
 
@@ -33,7 +24,7 @@ public class HookInstaller {
     @Inject
     ConfigLoader configLoader;
 
-    // ── Public API ────────────────────────────────────────────────────────────
+
 
     /**
      * Installs hooks for all supported tools into the user's home directory.
@@ -88,13 +79,13 @@ public class HookInstaller {
         return results;
     }
 
-    // ── Result records ────────────────────────────────────────────────────────
+
 
     public record InstallResult(HookTool tool, boolean success, String message) {}
     public record StatusResult(HookTool tool, boolean installed, Path hookFile) {}
     public record RemoveResult(HookTool tool, boolean removed, String message) {}
 
-    // ── Private implementation ────────────────────────────────────────────────
+
 
     private InstallResult install(HookTool tool, Path home, List<String> excluded) {
         if (tool == HookTool.CLAUDE_CODE) {

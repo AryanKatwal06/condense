@@ -30,7 +30,7 @@ import java.util.List;
 )
 public class GainCommand implements Runnable {
 
-    // ── Options ───────────────────────────────────────────────────────────────
+
 
     @Option(names = "--graph",
         description = "Render a 30-day ASCII bar chart of daily token savings.")
@@ -72,16 +72,16 @@ public class GainCommand implements Runnable {
         defaultValue = "text", paramLabel = "FORMAT")
     String format;
 
-    // ── Injection ─────────────────────────────────────────────────────────────
+
 
     @Inject
     GainRepository gainRepo;
 
-    // ── Jackson for JSON output ───────────────────────────────────────────────
+
 
     private static final ObjectMapper JSON = com.condense.core.Mappers.JSON;
 
-    // ── Entry point ───────────────────────────────────────────────────────────
+
 
     @Override
     public void run() {
@@ -137,7 +137,7 @@ public class GainCommand implements Runnable {
         }
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+
 
     private void renderJson(int effectiveSince) throws Exception {
         GainReport report = gainRepo.buildReport(scope, effectiveSince, top);

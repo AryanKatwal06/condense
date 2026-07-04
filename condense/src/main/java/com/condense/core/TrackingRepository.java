@@ -14,14 +14,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Persists command execution records to a local SQLite database for
- * analytics reporting via {@code condense gain}.
- *
- * <p>The database is created automatically on first use at the path
- * returned by {@link PlatformDirs#getDatabaseFile()}. Analytics failures
- * are non-fatal — they log a warning and never propagate to the caller.
- */
+
 @ApplicationScoped
 public class TrackingRepository {
 
@@ -278,7 +271,7 @@ public class TrackingRepository {
         return result;
     }
 
-    // ── Helper records (inner) ────────────────────────────────────────────────────
+
 
     public record AggregateStats(
         long totalCommands, long sumRaw, long sumOut, long sumExecMs) {
@@ -313,7 +306,7 @@ public class TrackingRepository {
         }
     }
 
-    // ── SQL helpers ───────────────────────────────────────────────────────────────
+
 
     private String buildAggregateQuery(long sinceEpoch, String projectHash) {
         return "SELECT COUNT(*) AS total_commands, " +
@@ -341,7 +334,7 @@ public class TrackingRepository {
         }
     }
 
-    // ── private ──────────────────────────────────────────────────────────────
+
 
     private Connection connection() throws SQLException {
         if (connection == null || connection.isClosed()) {
