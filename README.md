@@ -1,0 +1,252 @@
+# Condense
+
+![GitHub Release](https://img.shields.io/github/v/release/AryanKatwal06/code-condenser)
+![License](https://img.shields.io/github/license/AryanKatwal06/code-condenser)
+![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
+
+**Condense** — A high-performance CLI proxy that reduces AI agent token usage by 60-92% by filtering and compressing command output before the AI ever sees it.
+
+---
+
+## The Problem
+
+When an AI coding agent runs `pytest`, `cargo test`, `git diff`, or `kubectl pods`, it receives thousands of lines of raw output. This consumes massive context window tokens even when 95% of that output is irrelevant noise (passing tests, redundant file paths, ANSI escape codes, progress bars, etc.). This leads to slower response times, degraded AI reasoning (due to "lost in the middle" effects), and high API costs.
+
+Condense solves this. It sits between the AI agent and the shell, intercepts command output, applies command-specific compression logic, and returns only the signal the AI actually needs. For example, a failed `pytest` run that produces 2,400 lines of output becomes 8 lines showing only the failed tests and summary. In production analytics, across 513 commands recorded, 960,552 input tokens were reduced to 73,705 output tokens — a **92% savings**.
+
+## How It Works
+
+Here's an example of `pytest` output:
+
+**Without condense** (2000+ lines of raw output):
+```text
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.4.0, pluggy-1.0.0
+rootdir: /workspace/project
+collected 412 items
+
+tests/test_auth.py .................................................... [ 12%]
+tests/test_api.py ......................................F.............. [ 25%]
+tests/test_models.py .................................................. [ 38%]
+... (1800 more lines) ...
+=========================== short test summary info ============================
+FAILED tests/test_api.py::test_login_timeout - TimeoutError
+=================== 1 failed, 411 passed in 12.45s =====================
+```
+
+**With condense** (compressed to 6 lines):
+```text
+pytest failed (exit code 1)
+Failed Tests:
+- tests/test_api.py::test_login_timeout
+  Error: TimeoutError
+Summary: 1 failed, 411 passed in 12.45s
+```
+
+**The Mechanism:**
+1. The AI agent runs `condense pytest` instead of `pytest`
+2. Condense executes the real command and captures its full output
+3. Condense applies pytest-specific filtering and returns only the failures and summary to the AI
+
+---
+
+## Installation
+
+### Linux (x64)
+```bash
+curl -fsSL https://github.com/AryanKatwal06/code-condenser/releases/latest/download/install.sh | bash
+```
+Then run `condense --version` to verify.
+
+### macOS (Apple Silicon / Intel)
+```bash
+curl -fsSL https://github.com/AryanKatwal06/code-condenser/releases/latest/download/install.sh | bash
+```
+Then run `condense --version` to verify.
+
+### Windows (x64)
+```powershell
+irm https://github.com/AryanKatwal06/code-condenser/releases/latest/download/install.ps1 | iex
+```
+Then run `condense --version` to verify.
+
+### Manual Installation
+You can download the binary for your platform directly from the [GitHub Releases](https://github.com/AryanKatwal06/code-condenser/releases) page. Make it executable (`chmod +x` on Linux/macOS) and place it on your PATH (e.g., `~/.local/bin/` on Linux/macOS, or any directory on your PATH on Windows).
+
+---
+
+## Quick Start
+
+1. **Verify installation**: `condense --version`
+2. **Try it manually**: `condense git status` (see the compressed output yourself)
+3. **View your savings**: `condense gain` (shows your token analytics dashboard)
+4. **Set up AI tool integration**: `condense init -g` (installs hooks into your AI coding assistant so it automatically uses condense without changing commands)
+5. **Configure exclusions** (optional): Check your configuration file to exclude specific commands if needed.
+
+---
+
+## Supported Commands
+
+For any unrecognized command, condense passes output through unchanged — it is always safe to prefix any command with `condense`.
+
+| Command | What gets filtered | Typical reduction |
+|---|---|---|
+| `git status` | Unchanged files, branch details | ~70% |
+| `git diff` | Context lines, metadata | ~60% |
+| `git log` | Full commit bodies, author details | ~75% |
+| `git push` | Remote tracking info | ~65% |
+| `git commit` | Pre-commit hook noise, staged details | ~60% |
+| `git add` | Ignored files, verbose flags | ~50% |
+| `cargo test` | Passing tests, compilation output | ~85% |
+| `cargo build` | Verbose build steps | ~70% |
+| `cargo clippy` | Warning grouping | ~80% |
+| `cargo install` | Download progress, verbose logs | ~90% |
+| `pytest` | Passing tests, setup output | ~90% |
+| `python -m pytest` | Passing tests, setup output | ~90% |
+| `go test` | Passing test events | ~85% |
+| `jest` | Passing tests, coverage | ~88% |
+| `vitest` | Passing tests | ~87% |
+| `tsc` | Successful compilations | ~75% |
+| `eslint` | Grouped by rule | ~80% |
+| `ruff check` | Grouped violations | ~82% |
+| `golangci-lint run` | Grouped warnings | ~80% |
+| `docker ps` | Verbose container details | ~65% |
+| `docker build` | Step-by-step layer noise | ~80% |
+| `docker logs` | Timestamp noise, repetitive lines | ~50% |
+| `kubectl` (pods/describe) | Verbose status fields | ~70% |
+| `aws ec2 describe-instances` | JSON structure compression | ~85% |
+| `ls` | Long listing details | ~60% |
+| `find` | Full path verbosity | ~55% |
+| `grep` / `rg` | Context lines | ~50% |
+| `cat` | Truncates extremely large files | ~40% |
+| `make` | Build lifecycle noise | ~75% |
+| `mvn` / `gradle` | Build lifecycle noise, downloads | ~80% |
+| `npm install` | Dependency resolution noise | ~85% |
+| `pip install` | Download progress bars | ~90% |
+
+---
+
+## AI Tool Integration
+
+Running `condense init -g` installs hooks into your AI coding assistant. This means every shell command your AI runs is automatically intercepted and filtered by condense — the AI never has to know condense exists.
+
+| AI Tool | Hook Type | Status | Notes |
+|---|---|---|---|
+| Claude Code | PreToolUse (JSON stdin/stdout) | ✅ Verified | Rewrites command transparently |
+| Cursor | beforeShellExecution (deny+redirect) | ✅ Verified | AI retries with condense prefix |
+| GitHub Copilot CLI | preToolUse (deny+allow) | ✅ Verified | Cross-platform Bash+PowerShell |
+| Gemini CLI | BeforeTool (deny+redirect) | ✅ Verified | Requires paid API key (free tier deprecated Jun 2026) |
+| Cline | PreToolUse (executable script) | ✅ Verified | macOS/Linux only; Windows not supported by Cline |
+| Windsurf | pre_run_command (exit code 2) | ⚠️ Beta | Cascade Hooks are beta; auto-retry behavior unconfirmed |
+
+To verify hooks are working, run a few commands via your AI and then run `condense gain` to see the recorded commands. To remove hooks, run `condense init --remove`. For full details and troubleshooting, see [HOOKS.md](docs/HOOKS.md).
+
+---
+
+## Performance
+
+Condense is built as a GraalVM native image for instant startup.
+
+| Platform | Cold start | Binary size | Peak RSS |
+|---|---|---|---|
+| Linux x64 | 8-11 ms | 54.6 MB | ~33 MB |
+| macOS arm64 (Apple Silicon) | 18-61 ms | 52.7 MB | ~30 MB |
+| Windows x64 | 34-61 ms | 54.5 MB | ~35 MB |
+
+*(Note: "Cold start" is measured on each new command invocation since condense is a per-command proxy, not a persistent daemon. Linux performance is notably consistent due to better I/O characteristics on GitHub's Linux runners.)*
+
+---
+
+## Privacy
+
+**condense collects zero telemetry.** All analytics data (`condense gain`) is stored locally in a SQLite database at:
+- Linux: `~/.local/share/condense/condense.db`
+- macOS: `~/Library/Application Support/condense/condense.db`
+- Windows: `%APPDATA%\condense\condense.db`
+
+condense makes no network calls during normal operation. The only exception is the optional `condense update` command, which contacts GitHub Releases when explicitly invoked by you. condense never phones home, tracks usage, or sends any data anywhere.
+
+---
+
+## condense gain (Analytics)
+
+`condense gain` gives you a detailed breakdown of your token savings.
+
+```bash
+$ condense gain --graph
+
+Tokens Saved: 886,847 (92.3%)
+Total Commands: 513
+
+[ 30-Day Savings Trend ]
+  90k ┤         █
+  75k ┤         █       █
+  60k ┤ █       █ █     █
+  45k ┤ █   █   █ █ █   █
+  30k ┤ █ █ █ █ █ █ █ █ █
+  15k ┤ █ █ █ █ █ █ █ █ █ █
+      └────────────────────────
+
+$ condense gain --top 10
+Top Commands by Tokens Saved:
+1. pytest (420,500 saved)
+2. cargo build (210,000 saved)
+3. git status (115,000 saved)
+...
+```
+Other flags include `--daily`, `--weekly`, `--scope project`, and `--format json`.
+
+---
+
+## Configuration
+
+Condense can be configured via a TOML file.
+- Linux: `~/.config/condense/condense.toml`
+- macOS: `~/Library/Application Support/condense/condense.toml`
+- Windows: `%APPDATA%\condense\condense.toml`
+
+Example configuration:
+```toml
+[hooks]
+# Commands to exclude from hook interception (passed through directly)
+exclude_commands = []
+
+[tee]
+# Save raw output on command failure for AI inspection
+# Options: "failures" | "always" | "never"
+mode = "failures"
+```
+
+---
+
+## Updating
+
+Run `condense update` to automatically check GitHub Releases, download the correct platform binary, verify its SHA-256 checksum, and atomically replace the current binary. On success, it prints:
+> Successfully updated to vX.Y.Z! The new version will be used the next time you run condense.
+
+---
+
+## Building from Source
+
+Prerequisites: GraalVM JDK 21 (Mandrel 23.1+ recommended), Maven 3.9+
+
+```bash
+git clone https://github.com/AryanKatwal06/code-condenser.git
+cd code-condenser/condense
+./mvnw test                        # run all 140+ tests
+./mvnw package -Pnative            # build native binary
+./target/condense --version        # verify
+```
+
+---
+
+## Contributing
+
+We welcome pull requests! Adding new command filters requires demonstrating ≥60% token savings using golden fixture tests. Existing tests must pass. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+
+---
+
+## License & Attribution
+
+Condense is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+Condense is inspired by the original Rust implementation at [github.com/bitan-del/zap](https://github.com/bitan-del/zap).

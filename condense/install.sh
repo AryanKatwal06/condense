@@ -21,8 +21,22 @@ set -euo pipefail
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
-REPO="YOUR_ORG/condense"
-VERSION="${CONDENSE_VERSION:-${project.version}}"
+REPO="AryanKatwal06/code-condenser"
+
+if [ -z "${CONDENSE_VERSION:-}" ] || [ "${CONDENSE_VERSION}" = "\${project.version}" ]; then
+  if command -v curl >/dev/null 2>&1; then
+    LATEST_TAG=$(curl -s https://api.github.com/repos/${REPO}/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || true)
+  elif command -v wget >/dev/null 2>&1; then
+    LATEST_TAG=$(wget -qO- https://api.github.com/repos/${REPO}/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || true)
+  fi
+  VERSION="${LATEST_TAG#v}"
+  if [ -z "$VERSION" ]; then
+    VERSION="1.0.1"
+  fi
+else
+  VERSION="${CONDENSE_VERSION}"
+fi
+
 BASE_URL="https://github.com/${REPO}/releases/download/v${VERSION}"
 BINARY_NAME="condense"
 
@@ -126,6 +140,20 @@ verify_checksum() {
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 main() {
+  if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "Usage: install.sh [OPTIONS]"
+    echo ""
+    echo "Installs Condense, a high-performance CLI proxy for AI coding agents."
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help message"
+    echo ""
+    echo "Environment Variables:"
+    echo "  CONDENSE_VERSION   Force install of a specific version (e.g. 1.0.1)"
+    echo "                     If unset, defaults to the latest GitHub release."
+    exit 0
+  fi
+
   echo ""
   echo "  Installing Condense v${VERSION}"
   echo "  Repository: https://github.com/${REPO}"

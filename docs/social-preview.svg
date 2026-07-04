@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#bg)" />
+  <text x="640" y="280" font-family="system-ui, sans-serif" font-size="120" font-weight="bold" fill="#ffffff" text-anchor="middle">
+    condense
+  </text>
+  <text x="640" y="380" font-family="system-ui, sans-serif" font-size="48" fill="#94a3b8" text-anchor="middle">
+    High-performance CLI proxy
+  </text>
+  <text x="640" y="440" font-family="system-ui, sans-serif" font-size="36" fill="#38bdf8" text-anchor="middle">
+    Save 60-92% AI agent token usage
+  </text>
+</svg>

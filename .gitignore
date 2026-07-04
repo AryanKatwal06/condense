@@ -16,6 +16,7 @@ verify-rc5/
 run.json
 run2.json
 log.txt
+condense/test-home/
 
 # Binaries and downloaded tools
 condense-linux-*
