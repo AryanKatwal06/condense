@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/AryanKatwal06/code-condenser)](https://github.com/AryanKatwal06/code-condenser/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build](https://github.com/AryanKatwal06/code-condenser/actions/workflows/build.yml/badge.svg)](https://github.com/AryanKatwal06/code-condenser/actions/workflows/build.yml)
-**Condense** — A high-performance CLI proxy that reduces AI agent token usage by 60-92% by filtering and compressing command output before the AI ever sees it.
+**Condense** sits between your AI coding assistant and the shell. It filters command output so the AI sees a compact summary instead of thousands of raw lines — saving 60-92% of context window tokens.
 
 ---
 
@@ -159,7 +159,7 @@ AI agents increasingly ship with their own context-saving mechanisms. Condense i
 If your AI is struggling with context limits, you can enable ultra-compact mode. This trades human readability for maximum token efficiency.
 
 ```toml
-# ~/.config/condense/condense.toml
+# ~/.config/condense/config.toml
 [general]
 ultra_compact = true
 ```
@@ -226,9 +226,9 @@ Other flags include `--daily`, `--weekly`, `--top 10`, `--scope project`, `--sin
 ## Configuration
 
 Condense can be configured via a TOML file.
-- Linux: `~/.config/condense/condense.toml`
-- macOS: `~/Library/Application Support/condense/condense.toml`
-- Windows: `%APPDATA%\condense\condense.toml`
+- Linux: `~/.config/condense/config.toml`
+- macOS: `~/Library/Application Support/condense/config.toml`
+- Windows: `%APPDATA%\condense\config.toml`
 
 Example configuration:
 ```toml
@@ -272,7 +272,7 @@ cd code-condenser/condense
 
 ## Contributing
 
-We welcome pull requests! Adding new command filters requires demonstrating ≥60% token savings using golden fixture tests. Existing tests must pass. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+Pull requests are open. New command filters must demonstrate ≥60% token savings using golden fixture tests, and existing tests must pass. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

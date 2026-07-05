@@ -1,7 +1,6 @@
 # Contributing to Condense
 
-Thank you for your interest in contributing to Condense! This guide explains how to add
-new command filters, run tests, and submit pull requests.
+This guide covers adding new command filters, running tests, and submitting pull requests.
 
 ## Prerequisites
 
