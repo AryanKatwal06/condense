@@ -1,0 +1,6 @@
+NAME                          READY   STATUS             RESTARTS   AGE
+api-deployment-7d4b9f-xkv2p   1/1     Running            0          2d
+api-deployment-7d4b9f-mnb3q   0/1     CrashLoopBackOff   5          1h
+db-statefulset-0              0/1     Pending            0          10m
+redis-deployment-5f9c-p2x8k   1/1     Running            0          1d
+worker-deployment-abc-defgh   0/1     OOMKilled          3          30m

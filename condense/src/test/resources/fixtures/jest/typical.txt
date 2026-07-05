@@ -1,0 +1,12 @@
+PASS src/utils/math.test.js
+FAIL src/components/Button.test.js
+● Button › renders without crashing
+expect(received).toBeTruthy()
+Received: false
+FAIL src/api/auth.test.js
+● auth › should reject invalid token
+Error: timeout of 5000ms exceeded
+Test Suites: 2 failed, 1 passed, 3 total
+Tests:       2 failed, 8 passed, 10 total
+Snapshots:   0 total
+Time:        3.456 s

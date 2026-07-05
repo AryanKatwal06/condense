@@ -1,0 +1,11 @@
+[INFO] Scanning for projects...
+[INFO] Building myapp 1.0.0
+[INFO] --- compiler:3.11.0:compile (default-compile) @ myapp ---
+[ERROR] COMPILATION ERROR :
+[ERROR] /src/main/java/com/example/App.java:[15,10] error: cannot find symbol
+[ERROR]   symbol:   variable undefined
+[ERROR]   location: class App
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.123 s

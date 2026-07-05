@@ -1,0 +1,19 @@
+
+Task :compileJava FAILED
+
+FAILURE: Build failed with an exception.
+
+What went wrong:
+Execution failed for task ':compileJava'.
+
+
+Compilation failed; see the compiler error output for details.
+
+
+Try:
+
+
+Run with --info or --debug option to get more log output.
+
+BUILD FAILED in 2s
+1 actionable task: 1 executed

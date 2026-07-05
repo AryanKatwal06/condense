@@ -1,0 +1,5 @@
+{"Time":"2024-01-15T10:00:00Z","Action":"run","Package":"example.com/myapp","Test":"TestAdd"}
+{"Time":"2024-01-15T10:00:00Z","Action":"pass","Package":"example.com/myapp","Test":"TestAdd","Elapsed":0}
+{"Time":"2024-01-15T10:00:00Z","Action":"run","Package":"example.com/myapp","Test":"TestSubtract"}
+{"Time":"2024-01-15T10:00:00Z","Action":"pass","Package":"example.com/myapp","Test":"TestSubtract","Elapsed":0}
+{"Time":"2024-01-15T10:00:00Z","Action":"pass","Package":"example.com/myapp","Elapsed":0.001}

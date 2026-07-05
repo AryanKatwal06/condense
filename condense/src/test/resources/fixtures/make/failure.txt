@@ -1,0 +1,5 @@
+gcc -Wall -o main main.c utils.c
+main.c: In function 'calculate':
+main.c:15:5: error: 'result' undeclared (first use in this function)
+main.c:15:5: note: each undeclared identifier is reported only once
+make: *** [Makefile:8: main] Error 1

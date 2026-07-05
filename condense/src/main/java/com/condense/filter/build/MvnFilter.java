@@ -49,7 +49,11 @@ public class MvnFilter implements FilterStrategy {
         }
 
         if (isSuccess) {
-            return FilterResult.of(result, "✓ BUILD SUCCESS" + (testLine.isBlank() ? "" : " — " + testLine.trim()));
+            String tl = testLine.trim();
+            if (!tl.isBlank() && !config.commandConfig("mvn").showTiming(true) && tl.contains(", Time elapsed:")) {
+                tl = tl.substring(0, tl.indexOf(", Time elapsed:")).trim();
+            }
+            return FilterResult.of(result, "✓ BUILD SUCCESS" + (tl.isBlank() ? "" : " — " + tl));
         }
 
         if (isFailure) {

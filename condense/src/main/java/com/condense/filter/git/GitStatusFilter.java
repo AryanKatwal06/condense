@@ -46,8 +46,62 @@ public class GitStatusFilter implements FilterStrategy {
     }
 
 
+    private boolean isPorcelainFormat(ExecutionResult result) {
+        try (java.util.stream.Stream<String> stream = result.stdoutLines()) {
+            return stream.limit(5).allMatch(line ->
+                line.length() >= 3 &&
+                (line.charAt(2) == ' ') &&
+                "MADRCU?! ".indexOf(line.charAt(0)) >= 0 &&
+                "MADRCU?! ".indexOf(line.charAt(1)) >= 0
+            );
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private FilterResult parsePorcelain(ExecutionResult result, int verbose,
+                                        boolean ultraCompact) throws java.io.IOException {
+        int staged = 0, modified = 0, untracked = 0;
+        List<String> changedFiles = new ArrayList<>();
+
+        try (java.util.stream.Stream<String> stream = result.stdoutLines()) {
+            for (String line : (Iterable<String>) stream::iterator) {
+                if (line.length() < 3) continue;
+                char index = line.charAt(0);
+                char work  = line.charAt(1);
+                String path = line.substring(3);
+
+                if (index == '?' && work == '?') {
+                    untracked++;
+                    changedFiles.add("? " + path);
+                } else {
+                    if (index != ' ' && index != '?') { staged++; changedFiles.add("S " + path); }
+                    if (work  != ' ' && work  != '?') { modified++; changedFiles.add("M " + path); }
+                }
+            }
+        }
+
+        if (staged == 0 && modified == 0 && untracked == 0) {
+            return FilterResult.of(result, "✓ clean");
+        }
+
+        String summary = buildSummary("", staged, modified, untracked, ultraCompact);
+        if (verbose >= 2 && !changedFiles.isEmpty()) {
+            StringBuilder sb = new StringBuilder(summary).append('\n');
+            changedFiles.forEach(f -> sb.append("  ").append(f).append('\n'));
+            return FilterResult.of(result, sb.toString().stripTrailing());
+        }
+        return FilterResult.of(result, summary);
+    }
 
     private FilterResult filter(ExecutionResult result, int verbose, boolean ultraCompact) {
+        if (isPorcelainFormat(result)) {
+            try {
+                return parsePorcelain(result, verbose, ultraCompact);
+            } catch (Exception e) {
+                return FilterResult.passthrough(result);
+            }
+        }
         String branch = null;
         boolean isClean = false;
 

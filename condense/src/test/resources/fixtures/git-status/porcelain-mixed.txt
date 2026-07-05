@@ -1,0 +1,6 @@
+M  src/main.java
+MM src/util.java
+ M src/config.java
+?? new-file.txt
+?? another-new.txt
+A  staged-new.java

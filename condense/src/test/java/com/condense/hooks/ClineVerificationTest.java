@@ -32,7 +32,8 @@ public class ClineVerificationTest {
             public com.condense.core.CondenseConfig load() {
                 return new com.condense.core.CondenseConfig(
                     new com.condense.core.CondenseConfig.HooksConfig(List.of()),
-                    new com.condense.core.CondenseConfig.TeeConfig(true, com.condense.core.TeeMode.FAILURES)
+                    new com.condense.core.CondenseConfig.TeeConfig(true, com.condense.core.TeeMode.FAILURES),
+                    java.util.Map.of()
                 );
             }
         };

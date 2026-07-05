@@ -1,0 +1,7 @@
+src/main.py:4:1: F401 [] os imported but unused
+src/main.py:17:5: E501 Line too long (92 > 88 characters)
+src/utils.py:8:1: F401 [] sys imported but unused
+src/utils.py:23:9: E711 Comparison to None (use is or is not)
+src/models.py:45:1: W293 Whitespace before ':' on a blank line
+Found 5 errors.
+[*] 2 fixable with the --fix option.

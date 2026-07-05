@@ -1,0 +1,5 @@
+RUN  v1.0.0 /workspace/project
+✓ src/math.test.ts (3 tests) 14ms
+✓ src/utils.test.ts (2 tests) 8ms
+Tests  5 passed (5)
+Duration  38ms
