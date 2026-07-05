@@ -1,6 +1,8 @@
 package com.condense.hooks;
 
 import com.condense.core.ConfigLoader;
+import com.condense.hooks.HookInstaller;
+import com.condense.hooks.HookTool;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

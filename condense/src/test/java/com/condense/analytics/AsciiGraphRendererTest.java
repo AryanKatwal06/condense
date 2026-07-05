@@ -9,7 +9,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AsciiGraphRendererTest {
 
-    // ── Efficiency meter ──────────────────────────────────────────────────────
 
     @Test
     void meterAt0Pct_allEmpty() {
@@ -54,7 +53,6 @@ class AsciiGraphRendererTest {
         assertThat(AsciiGraphRenderer.efficiencyMeter(-10)).hasSize(24);
     }
 
-    // ── Summary ───────────────────────────────────────────────────────────────
 
     @Test
     void renderSummary_containsAllRequiredFields() {
@@ -77,7 +75,6 @@ class AsciiGraphRendererTest {
         assertThat(AsciiGraphRenderer.renderSummary(report)).contains("════");
     }
 
-    // ── History ───────────────────────────────────────────────────────────────
 
     @Test
     void renderHistory_highSavingsGetsTriangleIcon() {
@@ -100,7 +97,6 @@ class AsciiGraphRendererTest {
             .contains("No command history");
     }
 
-    // ── Graph ─────────────────────────────────────────────────────────────────
 
     @Test
     void renderGraph_emptyDataReturnsGuidanceMessage() {
@@ -121,7 +117,6 @@ class AsciiGraphRendererTest {
         assertThat(output).contains("|");
     }
 
-    // ── Top commands ──────────────────────────────────────────────────────────
 
     @Test
     void renderTopCommands_numberedCorrectly() {
