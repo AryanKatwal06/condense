@@ -19,7 +19,7 @@ class MakeFilterTest extends FilterTestSupport {
         FilterResult r = filter.apply("make",
             failure(2, fixture("make", "failure"), ""), config, 0, false);
         assertThat(r.output()).contains("error");
-        // assertCompressed(r);
+        assertCompressed(r);
     }
 
     @Test
@@ -27,7 +27,7 @@ class MakeFilterTest extends FilterTestSupport {
         FilterResult r = filter.apply("make",
             success(fixture("make", "success")), config, 0, false);
         assertThat(r.output()).containsAnyOf("success", "✓");
-        // assertCompressed(r);
+        assertCompressed(r);
     }
 
     @Test

@@ -1,4 +1,10 @@
-gcc -Wall -o main main.c utils.c
-gcc -Wall -o test test.c
-cp main /usr/local/bin/
-Build complete.
+mkdir -p build/obj
+gcc -Wall -O2 -DNDEBUG -I./include -c src/main.c -o build/obj/main.o
+gcc -Wall -O2 -DNDEBUG -I./include -c src/utils.c -o build/obj/utils.o
+gcc -Wall -O2 -DNDEBUG -I./include -c src/database.c -o build/obj/database.o
+gcc -Wall -O2 -DNDEBUG -I./include -c src/server.c -o build/obj/server.o
+gcc -Wall -O2 -DNDEBUG -I./include -c src/auth.c -o build/obj/auth.o
+gcc -o build/bin/app build/obj/main.o build/obj/utils.o build/obj/database.o build/obj/server.o build/obj/auth.o -lpthread -lm
+strip build/bin/app
+Build complete. App binary is located at build/bin/app.
+To install, run 'sudo make install'.
