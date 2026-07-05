@@ -55,4 +55,20 @@ class GoTestFilterTest extends FilterTestSupport {
             config, 0, false);
         assertThat(r.savingsPct()).isPositive();
     }
+
+    @Test
+    void plaintext_failures_areCompressed() {
+        String plaintextOutput = """
+            running 3 tests
+            test tests::test_add ... ok
+            --- FAIL: tests::test_multiply (0.00s)
+            --- FAIL: tests::test_divide (0.00s)
+            FAILED
+            """;
+        FilterResult r = filter.apply("go test",
+            new ExecutionResult(101, plaintextOutput, "", 200L),
+            config, 0, false);
+        assertThat(r.output()).contains("FAIL");
+        assertThat(r.wasFiltered()).isTrue();
+    }
 }

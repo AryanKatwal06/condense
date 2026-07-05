@@ -1,5 +1,21 @@
-gcc -Wall -o main main.c utils.c
-main.c: In function 'calculate':
-main.c:15:5: error: 'result' undeclared (first use in this function)
-main.c:15:5: note: each undeclared identifier is reported only once
-make: *** [Makefile:8: main] Error 1
+gcc -Wall -O2 -I./include -c src/main.c -o obj/main.o
+gcc -Wall -O2 -I./include -c src/utils.c -o obj/utils.o
+gcc -Wall -O2 -I./include -c src/parser.c -o obj/parser.o
+src/parser.c: In function 'parse_node':
+src/parser.c:45:12: warning: unused variable 'temp' [-Wunused-variable]
+   45 |     char * temp = buffer;
+      |            ^~~~
+gcc -Wall -O2 -I./include -c src/network.c -o obj/network.o
+src/network.c: In function 'connect_server':
+src/network.c:112:5: error: 'socket_fd' undeclared (first use in this function); did you mean 'socket_id'?
+  112 |     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+      |     ^~~~~~~~~
+      |     socket_id
+src/network.c:112:5: note: each undeclared identifier is reported only once for each function it appears in
+src/network.c:115:18: error: expected ';' before 'return'
+  115 |     connect(host)
+      |                  ^
+      |                  ;
+  116 |     return 0;
+      |     ~~~~~~        
+make: *** [Makefile:24: obj/network.o] Error 1

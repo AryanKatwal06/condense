@@ -1,19 +1,32 @@
-
-Task :compileJava FAILED
+> Task :clean UP-TO-DATE
+> Task :compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+> Task :processResources
+> Task :classes
+> Task :compileTestJava FAILED
+C:\projects\my-app\src\test\java\com\example\AppTest.java:12: error: cannot find symbol
+        assertEquals("expected", App.getResult());
+        ^
+  symbol:   method assertEquals(String,String)
+  location: class AppTest
+C:\projects\my-app\src\test\java\com\example\AppTest.java:15: error: cannot find symbol
+        assertTrue(App.isReady());
+        ^
+  symbol:   method assertTrue(boolean)
+  location: class AppTest
+2 errors
 
 FAILURE: Build failed with an exception.
 
-What went wrong:
-Execution failed for task ':compileJava'.
+* What went wrong:
+Execution failed for task ':compileTestJava'.
+> Compilation failed; see the compiler error output for details.
 
+* Try:
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
 
-Compilation failed; see the compiler error output for details.
-
-
-Try:
-
-
-Run with --info or --debug option to get more log output.
-
-BUILD FAILED in 2s
-1 actionable task: 1 executed
+BUILD FAILED in 3s
+4 actionable tasks: 3 executed, 1 up-to-date

@@ -19,7 +19,7 @@ class GradleFilterTest extends FilterTestSupport {
         FilterResult r = filter.apply("gradle build",
             failure(1, fixture("gradle", "failure"), ""), config, 0, false);
         assertThat(r.output()).contains("FAILED");
-        // assertCompressed(r);
+        assertCompressed(r);
     }
 
     @Test
@@ -27,7 +27,7 @@ class GradleFilterTest extends FilterTestSupport {
         FilterResult r = filter.apply("gradle build",
             success(fixture("gradle", "success")), config, 0, false);
         assertThat(r.output()).containsAnyOf("SUCCESS", "✓", "SUCCESSFUL");
-        // assertCompressed(r);
+        assertCompressed(r);
     }
 
     @Test
