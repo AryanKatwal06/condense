@@ -85,18 +85,10 @@ public class StrategyRegistry {
         return passthrough;
     }
 
-    /**
-     * Returns {@code true} if a non-passthrough filter is registered for
-     * this command.
-     */
     public boolean hasFilter(String[] args) {
         return lookup(args) != passthrough;
     }
 
-    /**
-     * Returns all registered command prefixes in sorted order.
-     * Useful for diagnostics and the {@code condense init --show} command.
-     */
     public List<String> registeredCommands() {
         return registry.keySet().stream().sorted().toList();
     }

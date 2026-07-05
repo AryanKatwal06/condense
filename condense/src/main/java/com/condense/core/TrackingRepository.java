@@ -77,10 +77,7 @@ public class TrackingRepository {
         }
     }
 
-    /**
-     * Returns the total number of recorded commands.
-     * Used in tests and by {@code condense gain}.
-     */
+    /** Used in tests and by {@code condense gain}. */
     public long countAll() {
         try (Statement st = connection().createStatement();
              ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM commands")) {
@@ -118,10 +115,6 @@ public class TrackingRepository {
         return new AggregateStats(0, 0, 0, 0);
     }
 
-    /**
-     * Returns per-day token savings for the last {@code days} days.
-     * Used by {@code condense gain --graph}.
-     */
     public List<DailyStat> queryDaily(int days, String projectHash) {
         long since = System.currentTimeMillis() / 1000L - (long) days * 86400;
         String projectFilter = projectHash != null
@@ -158,9 +151,6 @@ public class TrackingRepository {
         return result;
     }
 
-    /**
-     * Returns per-week token savings for the last {@code weeks} weeks.
-     */
     public List<WeeklyStat> queryWeekly(int weeks, String projectHash) {
         long since = System.currentTimeMillis() / 1000L - (long) weeks * 7 * 86400;
         String projectFilter = projectHash != null ? " AND project = ?" : "";
@@ -196,9 +186,6 @@ public class TrackingRepository {
         return result;
     }
 
-    /**
-     * Returns the top N commands by total tokens saved.
-     */
     public List<TopCommand> queryTopCommands(int limit, long sinceEpoch, String projectHash) {
         String projectFilter = projectHash != null ? " AND project = ?" : "";
         String sql = """
@@ -236,9 +223,6 @@ public class TrackingRepository {
         return result;
     }
 
-    /**
-     * Returns the last N command executions with their token data.
-     */
     public List<RecentCommand> queryRecent(int limit, String projectHash) {
         String projectFilter = projectHash != null ? " AND project = ?" : "";
         String sql = """

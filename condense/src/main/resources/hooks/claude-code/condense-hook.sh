@@ -15,7 +15,7 @@ try:
 except Exception:
     sys.exit(0)
 
-# Make sure this is a Bash tool use
+
 if data.get("tool_name") != "Bash":
     sys.exit(0)
 

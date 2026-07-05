@@ -36,12 +36,10 @@ public record ExecutionResult(
         }
     }
 
-    /** Returns true if the command exited with code 0. */
     public boolean succeeded() {
         return exitCode == 0;
     }
 
-    /** Returns true if stderr contains any non-whitespace content. */
     public boolean hasStderr() {
         try {
             return stderrFile != null && Files.size(stderrFile) > 0 && !readStderr().isBlank();
@@ -82,7 +80,6 @@ public record ExecutionResult(
         }
     }
 
-    /** Returns the combined stdout + stderr for tee/passthrough scenarios. */
     public String combined() {
         String out = readStdout();
         String err = readStderr();

@@ -144,6 +144,30 @@ To verify hooks are working, run a few commands via your AI and then run `conden
 
 ---
 
+## How Condense Interacts with Other Token-Saving Tools
+
+AI agents increasingly ship with their own context-saving mechanisms. Condense is designed to compose cleanly with them:
+
+*   **Claude Desktop (MCP)**: Use `condense mcp --start` (planned) to expose `execute_command` directly.
+*   **Claude Code (Compact Mode)**: Claude Code strips some whitespace automatically. Condense runs *first*, stripping entire irrelevant blocks (like passing tests), and then Claude compacts what's left. They stack multiplicatively.
+*   **Aider (Repo Map)**: Aider uses ctags to map codebases. Condense doesn't interfere with this; it focuses purely on transient shell output, which Aider's map doesn't cover.
+
+---
+
+## Ultra-Compact Mode
+
+If your AI is struggling with context limits, you can enable ultra-compact mode. This trades human readability for maximum token efficiency.
+
+```toml
+# ~/.config/condense/condense.toml
+[general]
+ultra_compact = true
+```
+
+When enabled, condense will strip indentation, remove all decorative characters (like `-`, `=`, `*`), and flatten nested structures. A 20-line error report might become 3 lines of dense, comma-separated facts. AI models parse this perfectly, but humans will find it hard to read.
+
+---
+
 ## Performance
 
 Condense is built as a GraalVM native image for instant startup.
