@@ -279,4 +279,3 @@ We welcome pull requests! Adding new command filters requires demonstrating ≥6
 ## License & Attribution
 
 Condense is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
-Condense is inspired by the original Rust implementation at [github.com/bitan-del/zap](https://github.com/bitan-del/zap).

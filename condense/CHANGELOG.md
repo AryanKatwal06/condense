@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [1.0.1] — 2026-07-04
 
 ### Fixed
-- Added Apache 2.0 LICENSE and NOTICE files for bitan-del/zap attribution
+- Added Apache 2.0 LICENSE and NOTICE files
 - Cleaned up git repository (removed ~20 junk tracked files including large binaries)
 - Pinned `macos-latest` runners to `macos-15` to avoid silent migration issues
 - Documented Windsurf fail-open behavior and cascade retry caveat in README
