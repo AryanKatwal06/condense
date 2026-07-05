@@ -38,3 +38,8 @@ test_update.py
 ^{commit}; break; fi; done
 Test*.java
 Test*.class
+
+# Dev/temp scripts - not part of the project
+*.py
+temp_*.md
+temp_*.txt

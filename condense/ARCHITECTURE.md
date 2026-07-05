@@ -1,4 +1,4 @@
-# Condense Architecture — Phase 1
+# Condense Architecture
 
 ## Overview
 
@@ -15,7 +15,7 @@ condense --version / --help
         ▼
   CondenseRootCommand (picocli @Command)
         │
-        ├── VersionProvider → reads /com/condenseproxy/version.properties
+        ├── VersionProvider → reads /com/condense/version.properties
         ├── ConfigLoader → reads ~/.config/condense/config.toml (or platform equivalent)
         │     └── CondenseConfig (record) + TeeMode (enum)
         ├── PlatformDirs → resolves config/data dirs per OS
