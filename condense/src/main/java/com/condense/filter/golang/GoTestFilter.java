@@ -75,6 +75,9 @@ public class GoTestFilter implements FilterStrategy {
         if (failures.isEmpty()) {
             return FilterResult.passthrough(result); // Using passthrough as fallback if nothing is found
         }
-        return FilterResult.passthrough(result); // Assuming parsePlainGoTest fallback should probably just passthrough if failed
+        StringBuilder sb = new StringBuilder("go test: ")
+            .append(failures.size()).append(" failure(s)\n");
+        failures.forEach(f -> sb.append("  ").append(f).append('\n'));
+        return FilterResult.of(result, sb.toString().stripTrailing());
     }
 }

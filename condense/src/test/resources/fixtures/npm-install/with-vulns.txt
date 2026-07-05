@@ -1,0 +1,4 @@
+npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+added 312 packages, and audited 313 packages in 12s
+found 2 vulnerabilities (1 moderate, 1 high)
+run npm audit for details

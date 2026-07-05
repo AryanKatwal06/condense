@@ -1,0 +1,4 @@
+gcc -Wall -o main main.c utils.c
+gcc -Wall -o test test.c
+cp main /usr/local/bin/
+Build complete.

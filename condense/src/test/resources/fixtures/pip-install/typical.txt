@@ -1,0 +1,10 @@
+Collecting requests==2.31.0
+Downloading requests-2.31.0-py3-none-any.whl (62 kB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 62.6/62.6 kB 2.1 MB/s eta 0:00:00
+Collecting urllib3<3,>=1.21.1
+Downloading urllib3-2.0.7-py3-none-any.whl (124 kB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 124.2/124.2 kB 4.2 MB/s eta 0:00:00
+Collecting certifi>=2017.4.17
+Downloading certifi-2023.11.17-py3-none-any.whl (162 kB)
+Installing collected packages: certifi, urllib3, requests
+Successfully installed certifi-2023.11.17 requests-2.31.0 urllib3-2.0.7

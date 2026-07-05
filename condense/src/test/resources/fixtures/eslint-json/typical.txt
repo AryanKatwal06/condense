@@ -1,0 +1,19 @@
+[
+  {
+    "filePath": "/workspace/src/app.js",
+    "messages": [
+      { "ruleId": "no-undef", "severity": 2, "message": "'foo' is not defined", "line": 3, "column": 10 },
+      { "ruleId": "no-console", "severity": 1, "message": "Unexpected console statement", "line": 7, "column": 5 }
+    ],
+    "errorCount": 1,
+    "warningCount": 1
+  },
+  {
+    "filePath": "/workspace/src/utils.js",
+    "messages": [
+      { "ruleId": "no-unused-vars", "severity": 2, "message": "'bar' is assigned a value but never used", "line": 5, "column": 3 }
+    ],
+    "errorCount": 1,
+    "warningCount": 0
+  }
+]

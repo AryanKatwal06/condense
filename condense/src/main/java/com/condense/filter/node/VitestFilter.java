@@ -36,8 +36,13 @@ public class VitestFilter implements FilterStrategy {
                 }
             }
 
+            if (failures.isEmpty() && summary.isEmpty()) {
+                if (result.succeeded()) return FilterResult.of(result, "✓ all tests passed");
+                return FilterResult.passthrough(result);
+            }
+
             if (failures.isEmpty() && result.succeeded()) {
-                return FilterResult.of(result, summary.isEmpty() ? "✓ all tests passed" : String.join("\n", summary));
+                return FilterResult.of(result, String.join("\n", summary));
             }
 
             StringBuilder sb = new StringBuilder();

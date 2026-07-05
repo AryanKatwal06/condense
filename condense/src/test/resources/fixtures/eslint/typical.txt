@@ -1,0 +1,8 @@
+/workspace/src/app.js
+3:10  error    'foo' is not defined                   no-undef
+7:5   warning  Unexpected console statement            no-console
+12:1  error    Expected indentation of 2 spaces        indent
+/workspace/src/utils.js
+5:3   error    'bar' is assigned a value but never used  no-unused-vars
+9:20  warning  Unexpected trailing spaces              no-trailing-spaces
+✖ 3 errors, 2 warnings

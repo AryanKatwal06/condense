@@ -29,7 +29,10 @@ public record CondenseConfig(
     HooksConfig hooks,
 
     @JsonProperty("tee")
-    TeeConfig tee
+    TeeConfig tee,
+
+    @JsonProperty("commands")
+    java.util.Map<String, CommandConfig> commands
 
 ) {
 
@@ -37,8 +40,16 @@ public record CondenseConfig(
     public static CondenseConfig defaults() {
         return new CondenseConfig(
             new HooksConfig(List.of()),
-            new TeeConfig(true, TeeMode.FAILURES)
+            new TeeConfig(true, TeeMode.FAILURES),
+            java.util.Map.of()
         );
+    }
+
+    public CommandConfig commandConfig(String command) {
+        if (commands == null) return new CommandConfig();
+        return commands.getOrDefault(command.toLowerCase().replace(' ', '-'),
+               commands.getOrDefault(command.toLowerCase(),
+               new CommandConfig()));
     }
 
     /**
@@ -89,6 +100,32 @@ public record CondenseConfig(
         @Override
         public TeeMode mode() {
             return mode != null ? mode : TeeMode.FAILURES;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CommandConfig(
+
+        @JsonProperty("max_failures")
+        Integer maxFailures,
+
+        @JsonProperty("show_timing")
+        Boolean showTiming,
+
+        @JsonProperty("max_lines")
+        Integer maxLines
+
+    ) {
+        public CommandConfig() { this(null, null, null); }
+
+        public int maxFailures(int defaultValue) {
+            return maxFailures != null ? maxFailures : defaultValue;
+        }
+        public boolean showTiming(boolean defaultValue) {
+            return showTiming != null ? showTiming : defaultValue;
+        }
+        public int maxLines(int defaultValue) {
+            return maxLines != null ? maxLines : defaultValue;
         }
     }
 }

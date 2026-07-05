@@ -59,7 +59,12 @@ public class PytestFilter implements FilterStrategy {
                 return FilterResult.of(result, lastLineStr.isBlank() ? "✓ all tests passed" : lastLineStr);
             }
 
-            return FilterResult.of(result, String.join("\n", output));
+            CondenseConfig.CommandConfig cc = config.commandConfig("pytest");
+            int limit = cc.maxFailures(Integer.MAX_VALUE);
+            List<String> shown = output.size() > limit ? output.subList(0, limit) : output;
+            if (output.size() > limit) shown = new ArrayList<>(shown);
+
+            return FilterResult.of(result, String.join("\n", shown));
 
         } catch (Exception e) {
             log.warnf("PytestFilter error: %s", e.getMessage());

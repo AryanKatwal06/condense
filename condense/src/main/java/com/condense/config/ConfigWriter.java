@@ -105,13 +105,15 @@ public class ConfigWriter {
                 config.hooks(),
                 new CondenseConfig.TeeConfig(
                     Boolean.parseBoolean(value.trim()),
-                    config.tee().mode()));
+                    config.tee().mode()),
+                config.commands());
 
             case "tee.mode" -> new CondenseConfig(
                 config.hooks(),
                 new CondenseConfig.TeeConfig(
                     config.tee().enabled(),
-                    TeeMode.fromString(value)));
+                    TeeMode.fromString(value)),
+                config.commands());
 
             case "hooks.exclude_commands" -> {
                 List<String> cmds = value.isBlank()
@@ -122,7 +124,8 @@ public class ConfigWriter {
                         .toList();
                 yield new CondenseConfig(
                     new CondenseConfig.HooksConfig(cmds),
-                    config.tee());
+                    config.tee(),
+                    config.commands());
             }
 
             default -> throw new IllegalArgumentException(

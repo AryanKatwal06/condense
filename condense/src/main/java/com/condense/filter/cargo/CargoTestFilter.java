@@ -55,13 +55,22 @@ public class CargoTestFilter implements FilterStrategy {
                     return FilterResult.of(result, out);
                 }
                 String summary = resultLine[0] != null ? resultLine[0] : "✓ all tests passed";
+                if (!config.commandConfig("cargo-test").showTiming(true) && summary.contains("; finished in")) {
+                    summary = summary.substring(0, summary.indexOf("; finished in")).trim();
+                }
                 return FilterResult.of(result, summary);
             }
 
             StringBuilder sb = new StringBuilder();
             sb.append("cargo test: ").append(failures.size()).append(" failure(s)\n");
             failures.forEach(f -> sb.append(f).append('\n'));
-            if (resultLine[0] != null) sb.append(resultLine[0]);
+            if (resultLine[0] != null) {
+                String line = resultLine[0];
+                if (!config.commandConfig("cargo-test").showTiming(true) && line.contains("; finished in")) {
+                    line = line.substring(0, line.indexOf("; finished in")).trim();
+                }
+                sb.append(line);
+            }
 
             return FilterResult.of(result, sb.toString().stripTrailing());
 

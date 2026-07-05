@@ -187,4 +187,25 @@ class GitStatusFilterTest {
                 .isPositive();
         }
     }
+
+    // ── porcelain ─────────────────────────────────────────────────────────────
+
+    @Test
+    void porcelainFormat_parsed_showsCorrectCounts() throws Exception {
+        String raw = fixture("porcelain-mixed");
+        FilterResult r = filter.apply("git status",
+            new ExecutionResult(0, raw, "", 10L), config, 0, false);
+        assertThat(r.output()).contains("staged:");
+        assertThat(r.output()).contains("modified:");
+        assertThat(r.output()).contains("untracked:");
+        assertThat(r.rawTokens()).isGreaterThan(r.outTokens());
+    }
+
+    @Test
+    void porcelainFormat_verbose2_showsFileList() throws Exception {
+        String raw = fixture("porcelain-mixed");
+        FilterResult r = filter.apply("git status",
+            new ExecutionResult(0, raw, "", 10L), config, 2, false);
+        assertThat(r.output().lines().count()).isGreaterThan(1L);
+    }
 }

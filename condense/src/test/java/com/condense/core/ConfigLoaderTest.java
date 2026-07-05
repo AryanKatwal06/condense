@@ -53,6 +53,11 @@ class ConfigLoaderTest {
             [tee]
             enabled = false
             mode = "always"
+            [commands.pytest]
+            max_failures = 10
+
+            [commands.cargo-test]
+            show_timing = false
             """);
 
         try {
@@ -64,6 +69,10 @@ class ConfigLoaderTest {
                 .containsExactly("curl", "playwright");
             assertThat(config.tee().enabled()).isFalse();
             assertThat(config.tee().mode()).isEqualTo(TeeMode.ALWAYS);
+
+            assertThat(config.commandConfig("pytest").maxFailures(20)).isEqualTo(10);
+            assertThat(config.commandConfig("cargo-test").showTiming(true)).isFalse();
+            assertThat(config.commandConfig("jest").maxFailures(20)).isEqualTo(20);
         } finally {
             Files.deleteIfExists(tmp);
         }

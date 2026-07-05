@@ -1,0 +1,12 @@
+RUN  v1.0.0 /workspace/project
+❯ src/math.test.ts (3 tests | 1 failed)
+✓ adds numbers correctly 5ms
+✓ subtracts numbers correctly 3ms
+× divides by zero 2ms
+→ Expected 0, received Infinity
+❯ src/utils.test.ts (2 tests | 1 failed)
+✓ formats date correctly 1ms
+× handles null input 2ms
+→ Cannot read property 'length' of null
+Tests  2 failed | 3 passed (5)
+Duration  42ms

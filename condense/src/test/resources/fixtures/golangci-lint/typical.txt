@@ -1,0 +1,5 @@
+main.go:15:6: G104: Errors unhandled. (errcheck)
+main.go:23:14: printf: Sprintf format %s has arg time.Now() of wrong type (govet)
+pkg/handler.go:8:5: exported function Handler should have comment or be unexported (golint)
+pkg/handler.go:45:12: G104: Errors unhandled. (errcheck)
+pkg/db.go:67:3: ineffectual assignment to err (ineffassign)

@@ -245,6 +245,12 @@ exclude_commands = []
 # Save raw output on command failure for AI inspection
 # Options: "failures" | "always" | "never"
 mode = "failures"
+
+[commands.pytest]
+max_failures = 10
+
+[commands.cargo-test]
+show_timing = false
 ```
 
 ---

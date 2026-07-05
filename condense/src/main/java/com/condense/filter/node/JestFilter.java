@@ -36,16 +36,23 @@ public class JestFilter implements FilterStrategy {
                 }
             }
 
+            if (failedSuites.isEmpty() && summaryLines.isEmpty()) {
+                if (result.succeeded()) return FilterResult.of(result, "✓ all tests passed");
+                return FilterResult.passthrough(result);
+            }
+
             if (failedSuites.isEmpty() && result.succeeded()) {
-                String summary = summaryLines.isEmpty() ? "✓ all tests passed"
-                    : String.join("\n", summaryLines);
-                return FilterResult.of(result, summary);
+                return FilterResult.of(result, String.join("\n", summaryLines));
             }
 
             StringBuilder sb = new StringBuilder();
             if (!failedSuites.isEmpty()) {
+                CondenseConfig.CommandConfig cc = config.commandConfig("jest");
+                int limit = cc.maxFailures(Integer.MAX_VALUE);
+                List<String> shown = failedSuites.size() > limit ? failedSuites.subList(0, limit) : failedSuites;
+                
                 sb.append("jest: ").append(failedSuites.size()).append(" suite(s) failed\n");
-                failedSuites.forEach(l -> sb.append(l).append('\n'));
+                shown.forEach(l -> sb.append(l).append('\n'));
             }
             summaryLines.forEach(l -> sb.append(l).append('\n'));
 
