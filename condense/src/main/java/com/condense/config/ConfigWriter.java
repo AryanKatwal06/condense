@@ -5,6 +5,7 @@ import com.condense.core.ConfigLoader;
 import com.condense.core.PlatformDirs;
 import com.condense.core.TeeMode;
 import com.condense.core.CondenseConfig;
+import com.condense.core.Mappers;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
@@ -33,7 +34,7 @@ import java.util.List;
 public class ConfigWriter {
 
     private static final Logger log = Logger.getLogger(ConfigWriter.class);
-    private static final TomlMapper TOML = com.condense.core.Mappers.TOML;
+    private static final TomlMapper TOML = Mappers.TOML;
 
     @Inject
     PlatformDirs platformDirs;

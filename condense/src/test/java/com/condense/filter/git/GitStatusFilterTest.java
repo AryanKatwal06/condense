@@ -24,7 +24,6 @@ class GitStatusFilterTest {
         config = CondenseConfig.defaults();
     }
 
-    // ── fixture loading ───────────────────────────────────────────────────────
 
     private String fixture(String name) throws IOException, URISyntaxException {
         URL url = getClass().getResource("/fixtures/git-status/" + name + ".txt");
@@ -40,7 +39,6 @@ class GitStatusFilterTest {
             new ExecutionResult(0, raw, "", 10L), config, 0, false);
     }
 
-    // ── clean ─────────────────────────────────────────────────────────────────
 
     @Test
     void cleanRepo_outputContainsCheckmarkAndBranch() throws Exception {
@@ -59,7 +57,6 @@ class GitStatusFilterTest {
         assertThat(r.rawTokens()).isGreaterThan(r.outTokens());
     }
 
-    // ── modified ──────────────────────────────────────────────────────────────
 
     @Test
     void modified_showsModifiedCount() throws Exception {
@@ -74,7 +71,6 @@ class GitStatusFilterTest {
         assertThat(r.output()).doesNotContain("untracked:");
     }
 
-    // ── staged ────────────────────────────────────────────────────────────────
 
     @Test
     void staged_showsStagedCountAndBranch() throws Exception {
@@ -82,7 +78,6 @@ class GitStatusFilterTest {
         assertThat(r.output()).contains("staged: 2").contains("[feature/new-filter]");
     }
 
-    // ── untracked ─────────────────────────────────────────────────────────────
 
     @Test
     void untracked_showsUntrackedCount() throws Exception {
@@ -91,7 +86,6 @@ class GitStatusFilterTest {
         assertThat(r.output()).doesNotContain("staged:").doesNotContain("modified:");
     }
 
-    // ── mixed ─────────────────────────────────────────────────────────────────
 
     @Test
     void mixed_showsAllThreeCountsWithPipeSeparator() throws Exception {
@@ -104,7 +98,6 @@ class GitStatusFilterTest {
             .contains("|");
     }
 
-    // ── detached HEAD ─────────────────────────────────────────────────────────
 
     @Test
     void detachedHead_showsDetachedPrefixAndClean() throws Exception {
@@ -112,7 +105,6 @@ class GitStatusFilterTest {
         assertThat(r.output()).contains("detached@abc1234f").contains("✓ clean");
     }
 
-    // ── failure passthrough ───────────────────────────────────────────────────
 
     @Test
     void nonZeroExit_passesStderrThrough() {
@@ -132,7 +124,6 @@ class GitStatusFilterTest {
         assertThat(r.savingsPct()).isZero();
     }
 
-    // ── ultra-compact ─────────────────────────────────────────────────────────
 
     @Test
     void ultraCompact_mixed_isSingleLine() throws Exception {
@@ -157,7 +148,6 @@ class GitStatusFilterTest {
         assertThat(hasIcon).isTrue();
     }
 
-    // ── verbose ───────────────────────────────────────────────────────────────
 
     @Test
     void verbose2_appendsFileListBelowSummary() throws Exception {
@@ -175,7 +165,6 @@ class GitStatusFilterTest {
         assertThat(r.output().lines().count()).isEqualTo(1L);
     }
 
-    // ── token savings ─────────────────────────────────────────────────────────
 
     @Test
     void allFixturesProducePositiveTokenSavings() throws Exception {
@@ -188,7 +177,6 @@ class GitStatusFilterTest {
         }
     }
 
-    // ── porcelain ─────────────────────────────────────────────────────────────
 
     @Test
     void porcelainFormat_parsed_showsCorrectCounts() throws Exception {

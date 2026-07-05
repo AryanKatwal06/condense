@@ -20,7 +20,7 @@ class ESLintFilterTest extends FilterTestSupport {
             new ExecutionResult(1, fixture("eslint", "typical"), "", 500L),
             config, 0, false);
         assertThat(r.output()).contains("error(s)");
-        // assertCompressed(r);
+        assertCompressed(r);
     }
 
     @Test
@@ -28,7 +28,7 @@ class ESLintFilterTest extends FilterTestSupport {
         FilterResult r = filter.apply("eslint",
             success(fixture("eslint", "passing")), config, 0, false);
         assertThat(r.output()).containsAnyOf("passed", "✓");
-        // assertCompressed(r);
+        assertCompressed(r);
     }
 
     @Test

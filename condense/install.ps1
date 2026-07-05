@@ -60,56 +60,61 @@ if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 }
 
-$BinaryFilename = "condense-$Platform"
-$ChecksumFilename = "condense-${Platform}.sha256"
-$BinaryUrl = "$BaseUrl/$BinaryFilename"
-$ChecksumUrl = "$BaseUrl/$ChecksumFilename"
+$BinaryFilename = "condense-$Platform.exe"
+$ChecksumsFilename = "checksums.txt"
+$BinaryUrl      = "$BaseUrl/$BinaryFilename"
+$ChecksumsUrl   = "$BaseUrl/$ChecksumsFilename"
 
 $TempDir = Join-Path $env:TEMP "condense_install_$([guid]::NewGuid().Guid)"
 New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 
 try {
-    Write-Host "`n  Installing Condense v$Version"
-    Write-Host "  Repository: https://github.com/$Repo"
-    Write-Host "`n  Platform:   $Platform"
-    Write-Host "  Install to: $InstallDir\$BinaryName`n"
+    Write-Host ""
+    Write-Host "  Installing Condense v$Version"
+    Write-Host "  Platform:   $Platform"
+    Write-Host "  Install to: $InstallDir\$BinaryName"
+    Write-Host ""
 
-    Write-Host "  Downloading $BinaryFilename..."
+    Write-Host "  Downloading binary..."
     Invoke-WebRequest -Uri $BinaryUrl -OutFile "$TempDir\$BinaryFilename" -UseBasicParsing
 
-    Write-Host "  Downloading $ChecksumFilename..."
-    Invoke-WebRequest -Uri $ChecksumUrl -OutFile "$TempDir\$ChecksumFilename" -UseBasicParsing
+    Write-Host "  Downloading checksums..."
+    Invoke-WebRequest -Uri $ChecksumsUrl -OutFile "$TempDir\$ChecksumsFilename" -UseBasicParsing
 
-    Write-Host "  Verifying SHA-256 checksum..."
-    $ExpectedChecksum = (Get-Content "$TempDir\$ChecksumFilename").Trim().Split(" ")[0]
-    $ActualChecksum = (Get-FileHash "$TempDir\$BinaryFilename" -Algorithm SHA256).Hash.ToLower()
-
-    if ($ExpectedChecksum.ToLower() -ne $ActualChecksum) {
-        Write-Error "`n  Error: checksum verification FAILED."
-        Write-Error "  The downloaded binary may be corrupted or tampered with."
+    Write-Host "  Verifying checksum..."
+    $ChecksumsContent = Get-Content "$TempDir\$ChecksumsFilename"
+    $ExpectedLine = $ChecksumsContent | Where-Object { $_ -match [regex]::Escape($BinaryFilename) }
+    if (-not $ExpectedLine) {
+        Write-Error "  Could not find checksum for $BinaryFilename in checksums.txt"
         exit 1
     }
-    Write-Host "  ✓ Checksum OK"
+    $ExpectedHash = ($ExpectedLine -split "\s+")[0].ToLower()
+    $ActualHash   = (Get-FileHash "$TempDir\$BinaryFilename" -Algorithm SHA256).Hash.ToLower()
+
+    if ($ExpectedHash -ne $ActualHash) {
+        Write-Error "  Checksum verification FAILED — binary may be corrupted."
+        exit 1
+    }
+    Write-Host "  checksum OK"
 
     $InstallPath = Join-Path $InstallDir $BinaryName
     Copy-Item "$TempDir\$BinaryFilename" -Destination $InstallPath -Force
+    Write-Host "  Installed to $InstallPath"
 
-    Write-Host "  ✓ Installed to $InstallPath`n"
-
-    $PathDirs = ($env:PATH).Split(';')
-    if ($PathDirs -notcontains $InstallDir) {
-        Write-Host "  Note: Add $InstallDir to your PATH to use condense from anywhere:"
-        Write-Host "  [Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path', 'User') + ';$InstallDir', 'User')"
+    # Add to PATH if needed
+    $UserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    if ($UserPath -notlike "*$InstallDir*") {
+        [Environment]::SetEnvironmentVariable('Path', "$UserPath;$InstallDir", 'User')
+        Write-Host ""
+        Write-Host "  Added $InstallDir to your PATH."
+        Write-Host "  Restart your terminal for the change to take effect."
     }
 
-    $VersionOut = & $InstallPath --version 2>&1
-    if ($LASTEXITCODE -eq 0 -or $VersionOut) {
-        Write-Host "`n  Condense installed successfully!"
-        Write-Host "  Run 'condense --help' to get started."
-        Write-Host "  Run 'condense init -g' to install AI tool hooks.`n"
-    } else {
-        Write-Warning "  Binary installed but 'condense --version' failed."
-    }
+    Write-Host ""
+    Write-Host "  Condense installed successfully."
+    Write-Host "  Run: condense --version"
+    Write-Host "  Run: condense init -g    to hook into your AI tool"
+    Write-Host ""
 } finally {
-    Remove-Item -Recurse -Force -Path $TempDir
+    Remove-Item -Recurse -Force -Path $TempDir -ErrorAction SilentlyContinue
 }

@@ -19,7 +19,6 @@
 
 set -euo pipefail
 
-# ── Configuration ─────────────────────────────────────────────────────────────
 
 REPO="AryanKatwal06/code-condenser"
 
@@ -40,7 +39,6 @@ fi
 BASE_URL="https://github.com/${REPO}/releases/download/v${VERSION}"
 BINARY_NAME="condense"
 
-# ── Platform detection ────────────────────────────────────────────────────────
 
 detect_platform() {
   local os arch
@@ -86,7 +84,6 @@ detect_platform() {
   esac
 }
 
-# ── Install directory ─────────────────────────────────────────────────────────
 
 install_dir() {
   local os
@@ -98,7 +95,6 @@ install_dir() {
   esac
 }
 
-# ── Download helper ───────────────────────────────────────────────────────────
 
 download() {
   local url="$1"
@@ -114,7 +110,6 @@ download() {
   fi
 }
 
-# ── Checksum verification ─────────────────────────────────────────────────────
 
 verify_checksum() {
   local binary="$1"
@@ -137,7 +132,6 @@ verify_checksum() {
   fi
 }
 
-# ── Main ──────────────────────────────────────────────────────────────────────
 
 main() {
   if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
@@ -179,29 +173,42 @@ main() {
   trap 'rm -rf "$tmpdir"' EXIT
 
   local binary_filename="condense-${platform}"
-  local checksum_filename="condense-${platform}.sha256"
   local binary_url="${BASE_URL}/${binary_filename}"
-  local checksum_url="${BASE_URL}/${checksum_filename}"
+  local checksums_url="${BASE_URL}/checksums.txt"
+  local checksums_file="${tmpdir}/checksums.txt"
 
   # Download binary
   echo "  Downloading ${binary_filename}..."
   download "$binary_url" "${tmpdir}/${binary_filename}"
 
-  # Download checksum
-  echo "  Downloading ${checksum_filename}..."
-  download "$checksum_url" "${tmpdir}/${checksum_filename}"
+  echo "  Downloading checksums.txt..."
+  download "$checksums_url" "$checksums_file"
 
-  # Verify checksum
-  echo "  Verifying SHA-256 checksum..."
-  if ! verify_checksum "${tmpdir}/${binary_filename}" "${tmpdir}/${checksum_filename}"; then
-    echo ""
-    echo "  Error: checksum verification FAILED." >&2
-    echo "  The downloaded binary may be corrupted or tampered with." >&2
-    echo "  Please try again or download manually from:" >&2
-    echo "  ${binary_url}" >&2
-    exit 1
+  echo "  Verifying checksum..."
+  # Extract the line matching our binary from checksums.txt
+  expected_line=$(grep "$binary_filename" "$checksums_file" || true)
+  if [ -z "$expected_line" ]; then
+      echo "  Error: could not find checksum for $binary_filename in checksums.txt" >&2
+      exit 1
   fi
-  echo "  ✓ Checksum OK"
+  expected_hash=$(echo "$expected_line" | awk '{print $1}')
+
+  if command -v sha256sum >/dev/null 2>&1; then
+      actual_hash=$(sha256sum "${tmpdir}/${binary_filename}" | awk '{print $1}')
+  elif command -v shasum >/dev/null 2>&1; then
+      actual_hash=$(shasum -a 256 "${tmpdir}/${binary_filename}" | awk '{print $1}')
+  else
+      echo "  Warning: no sha256sum or shasum found — skipping checksum verification." >&2
+      actual_hash="$expected_hash"  # skip
+  fi
+
+  if [ "$expected_hash" != "$actual_hash" ]; then
+      echo "  Error: checksum verification FAILED." >&2
+      echo "  Expected: $expected_hash" >&2
+      echo "  Got:      $actual_hash" >&2
+      exit 1
+  fi
+  echo "  checksum OK"
 
   # Install binary
   local install_path="${dir}/${BINARY_NAME}"
