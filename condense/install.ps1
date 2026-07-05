@@ -92,7 +92,7 @@ try {
     $ActualHash   = (Get-FileHash "$TempDir\$BinaryFilename" -Algorithm SHA256).Hash.ToLower()
 
     if ($ExpectedHash -ne $ActualHash) {
-        Write-Error "  Checksum verification FAILED — binary may be corrupted."
+        Write-Error "  Checksum verification FAILED - binary may be corrupted."
         exit 1
     }
     Write-Host "  checksum OK"
