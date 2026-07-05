@@ -34,7 +34,7 @@ Adding support for a new command (e.g. `helm`) takes four steps:
 ### 1. Create the filter class
 
 ```java
-// src/main/java/com/condenseproxy/filter/cloud/HelmFilter.java
+// src/main/java/com/condense/filter/cloud/HelmFilter.java
 package com.condense.filter.cloud;
 
 import com.condense.annotation.CommandFilter;
@@ -75,7 +75,7 @@ src/test/resources/fixtures/helm/failure.txt   — failed command output
 ### 3. Write tests
 
 ```java
-// src/test/java/com/condenseproxy/filter/cloud/HelmFilterTest.java
+// src/test/java/com/condense/filter/cloud/HelmFilterTest.java
 package com.condense.filter.cloud;
 
 import com.condense.core.*;
@@ -135,7 +135,7 @@ Then open a pull request. The PR template will ask you to confirm:
 ## Code Style
 
 - Java 21, no wildcard imports
-- All public methods have Javadoc
+- Public methods have Javadoc when the behavior isn't obvious from the signature alone — skip it for simple getters, setters, and self-explanatory utility methods
 - Records for data carriers (`ExecutionResult`, `FilterResult`, etc.)
 - Try-with-resources for all SQL and I/O
 - `@ApplicationScoped` for CDI beans, never `@Singleton`

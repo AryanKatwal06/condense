@@ -80,7 +80,7 @@ You can download the binary for your platform directly from the [GitHub Releases
 2. **Try it manually**: `condense git status` (see the compressed output yourself)
 3. **View your savings**: `condense gain` (shows your token analytics dashboard)
 4. **Set up AI tool integration**: `condense init -g` (installs hooks into your AI coding assistant so it automatically uses condense without changing commands)
-5. **Configure exclusions** (optional): Check your configuration file to exclude specific commands if needed.
+5. **Configure exclusions** (optional): Open `~/.config/condense/condense.toml` (Linux/macOS) or `%APPDATA%\condense\condense.toml` (Windows) and add commands to `exclude_commands` — for example `exclude_commands = ["make", "cat"]` to pass those through unfiltered.
 
 ---
 
@@ -148,7 +148,7 @@ To verify hooks are working, run a few commands via your AI and then run `conden
 
 AI agents increasingly ship with their own context-saving mechanisms. Condense is designed to compose cleanly with them:
 
-*   **Claude Desktop (MCP)**: Use `condense mcp --start` (planned) to expose `execute_command` directly.
+*   **Claude Desktop (MCP)**: An MCP server mode is planned — this would let Claude Desktop use condense natively without hook installation. Not yet available in v1.0.x.
 *   **Claude Code (Compact Mode)**: Claude Code strips some whitespace automatically. Condense runs *first*, stripping entire irrelevant blocks (like passing tests), and then Claude compacts what's left. They stack multiplicatively.
 *   **Aider (Repo Map)**: Aider uses ctags to map codebases. Condense doesn't interfere with this; it focuses purely on transient shell output, which Aider's map doesn't cover.
 
@@ -200,17 +200,19 @@ condense makes no network calls during normal operation. The only exception is t
 ```bash
 $ condense gain --graph
 
-Tokens Saved: 886,847 (92.3%)
-Total Commands: 513
+Daily Token Savings — Last 30 Days
+────────────────────────────────────────────────────────────
 
-[ 30-Day Savings Trend ]
-  90k ┤         █
-  75k ┤         █       █
-  60k ┤ █       █ █     █
-  45k ┤ █   █   █ █ █   █
-  30k ┤ █ █ █ █ █ █ █ █ █
-  15k ┤ █ █ █ █ █ █ █ █ █ █
-      └────────────────────────
+ 192k |                                                                      ## ##               
+ 168k |                                                                      ## ##               
+ 144k |                                                                      ## ##               
+ 120k |                                                                      ## ##               
+  96k |                                                                      ## ##          ##   
+  72k |                                                                      ## ##          ## ##
+  48k |                                                                      ## ##          ## ##
+  24k |                                                                      ## ##          ## ##
+       ──────────────────────────────────────────────────────────────────────────────────────────
+       Jun 6                Jun 13               Jun 20               Jun 27               Jul 4
 
 $ condense gain --top 10
 Top Commands by Tokens Saved:
@@ -234,8 +236,6 @@ Example configuration:
 ```toml
 # General settings
 [general]
-# Whether to check for updates automatically
-auto_update = true
 
 [hooks]
 # Commands to exclude from hook interception (passed through directly)
