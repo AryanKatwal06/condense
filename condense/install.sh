@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Condense — Install Script
-# Usage: curl -fsSL https://raw.githubusercontent.com/YOUR_ORG/condense/main/install.sh | sh
+# Usage: curl -fsSL https://github.com/AryanKatwal06/code-condenser/releases/latest/download/install.sh | bash
 #
 # This script:
 #   1. Detects your OS and architecture
