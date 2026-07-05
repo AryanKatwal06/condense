@@ -1,10 +1,10 @@
 Name:           condense
-Version:        0.1.0
+Version:        1.0.1
 Release:        1%{?dist}
 Summary:        High-performance CLI proxy for AI token savings
 
 License:        Apache-2.0
-URL:            https://github.com/YOUR_ORG/condense
+URL:            https://github.com/AryanKatwal06/code-condenser
 Source0:        condense-linux-x64
 
 BuildArch:      x86_64
@@ -31,5 +31,5 @@ install -m 644 ../../packaging/completions/condense.bash \
 /usr/share/bash-completion/completions/condense
 
 %changelog
-* Sat Jun 28 2025 Your Name <you@example.com> - 0.1.0-1
+* Sat Jun 28 2025 Your Name <you@example.com> - 1.0.1-1
 - Initial release
