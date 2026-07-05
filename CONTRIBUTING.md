@@ -28,7 +28,7 @@ mvn package -Pnative -DskipTests  # native image build (takes 2-5 minutes)
 
 ## Adding a New Command Filter
 
-**Contribution Bar:** The original upstream Zap project required at least 60% token savings per filter PR. We adopt the exact same bar. All new filters must demonstrate ≥60% token savings using the Java golden fixture framework.
+**Contribution Bar:** The project requires at least 60% token savings per filter PR. All new filters must demonstrate ≥60% token savings using the Java golden fixture framework.
 
 Adding support for a new command (e.g. `helm`) takes four steps:
 
