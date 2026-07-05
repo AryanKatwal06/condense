@@ -3,6 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/AryanKatwal06/code-condenser)](https://github.com/AryanKatwal06/code-condenser/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build](https://github.com/AryanKatwal06/code-condenser/actions/workflows/build.yml/badge.svg)](https://github.com/AryanKatwal06/code-condenser/actions/workflows/build.yml)
+
 **Condense** sits between your AI coding assistant and the shell. It filters command output so the AI sees a compact summary instead of thousands of raw lines — saving 60-92% of context window tokens.
 
 ---
