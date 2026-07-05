@@ -19,11 +19,9 @@ public class CommandExecutor {
     private static final Logger log = Logger.getLogger(CommandExecutor.class);
     private final java.util.Set<Process> activeProcesses = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
-    /** Default maximum time to wait for a command to complete. */
     public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
 
-    /** Maximum bytes to buffer from a single stream. 10 MB is generous for CLI output. */
-    private static final int MAX_STREAM_BYTES = 10 * 1024 * 1024;
+    private static final int MAX_STREAM_BYTES = 10 * 1024 * 1024; // 10 MB is generous for CLI output
 
     /**
      * Executes {@code args} as a child process and returns its captured output.
@@ -139,16 +137,10 @@ public class CommandExecutor {
         }
     }
 
-    /**
-     * Convenience overload with the default 60-second timeout.
-     */
     public ExecutionResult execute(List<String> args) throws IOException, InterruptedException {
         return execute(args, DEFAULT_TIMEOUT);
     }
 
-    /**
-     * Convenience overload accepting a varargs array.
-     */
     public ExecutionResult execute(String... args) throws IOException, InterruptedException {
         return execute(Arrays.asList(args), DEFAULT_TIMEOUT);
     }

@@ -8,11 +8,9 @@
 
 CONDENSE_COMMANDS="git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle"
 
-# Extract the bare command name from the first argument
 cmd_name="${1%% *}"
 bare_cmd="$(basename "$cmd_name")"
 
-# Check if command is in the condense-handled list
 if echo " $CONDENSE_COMMANDS " | grep -qw " $bare_cmd "; then
   exec condense "$@"
 fi

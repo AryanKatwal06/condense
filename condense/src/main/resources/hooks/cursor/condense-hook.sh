@@ -15,7 +15,6 @@ try:
 except Exception:
     sys.exit(0)
 
-# Extract top-level command
 command = data.get("command", "").strip()
 
 if not command:
@@ -27,7 +26,6 @@ parts = command.split()
 bare_cmd = parts[0].split("/")[-1]
 
 if bare_cmd in condense_commands:
-    # Deny and redirect
     response = {
         "continue": False,
         "permission": "deny",
@@ -36,7 +34,6 @@ if bare_cmd in condense_commands:
     }
     print(json.dumps(response))
 else:
-    # Allow unchanged
     response = {
         "continue": True,
         "permission": "allow"

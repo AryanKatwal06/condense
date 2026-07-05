@@ -16,13 +16,10 @@ CONDENSE_COMMANDS = '${CONDENSE_COMMANDS}'.split()
 def extract_command(data):
     # ASSUMPTION: The shell command is in one of these fields.
     # Fallback to empty string if not found.
-    # Try tool_input.command (Claude Code style)
     if 'tool_input' in data and isinstance(data['tool_input'], dict) and 'command' in data['tool_input']:
         return data['tool_input']['command']
-    # Try parameters.command (Cline style)
     if 'parameters' in data and isinstance(data['parameters'], dict) and 'command' in data['parameters']:
         return data['parameters']['command']
-    # Try top-level command
     if 'command' in data:
         return data['command']
     return ''
@@ -46,7 +43,6 @@ try:
         sys.exit(0)
         
 except Exception as e:
-    # Any error -> log to stderr, allow hook
     print(f'Error processing Gemini hook: {e}', file=sys.stderr)
 
 print(json.dumps({'decision': 'allow'}))

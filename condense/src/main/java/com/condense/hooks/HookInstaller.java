@@ -109,18 +109,14 @@ public class HookInstaller {
 
         Path hookFile = tool.hookFile(home);
         try {
-            // Load and customise template
             String template = HookTemplate.load(tool);
             String content  = HookTemplate.apply(tool, template, excluded);
 
-            // Create parent directories
             Files.createDirectories(hookFile.getParent());
 
-            // Write atomically
             Path tmp = Files.createTempFile(hookFile.getParent(), ".condense-hook-", ".tmp");
             Files.writeString(tmp, content);
 
-            // Make shell scripts executable (non-JSON hooks)
             if (!tool.isJson) {
                 try {
                     Set<PosixFilePermission> perms = EnumSet.of(
@@ -239,7 +235,6 @@ public class HookInstaller {
                 Files.setPosixFilePermissions(scriptFile, perms);
             } catch (UnsupportedOperationException ignored) {}
 
-            // 2. Update settings.json
             com.fasterxml.jackson.databind.node.ObjectNode root;
             if (Files.exists(hookFile)) {
                 String existing = Files.readString(hookFile);
@@ -266,7 +261,6 @@ public class HookInstaller {
                 preToolUseNode = hooksNode.putArray("PreToolUse");
             }
 
-            // Remove existing condense hook if it exists to avoid duplicates
             java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = preToolUseNode.elements();
             while (it.hasNext()) {
                 com.fasterxml.jackson.databind.JsonNode node = it.next();
@@ -295,7 +289,6 @@ public class HookInstaller {
                 }
             }
 
-            // Create new hook entry
             com.fasterxml.jackson.databind.node.ObjectNode hookEntry = com.condense.core.Mappers.JSON.createObjectNode();
             hookEntry.put("matcher", "Bash");
             com.fasterxml.jackson.databind.node.ArrayNode innerHooks = hookEntry.putArray("hooks");
@@ -414,7 +407,6 @@ public class HookInstaller {
                 Files.setPosixFilePermissions(scriptFile, perms);
             } catch (UnsupportedOperationException ignored) {}
 
-            // 2. Update hooks.json
             com.fasterxml.jackson.databind.node.ObjectNode root;
             if (Files.exists(hookFile)) {
                 String existing = Files.readString(hookFile);
@@ -445,7 +437,6 @@ public class HookInstaller {
 
             boolean hasExistingHooks = beforeShellExecNode.size() > 0;
 
-            // Remove existing condense hook if it exists to avoid duplicates
             java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = beforeShellExecNode.elements();
             while (it.hasNext()) {
                 com.fasterxml.jackson.databind.JsonNode node = it.next();
@@ -454,10 +445,8 @@ public class HookInstaller {
                 }
             }
             
-            // Re-evaluate after removal (in case condense was the only one)
             hasExistingHooks = beforeShellExecNode.size() > 0;
 
-            // Create new hook entry
             com.fasterxml.jackson.databind.node.ObjectNode hookEntry = com.condense.core.Mappers.JSON.createObjectNode();
             hookEntry.put("command", scriptFile.toAbsolutePath().toString().replace("\\", "/"));
 
@@ -565,7 +554,6 @@ public class HookInstaller {
                 Files.setPosixFilePermissions(scriptFile, perms);
             } catch (UnsupportedOperationException ignored) {}
 
-            // 2. Update settings.json
             com.fasterxml.jackson.databind.node.ObjectNode root;
             if (Files.exists(hookFile)) {
                 String existing = Files.readString(hookFile);
@@ -592,7 +580,6 @@ public class HookInstaller {
                 beforeToolNode = hooksNode.putArray("BeforeTool");
             }
 
-            // Remove existing condense hook to avoid duplicates
             java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = beforeToolNode.elements();
             while (it.hasNext()) {
                 com.fasterxml.jackson.databind.JsonNode node = it.next();
@@ -624,7 +611,6 @@ public class HookInstaller {
                 }
             }
 
-            // Create new hook entry
             com.fasterxml.jackson.databind.node.ObjectNode hookEntry = com.condense.core.Mappers.JSON.createObjectNode();
             hookEntry.put("matcher", "run_shell_command");
             com.fasterxml.jackson.databind.node.ArrayNode innerHooks = hookEntry.putArray("hooks");
@@ -761,14 +747,11 @@ public class HookInstaller {
                 }
             }
 
-            // Load and customise template
             String template = HookTemplate.load(tool);
             String content  = HookTemplate.apply(tool, template, excluded);
 
-            // Create parent directories
             Files.createDirectories(hookFile.getParent());
 
-            // Write atomically
             Path tmp = Files.createTempFile(hookFile.getParent(), ".condense-hook-", ".tmp");
             Files.writeString(tmp, content);
 

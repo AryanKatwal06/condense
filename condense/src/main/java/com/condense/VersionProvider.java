@@ -20,7 +20,6 @@ public class VersionProvider implements IVersionProvider {
                 props.load(in);
             }
         } catch (IOException ignored) {
-            // Fall through to default
         }
         String version = props.getProperty("version", "unknown");
         String imageCode = System.getProperty("org.graalvm.nativeimage.imagecode");

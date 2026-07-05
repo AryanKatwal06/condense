@@ -20,7 +20,8 @@ import java.util.List;
         com.condense.hooks.InitCommand.class,
         com.condense.config.ConfigCommand.class,
         com.condense.CompletionCommand.class,
-        com.condense.update.UpdateCommand.class
+        com.condense.update.UpdateCommand.class,
+        com.condense.commands.McpCommand.class
     },
     description = {
         "High-performance CLI proxy that filters command output to save 60-90%% AI tokens.",
@@ -89,40 +90,32 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
     @Override
     public Integer call() {
         if ((passthroughArgs == null || passthroughArgs.length == 0) && (remainder == null || remainder.isEmpty())) {
-            // No args: print help
             spec.commandLine().usage(System.out);
             return 0;
         }
 
-        // Dispatch through filter pipeline
         try {
             List<String> argList = new java.util.ArrayList<>();
             if (passthroughArgs != null) argList.addAll(Arrays.asList(passthroughArgs));
             if (remainder != null) argList.addAll(remainder);
             String commandStr = String.join(" ", argList);
 
-            // Execute the real command
             ExecutionResult result = executor.execute(argList);
 
-            // Find and apply the appropriate filter
             FilterStrategy strategy = registry.lookup(argList.toArray(new String[0]));
             CondenseConfig config = configLoader.load();
             FilterResult filtered = strategy.apply(
                 commandStr, result, config, verbosityLevel(), ultraCompact);
 
-            // Maybe save raw output to tee file
             Path teePath = teeWriter.maybeDump(commandStr, result);
 
-            // Print filtered output
             System.out.print(filtered.output());
             if (!filtered.output().endsWith("\n")) System.out.println();
 
-            // Append tee path if saved
             if (teePath != null) {
                 System.out.println("[raw output saved to: " + teePath + "]");
             }
 
-            // Flush output so caller (AI) gets it immediately
             System.out.flush();
 
             // Synchronous analytics insertion AFTER output is flushed
@@ -135,11 +128,9 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
                 result.durationMs()
             );
 
-            // Return the original exit code
             return result.exitCode();
 
         } catch (IllegalStateException e) {
-            // Infinite loop guard triggered
             System.err.println(e.getMessage());
             return 1;
         } catch (Exception e) {

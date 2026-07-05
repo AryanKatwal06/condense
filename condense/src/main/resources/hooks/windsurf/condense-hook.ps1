@@ -30,7 +30,6 @@ try {
         exit 0
     }
     
-    # Extract bare command
     $cmdName = ($cmd.Trim() -split '\s+')[0]
     $bareCmd = Split-Path $cmdName -Leaf
     

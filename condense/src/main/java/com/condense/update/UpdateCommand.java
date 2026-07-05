@@ -126,7 +126,6 @@ public class UpdateCommand implements Callable<Integer> {
             }
         }
 
-        // Determine current executable
         String execPathStr = ProcessHandle.current().info().command().orElse(null);
         if (execPathStr == null || execPathStr.contains("java")) {
             // Running via JVM (mvn), not a native image.
@@ -140,6 +139,9 @@ public class UpdateCommand implements Callable<Integer> {
         
         try {
             if (targetOs.equals("windows")) {
+                // Windows locks running executables, preventing direct overwrite.
+                // However, it permits renaming a running executable. We rename the
+                // current binary first, freeing the path for the new binary.
                 Path oldExe = currentExe.resolveSibling(currentExe.getFileName() + ".old");
                 Files.deleteIfExists(oldExe);
                 Files.move(currentExe, oldExe, StandardCopyOption.REPLACE_EXISTING);

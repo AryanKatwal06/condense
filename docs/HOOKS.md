@@ -110,6 +110,17 @@ exclude_commands = ["git", "make"]
 
 The hook scripts read this configuration on every invocation, so changes take effect immediately without requiring a restart or `condense init` rerun.
 
+### Ultra-Compact Mode
+
+If your AI is struggling with context limits, you can enable ultra-compact mode in the configuration file:
+
+```toml
+[general]
+ultra_compact = true
+```
+
+When enabled, condense trades human readability for maximum token efficiency by stripping indentation, decorative characters, and flattening structures.
+
 ---
 
 ## Troubleshooting

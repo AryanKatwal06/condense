@@ -52,22 +52,18 @@ public class GainRepository {
         );
     }
 
-    /** Returns daily stats for bar chart rendering. */
     public List<DailyStat> dailyStats(int days, String scope) {
         return tracking.queryDaily(days, resolveProjectHash(scope));
     }
 
-    /** Returns weekly stats for table rendering. */
     public List<WeeklyStat> weeklyStats(int weeks, String scope) {
         return tracking.queryWeekly(weeks, resolveProjectHash(scope));
     }
 
-    /** Returns the last N command executions. */
     public List<RecentCommand> recentCommands(int limit, String scope) {
         return tracking.queryRecent(limit, resolveProjectHash(scope));
     }
 
-    /** Returns top N commands by tokens saved. */
     public List<TopCommand> topCommands(int n, int sinceDays, String scope) {
         return tracking.queryTopCommands(n, sinceEpoch(sinceDays), resolveProjectHash(scope));
     }

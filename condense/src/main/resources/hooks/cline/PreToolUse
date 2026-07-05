@@ -27,7 +27,6 @@ preToolUse = data.get("preToolUse", {})
 command = extractShellCommand(preToolUse).strip()
 
 if not command:
-    # Safe fallback, do not cancel
     print(json.dumps({"cancel": False}))
     sys.exit(0)
 
