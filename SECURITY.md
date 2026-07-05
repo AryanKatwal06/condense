@@ -27,8 +27,7 @@ Condense is a local CLI tool. Its security surface is:
   and token counts only. No credentials, no file content, no secrets.
 - **Shell hooks**: installed into AI tool hook directories by `condense init -g`.
   Hook files are plain shell scripts — review them before running `condense init -g`.
-- **No network calls** during normal operation. The only network access is
-  `condense init` downloading hook templates from GitHub during first install.
+- **No network calls** during normal operation. Hook scripts are generated from templates bundled inside the binary — no network access is required for `condense init`.
 - **Process execution**: Condense executes the real shell command as a child process.
   It does not modify command arguments.
 
