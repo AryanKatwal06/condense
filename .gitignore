@@ -2,7 +2,7 @@
 .worktrees/
 apache-maven-*/
 maven.zip
-extract.py
+
 task.md
 implementation_plan.md
 walkthrough.md
