@@ -108,7 +108,7 @@ jobs:
           echo PATH=%PATH%>> %GITHUB_ENV%
 
       - name: Set up GraalVM JDK 21
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        uses: graalvm/setup-graalvm@0def53c0fd8534bc13416c9469f5be45265824fd # v1.6.3
         with:
           java-version: '21'
           distribution: 'graalvm-community'
