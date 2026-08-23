@@ -49,6 +49,8 @@ public class TrackingRepository {
 
     private Connection connection;
     private volatile boolean degraded = false;
+    private static final java.util.concurrent.atomic.AtomicBoolean driverRegistered =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
 
     public boolean isDegraded() {
         return degraded;
@@ -339,8 +341,18 @@ public class TrackingRepository {
             String url = "jdbc:sqlite:" + dbFile.toAbsolutePath();
             try {
                 Class.forName("org.sqlite.JDBC");
+                if (!driverRegistered.get()) {
+                    DriverManager.registerDriver(new org.sqlite.JDBC());
+                    driverRegistered.set(true);
+                }
             } catch (ClassNotFoundException e) {
+                this.degraded = true;
+                log.warnf("SQLite JDBC driver class not found: %s", e.getMessage());
                 throw new SQLException("SQLite driver not found", e);
+            } catch (SQLException e) {
+                this.degraded = true;
+                log.warnf("Failed to register SQLite JDBC driver: %s", e.getMessage());
+                throw e;
             }
             connection = DriverManager.getConnection(url);
             if (!dbExists) {
