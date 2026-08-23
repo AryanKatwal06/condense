@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @QuarkusIntegrationTest
 public class TrackingRepositoryNativeIT {
@@ -22,7 +23,10 @@ public class TrackingRepositoryNativeIT {
     void nativeBinary_persistsAnalyticsToSqlite() throws Exception {
         String nativeImagePath = System.getProperty("native.image.path");
         if (nativeImagePath == null || nativeImagePath.isBlank()) {
-            return;
+            fail("native.image.path system property was not supplied — this test requires " +
+                 "the native binary to be built first (e.g. `mvn verify -Pnative`). " +
+                 "It cannot validate BUG-002 (SQLite persistence in the native image) without it, " +
+                 "so it must fail rather than silently pass.");
         }
 
         File binary = new File(nativeImagePath);
@@ -31,8 +35,14 @@ public class TrackingRepositoryNativeIT {
             if (exeBinary.exists()) {
                 binary = exeBinary;
             } else {
-                return;
+                fail("native.image.path was set to '" + nativeImagePath + "' but no binary exists " +
+                     "at that path (checked both with and without a .exe suffix). The native build " +
+                     "must have failed or not run before this test executed.");
             }
+        }
+        if (!binary.canExecute()) {
+            fail("Native binary at '" + binary.getAbsolutePath() + "' exists but is not executable. " +
+                 "Check file permissions from the native-image build step.");
         }
 
         PlatformDirs dirs = new PlatformDirs();
@@ -46,7 +56,9 @@ public class TrackingRepositoryNativeIT {
                 if (rs.next()) {
                     countBefore = rs.getLong(1);
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                fail("Pre-existing database at '" + dbPath + "' could not be read: " + e.getMessage() +
+                     ". This baseline read must succeed for the before/after comparison to be meaningful.", e);
             }
         }
 
