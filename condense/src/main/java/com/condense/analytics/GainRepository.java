@@ -68,6 +68,10 @@ public class GainRepository {
         return tracking.queryTopCommands(n, sinceEpoch(sinceDays), resolveProjectHash(scope));
     }
 
+    public boolean isDegraded() {
+        return tracking.isDegraded();
+    }
+
     public void close() {
         tracking.close();
     }

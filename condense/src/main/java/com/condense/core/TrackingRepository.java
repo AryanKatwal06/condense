@@ -48,6 +48,11 @@ public class TrackingRepository {
     PlatformDirs platformDirs;
 
     private Connection connection;
+    private volatile boolean degraded = false;
+
+    public boolean isDegraded() {
+        return degraded;
+    }
 
     /**
      * Records a command execution.
@@ -73,6 +78,7 @@ public class TrackingRepository {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
+            this.degraded = true;
             log.warnf("Failed to record analytics for '%s': %s", command, e.getMessage());
         }
     }
@@ -83,6 +89,7 @@ public class TrackingRepository {
              ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM commands")) {
             return rs.next() ? rs.getLong(1) : 0L;
         } catch (SQLException e) {
+            this.degraded = true;
             log.warnf("Failed to count commands: %s", e.getMessage());
             return 0L;
         }
@@ -110,6 +117,7 @@ public class TrackingRepository {
                 }
             }
         } catch (SQLException e) {
+            this.degraded = true;
             log.warnf("queryAggregate failed: %s", e.getMessage());
         }
         return new AggregateStats(0, 0, 0, 0);
@@ -146,6 +154,7 @@ public class TrackingRepository {
                 }
             }
         } catch (SQLException e) {
+            this.degraded = true;
             log.warnf("queryDaily failed: %s", e.getMessage());
         }
         return result;
@@ -181,6 +190,7 @@ public class TrackingRepository {
                 }
             }
         } catch (SQLException e) {
+            this.degraded = true;
             log.warnf("queryWeekly failed: %s", e.getMessage());
         }
         return result;
@@ -218,6 +228,7 @@ public class TrackingRepository {
                 }
             }
         } catch (SQLException e) {
+            this.degraded = true;
             log.warnf("queryTopCommands failed: %s", e.getMessage());
         }
         return result;
@@ -250,6 +261,7 @@ public class TrackingRepository {
                 }
             }
         } catch (SQLException e) {
+            this.degraded = true;
             log.warnf("queryRecent failed: %s", e.getMessage());
         }
         return result;
