@@ -81,7 +81,7 @@ public class TrackingRepository {
             }
         } catch (SQLException e) {
             this.degraded = true;
-            log.warnf("Failed to record analytics for '%s': %s", command, e.getMessage());
+            log.warnf(e, "Failed to record analytics for '%s': %s", command, e.getMessage());
         }
     }
 
@@ -92,7 +92,7 @@ public class TrackingRepository {
             return rs.next() ? rs.getLong(1) : 0L;
         } catch (SQLException e) {
             this.degraded = true;
-            log.warnf("Failed to count commands: %s", e.getMessage());
+            log.warnf(e, "Failed to count commands: %s", e.getMessage());
             return 0L;
         }
     }
@@ -120,7 +120,7 @@ public class TrackingRepository {
             }
         } catch (SQLException e) {
             this.degraded = true;
-            log.warnf("queryAggregate failed: %s", e.getMessage());
+            log.warnf(e, "queryAggregate failed: %s", e.getMessage());
         }
         return new AggregateStats(0, 0, 0, 0);
     }
@@ -157,7 +157,7 @@ public class TrackingRepository {
             }
         } catch (SQLException e) {
             this.degraded = true;
-            log.warnf("queryDaily failed: %s", e.getMessage());
+            log.warnf(e, "queryDaily failed: %s", e.getMessage());
         }
         return result;
     }
@@ -193,7 +193,7 @@ public class TrackingRepository {
             }
         } catch (SQLException e) {
             this.degraded = true;
-            log.warnf("queryWeekly failed: %s", e.getMessage());
+            log.warnf(e, "queryWeekly failed: %s", e.getMessage());
         }
         return result;
     }
@@ -231,7 +231,7 @@ public class TrackingRepository {
             }
         } catch (SQLException e) {
             this.degraded = true;
-            log.warnf("queryTopCommands failed: %s", e.getMessage());
+            log.warnf(e, "queryTopCommands failed: %s", e.getMessage());
         }
         return result;
     }
@@ -264,7 +264,7 @@ public class TrackingRepository {
             }
         } catch (SQLException e) {
             this.degraded = true;
-            log.warnf("queryRecent failed: %s", e.getMessage());
+            log.warnf(e, "queryRecent failed: %s", e.getMessage());
         }
         return result;
     }
@@ -347,11 +347,11 @@ public class TrackingRepository {
                 }
             } catch (ClassNotFoundException e) {
                 this.degraded = true;
-                log.warnf("SQLite JDBC driver class not found: %s", e.getMessage());
+                log.warnf(e, "SQLite JDBC driver class not found: %s", e.getMessage());
                 throw new SQLException("SQLite driver not found", e);
             } catch (SQLException e) {
                 this.degraded = true;
-                log.warnf("Failed to register SQLite JDBC driver: %s", e.getMessage());
+                log.warnf(e, "Failed to register SQLite JDBC driver: %s", e.getMessage());
                 throw e;
             }
             connection = DriverManager.getConnection(url);
