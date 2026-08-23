@@ -133,6 +133,9 @@ public class GainCommand implements Runnable {
         } catch (Exception e) {
             System.err.println("condense gain: error: " + e.getMessage());
         } finally {
+            if (gainRepo.isDegraded()) {
+                System.err.println("⚠ analytics unavailable — persistence failed, see logs");
+            }
             gainRepo.close();
         }
     }
