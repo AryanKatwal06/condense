@@ -1,5 +1,7 @@
 package com.condense.core;
 
+import org.jboss.logging.Logger;
+
 /**
  * The output produced by a {@link FilterStrategy} after compressing a command's
  * raw output.
@@ -17,6 +19,8 @@ public record FilterResult(
     boolean wasFiltered
 ) {
 
+    private static final Logger log = Logger.getLogger(FilterResult.class);
+
     /** Percentage of tokens saved, 0–100. Returns 0 if rawTokens is 0. */
     public int savingsPct() {
         if (rawTokens == 0) return 0;
@@ -32,7 +36,9 @@ public record FilterResult(
         try {
             if (result.stdoutFile() != null) tokens += TokenCounter.count(result.stdoutFile());
             if (result.stderrFile() != null) tokens += TokenCounter.count(result.stderrFile());
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            log.debugf("Token counting failed in passthrough: %s", e.getMessage());
+        }
         return new FilterResult(result.combined(), tokens, tokens, false);
     }
 
@@ -44,7 +50,9 @@ public record FilterResult(
         try {
             if (result.stdoutFile() != null) rawTokens += TokenCounter.count(result.stdoutFile());
             if (result.stderrFile() != null) rawTokens += TokenCounter.count(result.stderrFile());
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            log.debugf("Token counting failed in of: %s", e.getMessage());
+        }
         
         return new FilterResult(
             filteredOutput,
