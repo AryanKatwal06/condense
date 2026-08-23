@@ -135,7 +135,17 @@ jobs:
           echo "Exit code test:"
           ./target/${{ matrix.binary-name }} sh -c "exit 42" || echo "Exit: $?"
           ./target/${{ matrix.binary-name }} git status || true
-          ./target/${{ matrix.binary-name }} gain
+
+          # Structural assertion: gain must track commands
+          GAIN_JSON=$(./target/${{ matrix.binary-name }} gain --format json)
+          echo "$GAIN_JSON"
+          TOTAL=$(echo "$GAIN_JSON" | grep '"total_commands"' | tr -dc '0-9')
+          if [ -z "$TOTAL" ] || [ "$TOTAL" -lt 1 ]; then
+            echo "FAIL: gain reported total_commands='$TOTAL', expected >= 1"
+            echo "Full output: $GAIN_JSON"
+            exit 1
+          fi
+          echo "PASS: gain reports total_commands=$TOTAL"
 
       - name: Smoke tests (Windows)
         if: runner.os == 'Windows'
@@ -146,7 +156,16 @@ jobs:
           Write-Host "Exit code test:"
           .\target\${{ matrix.binary-name }} cmd /c "exit 42" ; Write-Host "Exit: $LASTEXITCODE"
           .\target\${{ matrix.binary-name }} git status
-          .\target\${{ matrix.binary-name }} gain
+
+          # Structural assertion: gain must track commands
+          $gainJson = .\target\${{ matrix.binary-name }} gain --format json | Out-String
+          Write-Host $gainJson
+          $gain = $gainJson | ConvertFrom-Json
+          if ($gain.total_commands -lt 1) {
+            Write-Error "FAIL: gain reported total_commands=$($gain.total_commands), expected >= 1"
+            exit 1
+          }
+          Write-Host "PASS: gain reports total_commands=$($gain.total_commands)"
 
       - name: Measure native binary (Unix)
         if: runner.os != 'Windows'
