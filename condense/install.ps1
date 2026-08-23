@@ -8,7 +8,7 @@ verifies its SHA-256 checksum, and places it in $env:USERPROFILE\.local\bin.
 It also checks if the directory is in your PATH.
 
 .EXAMPLE
-iwr https://raw.githubusercontent.com/AryanKatwal06/code-condenser/main/install.ps1 -useb | iex
+irm https://github.com/AryanKatwal06/condense/releases/latest/download/install.ps1 | iex
 #>
 
 param (
@@ -31,7 +31,7 @@ if ($Help) {
 
 $ErrorActionPreference = 'Stop'
 
-$Repo = "AryanKatwal06/code-condenser"
+$Repo = "AryanKatwal06/condense"
 $Version = $env:CONDENSE_VERSION
 if ([string]::IsNullOrWhiteSpace($Version) -or $Version -eq "`$`{project.version`}") {
     try {

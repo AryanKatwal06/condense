@@ -37,8 +37,8 @@ Every release binary has a corresponding `.sha256` checksum file. Verify before
 running:
 ```bash
 # Download binary and checksum
-curl -LO https://github.com/AryanKatwal06/code-condenser/releases/download/v1.0.1/condense-linux-x64
-curl -LO https://github.com/AryanKatwal06/code-condenser/releases/download/v1.0.1/condense-linux-x64.sha256
+curl -LO https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-linux-x64
+curl -LO https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-linux-x64.sha256
 
 # Verify
 echo "$(cat condense-linux-x64.sha256)  condense-linux-x64" | sha256sum --check

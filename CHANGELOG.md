@@ -56,6 +56,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Zero network dependencies during normal operation
 - Apache License 2.0
 
-[1.0.1]: https://github.com/AryanKatwal06/code-condenser/releases/tag/v1.0.1
-[1.0.0]: https://github.com/AryanKatwal06/code-condenser/releases/tag/v1.0.0
-[1.0.0-rc1]: https://github.com/AryanKatwal06/code-condenser/releases/tag/v1.0.0-rc1
+[1.0.1]: https://github.com/AryanKatwal06/condense/releases/tag/v1.0.1
+[1.0.0]: https://github.com/AryanKatwal06/condense/releases/tag/v1.0.0
+[1.0.0-rc1]: https://github.com/AryanKatwal06/condense/releases/tag/v1.0.0-rc1

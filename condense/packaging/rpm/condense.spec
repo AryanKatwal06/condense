@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        High-performance CLI proxy for AI token savings
 
 License:        Apache-2.0
-URL:            https://github.com/AryanKatwal06/code-condenser
+URL:            https://github.com/AryanKatwal06/condense
 Source0:        condense-linux-x64
 
 BuildArch:      x86_64

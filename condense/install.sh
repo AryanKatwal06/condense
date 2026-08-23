@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Condense — Install Script
-# Usage: curl -fsSL https://github.com/AryanKatwal06/code-condenser/releases/latest/download/install.sh | bash
+# Usage: curl -fsSL https://github.com/AryanKatwal06/condense/releases/latest/download/install.sh | bash
 #
 # This script:
 #   1. Detects your OS and architecture
@@ -20,7 +20,7 @@
 set -euo pipefail
 
 
-REPO="AryanKatwal06/code-condenser"
+REPO="AryanKatwal06/condense"
 
 if [ -z "${CONDENSE_VERSION:-}" ] || [ "${CONDENSE_VERSION}" = "\${project.version}" ]; then
   if command -v curl >/dev/null 2>&1; then
@@ -73,7 +73,7 @@ detect_platform() {
       case "$os" in
         *MINGW*|*MSYS*|*CYGWIN*)
           echo "It looks like you are on Windows." >&2
-          echo "Please use the PowerShell installer instead: iwr https://raw.githubusercontent.com/${REPO}/main/install.ps1 -useb | iex" >&2
+          echo "Please use the PowerShell installer instead: irm https://github.com/${REPO}/releases/latest/download/install.ps1 | iex" >&2
           exit 1
           ;;
       esac

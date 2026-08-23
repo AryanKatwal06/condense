@@ -12,7 +12,7 @@ This guide covers adding new command filters, running tests, and submitting pull
 ## Development Setup
 
 ```bash
-git clone https://github.com/AryanKatwal06/code-condenser.git
+git clone https://github.com/AryanKatwal06/condense.git
 cd condense
 mvn verify          # builds, tests, confirms everything works
 ```

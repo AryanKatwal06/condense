@@ -1,8 +1,8 @@
 # Condense
 
-[![Release](https://img.shields.io/github/v/release/AryanKatwal06/code-condenser)](https://github.com/AryanKatwal06/code-condenser/releases/latest)
+[![Release](https://img.shields.io/github/v/release/AryanKatwal06/condense)](https://github.com/AryanKatwal06/condense/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
-[![Build](https://github.com/AryanKatwal06/code-condenser/actions/workflows/build.yml/badge.svg)](https://github.com/AryanKatwal06/code-condenser/actions/workflows/build.yml)
+[![Build](https://github.com/AryanKatwal06/condense/actions/workflows/build.yml/badge.svg)](https://github.com/AryanKatwal06/condense/actions/workflows/build.yml)
 
 **Condense** sits between your AI coding assistant and the shell. It filters command output so the AI sees a compact summary instead of thousands of raw lines — saving 60-92% of context window tokens.
 
@@ -54,24 +54,24 @@ Summary: 1 failed, 411 passed in 12.45s
 
 ### Linux (x64)
 ```bash
-curl -fsSL https://github.com/AryanKatwal06/code-condenser/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/AryanKatwal06/condense/releases/latest/download/install.sh | bash
 ```
 Then run `condense --version` to verify.
 
 ### macOS (Apple Silicon / Intel)
 ```bash
-curl -fsSL https://github.com/AryanKatwal06/code-condenser/releases/latest/download/install.sh | bash
+curl -fsSL https://github.com/AryanKatwal06/condense/releases/latest/download/install.sh | bash
 ```
 Then run `condense --version` to verify.
 
 ### Windows (x64)
 ```powershell
-irm https://github.com/AryanKatwal06/code-condenser/releases/latest/download/install.ps1 | iex
+irm https://github.com/AryanKatwal06/condense/releases/latest/download/install.ps1 | iex
 ```
 Then run `condense --version` to verify.
 
 ### Manual Installation
-You can download the binary for your platform directly from the [GitHub Releases](https://github.com/AryanKatwal06/code-condenser/releases) page. Make it executable (`chmod +x` on Linux/macOS) and place it on your PATH (e.g., `~/.local/bin/` on Linux/macOS, or any directory on your PATH on Windows). Then run `condense --version` to verify. Note that the install script requires internet access to download from GitHub Releases.
+You can download the binary for your platform directly from the [GitHub Releases](https://github.com/AryanKatwal06/condense/releases) page. Make it executable (`chmod +x` on Linux/macOS) and place it on your PATH (e.g., `~/.local/bin/` on Linux/macOS, or any directory on your PATH on Windows). Then run `condense --version` to verify. Note that the install script requires internet access to download from GitHub Releases.
 
 ---
 
@@ -268,8 +268,8 @@ Run `condense update` to automatically check GitHub Releases, download the corre
 Prerequisites: GraalVM JDK 21 (Mandrel 23.1+ recommended), Maven 3.9+
 
 ```bash
-git clone https://github.com/AryanKatwal06/code-condenser.git
-cd code-condenser/condense
+git clone https://github.com/AryanKatwal06/condense.git
+cd condense/condense
 ./mvnw test                        # run all 140+ tests
 ./mvnw package -Pnative            # build native binary
 ./target/condense --version        # verify
