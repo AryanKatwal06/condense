@@ -4,7 +4,8 @@
       { "pattern": "com/condense/version\\.properties" },
       { "pattern": "filters/.*\\.toml" },
       { "pattern": "hooks/.*" },
-      { "pattern": "application\\.properties" }
+      { "pattern": "application\\.properties" },
+      { "pattern": "org/sqlite/native/.*" }
     ]
   }
 }
