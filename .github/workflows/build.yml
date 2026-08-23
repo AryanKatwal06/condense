@@ -75,6 +75,7 @@ jobs:
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
           echo INCLUDE=%INCLUDE%>> %GITHUB_ENV%
           echo LIB=%LIB%>> %GITHUB_ENV%
           echo PATH=%PATH%>> %GITHUB_ENV%
