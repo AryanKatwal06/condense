@@ -1,7 +1,9 @@
 package com.condense.analytics;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.condense.core.TrackingRepository;
 import com.condense.core.TrackingRepository.*;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 import java.util.List;
 
@@ -12,6 +14,14 @@ import java.util.List;
  * <p>Produced by {@link GainRepository} and emitted by {@link GainCommand}
  * when {@code --format json} is requested.
  */
+@RegisterForReflection(targets = {
+    GainReport.class,
+    TrackingRepository.AggregateStats.class,
+    TrackingRepository.DailyStat.class,
+    TrackingRepository.WeeklyStat.class,
+    TrackingRepository.TopCommand.class,
+    TrackingRepository.RecentCommand.class
+})
 public record GainReport(
 
     @JsonProperty("scope")
