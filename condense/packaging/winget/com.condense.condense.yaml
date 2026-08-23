@@ -6,12 +6,12 @@ License: Apache-2.0
 ShortDescription: AI-focused command output condenser
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/AryanKatwal06/code-condenser/releases/download/v1.0.1/condense-windows-x64.exe
+    InstallerUrl: https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-windows-x64.exe
     InstallerType: portable
     Commands:
       - condense
   - Architecture: arm64
-    InstallerUrl: https://github.com/AryanKatwal06/code-condenser/releases/download/v1.0.1/condense-windows-aarch64.exe
+    InstallerUrl: https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-windows-aarch64.exe
     InstallerType: portable
     Commands:
       - condense
