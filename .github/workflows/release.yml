@@ -84,7 +84,7 @@ jobs:
             sha_cmd: "sha256sum"
 
           - os: macos-15 # Pinned to avoid silent macOS 26 migration — update intentionally after testing
-            target: macos-x64
+            target: macos-aarch64
             native_args: "--no-fallback"
             binary_suffix: ""
             sha_cmd: "shasum -a 256"
@@ -236,7 +236,7 @@ jobs:
           COSIGN_YES: true
         run: |
           cd artifacts
-          for file in condense-linux-x64 condense-macos-x64 condense-windows-x64.exe *.deb checksums.txt; do
+          for file in condense-linux-x64 condense-macos-aarch64 condense-windows-x64.exe *.deb checksums.txt; do
             if [ -f "$file" ]; then
               cosign sign-blob --output-signature "${file}.sig" --output-certificate "${file}.cert" "$file"
             fi

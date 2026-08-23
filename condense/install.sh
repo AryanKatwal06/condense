@@ -61,7 +61,11 @@ detect_platform() {
       ;;
     Darwin)
       case "$arch" in
-        x86_64)  echo "macos-x64" ;;
+        x86_64)
+          echo "Error: Intel macOS (x86_64) pre-built binaries are not available." >&2
+          echo "Please build from source: https://github.com/${REPO}#building-from-source" >&2
+          exit 1
+          ;;
         arm64)   echo "macos-aarch64" ;;
         *)
           echo "Unsupported macOS architecture: $arch" >&2
