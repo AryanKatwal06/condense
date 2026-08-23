@@ -154,16 +154,49 @@ jobs:
             -Dquarkus.native.additional-build-args="${{ matrix.native_args }}" \
             --no-transfer-progress -B
 
-      - name: Verify binary
+      - name: Verify binary (Unix)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           ./target/condense-runner --version
+          ./target/condense-runner --help
           echo "Binary size: $(du -sh target/condense-runner | cut -f1)"
+          ./target/condense-runner git status || true
+
+          # Structural assertion: gain must track commands
+          GAIN_JSON=$(./target/condense-runner gain --format json)
+          echo "$GAIN_JSON"
+          TOTAL=$(echo "$GAIN_JSON" | grep '"total_commands"' | tr -dc '0-9')
+          if [ -z "$TOTAL" ] || [ "$TOTAL" -lt 1 ]; then
+            echo "FAIL: gain reported total_commands='$TOTAL', expected >= 1"
+            echo "Full output: $GAIN_JSON"
+            exit 1
+          fi
+          echo "PASS: gain reports total_commands=$TOTAL"
+
+      - name: Verify binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\target\condense-runner.exe --version
+          .\target\condense-runner.exe --help
+          Write-Host "Binary size: $((Get-Item .\target\condense-runner.exe).Length / 1MB) MB"
+          .\target\condense-runner.exe git status
+
+          # Structural assertion: gain must track commands
+          $gainJson = .\target\condense-runner.exe gain --format json | Out-String
+          Write-Host $gainJson
+          $gain = $gainJson | ConvertFrom-Json
+          if ($gain.total_commands -lt 1) {
+            Write-Error "FAIL: gain reported total_commands=$($gain.total_commands), expected >= 1"
+            exit 1
+          }
+          Write-Host "PASS: gain reports total_commands=$($gain.total_commands)"
 
       - name: Rename binary
         shell: bash
         run: |
-          cp target/condense-runner "condense-${{ matrix.target }}${{ matrix.binary_suffix }}"
+          cp "target/condense-runner${{ matrix.binary_suffix }}" "condense-${{ matrix.target }}${{ matrix.binary_suffix }}"
 
       - name: Upload artifact for signing
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
