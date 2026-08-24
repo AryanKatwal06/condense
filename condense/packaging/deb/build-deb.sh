@@ -39,10 +39,10 @@ cat > "${DEB_ROOT}/DEBIAN/control" << EOF
 Package: condense
 Version: ${VERSION}
 Architecture: ${ARCH}
-Maintainer: Your Name <you@example.com>
+Maintainer: Aryan Katwal <katwal.aryan11@gmail.com>
 Description: High-performance CLI proxy for AI token savings
  Condense filters shell command output to save 60-90% of AI tokens.
-Homepage: https://github.com/YOUR_ORG/condense
+Homepage: https://github.com/AryanKatwal06/condense
 Section: utils
 Priority: optional
 EOF

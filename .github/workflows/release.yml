@@ -76,7 +76,7 @@ jobs:
         include:
           - os: ubuntu-latest
             target: linux-x64
-            native_args: "--no-fallback,--static,--libc=musl"
+            native_args: "--no-fallback"
             binary_suffix: ""
             sha_cmd: "sha256sum"
 
@@ -120,28 +120,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-maven-
             ${{ runner.os }}-maven-
-
-      - name: Install musl toolchain and zlib (Linux only)
-        if: startsWith(matrix.target, 'linux')
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y musl-tools
-          curl -L -o zlib.tar.gz https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
-          mkdir zlib && tar -xzf zlib.tar.gz -C zlib --strip-components 1
-          cd zlib
-          CC=musl-gcc ./configure --static --prefix=/usr/local/musl
-          make
-          sudo make install
-          sudo cp /usr/local/musl/lib/libz.a /usr/lib/x86_64-linux-musl/
-          echo "C_INCLUDE_PATH=/usr/local/musl/include" >> $GITHUB_ENV
-          echo "LIBRARY_PATH=/usr/local/musl/lib" >> $GITHUB_ENV
-          musl-gcc --version
-          
-          # Fix missing fstat64 in musl for sqlite-jdbc
-          sudo mv /usr/bin/x86_64-linux-musl-gcc /usr/bin/x86_64-linux-musl-gcc.real
-          sudo bash -c 'echo "#!/bin/bash" > /usr/bin/x86_64-linux-musl-gcc'
-          sudo bash -c 'echo "/usr/bin/x86_64-linux-musl-gcc.real \"\$@\" -Wl,--defsym=fstat64=fstat -Wl,--defsym=stat64=stat -Wl,--defsym=lstat64=lstat -Wl,--defsym=lseek64=lseek -Wl,--defsym=pread64=pread -Wl,--defsym=pwrite64=pwrite -Wl,--defsym=mmap64=mmap" >> /usr/bin/x86_64-linux-musl-gcc'
-          sudo chmod +x /usr/bin/x86_64-linux-musl-gcc
 
       - name: Build native image
         shell: bash
