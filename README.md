@@ -279,7 +279,7 @@ This indicates that condense encountered an error when attempting to write to or
 1. **Directory or File Permissions:** Verify that your user account has read and write permissions to the database directory:
    - **Linux:** `~/.local/share/condense/` or `~/.config/condense/`
    - **macOS:** `~/Library/Application Support/condense/`
-   - **Windows:** `%LOCALAPPDATA%\condense\`
+   - **Windows:** `%APPDATA%\condense\`
 2. **Corrupted Database File:** If the database file was damaged by an unexpected termination or disk issue, you can remove or rename `condense.db`. Condense will automatically initialize a fresh database and schema on the next invocation.
 3. **Outdated Binary:** If you are running an older release or self-built binary, ensure you update to the latest release (`condense update`) where native SQLite driver initialization is resolved.
 
