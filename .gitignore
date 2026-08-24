@@ -1,13 +1,70 @@
+# IDEs and Editors
+.idea/
+*.iml
+*.ipr
+*.iws
 .vscode/
-.worktrees/
+.project
+.classpath
+.settings/
+
+# Build & Compilation (Maven & Quarkus)
+target/
+*.class
+*.jar
+*.war
+*.ear
+!*-sources.jar
+.quarkus/
 apache-maven-*/
 maven.zip
 
+# GraalVM / Native Image Artifacts
+native-image-agent-output/
+*.exe
+*.exe.old
+*.dll
+*.so
+*.dylib
+*.pdb
+*.obj
+condense-linux-*
+condense-windows-*
+condense-macos-*
+*.sig
+*.cert
+cosign.exe
+
+# Database & Local Analytics
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Operating System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+Desktop.ini
+$RECYCLE.BIN/
+*~
+*.swp
+*.swo
+.directory
+
+# Worktrees & Internal Scratch
+.worktrees/
 task.md
 implementation_plan.md
 walkthrough.md
 
-# Log files and Temp directories
+# Log Files and Temp Directories
 gh_logs.txt
 linux_job_log.txt
 temp-release/
@@ -19,27 +76,14 @@ run2.json
 log.txt
 condense/test-home/
 
-# Binaries and downloaded tools
-condense-linux-*
-condense-windows-*
-condense-macos-*
-*.sig
-*.cert
-cosign.exe
-*.exe
-*.exe.old
-
-# Scratch scripts
+# Scratch and Test Scripts
 find_tags.sh
 find_tags2.sh
 build.bat
 loop.bat
 test_update.py
-^{commit}; break; fi; done
 Test*.java
 Test*.class
-
-# Dev/temp scripts - not part of the project
 *.py
 temp_*.md
 temp_*.txt
