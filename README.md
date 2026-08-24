@@ -58,11 +58,11 @@ curl -fsSL https://github.com/AryanKatwal06/condense/releases/latest/download/in
 ```
 Then run `condense --version` to verify.
 
-### macOS (Apple Silicon / Intel)
+### macOS (Apple Silicon)
 ```bash
 curl -fsSL https://github.com/AryanKatwal06/condense/releases/latest/download/install.sh | bash
 ```
-Then run `condense --version` to verify.
+Then run `condense --version` to verify. *(Note: Intel macOS binaries are not pre-built; see [Building from Source](#building-from-source).)*
 
 ### Windows (x64)
 ```powershell
@@ -81,7 +81,7 @@ You can download the binary for your platform directly from the [GitHub Releases
 2. **Try it manually**: `condense git status` (see the compressed output yourself)
 3. **View your savings**: `condense gain` (shows your token analytics dashboard)
 4. **Set up AI tool integration**: `condense init -g` (installs hooks into your AI coding assistant so it automatically uses condense without changing commands)
-5. **Configure exclusions** (optional): Open `~/.config/condense/condense.toml` (Linux/macOS) or `%APPDATA%\condense\condense.toml` (Windows) and add commands to `exclude_commands` — for example `exclude_commands = ["make", "cat"]` to pass those through unfiltered.
+5. **Configure exclusions** (optional): Open `~/.config/condense/config.toml` (Linux), `~/Library/Application Support/condense/config.toml` (macOS), or `%APPDATA%\condense\config.toml` (Windows) and add commands to `exclude_commands` — for example `exclude_commands = ["make", "cat"]` to pass those through unfiltered.
 
 ---
 
@@ -139,7 +139,7 @@ Running `condense init -g` installs hooks into your AI coding assistant. This me
 | Cline | PreToolUse executable script — macOS/Linux only (Cline doesn't support Windows hooks) | ✅ Supported |
 | Windsurf | pre_run_command exit-code hook — Beta; auto-retry behavior unconfirmed | ⚠️ Beta |
 
-`condense init --remove` removes all hooks. `condense init` (no -g) installs project-local hooks only.
+`condense init --remove` removes all hooks. `condense init --tool <tool>` installs a hook for a specific tool only.
 
 To verify hooks are working, run a few commands via your AI and then run `condense gain` to see the recorded commands. For full details and troubleshooting, see [HOOKS.md](docs/HOOKS.md).
 
@@ -287,7 +287,7 @@ This indicates that condense encountered an error when attempting to write to or
 
 ## Building from Source
 
-Prerequisites: GraalVM JDK 21 (Mandrel 23.1+ recommended), Maven 3.9+
+Prerequisites: Java 17+ / GraalVM JDK 21 (Mandrel 23.1+ recommended), Maven 3.9+
 
 ```bash
 git clone https://github.com/AryanKatwal06/condense.git
