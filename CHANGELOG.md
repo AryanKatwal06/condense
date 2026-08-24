@@ -4,6 +4,22 @@ All notable changes to Condense (Java + GraalVM port) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Native Image SQLite Persistence**: Resolved issue where SQLite analytics tracking failed in GraalVM native binary builds due to driver runtime initialization constraints; connections now initialize directly and reliably persist data across all platforms (BUG-002).
+- **Analytics Degradation Signal**: Added clear `⚠ analytics unavailable — persistence failed, see logs` warning in `condense gain` if analytics persistence encounters an error, preventing misleading zero-value dashboards (BUG-003).
+- **macOS Architecture Artifact Labeling**: Corrected release artifact naming for Apple Silicon (`condense-macos-aarch64`) to match runner architecture, and updated installer script with clear guidance for Intel macOS users (NEW-009).
+- **Repository Rename Cleanup**: Corrected remaining stale repository references from `code-condenser` to `condense` across documentation, installers, packaging manifests, and self-update endpoints (BUG-001).
+- **Filter and Hook Error Logging**: Added diagnostic debug and warning logging to previously-silent exception blocks in token filtering and AI tool hook installation/removal (BUG-004, BUG-005).
+- **Native JSON Serialization**: Registered analytics report records with GraalVM reflection metadata (`@RegisterForReflection`), fixing `--format json` output in native binary runs.
+
+### Added / Improved
+- **CI Smoke Test Assertions**: Strengthened CI and release workflows to structurally assert `gain --format json` output and verify positive command recording across Linux, macOS, and Windows runners (NEW-006, NEW-007).
+- **Windows MSVC Build Validation**: Added strict errorlevel checking after `vcvarsall.bat` environment setup in Windows native-image build actions (NEW-008).
+- **Native Binary Integration Test**: Added rigorous native integration test suite to validate SQLite persistence in compiled binaries.
+- **Troubleshooting Documentation**: Added comprehensive troubleshooting section in `README.md` explaining analytics degradation causes and resolutions.
+
 ## [1.0.1] — 2026-07-04
 
 ### Fixed
