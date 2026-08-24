@@ -117,7 +117,7 @@ jobs:
           DB_DIR="$HOME/.local/share/condense"
           mkdir -p "$DB_DIR"
           
-          # Make DB directory read-only
+          # 1. Make DB directory read-only to test write-failure fail-open
           chmod 555 "$DB_DIR"
           ls -ld "$DB_DIR"
           
@@ -133,7 +133,18 @@ jobs:
           fi
           echo "PASS: Core command succeeded (fail-open verified)"
           
-          echo "Testing gain command for degraded-state warning..."
+          # Restore directory write permission so we can modify the db file permission
+          chmod 755 "$DB_DIR"
+          
+          # 2. Make condense.db completely inaccessible (chmod 000) to test degraded warning in gain
+          if [ -f "$DB_DIR/condense.db" ]; then
+            chmod 000 "$DB_DIR/condense.db"
+          else
+            touch "$DB_DIR/condense.db"
+            chmod 000 "$DB_DIR/condense.db"
+          fi
+          
+          echo "Testing gain command for degraded-state warning with unreadable database..."
           GAIN_OUT=$("$BINARY" gain 2>&1 || true)
           echo "Gain output:"
           echo "$GAIN_OUT"
@@ -142,11 +153,13 @@ jobs:
             echo "PASS: Degraded state warning displayed successfully"
           else
             echo "FAIL: Degraded state warning not found in output"
+            chmod 644 "$DB_DIR/condense.db" 2>/dev/null || true
             chmod 755 "$DB_DIR"
             exit 1
           fi
           
           # Restore permissions
+          chmod 644 "$DB_DIR/condense.db" 2>/dev/null || true
           chmod 755 "$DB_DIR"
           echo "Permissions restored."
 
