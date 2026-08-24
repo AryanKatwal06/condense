@@ -263,6 +263,28 @@ Run `condense update` to automatically check GitHub Releases, download the corre
 
 ---
 
+## Troubleshooting
+
+### Persistence Failure Warning in `condense gain`
+If you run `condense gain` and see the warning:
+```text
+⚠ analytics unavailable — persistence failed, see logs
+```
+This indicates that condense encountered an error when attempting to write to or read from its local SQLite analytics database (`condense.db`).
+
+**Impact:**
+- **Zero impact on filtering:** Condense is designed to fail open. Core command compression and proxying continue to work normally even if analytics tracking encounters a persistence error.
+
+**Common Causes & Resolution:**
+1. **Directory or File Permissions:** Verify that your user account has read and write permissions to the database directory:
+   - **Linux:** `~/.local/share/condense/` or `~/.config/condense/`
+   - **macOS:** `~/Library/Application Support/condense/`
+   - **Windows:** `%LOCALAPPDATA%\condense\`
+2. **Corrupted Database File:** If the database file was damaged by an unexpected termination or disk issue, you can remove or rename `condense.db`. Condense will automatically initialize a fresh database and schema on the next invocation.
+3. **Outdated Binary:** If you are running an older release or self-built binary, ensure you update to the latest release (`condense update`) where native SQLite driver initialization is resolved.
+
+---
+
 ## Building from Source
 
 Prerequisites: GraalVM JDK 21 (Mandrel 23.1+ recommended), Maven 3.9+
