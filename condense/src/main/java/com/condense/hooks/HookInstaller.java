@@ -233,7 +233,9 @@ public class HookInstaller {
                     PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
                 );
                 Files.setPosixFilePermissions(scriptFile, perms);
-            } catch (UnsupportedOperationException ignored) {}
+            } catch (UnsupportedOperationException ignored) {
+                // Windows — POSIX permissions not supported, no action needed
+            }
 
             com.fasterxml.jackson.databind.node.ObjectNode root;
             if (Files.exists(hookFile)) {
@@ -344,7 +346,9 @@ public class HookInstaller {
         boolean removedAnything = false;
 
         if (Files.exists(scriptFile)) {
-            try { Files.delete(scriptFile); removedAnything = true; } catch (IOException ignored) {}
+            try { Files.delete(scriptFile); removedAnything = true; } catch (IOException ignored) {
+                log.debugf("Best-effort cleanup: failed to delete %s: %s", scriptFile, ignored.getMessage());
+            }
         }
 
         if (Files.exists(hookFile)) {
@@ -379,7 +383,9 @@ public class HookInstaller {
                         }
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                log.warnf("Failed to remove %s hook entry from config file: %s", tool.displayName, ignored.getMessage());
+            }
         }
 
         if (!removedAnything) {
@@ -405,7 +411,9 @@ public class HookInstaller {
                     PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
                 );
                 Files.setPosixFilePermissions(scriptFile, perms);
-            } catch (UnsupportedOperationException ignored) {}
+            } catch (UnsupportedOperationException ignored) {
+                // Windows — POSIX permissions not supported, no action needed
+            }
 
             com.fasterxml.jackson.databind.node.ObjectNode root;
             if (Files.exists(hookFile)) {
@@ -497,7 +505,9 @@ public class HookInstaller {
         boolean removedAnything = false;
 
         if (Files.exists(scriptFile)) {
-            try { Files.delete(scriptFile); removedAnything = true; } catch (IOException ignored) {}
+            try { Files.delete(scriptFile); removedAnything = true; } catch (IOException ignored) {
+                log.debugf("Best-effort cleanup: failed to delete %s: %s", scriptFile, ignored.getMessage());
+            }
         }
 
         if (Files.exists(hookFile)) {
@@ -526,7 +536,9 @@ public class HookInstaller {
                         }
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                log.warnf("Failed to remove %s hook entry from config file: %s", tool.displayName, ignored.getMessage());
+            }
         }
 
         if (!removedAnything) {
@@ -552,7 +564,9 @@ public class HookInstaller {
                     PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
                 );
                 Files.setPosixFilePermissions(scriptFile, perms);
-            } catch (UnsupportedOperationException ignored) {}
+            } catch (UnsupportedOperationException ignored) {
+                // Windows — POSIX permissions not supported, no action needed
+            }
 
             com.fasterxml.jackson.databind.node.ObjectNode root;
             if (Files.exists(hookFile)) {
@@ -666,7 +680,9 @@ public class HookInstaller {
         boolean removedAnything = false;
 
         if (Files.exists(scriptFile)) {
-            try { Files.delete(scriptFile); removedAnything = true; } catch (IOException ignored) {}
+            try { Files.delete(scriptFile); removedAnything = true; } catch (IOException ignored) {
+                log.debugf("Best-effort cleanup: failed to delete %s: %s", scriptFile, ignored.getMessage());
+            }
         }
 
         if (Files.exists(hookFile)) {
@@ -705,7 +721,9 @@ public class HookInstaller {
                         }
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                log.warnf("Failed to remove %s hook entry from config file: %s", tool.displayName, ignored.getMessage());
+            }
         }
 
         if (!removedAnything) {
@@ -810,7 +828,9 @@ public class HookInstaller {
                     PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
                 );
                 Files.setPosixFilePermissions(bashScript, perms);
-            } catch (UnsupportedOperationException ignored) {}
+            } catch (UnsupportedOperationException ignored) {
+                // Windows — POSIX permissions not supported, no action needed
+            }
 
             try (java.io.InputStream in = getClass().getResourceAsStream("/hooks/copilot/condense-hook.ps1")) {
                 if (in != null) {
@@ -913,10 +933,14 @@ public class HookInstaller {
         boolean removedAnything = false;
 
         if (Files.exists(bashScript)) {
-            try { Files.delete(bashScript); removedAnything = true; } catch (IOException ignored) {}
+            try { Files.delete(bashScript); removedAnything = true; } catch (IOException ignored) {
+                log.debugf("Best-effort cleanup: failed to delete %s: %s", bashScript, ignored.getMessage());
+            }
         }
         if (Files.exists(psScript)) {
-            try { Files.delete(psScript); removedAnything = true; } catch (IOException ignored) {}
+            try { Files.delete(psScript); removedAnything = true; } catch (IOException ignored) {
+                log.debugf("Best-effort cleanup: failed to delete %s: %s", psScript, ignored.getMessage());
+            }
         }
 
         if (Files.exists(hookFile)) {
@@ -945,7 +969,9 @@ public class HookInstaller {
                         }
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                log.warnf("Failed to remove %s hook entry from config file: %s", tool.displayName, ignored.getMessage());
+            }
         }
 
         if (!removedAnything) {
@@ -971,7 +997,9 @@ public class HookInstaller {
                     PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
                 );
                 Files.setPosixFilePermissions(bashScript, perms);
-            } catch (UnsupportedOperationException ignored) {}
+            } catch (UnsupportedOperationException ignored) {
+                // Windows — POSIX permissions not supported, no action needed
+            }
 
             try (java.io.InputStream in = getClass().getResourceAsStream("/hooks/windsurf/condense-hook.ps1")) {
                 if (in != null) {
@@ -1070,10 +1098,14 @@ public class HookInstaller {
         boolean removedAnything = false;
 
         if (Files.exists(bashScript)) {
-            try { Files.delete(bashScript); removedAnything = true; } catch (IOException ignored) {}
+            try { Files.delete(bashScript); removedAnything = true; } catch (IOException ignored) {
+                log.debugf("Best-effort cleanup: failed to delete %s: %s", bashScript, ignored.getMessage());
+            }
         }
         if (Files.exists(psScript)) {
-            try { Files.delete(psScript); removedAnything = true; } catch (IOException ignored) {}
+            try { Files.delete(psScript); removedAnything = true; } catch (IOException ignored) {
+                log.debugf("Best-effort cleanup: failed to delete %s: %s", psScript, ignored.getMessage());
+            }
         }
 
         if (Files.exists(hookFile)) {
@@ -1102,7 +1134,9 @@ public class HookInstaller {
                         }
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                log.warnf("Failed to remove %s hook entry from config file: %s", tool.displayName, ignored.getMessage());
+            }
         }
 
         if (!removedAnything) {
