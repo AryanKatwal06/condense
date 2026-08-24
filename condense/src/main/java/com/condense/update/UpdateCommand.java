@@ -83,48 +83,65 @@ public class UpdateCommand implements Callable<Integer> {
         System.out.println("Downloading " + binaryName + "...");
         Path tempBinary = Files.createTempFile("condense-", ".tmp");
         HttpRequest downloadReq = HttpRequest.newBuilder().uri(URI.create(downloadUrl)).build();
-        client.send(downloadReq, HttpResponse.BodyHandlers.ofFile(tempBinary));
+        HttpResponse<Path> downloadRes = client.send(downloadReq, HttpResponse.BodyHandlers.ofFile(tempBinary));
+        if (downloadRes.statusCode() != 200) {
+            System.err.println("Failed to download binary (" + binaryName + "). HTTP " + downloadRes.statusCode());
+            Files.deleteIfExists(tempBinary);
+            return 1;
+        }
 
-        if (checksumUrl != null) {
-            System.out.println("Verifying checksum...");
-            HttpRequest checksumReq = HttpRequest.newBuilder().uri(URI.create(checksumUrl)).build();
-            HttpResponse<String> checksumRes = client.send(checksumReq, HttpResponse.BodyHandlers.ofString());
-            String expectedHash = null;
-            for (String line : checksumRes.body().split("\n")) {
-                if (line.contains(binaryName)) {
-                    expectedHash = line.split("\\s+")[0].trim().toLowerCase();
-                    break;
-                }
-            }
+        if (checksumUrl == null) {
+            System.err.println("Error: Release " + latestVersionStr + " does not contain checksums.txt. Aborting update for safety.");
+            Files.deleteIfExists(tempBinary);
+            return 1;
+        }
 
-            if (expectedHash != null) {
-                MessageDigest md = MessageDigest.getInstance("SHA-256");
-                try (InputStream is = Files.newInputStream(tempBinary)) {
-                    byte[] buffer = new byte[8192];
-                    int read;
-                    while ((read = is.read(buffer)) != -1) {
-                        md.update(buffer, 0, read);
-                    }
-                }
-                byte[] digest = md.digest();
-                StringBuilder sb = new StringBuilder();
-                for (byte b : digest) {
-                    sb.append(String.format("%02x", b));
-                }
-                String actualHash = sb.toString();
+        System.out.println("Verifying checksum...");
+        HttpRequest checksumReq = HttpRequest.newBuilder().uri(URI.create(checksumUrl)).build();
+        HttpResponse<String> checksumRes = client.send(checksumReq, HttpResponse.BodyHandlers.ofString());
+        if (checksumRes.statusCode() != 200) {
+            System.err.println("Failed to download checksums.txt. HTTP " + checksumRes.statusCode());
+            Files.deleteIfExists(tempBinary);
+            return 1;
+        }
 
-                if (!expectedHash.equals(actualHash)) {
-                    System.err.println("Checksum verification failed!");
-                    System.err.println("Expected: " + expectedHash);
-                    System.err.println("Actual:   " + actualHash);
-                    Files.deleteIfExists(tempBinary);
-                    return 1;
-                }
-                System.out.println("Checksum verified.");
-            } else {
-                System.err.println("Warning: Could not find checksum for " + binaryName + " in checksums.txt");
+        String expectedHash = null;
+        for (String line : checksumRes.body().split("\n")) {
+            if (line.contains(binaryName)) {
+                expectedHash = line.split("\\s+")[0].trim().toLowerCase();
+                break;
             }
         }
+
+        if (expectedHash == null) {
+            System.err.println("Error: Could not find checksum for " + binaryName + " in checksums.txt. Aborting update.");
+            Files.deleteIfExists(tempBinary);
+            return 1;
+        }
+
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        try (InputStream is = Files.newInputStream(tempBinary)) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = is.read(buffer)) != -1) {
+                md.update(buffer, 0, read);
+            }
+        }
+        byte[] digest = md.digest();
+        StringBuilder sb = new StringBuilder();
+        for (byte b : digest) {
+            sb.append(String.format("%02x", b));
+        }
+        String actualHash = sb.toString();
+
+        if (!expectedHash.equals(actualHash)) {
+            System.err.println("Checksum verification failed!");
+            System.err.println("Expected: " + expectedHash);
+            System.err.println("Actual:   " + actualHash);
+            Files.deleteIfExists(tempBinary);
+            return 1;
+        }
+        System.out.println("Checksum verified.");
 
         String execPathStr = ProcessHandle.current().info().command().orElse(null);
         if (execPathStr == null || execPathStr.contains("java")) {
