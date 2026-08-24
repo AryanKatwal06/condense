@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
 public class UpdateCommand implements Callable<Integer> {
 
     private static final String REPO_OWNER = "AryanKatwal06";
-    private static final String REPO_NAME = "code-condenser";
+    private static final String REPO_NAME = "condense";
     private static final String LATEST_RELEASE_URL = "https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/releases/latest";
 
     @Override
