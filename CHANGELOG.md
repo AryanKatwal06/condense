@@ -4,7 +4,7 @@ All notable changes to Condense (Java + GraalVM port) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] — 2026-08-24
 
 ### Fixed
 - **Native Image SQLite Persistence**: Resolved issue where SQLite analytics tracking failed in GraalVM native binary builds due to driver runtime initialization constraints; connections now initialize directly and reliably persist data across all platforms (BUG-002).
@@ -13,30 +13,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Repository Rename Cleanup**: Corrected remaining stale repository references from `code-condenser` to `condense` across documentation, installers, packaging manifests, and self-update endpoints (BUG-001).
 - **Filter and Hook Error Logging**: Added diagnostic debug and warning logging to previously-silent exception blocks in token filtering and AI tool hook installation/removal (BUG-004, BUG-005).
 - **Native JSON Serialization**: Registered analytics report records with GraalVM reflection metadata (`@RegisterForReflection`), fixing `--format json` output in native binary runs.
+- **Update Command Security & Checksum Verification**: Added SHA-256 integrity verification, HTTP error handling, and Content-Type validation to `UpdateCommand`.
+- Cleaned up repository, added Apache 2.0 LICENSE and NOTICE files, and pinned `macos-latest` runners to `macos-15`.
 
 ### Added / Improved
 - **CI Smoke Test Assertions**: Strengthened CI and release workflows to structurally assert `gain --format json` output and verify positive command recording across Linux, macOS, and Windows runners (NEW-006, NEW-007).
 - **Windows MSVC Build Validation**: Added strict errorlevel checking after `vcvarsall.bat` environment setup in Windows native-image build actions (NEW-008).
+- **Phase 3 Verification Suite**: Added comprehensive verification workflow with soak and concurrency testing.
 - **Native Binary Integration Test**: Added rigorous native integration test suite to validate SQLite persistence in compiled binaries.
 - **Troubleshooting Documentation**: Added comprehensive troubleshooting section in `README.md` explaining analytics degradation causes and resolutions.
-
-## [1.0.1] — 2026-07-04
-
-### Fixed
-- Added Apache 2.0 LICENSE and NOTICE files
-- Cleaned up git repository (removed ~20 junk tracked files including large binaries)
-- Pinned `macos-latest` runners to `macos-15` to avoid silent migration issues
-- Documented Windsurf fail-open behavior and cascade retry caveat in README
-- Confirmed Gemini CLI and Windsurf hook installer idempotency
-- Fixed `YOUR_ORG` placeholders in documentation
-- Synchronized `version.properties` with pom.xml version
-
-## [1.0.0] — 2026-07-03
-
-### Added
-- Official v1.0.0 initial stable release!
-- Contains all features from release candidates including 42 command filters, 12 filter strategies, and `condense gain` analytics.
-- Updated release pipeline to use Node.js 24-compatible GitHub Actions.
 - Full provenance verification via Sigstore/cosign and CycloneDX SBOM integration.
 
 ## [1.0.0-rc1] — 2026-06-30
