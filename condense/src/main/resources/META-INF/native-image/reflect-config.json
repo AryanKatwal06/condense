@@ -366,5 +366,8 @@
   { "name": "com.condense.core.TrackingRepository$DailyStat",      "allDeclaredConstructors": true, "allDeclaredMethods": true },
   { "name": "com.condense.core.TrackingRepository$WeeklyStat",     "allDeclaredConstructors": true, "allDeclaredMethods": true },
   { "name": "com.condense.core.TrackingRepository$TopCommand",     "allDeclaredConstructors": true, "allDeclaredMethods": true },
-  { "name": "com.condense.core.TrackingRepository$RecentCommand",  "allDeclaredConstructors": true, "allDeclaredMethods": true }
+  { "name": "com.condense.core.TrackingRepository$RecentCommand",  "allDeclaredConstructors": true, "allDeclaredMethods": true },
+  { "name": "com.condense.uninstall.UninstallCommand",             "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.core.SafePathValidator",                 "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.core.PackageManagerDetector",            "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
 ]

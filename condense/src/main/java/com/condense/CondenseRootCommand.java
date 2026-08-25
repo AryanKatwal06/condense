@@ -21,7 +21,8 @@ import java.util.List;
         com.condense.config.ConfigCommand.class,
         com.condense.CompletionCommand.class,
         com.condense.update.UpdateCommand.class,
-        com.condense.commands.McpCommand.class
+        com.condense.commands.McpCommand.class,
+        com.condense.uninstall.UninstallCommand.class
     },
     description = {
         "High-performance CLI proxy that filters command output to save 60-90%% AI tokens.",
