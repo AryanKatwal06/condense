@@ -109,6 +109,8 @@ try {
         Write-Host "  Added $InstallDir to your PATH."
         Write-Host "  Restart your terminal for the change to take effect."
     }
+    # Mark the install directory for future uninstaller tracking
+    [Environment]::SetEnvironmentVariable('CONDENSE_INSTALL_DIR', $InstallDir, 'User')
 
     Write-Host ""
     Write-Host "  Condense installed successfully."
