@@ -116,7 +116,7 @@ public class UninstallCommand implements Callable<Integer> {
         // 6. Print final itemized report
         printFinalReport(removedItems, skippedOrFailedItems, manualCleanupCommands);
 
-        return skippedOrFailedItems.isEmpty() ? 0 : 0;
+        return skippedOrFailedItems.isEmpty() ? 0 : 1;
     }
 
     private Path resolveBinaryPath() {

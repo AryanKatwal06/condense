@@ -230,7 +230,7 @@ class UninstallCommandTest {
         cmd.yes = true;
 
         Integer exitCode = cmd.call();
-        assertThat(exitCode).isEqualTo(0);
+        assertThat(exitCode).isEqualTo(1);
 
         // condense.db is removed, but directory and user doc are preserved!
         assertThat(Files.exists(db)).isFalse();
@@ -238,4 +238,31 @@ class UninstallCommandTest {
         assertThat(Files.exists(fakeDataDir)).isTrue();
         assertThat(outContent.toString()).contains("Left directory");
     }
+
+    @Test
+    void partialFailure_returnsExitCodeOneWhenHookFails() {
+        HookInstaller failingHooks = new HookInstaller() {
+            @Override
+            public List<RemoveResult> removeAll() {
+                return List.of(new RemoveResult(HookTool.CLAUDE_CODE, false, "✗ Permission denied deleting hook"));
+            }
+
+            @Override
+            public List<HookTool> listInstalled() {
+                return List.of(HookTool.CLAUDE_CODE);
+            }
+        };
+
+        UninstallCommand cmd = new UninstallCommand();
+        cmd.platformDirs = platformDirs;
+        cmd.hookInstaller = failingHooks;
+        cmd.purge = true;
+        cmd.yes = true;
+
+        Integer exitCode = cmd.call();
+        assertThat(exitCode).isEqualTo(1);
+        assertThat(outContent.toString()).contains("Failed to remove AI hook for Claude Code");
+        assertThat(outContent.toString()).contains("Manual cleanup commands:");
+    }
 }
+
