@@ -180,4 +180,32 @@ class HookInstallerTest {
         assertThat(after).contains("\"matcher\" : \"write_file\"");
         assertThat(after).doesNotContain("\"name\" : \"condense-hook\"");
     }
+
+    @Test
+    void listInstalled_returnsEmptyWhenNoneInstalled() {
+        List<HookTool> installed = installer.listInstalled();
+        assertThat(installed).isEmpty();
+    }
+
+    @Test
+    void listInstalled_returnsInstalledToolWhenSingleInstalled(@TempDir Path tempHome) {
+        System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
+        installer.install(HookTool.GEMINI);
+        List<HookTool> installed = installer.listInstalled();
+        assertThat(installed).containsExactly(HookTool.GEMINI);
+    }
+
+    @Test
+    void listInstalled_returnsAllInstalledTools(@TempDir Path tempHome) {
+        System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
+        List<HookInstaller.InstallResult> results = installer.installAll();
+        List<HookTool> installed = installer.listInstalled();
+        
+        List<HookTool> expectedSuccessfulTools = results.stream()
+            .filter(HookInstaller.InstallResult::success)
+            .map(HookInstaller.InstallResult::tool)
+            .toList();
+
+        assertThat(installed).containsExactlyInAnyOrderElementsOf(expectedSuccessfulTools);
+    }
 }

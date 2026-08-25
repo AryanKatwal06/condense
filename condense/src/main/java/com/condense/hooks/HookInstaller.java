@@ -66,6 +66,19 @@ public class HookInstaller {
     }
 
     /**
+     * Returns the list of tools that currently have a condense hook installed.
+     * This method is read-only and side-effect-free.
+     *
+     * @return list of installed HookTool instances
+     */
+    public List<HookTool> listInstalled() {
+        return showAll().stream()
+            .filter(StatusResult::installed)
+            .map(StatusResult::tool)
+            .toList();
+    }
+
+    /**
      * Removes all Condense-managed hooks. Never removes non-Condense files.
      *
      * @return list of remove results (one per tool)
