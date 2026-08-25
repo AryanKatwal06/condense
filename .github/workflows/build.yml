@@ -147,6 +147,52 @@ jobs:
           fi
           echo "PASS: gain reports total_commands=$TOTAL"
 
+          # 1. Non-interactive purge guard test (must fail with exit code 1 when --yes is missing)
+          echo "Testing non-interactive refusal guard..."
+          if ./target/${{ matrix.binary-name }} uninstall --purge; then
+            echo "FAIL: Expected non-interactive purge without --yes to fail"
+            exit 1
+          else
+            echo "PASS: Non-interactive purge correctly refused"
+          fi
+
+          # 2. Package manager detection test (simulate Homebrew cellar path)
+          echo "Testing package manager detection..."
+          mkdir -p /tmp/fake-brew/opt/homebrew/Cellar/condense/1.0.1/bin
+          cp ./target/${{ matrix.binary-name }} /tmp/fake-brew/opt/homebrew/Cellar/condense/1.0.1/bin/condense
+          chmod +x /tmp/fake-brew/opt/homebrew/Cellar/condense/1.0.1/bin/condense
+          PM_OUT=$(/tmp/fake-brew/opt/homebrew/Cellar/condense/1.0.1/bin/condense uninstall)
+          echo "$PM_OUT"
+          if echo "$PM_OUT" | grep -q "brew uninstall condense"; then
+            echo "PASS: Homebrew detection and redirection succeeded"
+          else
+            echo "FAIL: Homebrew detection failed"
+            exit 1
+          fi
+          if [ ! -f /tmp/fake-brew/opt/homebrew/Cellar/condense/1.0.1/bin/condense ]; then
+            echo "FAIL: Binary under Homebrew was deleted, expected refusal"
+            exit 1
+          fi
+          rm -rf /tmp/fake-brew
+
+          # 3. End-to-end native uninstall purge and self-deletion
+          echo "Testing end-to-end native uninstall purge and self-deletion..."
+          DISPOSABLE_DIR=$(mktemp -d)
+          cp ./target/${{ matrix.binary-name }} "$DISPOSABLE_DIR/condense"
+          chmod +x "$DISPOSABLE_DIR/condense"
+
+          "$DISPOSABLE_DIR/condense" git status || true
+
+          UNINSTALL_OUT=$("$DISPOSABLE_DIR/condense" uninstall --purge --yes)
+          echo "$UNINSTALL_OUT"
+
+          if [ -f "$DISPOSABLE_DIR/condense" ]; then
+            echo "FAIL: Binary was not self-deleted"
+            exit 1
+          fi
+          echo "PASS: Binary was self-deleted"
+          rm -rf "$DISPOSABLE_DIR"
+
       - name: Smoke tests (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -166,6 +212,60 @@ jobs:
             exit 1
           }
           Write-Host "PASS: gain reports total_commands=$($gain.total_commands)"
+
+          # 1. Non-interactive purge guard test (must fail with exit code 1 when --yes is missing)
+          Write-Host "Testing non-interactive refusal guard..."
+          $refused = $false
+          try {
+            & .\target\${{ matrix.binary-name }} uninstall --purge
+            if ($LASTEXITCODE -ne 0) { $refused = $true }
+          } catch {
+            $refused = $true
+          }
+          if (-not $refused -and $LASTEXITCODE -eq 0) {
+            Write-Error "FAIL: Expected non-interactive purge without --yes to fail"
+            exit 1
+          }
+          Write-Host "PASS: Non-interactive purge correctly refused"
+
+          # 2. Package manager detection test (simulate Scoop path)
+          Write-Host "Testing package manager detection..."
+          $fakeScoopDir = Join-Path $env:TEMP "fake-scoop\scoop\apps\condense\1.0.1"
+          New-Item -ItemType Directory -Force -Path $fakeScoopDir | Out-Null
+          $fakeScoopBin = Join-Path $fakeScoopDir "condense.exe"
+          Copy-Item .\target\${{ matrix.binary-name }} $fakeScoopBin -Force
+          $pmOut = & $fakeScoopBin uninstall | Out-String
+          Write-Host $pmOut
+          if ($pmOut -notlike "*scoop uninstall condense*") {
+            Write-Error "FAIL: Scoop detection failed"
+            exit 1
+          }
+          if (-not (Test-Path $fakeScoopBin)) {
+            Write-Error "FAIL: Binary under Scoop was deleted, expected refusal"
+            exit 1
+          }
+          Write-Host "PASS: Scoop detection and redirection succeeded"
+          Remove-Item -Recurse -Force (Join-Path $env:TEMP "fake-scoop") -ErrorAction SilentlyContinue
+
+          # 3. End-to-end native uninstall purge and self-deletion on Windows
+          Write-Host "Testing end-to-end native uninstall purge and self-deletion..."
+          $dispDir = Join-Path $env:TEMP "disp-condense-$([guid]::NewGuid().Guid)"
+          New-Item -ItemType Directory -Force -Path $dispDir | Out-Null
+          $dispBin = Join-Path $dispDir "condense.exe"
+          Copy-Item .\target\${{ matrix.binary-name }} $dispBin -Force
+
+          & $dispBin git status
+
+          $uninstOut = & $dispBin uninstall --purge --yes | Out-String
+          Write-Host $uninstOut
+
+          Start-Sleep -Seconds 3
+          if (Test-Path $dispBin) {
+            Write-Error "FAIL: Windows binary was not deleted after self-deletion"
+            exit 1
+          }
+          Write-Host "PASS: Windows binary was successfully self-deleted"
+          Remove-Item -Recurse -Force $dispDir -ErrorAction SilentlyContinue
 
       - name: Measure native binary (Unix)
         if: runner.os != 'Windows'
