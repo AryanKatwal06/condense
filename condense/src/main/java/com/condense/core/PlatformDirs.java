@@ -42,6 +42,16 @@ public class PlatformDirs {
         return getDataDir().resolve("condense.db");
     }
 
+    /** Returns the config directory path without creating it. */
+    public Path resolveConfigDir() {
+        return resolveConfigBase();
+    }
+
+    /** Returns the data directory path without creating it. */
+    public Path resolveDataDir() {
+        return resolveDataBase();
+    }
+
 
 
     private Path resolveConfigBase() {
