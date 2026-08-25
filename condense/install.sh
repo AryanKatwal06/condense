@@ -100,6 +100,24 @@ install_dir() {
 }
 
 
+data_dir() {
+  local os
+  os="$(uname -s)"
+  case "$os" in
+    Darwin)
+      echo "${HOME}/Library/Application Support/condense"
+      ;;
+    *)
+      if [ -n "${XDG_DATA_HOME:-}" ] && [ -n "$(echo "${XDG_DATA_HOME}" | tr -d '[:space:]')" ]; then
+        echo "${XDG_DATA_HOME}/condense"
+      else
+        echo "${HOME}/.local/share/condense"
+      fi
+      ;;
+  esac
+}
+
+
 download() {
   local url="$1"
   local dest="$2"
@@ -218,6 +236,12 @@ main() {
   local install_path="${dir}/${BINARY_NAME}"
   cp "${tmpdir}/${binary_filename}" "$install_path"
   chmod 755 "$install_path"
+
+  # Record install location for future uninstaller tracking
+  local data_directory
+  data_directory="$(data_dir)"
+  mkdir -p "$data_directory"
+  echo "$dir" > "${data_directory}/.install_dir"
 
   echo "  ✓ Installed to ${install_path}"
 
