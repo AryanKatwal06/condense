@@ -43,18 +43,48 @@ main() {
   fi
 
   # Offer to remove data
-  if [ -d "${HOME}/.local/share/condense" ] || [ -d "${HOME}/.config/condense" ] || \
-     [ -d "${HOME}/Library/Application Support/condense" ]; then
+  local os
+  os="$(uname -s)"
+  local config_dir data_dir
+  case "$os" in
+    Darwin)
+      config_dir="${HOME}/Library/Application Support/condense"
+      data_dir="${HOME}/Library/Application Support/condense"
+      ;;
+    *)
+      # Linux / Unix — check XDG environment variables first (matching PlatformDirs.java)
+      if [ -n "${XDG_CONFIG_HOME:-}" ] && [ -n "$(echo "${XDG_CONFIG_HOME}" | tr -d '[:space:]')" ]; then
+        config_dir="${XDG_CONFIG_HOME}/condense"
+      else
+        config_dir="${HOME}/.config/condense"
+      fi
+      if [ -n "${XDG_DATA_HOME:-}" ] && [ -n "$(echo "${XDG_DATA_HOME}" | tr -d '[:space:]')" ]; then
+        data_dir="${XDG_DATA_HOME}/condense"
+      else
+        data_dir="${HOME}/.local/share/condense"
+      fi
+      ;;
+  esac
+
+  local existing_dirs=()
+  [ -d "$config_dir" ] && existing_dirs+=("$config_dir")
+  if [ "$config_dir" != "$data_dir" ] && [ -d "$data_dir" ]; then
+    existing_dirs+=("$data_dir")
+  fi
+
+  if [ ${#existing_dirs[@]} -gt 0 ]; then
     echo ""
     echo "  Condense data and config directories still exist:"
-    [ -d "${HOME}/.config/condense" ] && echo "    ${HOME}/.config/condense"
-    [ -d "${HOME}/.local/share/condense" ] && echo "    ${HOME}/.local/share/condense"
-    [ -d "${HOME}/Library/Application Support/condense" ] && \
-      echo "    ${HOME}/Library/Application Support/condense"
+    for ed in "${existing_dirs[@]}"; do
+      echo "    $ed"
+    done
     echo ""
     echo "  To remove them:"
-    echo "    rm -rf ~/.config/condense ~/.local/share/condense"
-    echo "    rm -rf ~/Library/Application\ Support/condense  # macOS"
+    local rm_cmd="    rm -rf"
+    for ed in "${existing_dirs[@]}"; do
+      rm_cmd+=" \"$ed\""
+    done
+    echo "$rm_cmd"
   fi
 
   echo ""
