@@ -332,5 +332,119 @@ class UninstallCommandTest {
         assertThat(outContent.toString()).contains("Failed to remove AI hook for Claude Code");
         assertThat(outContent.toString()).contains("Manual cleanup commands:");
     }
+
+    @Test
+    void purge_fullScenario_verifiesPromptAndStateAlignment() throws IOException {
+        System.setProperty("condense.test.interactive", "true");
+        System.setIn(new ByteArrayInputStream("y\n".getBytes()));
+
+        Path db = fakeDataDir.resolve("condense.db");
+        Path dbWal = fakeDataDir.resolve("condense.db-wal");
+        Path dbShm = fakeDataDir.resolve("condense.db-shm");
+        Path config = fakeConfigDir.resolve("config.toml");
+        Path tracking = fakeDataDir.resolve(".install_dir");
+
+        Files.writeString(db, "db-data");
+        Files.writeString(dbWal, "wal-data");
+        Files.writeString(dbShm, "shm-data");
+        Files.writeString(config, "config-data");
+        Files.writeString(tracking, "/usr/local/bin");
+
+        HookInstaller multiHookInstaller = new HookInstaller() {
+            @Override
+            public List<RemoveResult> removeAll() {
+                return List.of(
+                    new RemoveResult(HookTool.CLAUDE_CODE, true, "✓ Removed hook for Claude Code"),
+                    new RemoveResult(HookTool.CURSOR, true, "✓ Removed hook for Cursor")
+                );
+            }
+
+            @Override
+            public List<HookTool> listInstalled() {
+                return List.of(HookTool.CLAUDE_CODE, HookTool.CURSOR);
+            }
+        };
+
+        UninstallCommand cmd = new UninstallCommand();
+        cmd.platformDirs = platformDirs;
+        cmd.hookInstaller = multiHookInstaller;
+        cmd.purge = true;
+        cmd.yes = false;
+
+        Integer exitCode = cmd.call();
+        assertThat(exitCode).isEqualTo(0);
+
+        // 1. Verify confirmation plan output
+        String out = outContent.toString();
+        assertThat(out).contains("Condense Uninstall & Purge Plan");
+        assertThat(out).contains("• Binary:     " + fakeBinary);
+        assertThat(out).contains("• Database:   " + db);
+        assertThat(out).contains("• Config:     " + config);
+        assertThat(out).contains("• Data dir:   " + fakeDataDir);
+        assertThat(out).contains("• Config dir: " + fakeConfigDir);
+        assertThat(out).contains("• Metadata:   " + tracking);
+        assertThat(out).contains("Claude Code");
+        assertThat(out).contains("Cursor");
+
+        // 2. Verify all promised files and directories are completely removed
+        assertThat(Files.exists(db)).isFalse();
+        assertThat(Files.exists(dbWal)).isFalse();
+        assertThat(Files.exists(dbShm)).isFalse();
+        assertThat(Files.exists(config)).isFalse();
+        assertThat(Files.exists(tracking)).isFalse();
+        assertThat(Files.exists(fakeDataDir)).isFalse();
+        assertThat(Files.exists(fakeConfigDir)).isFalse();
+
+        // 3. Verify summary report shows success
+        assertThat(out).contains("Successfully removed:");
+        assertThat(out).contains("Removed " + db);
+        assertThat(out).contains("Removed " + dbWal);
+        assertThat(out).contains("Removed " + dbShm);
+        assertThat(out).contains("Removed " + config);
+        assertThat(out).contains("Removed install tracking file " + tracking);
+        assertThat(out).contains("Removed directory " + fakeDataDir);
+        assertThat(out).contains("Removed directory " + fakeConfigDir);
+    }
+
+    @Test
+    void interactiveConfirmation_unifiedConfigAndDataDir_deduplicatesDirLine() throws IOException {
+        System.setProperty("condense.test.interactive", "true");
+        System.setIn(new ByteArrayInputStream("n\n".getBytes()));
+
+        PlatformDirs unifiedDirs = new PlatformDirs() {
+            @Override
+            public Path resolveConfigDir() {
+                return fakeDataDir;
+            }
+
+            @Override
+            public Path resolveDataDir() {
+                return fakeDataDir;
+            }
+
+            @Override
+            public Path getConfigDir() {
+                return fakeDataDir;
+            }
+
+            @Override
+            public Path getDataDir() {
+                return fakeDataDir;
+            }
+        };
+
+        UninstallCommand cmd = new UninstallCommand();
+        cmd.platformDirs = unifiedDirs;
+        cmd.hookInstaller = hookInstaller;
+        cmd.purge = true;
+        cmd.yes = false;
+
+        Integer exitCode = cmd.call();
+        assertThat(exitCode).isEqualTo(0);
+
+        String out = outContent.toString();
+        assertThat(out).contains("• Data dir:   " + fakeDataDir);
+        assertThat(out).doesNotContain("• Config dir:");
+    }
 }
 

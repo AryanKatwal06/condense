@@ -180,11 +180,15 @@ public class UninstallCommand implements Callable<Integer> {
             System.out.println("  • Binary:     " + binaryPath);
         }
         if (platformDirs != null) {
-            System.out.println("  • Database:   " + platformDirs.resolveDataDir().resolve("condense.db"));
-            System.out.println("  • Config:     " + platformDirs.resolveConfigDir().resolve("config.toml"));
-            System.out.println("  • Data dir:   " + platformDirs.resolveDataDir());
-            System.out.println("  • Config dir: " + platformDirs.resolveConfigDir());
-            Path unixInstallFile = platformDirs.resolveDataDir().resolve(".install_dir");
+            Path dataDir = platformDirs.resolveDataDir();
+            Path configDir = platformDirs.resolveConfigDir();
+            System.out.println("  • Database:   " + dataDir.resolve("condense.db"));
+            System.out.println("  • Config:     " + configDir.resolve("config.toml"));
+            System.out.println("  • Data dir:   " + dataDir);
+            if (!configDir.equals(dataDir)) {
+                System.out.println("  • Config dir: " + configDir);
+            }
+            Path unixInstallFile = dataDir.resolve(".install_dir");
             if (Files.exists(unixInstallFile)) {
                 System.out.println("  • Metadata:   " + unixInstallFile);
             }
