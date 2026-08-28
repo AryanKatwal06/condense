@@ -217,6 +217,74 @@ class UninstallCommandTest {
     }
 
     @Test
+    void packageManagerDetection_homebrewRedirectsAndSkipsBinaryDelete() throws IOException {
+        Path brewBinary = tempDir.resolve("opt/homebrew/Cellar/condense/1.0.1/bin/condense");
+        Files.createDirectories(brewBinary.getParent());
+        Files.writeString(brewBinary, "brew-bin");
+        System.setProperty("condense.test.binary", brewBinary.toString());
+
+        UninstallCommand cmd = new UninstallCommand();
+        cmd.platformDirs = platformDirs;
+        cmd.hookInstaller = hookInstaller;
+        cmd.purge = false;
+
+        Integer exitCode = cmd.call();
+        assertThat(exitCode).isEqualTo(0);
+        assertThat(outContent.toString()).contains("Notice: Condense appears to have been installed via Homebrew.");
+        assertThat(outContent.toString()).contains("brew uninstall condense");
+        assertThat(Files.exists(brewBinary)).isTrue();
+    }
+
+    @Test
+    void packageManagerDetection_wingetRedirectsAndSkipsBinaryDelete() throws IOException {
+        Path wingetBinary = tempDir.resolve("AppData/Local/Microsoft/WinGet/Packages/AryanKatwal.Condense_8wekyb3d8bbwe/condense.exe");
+        Files.createDirectories(wingetBinary.getParent());
+        Files.writeString(wingetBinary, "winget-bin");
+        System.setProperty("condense.test.binary", wingetBinary.toString());
+
+        UninstallCommand cmd = new UninstallCommand();
+        cmd.platformDirs = platformDirs;
+        cmd.hookInstaller = hookInstaller;
+        cmd.purge = false;
+
+        Integer exitCode = cmd.call();
+        assertThat(exitCode).isEqualTo(0);
+        assertThat(outContent.toString()).contains("Notice: Condense appears to have been installed via WinGet.");
+        assertThat(outContent.toString()).contains("winget uninstall condense");
+        assertThat(Files.exists(wingetBinary)).isTrue();
+    }
+
+    @Test
+    void interactiveConfirmation_displaysCompletePurgePlan() throws IOException {
+        System.setProperty("condense.test.interactive", "true");
+        System.setIn(new ByteArrayInputStream("n\n".getBytes()));
+
+        Path tracking = fakeDataDir.resolve(".install_dir");
+        Files.writeString(tracking, "/usr/local/bin");
+
+        UninstallCommand cmd = new UninstallCommand();
+        cmd.platformDirs = platformDirs;
+        cmd.hookInstaller = hookInstaller;
+        cmd.purge = true;
+        cmd.yes = false;
+
+        Integer exitCode = cmd.call();
+        assertThat(exitCode).isEqualTo(0);
+
+        String output = outContent.toString();
+        assertThat(output).contains("Condense Uninstall & Purge Plan");
+        assertThat(output).contains("• Binary:     " + fakeBinary);
+        assertThat(output).contains("• Database:   " + fakeDataDir.resolve("condense.db"));
+        assertThat(output).contains("• Config:     " + fakeConfigDir.resolve("config.toml"));
+        assertThat(output).contains("• Data dir:   " + fakeDataDir);
+        assertThat(output).contains("• Config dir: " + fakeConfigDir);
+        assertThat(output).contains("• Metadata:   " + tracking);
+        assertThat(output).contains("• Installed AI Hooks:");
+        assertThat(output).contains("Claude Code");
+        assertThat(output).contains("Uninstall aborted.");
+    }
+
+    @Test
     void purge_preservesDirectoryWithUnrecognizedFiles() throws IOException {
         Path db = fakeDataDir.resolve("condense.db");
         Path userDoc = fakeDataDir.resolve("important-user-notes.txt");

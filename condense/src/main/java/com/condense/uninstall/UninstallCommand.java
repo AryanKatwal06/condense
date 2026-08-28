@@ -177,13 +177,21 @@ public class UninstallCommand implements Callable<Integer> {
         System.out.println("===============================");
         System.out.println("The following components and files will be permanently removed:");
         if (binaryPath != null && !skipBinary) {
-            System.out.println("  • Binary:    " + binaryPath);
+            System.out.println("  • Binary:     " + binaryPath);
         }
         if (platformDirs != null) {
-            System.out.println("  • Database:  " + platformDirs.resolveDataDir().resolve("condense.db"));
-            System.out.println("  • Config:    " + platformDirs.resolveConfigDir().resolve("config.toml"));
-            System.out.println("  • Data dir:  " + platformDirs.resolveDataDir());
-            System.out.println("  • Config dir:" + platformDirs.resolveConfigDir());
+            System.out.println("  • Database:   " + platformDirs.resolveDataDir().resolve("condense.db"));
+            System.out.println("  • Config:     " + platformDirs.resolveConfigDir().resolve("config.toml"));
+            System.out.println("  • Data dir:   " + platformDirs.resolveDataDir());
+            System.out.println("  • Config dir: " + platformDirs.resolveConfigDir());
+            Path unixInstallFile = platformDirs.resolveDataDir().resolve(".install_dir");
+            if (Files.exists(unixInstallFile)) {
+                System.out.println("  • Metadata:   " + unixInstallFile);
+            }
+        }
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        if (os.contains("win")) {
+            System.out.println("  • Env var:    CONDENSE_INSTALL_DIR (User)");
         }
         if (hookInstaller != null) {
             List<HookTool> installed = hookInstaller.listInstalled();
@@ -450,6 +458,15 @@ public class UninstallCommand implements Callable<Integer> {
         }
     }
 
+    /**
+     * Deletes all file entries in a directory and then the directory itself.
+     *
+     * <p>Subdirectories are never expected here because {@link SafePathValidator#validateDirectoryForDeletion}
+     * rejects any directory containing subdirectories as {@code UNEXPECTED_CONTENTS} before this method
+     * is called. If an unexpected subdirectory is encountered anyway (e.g. created concurrently between
+     * validation and deletion), it is skipped and logged rather than recursively deleted, allowing
+     * {@link Files#delete(Path)} to safely fail with {@link java.nio.file.DirectoryNotEmptyException}.
+     */
     private void deleteDirectoryContentsAndSelf(Path dir) throws IOException {
         if (!Files.exists(dir)) {
             return;
@@ -457,10 +474,12 @@ public class UninstallCommand implements Callable<Integer> {
         try (DirectoryStream<Path> entries = Files.newDirectoryStream(dir)) {
             for (Path entry : entries) {
                 if (Files.isDirectory(entry)) {
-                    deleteDirectoryContentsAndSelf(entry);
-                } else {
-                    Files.delete(entry);
+                    // Subdirectories are rejected upstream by SafePathValidator.
+                    // If one appears (e.g. filesystem race), skip it rather than recursing.
+                    log.warnf("Skipping unexpected subdirectory during cleanup: %s", entry);
+                    continue;
                 }
+                Files.delete(entry);
             }
         }
         Files.delete(dir);
