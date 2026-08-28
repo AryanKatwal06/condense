@@ -25,7 +25,11 @@ public class CatFilter implements FilterStrategy {
         long size = 0;
         try {
             size = java.nio.file.Files.size(result.stdoutFile());
-        } catch (java.io.IOException e) {}
+        } catch (java.io.IOException e) {
+            // If stdout file size cannot be determined, size remains 0, which safely
+            // routes below to uncompressed passthrough rather than risking data loss.
+            log.debugf("CatFilter could not determine stdout file size, defaulting to passthrough: %s", e.getMessage());
+        }
 
         // Small output — pass through as-is
         if (size <= CHAR_LIMIT_BEFORE_COMPRESS || verbose >= 2) {
@@ -48,6 +52,7 @@ public class CatFilter implements FilterStrategy {
                 count[0]++;
             });
         } catch (java.io.IOException e) {
+            log.debugf("CatFilter stream read failed, falling back to passthrough: %s", e.getMessage());
             return FilterResult.passthrough(result);
         }
 
