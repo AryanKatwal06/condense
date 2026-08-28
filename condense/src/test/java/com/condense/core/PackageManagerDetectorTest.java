@@ -10,64 +10,78 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PackageManagerDetectorTest {
 
     @Test
-    void detect_identifiesScoop() {
-        Path p1 = Path.of("C:\\Users\\alice\\scoop\\apps\\condense\\1.0.1\\condense.exe");
-        Path p2 = Path.of("C:\\Users\\alice\\scoop\\shims\\condense.exe");
-
-        Optional<PackageManagerDetector.Detection> d1 = PackageManagerDetector.detect(p1);
-        assertThat(d1).isPresent();
-        assertThat(d1.get().managerName()).isEqualTo("Scoop");
-        assertThat(d1.get().uninstallCommand()).isEqualTo("scoop uninstall condense");
-
-        Optional<PackageManagerDetector.Detection> d2 = PackageManagerDetector.detect(p2);
-        assertThat(d2).isPresent();
-        assertThat(d2.get().managerName()).isEqualTo("Scoop");
+    void detect_nullPath_returnsEmpty() {
+        Optional<PackageManagerDetector.Detection> result = PackageManagerDetector.detect(null);
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void detect_identifiesHomebrewMacAndLinux() {
-        Path p1 = Path.of("/opt/homebrew/Cellar/condense/1.0.1/bin/condense");
-        Path p2 = Path.of("/usr/local/Cellar/condense/1.0.1/bin/condense");
-        Path p3 = Path.of("/home/linuxbrew/.linuxbrew/Cellar/condense/1.0.1/bin/condense");
-        Path p4 = Path.of("/opt/homebrew/bin/condense");
+    void detect_standaloneInstallPaths_returnsEmpty() {
+        Path unixManual = Path.of("/usr/local/bin/condense");
+        Path unixLocal = Path.of("/home/user/.local/bin/condense");
+        Path windowsProgramFiles = Path.of("C:\\Program Files\\Condense\\condense.exe");
+        Path windowsCustom = Path.of("D:\\tools\\condense\\condense.exe");
 
-        assertThat(PackageManagerDetector.detect(p1)).hasValueSatisfying(d -> {
-            assertThat(d.managerName()).isEqualTo("Homebrew");
-            assertThat(d.uninstallCommand()).isEqualTo("brew uninstall condense");
-        });
-        assertThat(PackageManagerDetector.detect(p2)).hasValueSatisfying(d -> {
-            assertThat(d.managerName()).isEqualTo("Homebrew");
-            assertThat(d.uninstallCommand()).isEqualTo("brew uninstall condense");
-        });
-        assertThat(PackageManagerDetector.detect(p3)).hasValueSatisfying(d -> {
-            assertThat(d.managerName()).isEqualTo("Homebrew");
-        });
-        assertThat(PackageManagerDetector.detect(p4)).hasValueSatisfying(d -> {
-            assertThat(d.managerName()).isEqualTo("Homebrew");
-        });
+        assertThat(PackageManagerDetector.detect(unixManual)).isEmpty();
+        assertThat(PackageManagerDetector.detect(unixLocal)).isEmpty();
+        assertThat(PackageManagerDetector.detect(windowsProgramFiles)).isEmpty();
+        assertThat(PackageManagerDetector.detect(windowsCustom)).isEmpty();
     }
 
     @Test
-    void detect_identifiesWinGet() {
-        Path p = Path.of("C:\\Users\\alice\\AppData\\Local\\Microsoft\\WinGet\\Packages\\AryanKatwal06.condense_x64\\condense.exe");
+    void detect_scoopPaths_returnsScoopDetection() {
+        Path userApp = Path.of("C:\\Users\\user\\scoop\\apps\\condense\\1.0.1\\condense.exe");
+        Path userAppCurrent = Path.of("C:\\Users\\user\\scoop\\apps\\condense\\current\\condense.exe");
+        Path userShim = Path.of("C:\\Users\\user\\scoop\\shims\\condense.exe");
+        Path globalApp = Path.of("C:\\ProgramData\\scoop\\apps\\condense\\1.0.1\\condense.exe");
+        Path globalShim = Path.of("C:\\ProgramData\\scoop\\shims\\condense.exe");
 
-        Optional<PackageManagerDetector.Detection> d = PackageManagerDetector.detect(p);
-        assertThat(d).isPresent();
-        assertThat(d.get().managerName()).isEqualTo("WinGet");
-        assertThat(d.get().uninstallCommand()).isEqualTo("winget uninstall condense");
+        assertDetection(userApp, "Scoop", "scoop uninstall condense");
+        assertDetection(userAppCurrent, "Scoop", "scoop uninstall condense");
+        assertDetection(userShim, "Scoop", "scoop uninstall condense");
+        assertDetection(globalApp, "Scoop", "scoop uninstall condense");
+        assertDetection(globalShim, "Scoop", "scoop uninstall condense");
     }
 
     @Test
-    void detect_returnsEmptyForStandaloneInstall() {
-        Path pLinux = Path.of("/home/alice/.local/bin/condense");
-        Path pMac = Path.of("/usr/local/bin/condense");
-        Path pWin = Path.of("C:\\Users\\alice\\.local\\bin\\condense.exe");
-        Path pCustom = Path.of("/opt/custom/bin/condense");
+    void detect_homebrewPaths_returnsHomebrewDetection() {
+        Path appleSiliconCellar = Path.of("/opt/homebrew/Cellar/condense/1.0.1/bin/condense");
+        Path appleSiliconBin = Path.of("/opt/homebrew/bin/condense");
+        Path intelCellar = Path.of("/usr/local/Cellar/condense/1.0.1/bin/condense");
+        Path linuxbrewCellar = Path.of("/home/linuxbrew/.linuxbrew/Cellar/condense/1.0.1/bin/condense");
+        Path linuxbrewBin = Path.of("/home/linuxbrew/.linuxbrew/bin/condense");
 
-        assertThat(PackageManagerDetector.detect(pLinux)).isEmpty();
-        assertThat(PackageManagerDetector.detect(pMac)).isEmpty();
-        assertThat(PackageManagerDetector.detect(pWin)).isEmpty();
-        assertThat(PackageManagerDetector.detect(pCustom)).isEmpty();
-        assertThat(PackageManagerDetector.detect(null)).isEmpty();
+        assertDetection(appleSiliconCellar, "Homebrew", "brew uninstall condense");
+        assertDetection(appleSiliconBin, "Homebrew", "brew uninstall condense");
+        assertDetection(intelCellar, "Homebrew", "brew uninstall condense");
+        assertDetection(linuxbrewCellar, "Homebrew", "brew uninstall condense");
+        assertDetection(linuxbrewBin, "Homebrew", "brew uninstall condense");
+    }
+
+    @Test
+    void detect_wingetPaths_returnsWinGetDetection() {
+        Path userPortable = Path.of("C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\AryanKatwal.Condense_Microsoft.Winget.Source_8wekyb3d8bbwe\\condense.exe");
+        Path machinePortable = Path.of("C:\\Program Files\\WinGet\\Packages\\AryanKatwal.Condense_Microsoft.Winget.Source_8wekyb3d8bbwe\\condense.exe");
+
+        assertDetection(userPortable, "WinGet", "winget uninstall condense");
+        assertDetection(machinePortable, "WinGet", "winget uninstall condense");
+    }
+
+    @Test
+    void detect_unrelatedAppInPackageManagers_returnsEmpty() {
+        Path otherScoop = Path.of("C:\\Users\\user\\scoop\\apps\\ripgrep\\14.1.0\\rg.exe");
+        Path otherBrewCellar = Path.of("/opt/homebrew/Cellar/ripgrep/14.1.0/bin/rg");
+        Path otherBrewBin = Path.of("/opt/homebrew/bin/rg");
+
+        assertThat(PackageManagerDetector.detect(otherScoop)).isEmpty();
+        assertThat(PackageManagerDetector.detect(otherBrewCellar)).isEmpty();
+        assertThat(PackageManagerDetector.detect(otherBrewBin)).isEmpty();
+    }
+
+    private void assertDetection(Path path, String expectedManager, String expectedUninstallCommand) {
+        Optional<PackageManagerDetector.Detection> detection = PackageManagerDetector.detect(path);
+        assertThat(detection).isPresent();
+        assertThat(detection.get().managerName()).isEqualTo(expectedManager);
+        assertThat(detection.get().uninstallCommand()).isEqualTo(expectedUninstallCommand);
     }
 }
