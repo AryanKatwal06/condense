@@ -1,7 +1,6 @@
 package com.condense.filter.pipeline;
 
-import com.condense.core.ExecutionResult;
-import com.condense.core.FilterResult;
+import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,11 +10,17 @@ import java.util.Objects;
  * An ordered sequence of {@link FilterStage} instances executed in series.
  *
  * <p>A pipeline receives input text, executes each stage sequentially, and returns
- * either intermediate transformed output or a final {@link FilterResult}.
+ * the final transformed output string.
  * If any stage returns a {@link StageResult#shortCircuit()} flag as {@code true},
  * execution stops immediately and the short-circuited output is returned.
+ *
+ * <p>The pipeline operates with a fail-open philosophy: if any stage throws an unchecked
+ * exception during {@link FilterStage#process}, the error is logged as a warning and the
+ * pipeline continues with the previous stage's output.
  */
 public class FilterPipeline {
+
+    private static final Logger log = Logger.getLogger(FilterPipeline.class);
 
     private final List<FilterStage> stages;
 
@@ -46,6 +51,9 @@ public class FilterPipeline {
     /**
      * Executes all stages in sequence on the given input text.
      *
+     * <p>If any stage throws an exception, it is caught, logged, and execution continues
+     * with the current intermediate text (fail-open).
+     *
      * @param input   the raw input text
      * @param context contextual metadata
      * @return the transformed output string
@@ -55,11 +63,18 @@ public class FilterPipeline {
         FilterContext ctx = context != null ? context : FilterContext.empty();
 
         for (FilterStage stage : stages) {
-            StageResult stageResult = stage.process(current, ctx);
+            StageResult stageResult;
+            try {
+                stageResult = stage.process(current, ctx);
+            } catch (Exception e) {
+                log.warnf("Stage %s threw an exception during pipeline execution: %s",
+                    stage.getClass().getName(), e.getMessage());
+                continue;
+            }
             if (stageResult == null) {
                 continue;
             }
-            current = stageResult.output() != null ? stageResult.output() : "";
+            current = stageResult.output();
             if (stageResult.shortCircuit()) {
                 break;
             }
@@ -75,25 +90,6 @@ public class FilterPipeline {
      */
     public String execute(String input) {
         return execute(input, FilterContext.empty());
-    }
-
-    /**
-     * Executes the pipeline on an {@link ExecutionResult} and wraps the final output
-     * in a {@link FilterResult}.
-     *
-     * @param result  the raw command execution result
-     * @param context contextual metadata
-     * @return a FilterResult with token metrics
-     */
-    public FilterResult execute(ExecutionResult result, FilterContext context) {
-        if (result == null) {
-            return new FilterResult("", 0, 0, false);
-        }
-        String raw = result.readStdout().isBlank() && !result.readStderr().isBlank()
-            ? result.readStderr()
-            : result.readStdout();
-        String output = execute(raw, context);
-        return FilterResult.of(result, output);
     }
 
     public static final class Builder {

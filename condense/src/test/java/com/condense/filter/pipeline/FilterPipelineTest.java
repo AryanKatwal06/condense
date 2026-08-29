@@ -2,7 +2,6 @@ package com.condense.filter.pipeline;
 
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
-import com.condense.core.FilterResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -87,6 +86,68 @@ class FilterPipelineTest {
     }
 
     @Test
+    @DisplayName("First stage short-circuit returns immediately without running subsequent stages")
+    void firstStage_shortCircuit_returnsImmediately() {
+        List<String> executionOrder = new ArrayList<>();
+
+        FilterStage shortCircuitStage = (input, ctx) -> {
+            executionOrder.add("stage1-shortcircuit");
+            return StageResult.stopWith("first-stage-output");
+        };
+
+        FilterStage stage2 = (input, ctx) -> {
+            executionOrder.add("stage2-should-not-run");
+            return StageResult.continueWith("stage2-output");
+        };
+
+        FilterPipeline pipeline = FilterPipeline.of(shortCircuitStage, stage2);
+        String result = pipeline.execute("raw-input");
+
+        assertThat(result).isEqualTo("first-stage-output");
+        assertThat(executionOrder).containsExactly("stage1-shortcircuit");
+    }
+
+    @Test
+    @DisplayName("Last stage short-circuit returns correctly")
+    void lastStage_shortCircuit_returnsLastStageOutput() {
+        FilterStage stage1 = (input, ctx) -> StageResult.continueWith(input + "-stage1");
+        FilterStage stage2 = (input, ctx) -> StageResult.stopWith(input + "-stage2-stop");
+
+        FilterPipeline pipeline = FilterPipeline.of(stage1, stage2);
+        String result = pipeline.execute("start");
+
+        assertThat(result).isEqualTo("start-stage1-stage2-stop");
+    }
+
+    @Test
+    @DisplayName("Stage throwing an unchecked exception fails open and continues with previous output")
+    void stageThrowsException_failsOpenAndContinues() {
+        FilterStage stage1 = (input, ctx) -> StageResult.continueWith("stage1-clean");
+        FilterStage throwingStage = (input, ctx) -> {
+            throw new RuntimeException("Simulated parser failure");
+        };
+        FilterStage stage3 = (input, ctx) -> StageResult.continueWith(input + "-stage3");
+
+        FilterPipeline pipeline = FilterPipeline.of(stage1, throwingStage, stage3);
+        String result = pipeline.execute("start");
+
+        assertThat(result).isEqualTo("stage1-clean-stage3");
+    }
+
+    @Test
+    @DisplayName("Stage returning null StageResult is skipped safely")
+    void stageReturnsNull_skippedSafely() {
+        FilterStage stage1 = (input, ctx) -> StageResult.continueWith("stage1-ok");
+        FilterStage nullStage = (input, ctx) -> null;
+        FilterStage stage3 = (input, ctx) -> StageResult.continueWith(input + "-stage3");
+
+        FilterPipeline pipeline = FilterPipeline.of(stage1, nullStage, stage3);
+        String result = pipeline.execute("start");
+
+        assertThat(result).isEqualTo("stage1-ok-stage3");
+    }
+
+    @Test
     @DisplayName("FilterContext passes metadata through the pipeline")
     void filterContext_passesMetadata() {
         CondenseConfig config = CondenseConfig.defaults();
@@ -105,20 +166,6 @@ class FilterPipelineTest {
         FilterPipeline pipeline = FilterPipeline.of(stage);
         String result = pipeline.execute("input", context);
         assertThat(result).isEqualTo("context-validated");
-    }
-
-    @Test
-    @DisplayName("execute(ExecutionResult) wraps output in FilterResult")
-    void executeWithExecutionResult_wrapsInFilterResult() {
-        ExecutionResult execResult = new ExecutionResult(0, "raw text output", "", 20L);
-        FilterStage stage = (input, ctx) -> StageResult.continueWith("compressed output");
-
-        FilterPipeline pipeline = FilterPipeline.of(stage);
-        FilterResult filterResult = pipeline.execute(execResult, FilterContext.empty());
-
-        assertThat(filterResult.output()).isEqualTo("compressed output");
-        assertThat(filterResult.wasFiltered()).isTrue();
-        assertThat(filterResult.rawTokens()).isPositive();
     }
 
     @Test
