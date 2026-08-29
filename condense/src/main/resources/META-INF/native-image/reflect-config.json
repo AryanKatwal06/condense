@@ -360,12 +360,14 @@
   {
     "name": "com.condense.filter.pipeline.FilterContext",
     "allDeclaredConstructors": true,
-    "allDeclaredMethods": true
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
   },
   {
     "name": "com.condense.filter.pipeline.StageResult",
     "allDeclaredConstructors": true,
-    "allDeclaredMethods": true
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
   },
   {
     "name": "com.condense.filter.pipeline.FilterStage",
