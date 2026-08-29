@@ -1,28 +1,18 @@
 package com.condense.filter.pipeline;
 
-import com.condense.core.CondenseConfig;
-import com.condense.core.ExecutionResult;
-import com.condense.core.FilterResult;
-import com.condense.filter.fs.LsFilter;
-import com.condense.filter.node.ESLintFilter;
-import com.condense.filter.node.NpmInstallFilter;
 import com.condense.filter.strategy.AnsiStripStrategy;
 import com.condense.filter.strategy.GroupingStrategy;
 import com.condense.filter.strategy.TreeCompressionStrategy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class FilterPipelineBenchmarkTest {
-
-    private final NpmInstallFilter npmFilter = new NpmInstallFilter();
-    private final LsFilter lsFilter = new LsFilter();
-    private final ESLintFilter eslintFilter = new ESLintFilter();
-    private final CondenseConfig config = CondenseConfig.defaults();
 
     private static final Pattern ADDED_PATTERN = Pattern.compile("added (\\d+) packages?");
     private static final Pattern AUDIT_PATTERN = Pattern.compile("found (\\d+) vulnerabilit");
@@ -31,12 +21,12 @@ class FilterPipelineBenchmarkTest {
     @Test
     @DisplayName("Compare pure transformation execution time (in-memory pipeline vs direct strategy)")
     void benchmarkPurePipelineTransformation() {
-        System.out.println("==========================================================================================================");
-        System.out.println("PHASE 0 PURE TRANSFORMATION LATENCY: DIRECT STRATEGY VS FILTER PIPELINE");
-        System.out.println("==========================================================================================================");
-        System.out.printf("%-35s | %-12s | %-12s | %-12s | %-12s%n",
-            "Strategy / Pipeline & Size", "Direct (µs)", "Pipeline (µs)", "Diff (µs)", "Overhead");
-        System.out.println("----------------------------------------------------------------------------------------------------------");
+        System.out.println("==========================================================================================================================");
+        System.out.println("PHASE 1 RIGOROUS PURE TRANSFORMATION LATENCY: DIRECT STRATEGY VS FILTER PIPELINE");
+        System.out.println("==========================================================================================================================");
+        System.out.printf("%-32s | %-18s | %-18s | %-12s | %-10s%n",
+            "Strategy / Pipeline & Size", "Direct (µs ± std)", "Pipeline (µs ± std)", "Diff (µs)", "Overhead");
+        System.out.println("--------------------------------------------------------------------------------------------------------------------------");
 
         // 1. AnsiStrip / Npm Pipeline
         String npmSmall = "added 15 packages in 1.2s\nfound 0 vulnerabilities\n";
@@ -67,7 +57,7 @@ class FilterPipelineBenchmarkTest {
             () -> directNpm(npmLarge),
             () -> npmPipeline.execute(npmLarge));
 
-        System.out.println("----------------------------------------------------------------------------------------------------------");
+        System.out.println("--------------------------------------------------------------------------------------------------------------------------");
 
         // 2. TreeCompression / Ls Pipeline
         String lsSmall = generatePaths(20);
@@ -90,7 +80,7 @@ class FilterPipelineBenchmarkTest {
             () -> directLs(lsLarge),
             () -> lsPipeline.execute(lsLarge));
 
-        System.out.println("----------------------------------------------------------------------------------------------------------");
+        System.out.println("--------------------------------------------------------------------------------------------------------------------------");
 
         // 3. Grouping / ESLint Pipeline
         String eslintSmall = generateEslintText(5);
@@ -124,37 +114,78 @@ class FilterPipelineBenchmarkTest {
             () -> directEslint(eslintLarge),
             () -> eslintPipeline.execute(eslintLarge));
 
-        System.out.println("==========================================================================================================");
+        System.out.println("==========================================================================================================================");
     }
 
     private void compare(String label, Runnable directTask, Runnable pipelineTask) {
-        // Warmup
-        for (int i = 0; i < 100; i++) {
-            directTask.run();
-            pipelineTask.run();
+        // 1. Warmup: 300 iterations interleaved and discarded
+        for (int i = 0; i < 300; i++) {
+            if ((i & 1) == 0) {
+                directTask.run();
+                pipelineTask.run();
+            } else {
+                pipelineTask.run();
+                directTask.run();
+            }
         }
 
-        int iterations = 200;
+        // 2. Measurement: 500 interleaved iterations with per-run nanosecond measurement
+        int iterations = 500;
+        double[] directNanos = new double[iterations];
+        double[] pipeNanos = new double[iterations];
 
-        long startDirect = System.nanoTime();
         for (int i = 0; i < iterations; i++) {
-            directTask.run();
+            if ((i & 1) == 0) {
+                long t0 = System.nanoTime();
+                directTask.run();
+                long t1 = System.nanoTime();
+                directNanos[i] = (t1 - t0);
+
+                long t2 = System.nanoTime();
+                pipelineTask.run();
+                long t3 = System.nanoTime();
+                pipeNanos[i] = (t3 - t2);
+            } else {
+                long t2 = System.nanoTime();
+                pipelineTask.run();
+                long t3 = System.nanoTime();
+                pipeNanos[i] = (t3 - t2);
+
+                long t0 = System.nanoTime();
+                directTask.run();
+                long t1 = System.nanoTime();
+                directNanos[i] = (t1 - t0);
+            }
         }
-        long elapsedDirect = System.nanoTime() - startDirect;
-        double avgUsDirect = (elapsedDirect / (double) iterations) / 1_000.0;
 
-        long startPipe = System.nanoTime();
-        for (int i = 0; i < iterations; i++) {
-            pipelineTask.run();
+        double meanDirectUs = mean(directNanos) / 1_000.0;
+        double stdDirectUs = stdDev(directNanos, mean(directNanos)) / 1_000.0;
+        double meanPipeUs = mean(pipeNanos) / 1_000.0;
+        double stdPipeUs = stdDev(pipeNanos, mean(pipeNanos)) / 1_000.0;
+
+        double diffUs = meanPipeUs - meanDirectUs;
+        double overheadPct = meanDirectUs > 0 ? (diffUs / meanDirectUs) * 100.0 : 0.0;
+
+        String directStr = String.format("%.2f ± %.1f", meanDirectUs, stdDirectUs);
+        String pipeStr = String.format("%.2f ± %.1f", meanPipeUs, stdPipeUs);
+
+        System.out.printf("%-32s | %18s | %18s | %+10.2f µs | %+6.1f%%%n",
+            label, directStr, pipeStr, diffUs, overheadPct);
+    }
+
+    private static double mean(double[] values) {
+        double sum = 0.0;
+        for (double v : values) sum += v;
+        return sum / values.length;
+    }
+
+    private static double stdDev(double[] values, double mean) {
+        double sumSq = 0.0;
+        for (double v : values) {
+            double diff = v - mean;
+            sumSq += diff * diff;
         }
-        long elapsedPipe = System.nanoTime() - startPipe;
-        double avgUsPipe = (elapsedPipe / (double) iterations) / 1_000.0;
-
-        double diffUs = avgUsPipe - avgUsDirect;
-        double overheadPct = avgUsDirect > 0 ? (diffUs / avgUsDirect) * 100.0 : 0.0;
-
-        System.out.printf("%-35s | %10.2f µs | %10.2f µs | %+10.2f µs | %+6.1f%%%n",
-            label, avgUsDirect, avgUsPipe, diffUs, overheadPct);
+        return Math.sqrt(sumSq / values.length);
     }
 
     private String directNpm(String raw) {
