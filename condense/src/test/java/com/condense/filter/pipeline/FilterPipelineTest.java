@@ -181,6 +181,30 @@ class FilterPipelineTest {
     }
 
     @Test
+    @DisplayName("FilterPipeline Builder supports chaining addStage and addStages")
+    void builder_supportsChainingAndAddStages() {
+        FilterStage s1 = (in, ctx) -> StageResult.continueWith(in + "1");
+        FilterStage s2 = (in, ctx) -> StageResult.continueWith(in + "2");
+        FilterStage s3 = (in, ctx) -> StageResult.continueWith(in + "3");
+
+        FilterPipeline pipeline = FilterPipeline.builder()
+            .addStage(s1)
+            .addStages(s2, s3)
+            .build();
+
+        assertThat(pipeline.size()).isEqualTo(3);
+        assertThat(pipeline.execute("0")).isEqualTo("0123");
+    }
+
+    @Test
+    @DisplayName("FilterPipeline Builder rejects null in addStages")
+    void builder_addStages_rejectsNull() {
+        assertThatThrownBy(() -> FilterPipeline.builder().addStages(new FilterStage[]{ null }))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("stage must not be null");
+    }
+
+    @Test
     @DisplayName("FilterPipeline stages list is immutable")
     void stagesList_isImmutable() {
         FilterStage stage = (input, ctx) -> StageResult.continueWith(input);

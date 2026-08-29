@@ -130,8 +130,11 @@ class FilterPipelineHardeningTest {
     }
 
     @Test
-    @DisplayName("Records have complete reflective access for native image compliance")
+    @DisplayName("Records provide reflective constructor and accessor accessibility for JVM contract verification")
     void records_reflectionAccessibility() throws Exception {
+        // Note: This unit test verifies standard JVM reflective accessibility for record constructors
+        // and accessors. GraalVM native-image reachability is separately and additionally proven by
+        // the native compilation and smoke test pipeline in CI.
         // StageResult reflection check
         Class<StageResult> srClass = StageResult.class;
         Constructor<?> srCtor = srClass.getDeclaredConstructor(String.class, boolean.class);
