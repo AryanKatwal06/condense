@@ -395,5 +395,14 @@
   { "name": "com.condense.core.TrackingRepository$RecentCommand",  "allDeclaredConstructors": true, "allDeclaredMethods": true },
   { "name": "com.condense.uninstall.UninstallCommand",             "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.core.SafePathValidator",                 "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
-  { "name": "com.condense.core.PackageManagerDetector",            "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
+  { "name": "com.condense.core.PackageManagerDetector",            "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.FilterOverrideConfig", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.FilterOverrideConfig$FileConfig", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.FilterOverrideConfig$FilterDef", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.FilterOverrideConfig$StageDef", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.FilterOverrideConfig$TransitionDef", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.FilterOverrideValidationResult", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.FilterOverrideValidationResult$Status", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.FilterOverrideLoader", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.config.ConfigValidateCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
 ]

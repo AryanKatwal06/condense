@@ -20,12 +20,22 @@ import picocli.CommandLine.Option;
     name = "config",
     description = "Read and write Condense configuration.",
     mixinStandardHelpOptions = true,
+    subcommands = {
+        ConfigValidateCommand.class
+    },
     footer = {
         "",
         "Config file location:",
         "  Linux:   $XDG_CONFIG_HOME/condense/config.toml  (default: ~/.config/condense/config.toml)",
         "  macOS:   ~/Library/Application Support/condense/config.toml",
         "  Windows: %APPDATA%\\condense\\config.toml",
+        "",
+        "Filter override locations:",
+        "  Project: .condense/filters.toml",
+        "  Global:  <config-dir>/filters.toml",
+        "",
+        "Commands:",
+        "  validate                 Validate filter override files (.condense/filters.toml)",
         "",
         "Valid keys:",
         "  tee.enabled              true | false",
@@ -54,8 +64,15 @@ public class ConfigCommand implements Runnable {
         description = "Reset config to defaults.")
     boolean reset;
 
+    @Option(names = "--validate",
+        description = "Validate declarative filter override files.")
+    boolean validate;
+
     @Inject
     ConfigWriter configWriter;
+
+    @Inject
+    ConfigValidateCommand validateCommand;
 
     @Override
     public void run() {
@@ -89,8 +106,16 @@ public class ConfigCommand implements Runnable {
                 return;
             }
 
+            if (validate) {
+                if (validateCommand == null) {
+                    validateCommand = new ConfigValidateCommand();
+                }
+                validateCommand.call();
+                return;
+            }
+
             // No flag: print help
-            System.out.println("Usage: condense config --list | --get KEY | --set KEY=VALUE | --reset");
+            System.out.println("Usage: condense config --list | --get KEY | --set KEY=VALUE | --reset | validate");
             System.out.println("Run 'condense config --help' for full details.");
 
         } catch (IllegalArgumentException e) {

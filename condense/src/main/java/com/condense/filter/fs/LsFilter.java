@@ -5,8 +5,10 @@ import com.condense.core.*;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import com.condense.filter.strategy.TreeCompressionStrategy;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import java.util.List;
 
@@ -14,10 +16,17 @@ import java.util.List;
 @ApplicationScoped
 public class LsFilter implements FilterStrategy {
 
-    private final FilterPipeline pipeline;
+    private final FilterPipeline defaultPipeline;
+    private final FilterOverrideLoader overrideLoader;
 
     public LsFilter() {
-        this.pipeline = FilterPipeline.builder()
+        this(new FilterOverrideLoader());
+    }
+
+    @Inject
+    public LsFilter(FilterOverrideLoader overrideLoader) {
+        this.overrideLoader = overrideLoader != null ? overrideLoader : new FilterOverrideLoader();
+        this.defaultPipeline = FilterPipeline.builder()
             .addStage(TreeCompressionStrategy.INSTANCE)
             .addStage((tree, ctx) -> {
                 if (tree.isBlank()) {
@@ -48,7 +57,8 @@ public class LsFilter implements FilterStrategy {
 
         // Large directory: compress to summary via pipeline
         FilterContext context = FilterContext.of(command, result, config, verbose, ultraCompact);
-        String output = pipeline.execute(raw, context);
+        FilterPipeline activePipeline = overrideLoader.resolvePipeline(command, defaultPipeline);
+        String output = activePipeline.execute(raw, context);
         return FilterResult.of(result, output);
     }
 }

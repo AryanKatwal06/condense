@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Added / Improved
+- **Declarative Filter Override System**: Introduced TOML-based schema and `FilterOverrideLoader` supporting a 3-tier precedence model (project-local `.condense/filters.toml` → user-global `filters.toml` → built-in compiled default) with fail-open error handling and strict security guards against symlink escapes, path traversal, and unauthorized code execution.
+- **Configuration Validation Subcommand**: Added `condense config validate` (`ConfigValidateCommand`) with `--project`, `--global`, and `--file` options to provide structured, itemized diagnostics for filter override configurations.
 - **Filter Pipeline Architecture & Hardening**: Introduced composable `FilterPipeline` abstraction with fail-open stage error handling, core strategy library, and hardened GraalVM reflection configuration.
 - **Test Lifecycle Isolation**: Added defensive `<exclude>**/*IT.java</exclude>` configuration to `maven-surefire-plugin` with documented rationale, guarding against integration tests (such as `TrackingRepositoryNativeIT`) running during unit test execution under broadened CLI test selectors.
 
