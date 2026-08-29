@@ -6,8 +6,10 @@ import com.condense.core.*;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import com.condense.filter.strategy.GroupingStrategy;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 import java.util.List;
@@ -26,12 +28,19 @@ public class ESLintFilter implements FilterStrategy {
     private static final Pattern RULE_PATTERN =
         Pattern.compile("\\s+\\d+:\\d+\\s+(?:error|warning)\\s+.+?\\s+(\\S+)$");
 
-    private final FilterPipeline pipeline;
+    private final FilterPipeline defaultPipeline;
+    private final FilterOverrideLoader overrideLoader;
 
     public ESLintFilter() {
+        this(new FilterOverrideLoader());
+    }
+
+    @Inject
+    public ESLintFilter(FilterOverrideLoader overrideLoader) {
+        this.overrideLoader = overrideLoader != null ? overrideLoader : new FilterOverrideLoader();
         GroupingStrategy groupingStage = new GroupingStrategy(RULE_PATTERN, false);
 
-        this.pipeline = FilterPipeline.builder()
+        this.defaultPipeline = FilterPipeline.builder()
             // Stage 1: JSON format short-circuit
             .addStage((raw, ctx) -> {
                 String trimmed = raw.trim();
@@ -71,7 +80,8 @@ public class ESLintFilter implements FilterStrategy {
             String raw = result.readStdout().isBlank() ? result.readStderr()
                                                         : result.readStdout();
             FilterContext context = FilterContext.of(command, result, config, verbose, ultraCompact);
-            String output = pipeline.execute(raw, context);
+            FilterPipeline activePipeline = overrideLoader.resolvePipeline(command, defaultPipeline);
+            String output = activePipeline.execute(raw, context);
             return FilterResult.of(result, output);
         } catch (Exception e) {
             log.warnf("ESLintFilter error: %s", e.getMessage());
