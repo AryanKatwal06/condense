@@ -1,7 +1,6 @@
 package com.condense.filter.pipeline.config;
 
 import com.condense.core.PlatformDirs;
-import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.StageResult;
 import org.junit.jupiter.api.DisplayName;

@@ -16,7 +16,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -214,9 +213,10 @@ public class UninstallCommand implements Callable<Integer> {
         if (System.console() != null) {
             line = System.console().readLine();
         } else {
-            Scanner scanner = new Scanner(System.in);
-            if (scanner.hasNextLine()) {
-                line = scanner.nextLine();
+            try (Scanner scanner = new Scanner(System.in)) {
+                if (scanner.hasNextLine()) {
+                    line = scanner.nextLine();
+                }
             }
         }
 

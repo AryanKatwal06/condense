@@ -2,7 +2,6 @@ package com.condense.filter.strategy;
 
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterPipeline;
-import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
