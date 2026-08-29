@@ -88,17 +88,17 @@ class FilterPipelineHardeningTest {
             DeduplicationStrategy.DEFAULT
         );
 
-        // Build ~2MB input
+        // Build ~2MB input with lines repeating within default window of 50
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 20000; i++) {
-            sb.append("\u001B[33mline ").append(i % 100).append("\u001B[0m\n");
+            sb.append("\u001B[33mline ").append(i % 10).append("\u001B[0m\n");
         }
         String largeInput = sb.toString();
 
         String result = pipeline.execute(largeInput);
 
         assertThat(result).doesNotContain("\u001B[");
-        assertThat(result).contains("(×200)");
+        assertThat(result).contains("(×2000)");
     }
 
     @Test
