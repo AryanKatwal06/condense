@@ -4,6 +4,12 @@ All notable changes to Condense (Java + GraalVM port) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added / Improved
+- **Filter Pipeline Architecture & Hardening**: Introduced composable `FilterPipeline` abstraction with fail-open stage error handling, core strategy library, and hardened GraalVM reflection configuration.
+- **Test Lifecycle Isolation**: Added defensive `<exclude>**/*IT.java</exclude>` configuration to `maven-surefire-plugin` with documented rationale, guarding against integration tests (such as `TrackingRepositoryNativeIT`) running during unit test execution under broadened CLI test selectors.
+
 ## [1.0.0] — 2026-08-24
 
 ### Fixed
