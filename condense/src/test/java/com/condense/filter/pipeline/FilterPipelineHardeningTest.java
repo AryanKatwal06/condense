@@ -3,8 +3,6 @@ package com.condense.filter.pipeline;
 import com.condense.core.CondenseConfig;
 import com.condense.filter.strategy.AnsiStripStrategy;
 import com.condense.filter.strategy.DeduplicationStrategy;
-import com.condense.filter.strategy.GroupingStrategy;
-import com.condense.filter.strategy.JsonStructureStrategy;
 import com.condense.filter.strategy.TreeCompressionStrategy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
