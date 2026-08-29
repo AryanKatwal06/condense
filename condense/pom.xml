@@ -145,6 +145,14 @@
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
+                    <!--
+                      Defensive safeguard: Explicitly exclude integration test classes (**/*IT.java).
+                      Under default Surefire include rules (**/*Test.java, etc.), *IT.java files are already
+                      ignored. This explicit exclude guards against broadened CLI test selectors (such as
+                      -Dtest="!SomeTest") that would otherwise scan and execute integration tests like
+                      TrackingRepositoryNativeIT during unit test runs without the required native binary properties
+                      provided by the maven-failsafe-plugin.
+                    -->
                     <excludes>
                         <exclude>**/*IT.java</exclude>
                     </excludes>
