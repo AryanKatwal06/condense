@@ -1,11 +1,16 @@
 package com.condense.filter.strategy;
 
+import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterStage;
+import com.condense.filter.pipeline.StageResult;
+
 import java.util.regex.Pattern;
 
+public final class AnsiStripStrategy implements FilterStage {
 
-public final class AnsiStripStrategy {
+    public static final AnsiStripStrategy INSTANCE = new AnsiStripStrategy();
 
-    private AnsiStripStrategy() {}
+    public AnsiStripStrategy() {}
 
     /** Matches any ANSI CSI (Control Sequence Introducer) escape. */
     private static final Pattern ANSI_PATTERN =
@@ -14,6 +19,11 @@ public final class AnsiStripStrategy {
     /** Matches lines overwritten via carriage return (progress bar updates). */
     private static final Pattern CR_LINE_PATTERN =
         Pattern.compile("[^\n]*\r(?!\n)");
+
+    @Override
+    public StageResult process(String input, FilterContext context) {
+        return StageResult.continueWith(strip(input));
+    }
 
     /**
      * Removes all ANSI escape codes and carriage-return progress bar lines.

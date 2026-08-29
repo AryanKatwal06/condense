@@ -3,12 +3,14 @@ package com.condense.filter.node;
 import com.condense.annotation.CommandFilter;
 import com.condense.annotation.CommandFilters;
 import com.condense.core.*;
+import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterPipeline;
+import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.GroupingStrategy;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 @CommandFilters({
@@ -24,28 +26,60 @@ public class ESLintFilter implements FilterStrategy {
     private static final Pattern RULE_PATTERN =
         Pattern.compile("\\s+\\d+:\\d+\\s+(?:error|warning)\\s+.+?\\s+(\\S+)$");
 
+    private final FilterPipeline pipeline;
+
+    public ESLintFilter() {
+        GroupingStrategy groupingStage = new GroupingStrategy(RULE_PATTERN, false);
+
+        this.pipeline = FilterPipeline.builder()
+            // Stage 1: JSON format short-circuit
+            .addStage((raw, ctx) -> {
+                String trimmed = raw.trim();
+                if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+                    String jsonSummary = tryParseJson(trimmed);
+                    if (jsonSummary != null) {
+                        return StageResult.stopWith(jsonSummary);
+                    }
+                }
+                return StageResult.continueWith(raw);
+            })
+            // Stage 2: Text format parsing and rule grouping
+            .addStage((raw, ctx) -> {
+                List<String> lines = raw.lines().toList();
+                long errors   = lines.stream().filter(l -> l.contains("  error  ")).count();
+                long warnings = lines.stream().filter(l -> l.contains("  warning  ")).count();
+
+                if (errors == 0 && warnings == 0 && (ctx.result() != null && ctx.result().succeeded())) {
+                    return StageResult.stopWith("✓ no lint issues");
+                }
+
+                String formattedGroups = groupingStage.process(raw, ctx).output();
+                StringBuilder sb = new StringBuilder("eslint: ").append(errors)
+                    .append(" error(s), ").append(warnings).append(" warning(s)\n");
+                if (!formattedGroups.isBlank()) {
+                    sb.append(formattedGroups);
+                }
+                return StageResult.continueWith(sb.toString().stripTrailing());
+            })
+            .build();
+    }
+
     @Override
     public FilterResult apply(String command, ExecutionResult result,
                               CondenseConfig config, int verbose, boolean ultraCompact) {
         try {
-            // Try JSON output first (from eslint --format json)
             String raw = result.readStdout().isBlank() ? result.readStderr()
                                                         : result.readStdout();
-            String trimmed = raw.trim();
-            if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
-                FilterResult jsonResult = tryParseJson(result, trimmed);
-                if (jsonResult != null) return jsonResult;
-            }
-
-            // Fallback: parse the human-readable text format
-            return parseText(result, raw, verbose, ultraCompact);
+            FilterContext context = FilterContext.of(command, result, config, verbose, ultraCompact);
+            String output = pipeline.execute(raw, context);
+            return FilterResult.of(result, output);
         } catch (Exception e) {
             log.warnf("ESLintFilter error: %s", e.getMessage());
             return FilterResult.passthrough(result);
         }
     }
 
-    private FilterResult tryParseJson(ExecutionResult result, String json) {
+    private static String tryParseJson(String json) {
         try {
             var root = Mappers.JSON.readTree(json);
             if (!root.isArray()) return null;
@@ -63,7 +97,7 @@ public class ESLintFilter implements FilterStrategy {
             }
 
             if (errors == 0 && warnings == 0) {
-                return FilterResult.of(result, "✓ no lint issues");
+                return "✓ no lint issues";
             }
 
             StringBuilder sb = new StringBuilder("eslint: ")
@@ -73,27 +107,10 @@ public class ESLintFilter implements FilterStrategy {
                 .sorted(java.util.Map.Entry.<String, Integer>comparingByValue().reversed())
                 .forEach(e -> sb.append("  ").append(e.getKey())
                                 .append(": ").append(e.getValue()).append('\n'));
-            return FilterResult.of(result, sb.toString().stripTrailing());
+            return sb.toString().stripTrailing();
 
         } catch (Exception e) {
             return null; // Not valid JSON or wrong shape — caller will try text fallback
         }
-    }
-
-    private FilterResult parseText(ExecutionResult result, String raw,
-                                   int verbose, boolean ultraCompact) {
-        List<String> lines = raw.lines().toList();
-        long errors   = lines.stream().filter(l -> l.contains("  error  ")).count();
-        long warnings = lines.stream().filter(l -> l.contains("  warning  ")).count();
-
-        if (errors == 0 && warnings == 0 && result.succeeded()) {
-            return FilterResult.of(result, "✓ no lint issues");
-        }
-
-        Map<String, Integer> groups = GroupingStrategy.group(lines, RULE_PATTERN, false);
-        StringBuilder sb = new StringBuilder("eslint: ").append(errors)
-            .append(" error(s), ").append(warnings).append(" warning(s)\n");
-        sb.append(GroupingStrategy.format(groups));
-        return FilterResult.of(result, sb.toString().stripTrailing());
     }
 }

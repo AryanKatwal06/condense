@@ -1,15 +1,42 @@
 package com.condense.filter.strategy;
 
+import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterStage;
+import com.condense.filter.pipeline.StageResult;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+public final class GroupingStrategy implements FilterStage {
 
-public final class GroupingStrategy {
+    private final Pattern keyPattern;
+    private final boolean includeOther;
 
-    private GroupingStrategy() {}
+    public GroupingStrategy() {
+        this(Pattern.compile("(.*)"), false);
+    }
+
+    public GroupingStrategy(Pattern keyPattern) {
+        this(keyPattern, false);
+    }
+
+    public GroupingStrategy(Pattern keyPattern, boolean includeOther) {
+        this.keyPattern = keyPattern;
+        this.includeOther = includeOther;
+    }
+
+    @Override
+    public StageResult process(String input, FilterContext context) {
+        if (input == null || input.isEmpty()) {
+            return StageResult.continueWith("");
+        }
+        List<String> lines = input.lines().toList();
+        Map<String, Integer> groups = group(lines, keyPattern, includeOther);
+        return StageResult.continueWith(format(groups));
+    }
 
     /**
      * Groups {@code lines} by the string captured in group 1 of {@code keyPattern}.
