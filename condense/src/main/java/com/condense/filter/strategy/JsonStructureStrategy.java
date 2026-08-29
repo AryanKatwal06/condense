@@ -1,5 +1,8 @@
 package com.condense.filter.strategy;
 
+import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterStage;
+import com.condense.filter.pipeline.StageResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -8,13 +11,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 import java.util.Map;
 
+public final class JsonStructureStrategy implements FilterStage {
 
-public final class JsonStructureStrategy {
+    public static final JsonStructureStrategy INSTANCE = new JsonStructureStrategy();
 
-    private JsonStructureStrategy() {}
+    public JsonStructureStrategy() {}
 
     private static final ObjectMapper MAPPER = com.condense.core.Mappers.JSON;
     private static final int MAX_DEPTH = 6;
+
+    @Override
+    public StageResult process(String input, FilterContext context) {
+        return StageResult.continueWith(skeleton(input));
+    }
 
     /**
      * Parses {@code json} and returns a schema-skeleton string.

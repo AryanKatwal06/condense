@@ -329,26 +329,50 @@
   },
   {
     "name": "com.condense.filter.strategy.DeduplicationStrategy",
+    "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
     "name": "com.condense.filter.strategy.GroupingStrategy",
+    "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
     "name": "com.condense.filter.strategy.AnsiStripStrategy",
+    "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
     "name": "com.condense.filter.strategy.JsonStructureStrategy",
+    "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
     "name": "com.condense.filter.strategy.TreeCompressionStrategy",
+    "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
     "name": "com.condense.filter.strategy.StateMachineStrategy",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.condense.filter.pipeline.FilterContext",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.condense.filter.pipeline.StageResult",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.condense.filter.pipeline.FilterStage",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.condense.filter.pipeline.FilterPipeline",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },

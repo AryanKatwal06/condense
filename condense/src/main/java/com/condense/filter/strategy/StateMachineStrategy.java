@@ -1,12 +1,15 @@
 package com.condense.filter.strategy;
 
+import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterStage;
+import com.condense.filter.pipeline.StageResult;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-
-public final class StateMachineStrategy {
+public final class StateMachineStrategy implements FilterStage {
 
     public enum Action { EMIT, DISCARD, COLLECT }
 
@@ -23,6 +26,16 @@ public final class StateMachineStrategy {
     private StateMachineStrategy(List<Transition> transitions, String initialState) {
         this.transitions = transitions;
         this.initialState = initialState;
+    }
+
+    @Override
+    public StageResult process(String input, FilterContext context) {
+        if (input == null || input.isEmpty()) {
+            return StageResult.continueWith("");
+        }
+        List<String> lines = input.lines().toList();
+        List<String> processed = process(lines);
+        return StageResult.continueWith(String.join("\n", processed));
     }
 
     /**

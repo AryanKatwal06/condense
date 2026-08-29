@@ -1,14 +1,37 @@
 package com.condense.filter.strategy;
 
+import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterStage;
+import com.condense.filter.pipeline.StageResult;
+
 import java.util.ArrayList;
 import java.util.List;
 
+public final class DeduplicationStrategy implements FilterStage {
 
-public final class DeduplicationStrategy {
+    public static final DeduplicationStrategy DEFAULT = new DeduplicationStrategy(50);
 
-    private DeduplicationStrategy() {}
+    private final int windowSize;
+
+    public DeduplicationStrategy() {
+        this(50);
+    }
+
+    public DeduplicationStrategy(int windowSize) {
+        this.windowSize = windowSize;
+    }
 
     private static final java.util.regex.Pattern MULTIPLIER_PATTERN = java.util.regex.Pattern.compile("\\s+\\(×\\d+\\)$");
+
+    @Override
+    public StageResult process(String input, FilterContext context) {
+        if (input == null || input.isEmpty()) {
+            return StageResult.continueWith("");
+        }
+        List<String> lines = input.lines().toList();
+        List<String> deduped = deduplicate(lines, windowSize);
+        return StageResult.continueWith(String.join("\n", deduped));
+    }
 
     /**
      * Deduplicates lines within a sliding window of {@code windowSize} lines.

@@ -1,14 +1,28 @@
 package com.condense.filter.strategy;
 
+import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterStage;
+import com.condense.filter.pipeline.StageResult;
+
 import java.util.*;
 
+public final class TreeCompressionStrategy implements FilterStage {
 
-public final class TreeCompressionStrategy {
+    public static final TreeCompressionStrategy INSTANCE = new TreeCompressionStrategy();
 
-    private TreeCompressionStrategy() {}
+    public TreeCompressionStrategy() {}
 
     /** Directories with more files than this show a summary count. */
     public static final int MAX_FILES_PER_DIR = 8;
+
+    @Override
+    public StageResult process(String input, FilterContext context) {
+        if (input == null || input.isEmpty()) {
+            return StageResult.continueWith("");
+        }
+        List<String> lines = input.lines().toList();
+        return StageResult.continueWith(compress(lines));
+    }
 
     /**
      * Builds a compressed tree string from a list of file paths.
