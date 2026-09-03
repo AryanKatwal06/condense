@@ -60,6 +60,9 @@ public class FilterOverrideLoader {
     );
 
     private final PlatformDirs platformDirs;
+    private final Map<Path, CachedOverride> projectConfigCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private volatile CachedOverride globalConfigCache = null;
+    private final Object globalCacheLock = new Object();
 
     public FilterOverrideLoader() {
         this(new PlatformDirs());
@@ -83,6 +86,7 @@ public class FilterOverrideLoader {
 
     /**
      * Resolves the active {@link FilterPipeline} for the given command and project working directory.
+     * Uses in-memory caching to avoid redundant filesystem I/O and TOML parsing on repeated invocations.
      *
      * @param command         the command name or invocation
      * @param defaultPipeline the built-in default pipeline
@@ -98,24 +102,34 @@ public class FilterOverrideLoader {
 
         // Tier 1: Project-local override (.condense/filters.toml)
         if (projectDir != null) {
-            Path projectOverrideFile = projectDir.resolve(PROJECT_OVERRIDE_REL_PATH);
-            Optional<FilterPipeline> projectPipeline = tryLoadPipelineForCommand(projectOverrideFile, projectDir, normalizedCmd);
-            if (projectPipeline.isPresent()) {
-                log.debugf("Applied project-local override for '%s' from %s", command, projectOverrideFile);
-                return projectPipeline.get();
+            Path normalizedProjectDir = projectDir.toAbsolutePath().normalize();
+            CachedOverride projectCached = projectConfigCache.computeIfAbsent(
+                normalizedProjectDir,
+                this::loadProjectOverride
+            );
+            FilterPipeline projectPipeline = projectCached.getOrCreatePipeline(normalizedCmd, this);
+            if (projectPipeline != null) {
+                log.debugf("Applied project-local override for '%s' from %s", command, normalizedProjectDir.resolve(PROJECT_OVERRIDE_REL_PATH));
+                return projectPipeline;
             }
         }
 
         // Tier 2: User-global override ($CONFIG_DIR/filters.toml)
         if (platformDirs != null) {
-            Path configDir = platformDirs.resolveConfigDir();
-            if (configDir != null) {
-                Path globalOverrideFile = configDir.resolve(GLOBAL_OVERRIDE_FILE_NAME);
-                Optional<FilterPipeline> globalPipeline = tryLoadPipelineForCommand(globalOverrideFile, configDir, normalizedCmd);
-                if (globalPipeline.isPresent()) {
-                    log.debugf("Applied user-global override for '%s' from %s", command, globalOverrideFile);
-                    return globalPipeline.get();
+            CachedOverride globalCached = globalConfigCache;
+            if (globalCached == null) {
+                synchronized (globalCacheLock) {
+                    globalCached = globalConfigCache;
+                    if (globalCached == null) {
+                        globalCached = loadGlobalOverride();
+                        globalConfigCache = globalCached;
+                    }
                 }
+            }
+            FilterPipeline globalPipeline = globalCached.getOrCreatePipeline(normalizedCmd, this);
+            if (globalPipeline != null) {
+                log.debugf("Applied user-global override for '%s'", command);
+                return globalPipeline;
             }
         }
 
@@ -124,19 +138,42 @@ public class FilterOverrideLoader {
     }
 
     /**
-     * Validates a candidate filter override file at the given path against its expected parent directory.
+     * Clears all cached filter override configurations and compiled pipelines.
+     * Used in tests and when configuration files are modified or deleted.
+     */
+    public void invalidateCache() {
+        projectConfigCache.clear();
+        synchronized (globalCacheLock) {
+            globalConfigCache = null;
+        }
+    }
+
+    /**
+     * Clears cached filter overrides for a specific project directory.
+     *
+     * @param projectDir the project directory whose cache should be invalidated
+     */
+    public void invalidateCache(Path projectDir) {
+        if (projectDir != null) {
+            projectConfigCache.remove(projectDir.toAbsolutePath().normalize());
+        }
+    }
+
+    /**
+     * Validates and parses a candidate filter override file at the given path against its expected parent directory.
+     * Performs a single TOML parse via Jackson and applies both syntax and semantic validation.
      *
      * @param file           the file path to validate
      * @param expectedParent the parent directory the file must reside in (for symlink/traversal checks)
-     * @return structured validation result
+     * @return structured validation result paired with the parsed FileConfig (if valid)
      */
-    public FilterOverrideValidationResult validateFile(Path file, Path expectedParent) {
+    public ParsedFileResult parseAndValidateFile(Path file, Path expectedParent) {
         if (file == null) {
-            return FilterOverrideValidationResult.error(null, "Target path is null");
+            return ParsedFileResult.invalid(FilterOverrideValidationResult.error(null, "Target path is null"));
         }
 
         if (!Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
-            return FilterOverrideValidationResult.notFound(file);
+            return ParsedFileResult.invalid(FilterOverrideValidationResult.notFound(file));
         }
 
         // Security check: canonicalize and verify path safety
@@ -148,28 +185,28 @@ public class FilterOverrideLoader {
                     : expectedParent.toAbsolutePath().normalize();
 
                 if (!realFile.startsWith(realParent)) {
-                    return FilterOverrideValidationResult.securityViolation(
+                    return ParsedFileResult.invalid(FilterOverrideValidationResult.securityViolation(
                         file,
                         "Path traversal or symlink escape: file '" + realFile + "' resolves outside expected directory '" + realParent + "'"
-                    );
+                    ));
                 }
             }
         } catch (IOException e) {
-            return FilterOverrideValidationResult.securityViolation(
+            return ParsedFileResult.invalid(FilterOverrideValidationResult.securityViolation(
                 file,
                 "Cannot resolve canonical path for '" + file + "': " + e.getMessage()
-            );
+            ));
         }
 
-        // Syntax validation: parse TOML
+        // Syntax validation: parse TOML once
         FilterOverrideConfig.FileConfig config;
         try {
             config = TOML.readValue(file.toFile(), FilterOverrideConfig.FileConfig.class);
             if (config == null || config.filters() == null) {
-                return FilterOverrideValidationResult.valid(file, 0);
+                return ParsedFileResult.of(FilterOverrideValidationResult.valid(file, 0), config);
             }
         } catch (Exception e) {
-            return FilterOverrideValidationResult.syntaxError(file, "TOML parse error: " + e.getMessage());
+            return ParsedFileResult.invalid(FilterOverrideValidationResult.syntaxError(file, "TOML parse error: " + e.getMessage()));
         }
 
         // Semantic validation: inspect filters and stages
@@ -198,10 +235,21 @@ public class FilterOverrideLoader {
         }
 
         if (!errors.isEmpty()) {
-            return FilterOverrideValidationResult.semanticError(file, errors);
+            return ParsedFileResult.invalid(FilterOverrideValidationResult.semanticError(file, errors));
         }
 
-        return FilterOverrideValidationResult.valid(file, filterCount);
+        return ParsedFileResult.of(FilterOverrideValidationResult.valid(file, filterCount), config);
+    }
+
+    /**
+     * Validates a candidate filter override file at the given path against its expected parent directory.
+     *
+     * @param file           the file path to validate
+     * @param expectedParent the parent directory the file must reside in (for symlink/traversal checks)
+     * @return structured validation result
+     */
+    public FilterOverrideValidationResult validateFile(Path file, Path expectedParent) {
+        return parseAndValidateFile(file, expectedParent).validationResult();
     }
 
     /**
@@ -228,36 +276,109 @@ public class FilterOverrideLoader {
         return validateFile(file, configDir);
     }
 
-    private Optional<FilterPipeline> tryLoadPipelineForCommand(Path file, Path expectedParent, String command) {
+    private CachedOverride loadProjectOverride(Path normalizedProjectDir) {
+        Path projectOverrideFile = normalizedProjectDir.resolve(PROJECT_OVERRIDE_REL_PATH);
         try {
-            if (!Files.exists(file)) {
-                return Optional.empty();
+            if (!Files.exists(projectOverrideFile)) {
+                return CachedOverride.EMPTY;
             }
 
-            FilterOverrideValidationResult validation = validateFile(file, expectedParent);
-            if (!validation.isValid()) {
+            ParsedFileResult parsed = parseAndValidateFile(projectOverrideFile, normalizedProjectDir);
+            if (!parsed.validationResult().isValid()) {
                 log.warnf("Filter override file at %s failed validation (%s): %s",
-                    file, validation.status(), String.join("; ", validation.errors()));
-                return Optional.empty();
+                    projectOverrideFile, parsed.validationResult().status(),
+                    String.join("; ", parsed.validationResult().errors()));
+                return CachedOverride.EMPTY;
             }
 
-            FilterOverrideConfig.FileConfig config = TOML.readValue(file.toFile(), FilterOverrideConfig.FileConfig.class);
-            if (config == null || config.filters() == null) {
-                return Optional.empty();
+            if (parsed.fileConfig() == null || parsed.fileConfig().filters() == null) {
+                return CachedOverride.EMPTY;
             }
 
-            // Find matching filter definition: exact match or prefix match
-            FilterOverrideConfig.FilterDef matchingDef = findMatchingFilterDef(config.filters(), command);
-            if (matchingDef == null) {
-                return Optional.empty();
-            }
-
-            FilterPipeline pipeline = buildPipelineFromDef(matchingDef);
-            return Optional.ofNullable(pipeline);
-
+            return new CachedOverride(true, parsed.fileConfig());
         } catch (Exception e) {
-            log.warnf("Unexpected error reading filter override from %s: %s", file, e.getMessage());
-            return Optional.empty();
+            log.warnf("Unexpected error reading filter override from %s: %s", projectOverrideFile, e.getMessage());
+            return CachedOverride.EMPTY;
+        }
+    }
+
+    private CachedOverride loadGlobalOverride() {
+        Path configDir = platformDirs != null ? platformDirs.resolveConfigDir() : null;
+        if (configDir == null) {
+            return CachedOverride.EMPTY;
+        }
+        Path globalOverrideFile = configDir.resolve(GLOBAL_OVERRIDE_FILE_NAME);
+        try {
+            if (!Files.exists(globalOverrideFile)) {
+                return CachedOverride.EMPTY;
+            }
+
+            ParsedFileResult parsed = parseAndValidateFile(globalOverrideFile, configDir);
+            if (!parsed.validationResult().isValid()) {
+                log.warnf("Filter override file at %s failed validation (%s): %s",
+                    globalOverrideFile, parsed.validationResult().status(),
+                    String.join("; ", parsed.validationResult().errors()));
+                return CachedOverride.EMPTY;
+            }
+
+            if (parsed.fileConfig() == null || parsed.fileConfig().filters() == null) {
+                return CachedOverride.EMPTY;
+            }
+
+            return new CachedOverride(true, parsed.fileConfig());
+        } catch (Exception e) {
+            log.warnf("Unexpected error reading filter override from %s: %s", globalOverrideFile, e.getMessage());
+            return CachedOverride.EMPTY;
+        }
+    }
+
+    static final class CachedOverride {
+        static final CachedOverride EMPTY = new CachedOverride(false, null);
+
+        final boolean exists;
+        final FilterOverrideConfig.FileConfig config;
+        final java.util.concurrent.ConcurrentHashMap<String, FilterPipeline> pipelineCache;
+
+        CachedOverride(boolean exists, FilterOverrideConfig.FileConfig config) {
+            this.exists = exists;
+            this.config = config;
+            this.pipelineCache = new java.util.concurrent.ConcurrentHashMap<>();
+        }
+
+        boolean hasPipelines() {
+            return exists && config != null && config.filters() != null && !config.filters().isEmpty();
+        }
+
+        FilterPipeline getOrCreatePipeline(String command, FilterOverrideLoader loader) {
+            if (!hasPipelines()) {
+                return null;
+            }
+            FilterPipeline cached = pipelineCache.get(command);
+            if (cached != null) {
+                return cached;
+            }
+            FilterOverrideConfig.FilterDef def = loader.findMatchingFilterDef(config.filters(), command);
+            if (def == null) {
+                return null;
+            }
+            FilterPipeline built = loader.buildPipelineFromDef(def);
+            if (built != null) {
+                pipelineCache.put(command, built);
+            }
+            return built;
+        }
+    }
+
+    public record ParsedFileResult(
+        FilterOverrideValidationResult validationResult,
+        FilterOverrideConfig.FileConfig fileConfig
+    ) {
+        public static ParsedFileResult of(FilterOverrideValidationResult result, FilterOverrideConfig.FileConfig config) {
+            return new ParsedFileResult(result, config);
+        }
+
+        public static ParsedFileResult invalid(FilterOverrideValidationResult result) {
+            return new ParsedFileResult(result, null);
         }
     }
 

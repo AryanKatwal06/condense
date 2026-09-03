@@ -200,4 +200,128 @@ class FilterOverrideLoaderTest {
         assertThat(resolved).isSameAs(defaultPipeline);
         assertThat(resolved.execute("any input")).isEqualTo("SAFE_FALLBACK");
     }
+
+    @Test
+    @DisplayName("Caching: Repeated lookups avoid redundant filesystem I/O")
+    void testCacheAvoidsRedundantFileSystemWorkOnRepeatedInvocations() throws IOException {
+        Path projectDir = tempDir.resolve("cached-project");
+        Path condenseDir = projectDir.resolve(".condense");
+        Files.createDirectories(condenseDir);
+
+        String toml = """
+            [filters."npm install"]
+            stages = [
+              { strategy = "ansi_strip" }
+            ]
+            """;
+        Path overrideFile = condenseDir.resolve("filters.toml");
+        Files.writeString(overrideFile, toml);
+
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterPipeline defaultPipeline = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+
+        // First call: reads from disk, caches pipeline
+        FilterPipeline first = loader.resolvePipeline("npm install", defaultPipeline, projectDir);
+        assertThat(first).isNotSameAs(defaultPipeline);
+        assertThat(first.execute("\u001B[31merror\u001B[0m")).isEqualTo("error");
+
+        // Physically delete file from disk to prove subsequent call does not touch disk
+        Files.delete(overrideFile);
+        assertThat(Files.exists(overrideFile)).isFalse();
+
+        // Second call: served from in-memory cache without hitting disk
+        FilterPipeline second = loader.resolvePipeline("npm install", defaultPipeline, projectDir);
+        assertThat(second).isSameAs(first);
+        assertThat(second.execute("\u001B[31merror\u001B[0m")).isEqualTo("error");
+
+        // Negative caching test: non-existent override cached
+        Path emptyProject = tempDir.resolve("empty-cached-project");
+        Files.createDirectories(emptyProject);
+
+        FilterPipeline noOverrideFirst = loader.resolvePipeline("ls", defaultPipeline, emptyProject);
+        assertThat(noOverrideFirst).isSameAs(defaultPipeline);
+
+        // Now create a file on disk; because negative existence is cached, second call still returns default without I/O
+        Files.createDirectories(emptyProject.resolve(".condense"));
+        Files.writeString(emptyProject.resolve(".condense/filters.toml"), toml);
+
+        FilterPipeline noOverrideSecond = loader.resolvePipeline("ls", defaultPipeline, emptyProject);
+        assertThat(noOverrideSecond).isSameAs(defaultPipeline);
+    }
+
+    @Test
+    @DisplayName("Caching: Cache invalidation reloads modified configuration from disk")
+    void testCacheInvalidationReloadsModifiedFiles() throws IOException {
+        Path projectDir = tempDir.resolve("invalidation-project");
+        Path condenseDir = projectDir.resolve(".condense");
+        Files.createDirectories(condenseDir);
+
+        String tomlV1 = """
+            [filters."cmd"]
+            stages = [
+              { strategy = "ansi_strip" }
+            ]
+            """;
+        Path overrideFile = condenseDir.resolve("filters.toml");
+        Files.writeString(overrideFile, tomlV1);
+
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterPipeline defaultPipeline = FilterPipeline.of();
+
+        // Initial load: Version 1 (ansi_strip)
+        FilterPipeline v1 = loader.resolvePipeline("cmd", defaultPipeline, projectDir);
+        assertThat(v1.execute("\u001B[32mhello\u001B[0m")).isEqualTo("hello");
+
+        // Update file on disk to Version 2 (deduplication)
+        String tomlV2 = """
+            [filters."cmd"]
+            stages = [
+              { strategy = "deduplication", window_size = 5 }
+            ]
+            """;
+        Files.writeString(overrideFile, tomlV2);
+
+        // Before invalidation: cache serves Version 1
+        FilterPipeline stillV1 = loader.resolvePipeline("cmd", defaultPipeline, projectDir);
+        assertThat(stillV1).isSameAs(v1);
+
+        // Invalidate cache for project
+        loader.invalidateCache(projectDir);
+
+        // After invalidation: reloads Version 2 from disk
+        FilterPipeline v2 = loader.resolvePipeline("cmd", defaultPipeline, projectDir);
+        assertThat(v2).isNotSameAs(v1);
+        assertThat(v2.execute("repeat\nrepeat\nother")).isEqualTo("repeat (×2)\nother");
+    }
+
+    @Test
+    @DisplayName("Caching: Different project directories maintain isolated cache entries")
+    void testMultiDirectoryIsolation() throws IOException {
+        Path projectA = tempDir.resolve("project-a");
+        Path projectB = tempDir.resolve("project-b");
+        Files.createDirectories(projectA.resolve(".condense"));
+        Files.createDirectories(projectB.resolve(".condense"));
+
+        String tomlA = """
+            [filters."shared-cmd"]
+            stages = [ { strategy = "ansi_strip" } ]
+            """;
+        String tomlB = """
+            [filters."shared-cmd"]
+            stages = [ { strategy = "tree_compression" } ]
+            """;
+
+        Files.writeString(projectA.resolve(".condense/filters.toml"), tomlA);
+        Files.writeString(projectB.resolve(".condense/filters.toml"), tomlB);
+
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterPipeline defaultPipeline = FilterPipeline.of();
+
+        FilterPipeline pipelineA = loader.resolvePipeline("shared-cmd", defaultPipeline, projectA);
+        FilterPipeline pipelineB = loader.resolvePipeline("shared-cmd", defaultPipeline, projectB);
+
+        assertThat(pipelineA).isNotSameAs(pipelineB);
+        assertThat(pipelineA.execute("\u001B[32mtext\u001B[0m")).isEqualTo("text");
+        assertThat(pipelineB.execute("dir/file.txt\ndir/file2.txt")).contains("dir/");
+    }
 }
