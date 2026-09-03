@@ -14,18 +14,24 @@ public final class GroupingStrategy implements FilterStage {
 
     private final Pattern keyPattern;
     private final boolean includeOther;
+    private final long timeoutMillis;
 
     public GroupingStrategy() {
-        this(Pattern.compile("(.*)"), false);
+        this(Pattern.compile("(.*)"), false, 0);
     }
 
     public GroupingStrategy(Pattern keyPattern) {
-        this(keyPattern, false);
+        this(keyPattern, false, 0);
     }
 
     public GroupingStrategy(Pattern keyPattern, boolean includeOther) {
+        this(keyPattern, includeOther, 0);
+    }
+
+    public GroupingStrategy(Pattern keyPattern, boolean includeOther, long timeoutMillis) {
         this.keyPattern = keyPattern;
         this.includeOther = includeOther;
+        this.timeoutMillis = timeoutMillis;
     }
 
     @Override
@@ -34,7 +40,7 @@ public final class GroupingStrategy implements FilterStage {
             return StageResult.continueWith("");
         }
         List<String> lines = input.lines().toList();
-        Map<String, Integer> groups = group(lines, keyPattern, includeOther);
+        Map<String, Integer> groups = group(lines, keyPattern, includeOther, timeoutMillis);
         return StageResult.continueWith(format(groups));
     }
 
@@ -50,12 +56,30 @@ public final class GroupingStrategy implements FilterStage {
      */
     public static Map<String, Integer> group(
             List<String> lines, Pattern keyPattern, boolean includeOther) {
+        return group(lines, keyPattern, includeOther, 0);
+    }
+
+    /**
+     * Groups {@code lines} by the string captured in group 1 of {@code keyPattern},
+     * enforcing a per-match timeout if {@code timeoutMillis > 0}.
+     *
+     * @param lines         input lines
+     * @param keyPattern    regex with one capture group that extracts the group key
+     * @param includeOther  whether non-matching lines count toward "(other)"
+     * @param timeoutMillis maximum execution time per regex match in milliseconds, or 0 for unconstrained
+     * @return map of key → count, sorted by count descending, then key ascending
+     */
+    public static Map<String, Integer> group(
+            List<String> lines, Pattern keyPattern, boolean includeOther, long timeoutMillis) {
 
         Map<String, Integer> counts = new LinkedHashMap<>();
         int other = 0;
 
         for (String line : lines) {
-            var m = keyPattern.matcher(line);
+            CharSequence lineSeq = timeoutMillis > 0
+                ? new TimeoutCharSequence(line, timeoutMillis, keyPattern.pattern())
+                : line;
+            var m = keyPattern.matcher(lineSeq);
             if (m.find()) {
                 String key = m.group(1).trim();
                 counts.merge(key, 1, Integer::sum);

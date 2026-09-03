@@ -41,6 +41,15 @@ public class FilterOverrideLoader {
     public static final String PROJECT_OVERRIDE_REL_PATH = ".condense/filters.toml";
     public static final String GLOBAL_OVERRIDE_FILE_NAME = "filters.toml";
 
+    /** Maximum allowed regex execution time in milliseconds for untrusted declarative patterns. */
+    public static final long OVERRIDE_REGEX_TIMEOUT_MS = 200L;
+
+    /** Maximum allowed character length for any declarative regex pattern. */
+    public static final int MAX_PATTERN_LENGTH = 500;
+
+    /** Maximum allowed number of transitions in a single state machine strategy. */
+    public static final int MAX_TRANSITIONS_COUNT = 50;
+
     public static final Set<String> ALLOWED_STRATEGIES = Set.of(
         "ansi_strip", "ansi-strip", "ansi",
         "tree_compression", "tree-compression", "tree",
@@ -322,7 +331,7 @@ public class FilterOverrideLoader {
                     ? Pattern.compile(stageDef.pattern())
                     : Pattern.compile("(.*)");
                 boolean includeOther = Boolean.TRUE.equals(stageDef.includeOther());
-                yield new GroupingStrategy(pattern, includeOther);
+                yield new GroupingStrategy(pattern, includeOther, OVERRIDE_REGEX_TIMEOUT_MS);
             }
 
             case "state_machine", "state-machine" ->
@@ -346,7 +355,7 @@ public class FilterOverrideLoader {
                 }
                 Pattern p = Pattern.compile(t.pattern());
                 StateMachineStrategy.Action action = parseAction(t.action());
-                builder.on(t.fromState().trim(), p, action, t.nextState().trim());
+                builder.on(t.fromState().trim(), p, action, t.nextState().trim(), OVERRIDE_REGEX_TIMEOUT_MS);
             }
         }
 
@@ -408,13 +417,17 @@ public class FilterOverrideLoader {
 
             case "grouping", "group" -> {
                 if (stage.pattern() != null && !stage.pattern().isBlank()) {
-                    try {
-                        Pattern p = Pattern.compile(stage.pattern());
-                        if (p.matcher("").groupCount() < 1) {
-                            errors.add(location + " 'pattern' regex must contain at least one capture group (e.g. '(.*)')");
+                    if (stage.pattern().length() > MAX_PATTERN_LENGTH) {
+                        errors.add(location + " 'pattern' regex exceeds maximum allowed length of " + MAX_PATTERN_LENGTH + " characters");
+                    } else {
+                        try {
+                            Pattern p = Pattern.compile(stage.pattern());
+                            if (p.matcher("").groupCount() < 1) {
+                                errors.add(location + " 'pattern' regex must contain at least one capture group (e.g. '(.*)')");
+                            }
+                        } catch (PatternSyntaxException e) {
+                            errors.add(location + " Invalid regex in 'pattern': " + e.getMessage());
                         }
-                    } catch (PatternSyntaxException e) {
-                        errors.add(location + " Invalid regex in 'pattern': " + e.getMessage());
                     }
                 }
             }
@@ -424,6 +437,9 @@ public class FilterOverrideLoader {
                     errors.add(location + " 'initial_state' must not be empty");
                 }
                 if (stage.transitions() != null) {
+                    if (stage.transitions().size() > MAX_TRANSITIONS_COUNT) {
+                        errors.add(location + " 'transitions' count exceeds maximum allowed limit of " + MAX_TRANSITIONS_COUNT);
+                    }
                     for (int tIdx = 0; tIdx < stage.transitions().size(); tIdx++) {
                         FilterOverrideConfig.TransitionDef t = stage.transitions().get(tIdx);
                         String tLoc = location + String.format(".transitions[%d]", tIdx);
@@ -435,6 +451,8 @@ public class FilterOverrideLoader {
                         }
                         if (t.pattern() == null || t.pattern().isBlank()) {
                             errors.add(tLoc + " 'pattern' must not be empty");
+                        } else if (t.pattern().length() > MAX_PATTERN_LENGTH) {
+                            errors.add(tLoc + " 'pattern' regex exceeds maximum allowed length of " + MAX_PATTERN_LENGTH + " characters");
                         } else {
                             try {
                                 Pattern.compile(t.pattern());

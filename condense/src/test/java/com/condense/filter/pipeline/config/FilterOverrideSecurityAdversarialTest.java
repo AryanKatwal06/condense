@@ -3,6 +3,8 @@ package com.condense.filter.pipeline.config;
 import com.condense.core.PlatformDirs;
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.strategy.RegexTimeoutException;
+import com.condense.filter.strategy.TimeoutCharSequence;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -216,5 +218,166 @@ class FilterOverrideSecurityAdversarialTest {
         FilterPipeline resolved = loader.resolvePipeline("npm install", defaultPipeline, projectDir);
         assertThat(resolved).isSameAs(defaultPipeline);
         assertThat(resolved.execute("raw text")).isEqualTo("SAFE_PASSTHROUGH");
+    }
+
+    @Test
+    @DisplayName("Attack 8: Catastrophic backtracking in grouping pattern aborts within bounded timeout and fails open")
+    void testGroupingCatastrophicBacktrackingAbortsWithinTimeout() throws IOException {
+        Path projectDir = tempDir.resolve("redos-grouping-project");
+        Path condenseDir = projectDir.resolve(".condense");
+        Files.createDirectories(condenseDir);
+
+        // Pattern (a*)a*a*a*a*a*a*b exhibits genuine catastrophic backtracking on a...ac
+        String redosToml = """
+            [filters."redos-group"]
+            stages = [
+              { strategy = "grouping", pattern = "(a*)a*a*a*a*a*a*b" }
+            ]
+            """;
+        Path overrideFile = condenseDir.resolve("filters.toml");
+        Files.writeString(overrideFile, redosToml);
+
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
+        assertThat(result.isValid()).isTrue();
+
+        FilterPipeline defaultPipeline = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT_FAILOPEN"));
+        FilterPipeline resolved = loader.resolvePipeline("redos-group", defaultPipeline, projectDir);
+        assertThat(resolved).isNotSameAs(defaultPipeline);
+
+        // Crafted input: 34 'a' characters followed by 'c'
+        // In unmitigated backtracking, this pattern explores tens of millions of states
+        String adversarialInput = "a".repeat(34) + "c";
+
+        long start = System.nanoTime();
+        String output = resolved.execute(adversarialInput);
+        long elapsedMillis = (System.nanoTime() - start) / 1_000_000L;
+
+        // Bounded time limit assertion: must abort cleanly around ~200ms and well under 2000ms
+        assertThat(elapsedMillis).isGreaterThanOrEqualTo(100L).isLessThan(2000L);
+
+        // Fail-open guarantee: stage exception caught by pipeline, returning intermediate text
+        assertThat(output).isEqualTo(adversarialInput);
+    }
+
+    @Test
+    @DisplayName("Attack 9: Catastrophic backtracking in state machine pattern aborts within bounded timeout and fails open")
+    void testStateMachineCatastrophicBacktrackingAbortsWithinTimeout() throws IOException {
+        Path projectDir = tempDir.resolve("redos-sm-project");
+        Path condenseDir = projectDir.resolve(".condense");
+        Files.createDirectories(condenseDir);
+
+        String redosSmToml = """
+            [filters."redos-sm"]
+            stages = [
+              { strategy = "state_machine", initial_state = "START", transitions = [
+                { from_state = "START", pattern = "a*a*a*a*a*a*a*b", action = "EMIT", next_state = "MATCHED" }
+              ] }
+            ]
+            """;
+        Path overrideFile = condenseDir.resolve("filters.toml");
+        Files.writeString(overrideFile, redosSmToml);
+
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
+        assertThat(result.isValid()).isTrue();
+
+        FilterPipeline defaultPipeline = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT_FAILOPEN"));
+        FilterPipeline resolved = loader.resolvePipeline("redos-sm", defaultPipeline, projectDir);
+        assertThat(resolved).isNotSameAs(defaultPipeline);
+
+        String adversarialInput = "a".repeat(34) + "c";
+
+        long start = System.nanoTime();
+        String output = resolved.execute(adversarialInput);
+        long elapsedMillis = (System.nanoTime() - start) / 1_000_000L;
+
+        // Bounded time limit assertion
+        assertThat(elapsedMillis).isGreaterThanOrEqualTo(100L).isLessThan(2000L);
+
+        // Fail-open guarantee
+        assertThat(output).isEqualTo(adversarialInput);
+    }
+
+    @Test
+    @DisplayName("Attack 10: Ordinary non-pathological regex patterns continue to execute without false timeouts")
+    void testLegitimateRegexPatternsExecuteNormally() throws IOException {
+        Path projectDir = tempDir.resolve("safe-regex-project");
+        Path condenseDir = projectDir.resolve(".condense");
+        Files.createDirectories(condenseDir);
+
+        String safeToml = """
+            [filters."safe-logs"]
+            stages = [
+              { strategy = "grouping", pattern = '^\\[(INFO|WARN|ERROR)\\]\\s+(.*)$' }
+            ]
+            """;
+        Path overrideFile = condenseDir.resolve("filters.toml");
+        Files.writeString(overrideFile, safeToml);
+
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterPipeline defaultPipeline = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+        FilterPipeline resolved = loader.resolvePipeline("safe-logs", defaultPipeline, projectDir);
+        assertThat(resolved).isNotSameAs(defaultPipeline);
+
+        StringBuilder logBuilder = new StringBuilder();
+        for (int i = 0; i < 50; i++) {
+            logBuilder.append("[INFO] Service worker heartbeat ").append(i).append("\n");
+            logBuilder.append("[WARN] High latency detected ").append(i).append("\n");
+        }
+        String input = logBuilder.toString();
+
+        long start = System.nanoTime();
+        String output = resolved.execute(input);
+        long elapsedMillis = (System.nanoTime() - start) / 1_000_000L;
+
+        assertThat(elapsedMillis).isLessThan(500L);
+        assertThat(output).contains("INFO").contains("WARN").contains("50");
+    }
+
+    @Test
+    @DisplayName("Attack 11: Static complexity budgets reject oversized patterns and excessive transitions")
+    void testStaticComplexityBudgetsRejected() throws IOException {
+        Path projectDir = tempDir.resolve("oversized-project");
+        Path condenseDir = projectDir.resolve(".condense");
+        Files.createDirectories(condenseDir);
+
+        String longPattern = "a".repeat(501);
+        StringBuilder transitions = new StringBuilder();
+        for (int i = 0; i < 55; i++) {
+            transitions.append(String.format(
+                "{ from_state = 'S%d', pattern = 'foo%d', action = 'EMIT', next_state = 'S%d' },",
+                i, i, i + 1));
+        }
+
+        String oversizedToml = String.format("""
+            [filters."oversized-pattern"]
+            stages = [
+              { strategy = "grouping", pattern = "(%s)" }
+            ]
+
+            [filters."oversized-transitions"]
+            stages = [
+              { strategy = "state_machine", initial_state = "S0", transitions = [%s] }
+            ]
+            """, longPattern, transitions);
+
+        Path overrideFile = condenseDir.resolve("filters.toml");
+        Files.writeString(overrideFile, oversizedToml);
+
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.status()).isEqualTo(FilterOverrideValidationResult.Status.SEMANTIC_ERROR);
+        assertThat(result.errors()).anyMatch(e -> e.contains("'pattern' regex exceeds maximum allowed length of 500 characters"));
+        assertThat(result.errors()).anyMatch(e -> e.contains("'transitions' count exceeds maximum allowed limit of 50"));
+
+        // Fail-open
+        FilterPipeline defaultPipeline = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+        FilterPipeline resolvedPattern = loader.resolvePipeline("oversized-pattern", defaultPipeline, projectDir);
+        FilterPipeline resolvedTransitions = loader.resolvePipeline("oversized-transitions", defaultPipeline, projectDir);
+        assertThat(resolvedPattern).isSameAs(defaultPipeline);
+        assertThat(resolvedTransitions).isSameAs(defaultPipeline);
     }
 }
