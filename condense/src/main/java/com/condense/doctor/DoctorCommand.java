@@ -1,6 +1,7 @@
 package com.condense.doctor;
 
 import com.condense.core.Mappers;
+import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
@@ -17,6 +18,7 @@ import java.util.concurrent.Callable;
     mixinStandardHelpOptions = true
 )
 @Dependent
+@Unremovable
 public class DoctorCommand implements Callable<Integer> {
 
     @Option(

@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Fixed
+- `condense doctor` is `@Unremovable` so Quarkus no longer strips the Picocli bean from the native image. Without that, `PicocliBeansFactory` failed with a CDI unused-bean error and `NativePersistenceIT` exited 1 on every platform.
 - `condense doctor --format json` no longer exits 1 in the native binary. The report now uses `LinkedHashMap` / `ArrayList` so Jackson can serialize empty maps and warning lists without GraalVM `ImmutableCollections` reflection. `NativePersistenceIT` failed on every CI platform because of this.
 - `condense uninstall --purge` no longer aborts when `{dataDir}/tee/` or `{configDir}/filters.toml` exist. Those are Condense-owned and are removed with the rest of the allowlisted tree.
 - On Windows, `condense` now resolves PATHEXT shims such as `pytest.cmd` / `npm.cmd` before launching the child process. `ProcessBuilder` does not apply PATHEXT, which made `NativeCorpusIT` (and real `condense pytest`) fail with empty stdout.

@@ -80,6 +80,12 @@ class ReflectConfigDriftTest {
             com.condense.doctor.DoctorReport.HookStatus.class.getName(),
             com.condense.doctor.DoctorService.class.getName()
         );
+
+        assertThat(com.condense.doctor.DoctorCommand.class.isAnnotationPresent(
+                io.quarkus.arc.Unremovable.class))
+            .as("DoctorCommand is created only via Picocli programmatic lookup; "
+                + "without @Unremovable Quarkus strips it from the native image")
+            .isTrue();
     }
 
     private static List<String> registeredNames() throws Exception {
