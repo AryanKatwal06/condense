@@ -1,0 +1,422 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "pytest/typical",
+      "command": "pytest",
+      "fixture": "fixtures/pytest/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["test_mul", "test_mod", "failed"]
+    },
+    {
+      "id": "jest/typical",
+      "command": "jest",
+      "fixture": "fixtures/jest/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 47,
+      "meets_contribution_bar": false,
+      "critical_signals": ["FAIL: src/components/Button.test.js", "FAIL: src/api/auth.test.js"]
+    },
+    {
+      "id": "jest/passing",
+      "command": "jest",
+      "fixture": "fixtures/jest/passing.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["10 passed"]
+    },
+    {
+      "id": "vitest/typical",
+      "command": "vitest",
+      "fixture": "fixtures/vitest/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["divides by zero", "handles null input"]
+    },
+    {
+      "id": "vitest/passing",
+      "command": "vitest",
+      "fixture": "fixtures/vitest/passing.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["5 passed"]
+    },
+    {
+      "id": "eslint/typical",
+      "command": "eslint",
+      "fixture": "fixtures/eslint/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["3 error(s)", "2 warning(s)"]
+    },
+    {
+      "id": "eslint/passing",
+      "command": "eslint",
+      "fixture": "fixtures/eslint/passing.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["no lint issues"]
+    },
+    {
+      "id": "eslint-json/typical",
+      "command": "eslint",
+      "fixture": "fixtures/eslint-json/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["no-undef", "no-unused-vars", "error(s)"]
+    },
+    {
+      "id": "tsc/typical",
+      "command": "tsc",
+      "fixture": "fixtures/tsc/typical.txt",
+      "exit_code": 2,
+      "savings_floor": 60,
+      "critical_signals": ["src/api/client.ts", "error(s)"]
+    },
+    {
+      "id": "npm-install/typical",
+      "command": "npm install",
+      "fixture": "fixtures/npm-install/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["packages"]
+    },
+    {
+      "id": "npm-install/with-vulns",
+      "command": "npm install",
+      "fixture": "fixtures/npm-install/with-vulns.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["vulnerabilit"]
+    },
+    {
+      "id": "pip-install/typical",
+      "command": "pip install",
+      "fixture": "fixtures/pip-install/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["Successfully installed"]
+    },
+    {
+      "id": "ruff-check/typical",
+      "command": "ruff check",
+      "fixture": "fixtures/ruff-check/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["issue(s)", "F401"]
+    },
+    {
+      "id": "ruff-check/passing",
+      "command": "ruff check",
+      "fixture": "fixtures/ruff-check/passing.txt",
+      "exit_code": 0,
+      "savings_exemption": "too_small",
+      "critical_signals": ["no lint issues"]
+    },
+    {
+      "id": "python-c/typical",
+      "command": "python -c",
+      "fixture": "fixtures/python-c/typical.txt",
+      "exit_code": 0,
+      "savings_exemption": "intentional_identity",
+      "critical_signals": ["hello from python -c"]
+    },
+    {
+      "id": "mvn/success",
+      "command": "mvn",
+      "fixture": "fixtures/mvn/success.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["BUILD SUCCESS"]
+    },
+    {
+      "id": "mvn/failure",
+      "command": "mvn",
+      "fixture": "fixtures/mvn/failure.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["ERROR", "cannot find symbol"]
+    },
+    {
+      "id": "gradle/success",
+      "command": "gradle",
+      "fixture": "fixtures/gradle/success.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["BUILD SUCCESSFUL"]
+    },
+    {
+      "id": "gradle/failure",
+      "command": "gradle",
+      "fixture": "fixtures/gradle/failure.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["FAILED"]
+    },
+    {
+      "id": "make/success",
+      "command": "make",
+      "fixture": "fixtures/make/success.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["sudo make install"]
+    },
+    {
+      "id": "make/failure",
+      "command": "make",
+      "fixture": "fixtures/make/failure.txt",
+      "exit_code": 2,
+      "savings_floor": 60,
+      "critical_signals": ["error:", "Error 1"]
+    },
+    {
+      "id": "git-status/clean",
+      "command": "git status",
+      "fixture": "fixtures/git-status/clean.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["[main]", "clean"]
+    },
+    {
+      "id": "git-status/modified",
+      "command": "git status",
+      "fixture": "fixtures/git-status/modified.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["modified: 2", "[main]"]
+    },
+    {
+      "id": "git-status/staged",
+      "command": "git status",
+      "fixture": "fixtures/git-status/staged.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["staged: 2", "[feature/new-filter]"]
+    },
+    {
+      "id": "git-status/untracked",
+      "command": "git status",
+      "fixture": "fixtures/git-status/untracked.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["untracked: 3"]
+    },
+    {
+      "id": "git-status/mixed",
+      "command": "git status",
+      "fixture": "fixtures/git-status/mixed.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["staged: 1", "modified: 2", "untracked: 2", "[develop]"]
+    },
+    {
+      "id": "git-status/detached-head",
+      "command": "git status",
+      "fixture": "fixtures/git-status/detached-head.txt",
+      "exit_code": 0,
+      "savings_floor": 47,
+      "meets_contribution_bar": false,
+      "critical_signals": ["detached@abc1234f", "clean"]
+    },
+    {
+      "id": "git-status/porcelain-mixed",
+      "command": "git status",
+      "fixture": "fixtures/git-status/porcelain-mixed.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["staged:", "modified:", "untracked:"]
+    },
+    {
+      "id": "git-diff/stat",
+      "command": "git diff",
+      "fixture": "fixtures/git-diff/stat.txt",
+      "exit_code": 0,
+      "savings_floor": 28,
+      "meets_contribution_bar": false,
+      "critical_signals": ["files changed"]
+    },
+    {
+      "id": "git-diff/typical",
+      "command": "git diff",
+      "fixture": "fixtures/git-diff/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["+2 / -1"]
+    },
+    {
+      "id": "git-add/typical",
+      "command": "git add",
+      "fixture": "fixtures/git-add/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["staged"]
+    },
+    {
+      "id": "git-log/typical",
+      "command": "git log",
+      "fixture": "fixtures/git-log/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["a1b2c3d4", "Fix token estimator bound"]
+    },
+    {
+      "id": "git-commit/typical",
+      "command": "git commit",
+      "fixture": "fixtures/git-commit/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["main", "7f3a9c2"]
+    },
+    {
+      "id": "git-push/rejected",
+      "command": "git push",
+      "fixture": "fixtures/git-push/rejected.txt",
+      "exit_code": 1,
+      "savings_exemption": "passthrough",
+      "critical_signals": ["[rejected]", "failed to push"]
+    },
+    {
+      "id": "grep/typical",
+      "command": "grep",
+      "fixture": "fixtures/grep/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["src/app.js", "match(es)"]
+    },
+    {
+      "id": "find/typical",
+      "command": "find",
+      "fixture": "fixtures/find/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": [".java", "result(s)"]
+    },
+    {
+      "id": "ls/large",
+      "command": "ls",
+      "fixture": "fixtures/ls/large.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["src/"]
+    },
+    {
+      "id": "cat/large",
+      "command": "cat",
+      "fixture": "fixtures/cat/large.txt",
+      "exit_code": 0,
+      "savings_floor": 27,
+      "meets_contribution_bar": false,
+      "critical_signals": ["Data line 1 ", "lines omitted", "Data line 60 "]
+    },
+    {
+      "id": "kubectl/pods-unhealthy",
+      "command": "kubectl get pods",
+      "fixture": "fixtures/kubectl/pods-unhealthy.txt",
+      "exit_code": 0,
+      "savings_exemption": "too_small",
+      "critical_signals": ["UNHEALTHY PODS", "CrashLoopBackOff"]
+    },
+    {
+      "id": "kubectl/pods-healthy",
+      "command": "kubectl get pods",
+      "fixture": "fixtures/kubectl/pods-healthy.txt",
+      "exit_code": 0,
+      "savings_exemption": "too_small",
+      "critical_signals": ["api-deployment-7d4b9f-xkv2p", "Running"]
+    },
+    {
+      "id": "docker-ps/typical",
+      "command": "docker ps",
+      "fixture": "fixtures/docker-ps/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 35,
+      "meets_contribution_bar": false,
+      "critical_signals": ["web-server", "database"]
+    },
+    {
+      "id": "docker-build/typical",
+      "command": "docker build",
+      "fixture": "fixtures/docker-build/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["a1b2c3d4e5f6", "myapp:latest"]
+    },
+    {
+      "id": "docker-logs/long",
+      "command": "docker logs",
+      "fixture": "fixtures/docker-logs/long.txt",
+      "exit_code": 0,
+      "savings_floor": 18,
+      "meets_contribution_bar": false,
+      "critical_signals": ["connection refused"]
+    },
+    {
+      "id": "aws/describe-instances",
+      "command": "aws",
+      "fixture": "fixtures/aws/describe-instances.txt",
+      "exit_code": 0,
+      "savings_floor": 15,
+      "meets_contribution_bar": false,
+      "critical_signals": ["Reservations"]
+    },
+    {
+      "id": "go-test/json-typical",
+      "command": "go test",
+      "fixture": "fixtures/go-test/json-typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["FAIL: TestMultiply", "FAIL: TestDivide"]
+    },
+    {
+      "id": "go-test/json-passing",
+      "command": "go test",
+      "fixture": "fixtures/go-test/json-passing.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["passed: 2"]
+    },
+    {
+      "id": "golangci-lint/typical",
+      "command": "golangci-lint run",
+      "fixture": "fixtures/golangci-lint/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["errcheck"]
+    },
+    {
+      "id": "cargo-test/typical",
+      "command": "cargo test",
+      "fixture": "fixtures/cargo-test/typical.txt",
+      "exit_code": 101,
+      "savings_floor": 60,
+      "critical_signals": ["FAILED: tests::test_multiply", "FAILED: tests::test_modulo"]
+    },
+    {
+      "id": "cargo-test/passing",
+      "command": "cargo test",
+      "fixture": "fixtures/cargo-test/passing.txt",
+      "exit_code": 0,
+      "savings_floor": 49,
+      "meets_contribution_bar": false,
+      "critical_signals": ["3 passed"]
+    },
+    {
+      "id": "cargo-clippy/typical",
+      "command": "cargo clippy",
+      "fixture": "fixtures/cargo-clippy/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["unused_variables"]
+    },
+    {
+      "id": "cargo-build/typical",
+      "command": "cargo build",
+      "fixture": "fixtures/cargo-build/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 32,
+      "meets_contribution_bar": false,
+      "critical_signals": ["Finished"]
+    }
+  ]
+}

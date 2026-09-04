@@ -1,0 +1,19 @@
+    Checking condense v0.1.0 (/workspace)
+warning: unused variable `scratch`
+  --> src/main.rs:10:9
+   |
+10 |     let scratch = 1;
+   |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_scratch`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable `tmp`
+  --> src/lib.rs:4:9
+   |
+4  |     let tmp = Vec::new();
+   |         ^^^
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: `condense` (bin "condense") generated 2 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.10s

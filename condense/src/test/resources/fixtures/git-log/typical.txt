@@ -1,0 +1,17 @@
+commit a1b2c3d4e5f678901234567890abcdef12345678
+Author: Dev <dev@example.com>
+Date:   Mon Sep 1 12:00:00 2026 +0000
+
+    Fix token estimator bound
+
+commit b2c3d4e5f678901234567890abcdef1234567890
+Author: Dev <dev@example.com>
+Date:   Sun Aug 31 18:22:11 2026 +0000
+
+    Isolate native IT config and data dirs
+
+commit c3d4e5f678901234567890abcdef1234567890ab
+Author: Dev <dev@example.com>
+Date:   Sat Aug 30 09:14:03 2026 +0000
+
+    Raise compiler release to Java 21
