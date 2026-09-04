@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,8 +23,9 @@ class WindowsCommandResolverTest {
         Path shim = tempDir.resolve("pytest.cmd");
         Files.writeString(shim, "@echo off\r\n");
 
-        assertThat(WindowsCommandResolver.resolve("pytest", tempDir.toString(), ".COM;.EXE;.BAT;.CMD"))
-            .contains(shim.toAbsolutePath());
+        assertSameFile(
+            WindowsCommandResolver.resolve("pytest", tempDir.toString(), ".COM;.EXE;.BAT;.CMD"),
+            shim);
     }
 
     @Test
@@ -32,8 +34,9 @@ class WindowsCommandResolverTest {
         Path exe = tempDir.resolve("tool.exe");
         Files.writeString(exe, "exe");
 
-        assertThat(WindowsCommandResolver.resolve("tool", tempDir.toString(), ".EXE;.CMD"))
-            .contains(exe.toAbsolutePath());
+        assertSameFile(
+            WindowsCommandResolver.resolve("tool", tempDir.toString(), ".EXE;.CMD"),
+            exe);
     }
 
     @Test
@@ -47,8 +50,7 @@ class WindowsCommandResolverTest {
         Files.writeString(second.resolve("tool.cmd"), "second");
 
         String path = first + ";" + second;
-        assertThat(WindowsCommandResolver.resolve("tool", path, ".CMD"))
-            .contains(winner.toAbsolutePath());
+        assertSameFile(WindowsCommandResolver.resolve("tool", path, ".CMD"), winner);
     }
 
     @Test
@@ -56,9 +58,14 @@ class WindowsCommandResolverTest {
         Path shim = tempDir.resolve("pytest.cmd");
         Files.writeString(shim, "@echo off\r\n");
 
-        assertThat(WindowsCommandResolver.rewrite(
-            List.of("pytest", "tests"), tempDir.toString(), ".CMD"))
-            .containsExactly("cmd.exe", "/c", shim.toAbsolutePath().toString(), "tests");
+        List<String> rewritten = WindowsCommandResolver.rewrite(
+            List.of("pytest", "tests"), tempDir.toString(), ".CMD");
+        assertThat(rewritten).hasSize(4);
+        assertThat(rewritten.get(0)).isEqualTo("cmd.exe");
+        assertThat(rewritten.get(1)).isEqualTo("/c");
+        assertThat(Path.of(rewritten.get(2))).exists();
+        assertThat(Files.isSameFile(Path.of(rewritten.get(2)), shim)).isTrue();
+        assertThat(rewritten.get(3)).isEqualTo("tests");
     }
 
     @Test
@@ -89,5 +96,10 @@ class WindowsCommandResolverTest {
         assertThat(WindowsCommandResolver.resolve(
             shim.toString(), tempDir.toString(), ".CMD"))
             .isEmpty();
+    }
+
+    private static void assertSameFile(Optional<Path> actual, Path expected) throws Exception {
+        assertThat(actual).isPresent();
+        assertThat(Files.isSameFile(actual.get(), expected)).isTrue();
     }
 }

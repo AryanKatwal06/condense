@@ -46,16 +46,18 @@ final class WindowsCommandResolver {
                 continue;
             }
             Path folder = Path.of(dir.trim());
+            if (!Files.isDirectory(folder)) {
+                continue;
+            }
             if (nameHasDot) {
-                Path candidate = folder.resolve(name);
-                Optional<Path> existing = existingFile(candidate);
+                Optional<Path> existing = findIgnoreCase(folder, name);
                 if (existing.isPresent()) {
                     return existing;
                 }
                 continue;
             }
             for (String ext : extensions) {
-                Optional<Path> existing = existingFile(folder.resolve(name + ext));
+                Optional<Path> existing = findIgnoreCase(folder, name + ext);
                 if (existing.isPresent()) {
                     return existing;
                 }
@@ -64,10 +66,27 @@ final class WindowsCommandResolver {
         return Optional.empty();
     }
 
-    private static Optional<Path> existingFile(Path candidate) {
-        if (!Files.isRegularFile(candidate)) {
+    /**
+     * Windows path search is case-insensitive. Unit tests run on Linux CI, where
+     * {@code pytest.CMD} from PATHEXT will not match a file named {@code pytest.cmd}.
+     */
+    private static Optional<Path> findIgnoreCase(Path folder, String fileName) {
+        Path exact = folder.resolve(fileName);
+        if (Files.isRegularFile(exact)) {
+            return canonicalize(exact);
+        }
+        try (var stream = Files.list(folder)) {
+            return stream
+                .filter(Files::isRegularFile)
+                .filter(p -> p.getFileName().toString().equalsIgnoreCase(fileName))
+                .findFirst()
+                .flatMap(WindowsCommandResolver::canonicalize);
+        } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    private static Optional<Path> canonicalize(Path candidate) {
         try {
             return Optional.of(candidate.toRealPath());
         } catch (Exception e) {
