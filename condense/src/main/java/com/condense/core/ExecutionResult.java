@@ -29,7 +29,7 @@ public record ExecutionResult(
     private static Path writeStringSafe(String s) {
         try {
             Path p = Files.createTempFile("condense-test", ".tmp");
-            Files.writeString(p, s != null ? s : "");
+            Files.writeString(p, s != null ? s : "", StandardCharsets.UTF_8);
             return p;
         } catch (IOException e) {
             throw new RuntimeException(e);
