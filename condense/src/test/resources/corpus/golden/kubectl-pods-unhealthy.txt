@@ -1,3 +1,4 @@
+condense[filtered]
 UNHEALTHY PODS:
   ⚠ api-deployment-7d4b9f-mnb3q   0/1     CrashLoopBackOff   5          1h
   ⚠ db-statefulset-0              0/1     Pending            0          10m

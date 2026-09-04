@@ -1,3 +1,4 @@
+condense[filtered]
 ✗ BUILD FAILED
 > Task :clean UP-TO-DATE
 > Task :compileJava

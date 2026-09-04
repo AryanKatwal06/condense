@@ -1,5 +1,6 @@
 package com.condense.core;
 
+import com.condense.trust.Provenance;
 import org.jboss.logging.Logger;
 
 /**
@@ -39,7 +40,7 @@ public record FilterResult(
         } catch (Exception e) {
             log.debugf("Token counting failed in passthrough: %s", e.getMessage());
         }
-        return new FilterResult(result.combined(), tokens, tokens, false);
+        return new FilterResult(Provenance.passthrough(result.combined()), tokens, tokens, false);
     }
 
     /**
@@ -54,10 +55,11 @@ public record FilterResult(
             log.debugf("Token counting failed in of: %s", e.getMessage());
         }
         
+        String stamped = Provenance.stamp(filteredOutput);
         return new FilterResult(
-            filteredOutput,
+            stamped,
             rawTokens,
-            TokenCounter.count(filteredOutput),
+            TokenCounter.count(stamped),
             true
         );
     }

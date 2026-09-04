@@ -1,3 +1,4 @@
+condense[filtered]
 cargo test: 2 failure(s)
   FAILED: tests::test_multiply
   FAILED: tests::test_modulo

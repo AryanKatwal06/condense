@@ -1,1 +1,2 @@
+condense[filtered]
 Tests  5 passed (5)

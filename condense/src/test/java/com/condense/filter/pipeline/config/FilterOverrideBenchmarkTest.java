@@ -1,8 +1,8 @@
 package com.condense.filter.pipeline.config;
 
-import com.condense.core.PlatformDirs;
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.strategy.AnsiStripStrategy;
+import com.condense.trust.TrustTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -36,8 +36,8 @@ class FilterOverrideBenchmarkTest {
         Path emptyProject = tempDir.resolve("empty-benchmark-project");
         Files.createDirectories(emptyProject);
 
-        FilterOverrideLoader uncachedLoader = new FilterOverrideLoader(new PlatformDirs());
-        FilterOverrideLoader cachedLoader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader uncachedLoader = TrustTestSupport.isolatedLoader(tempDir.resolve("bench-empty-uncached"));
+        FilterOverrideLoader cachedLoader = TrustTestSupport.isolatedLoader(tempDir.resolve("bench-empty-cached"));
 
         // Warm up cachedLoader once so it populates negative cache
         cachedLoader.resolvePipeline("npm install", defaultPipeline, emptyProject);
@@ -69,8 +69,10 @@ class FilterOverrideBenchmarkTest {
             """;
         Files.writeString(condenseDir.resolve("filters.toml"), toml);
 
-        FilterOverrideLoader uncachedOverrideLoader = new FilterOverrideLoader(new PlatformDirs());
-        FilterOverrideLoader cachedOverrideLoader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader uncachedOverrideLoader = TrustTestSupport.trustedLoader(
+            tempDir.resolve("bench-override-uncached"), overrideProject);
+        FilterOverrideLoader cachedOverrideLoader = TrustTestSupport.trustedLoader(
+            tempDir.resolve("bench-override-cached"), overrideProject);
 
         // Warm up cachedOverrideLoader once to populate cache
         cachedOverrideLoader.resolvePipeline("npm install", defaultPipeline, overrideProject);

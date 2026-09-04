@@ -43,7 +43,7 @@ class GitStatusFilterTest {
     @Test
     void cleanRepo_outputContainsCheckmarkAndBranch() throws Exception {
         FilterResult r = run("clean");
-        assertThat(r.output()).isEqualTo("[main] ✓ clean");
+        assertThat(r.output()).isEqualTo("condense[filtered]\n[main] ✓ clean");
     }
 
     @Test
@@ -130,7 +130,8 @@ class GitStatusFilterTest {
         String raw = fixture("mixed");
         FilterResult r = filter.apply("git status",
             new ExecutionResult(0, raw, "", 10L), config, 0, true);
-        assertThat(r.output().lines().count()).isEqualTo(1L);
+        assertThat(r.output()).startsWith("condense[filtered]\n");
+        assertThat(r.output().lines().skip(1).count()).isEqualTo(1L);
     }
 
     @Test
@@ -162,7 +163,8 @@ class GitStatusFilterTest {
         String raw = fixture("modified");
         FilterResult r = filter.apply("git status",
             new ExecutionResult(0, raw, "", 10L), config, 1, false);
-        assertThat(r.output().lines().count()).isEqualTo(1L);
+        assertThat(r.output()).startsWith("condense[filtered]\n");
+        assertThat(r.output().lines().skip(1).count()).isEqualTo(1L);
     }
 
 

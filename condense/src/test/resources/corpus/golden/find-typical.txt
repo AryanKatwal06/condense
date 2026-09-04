@@ -1,2 +1,3 @@
+condense[filtered]
 24 result(s)
   .java: 24

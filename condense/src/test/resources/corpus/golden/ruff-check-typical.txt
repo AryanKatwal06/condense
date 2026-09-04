@@ -1,3 +1,4 @@
+condense[filtered]
 ruff: 5 issue(s)
   F401 : 2
   E501 : 1

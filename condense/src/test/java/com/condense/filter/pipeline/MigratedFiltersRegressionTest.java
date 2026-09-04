@@ -36,7 +36,8 @@ class MigratedFiltersRegressionTest extends FilterTestSupport {
         String typical = fixture("npm-install", "typical");
         FilterResult result = npmFilter.apply("npm install", success(typical), config, 0, false);
 
-        assertThat(result.output()).startsWith("✓ npm install");
+        assertThat(result.output()).startsWith("condense[filtered]");
+        assertThat(result.output()).contains("✓ npm install");
         assertThat(result.output()).contains("packages");
         assertCompressed(result);
     }
@@ -47,7 +48,8 @@ class MigratedFiltersRegressionTest extends FilterTestSupport {
         String withVulns = fixture("npm-install", "with-vulns");
         FilterResult result = npmFilter.apply("npm install", success(withVulns), config, 0, false);
 
-        assertThat(result.output()).startsWith("✓ npm install");
+        assertThat(result.output()).startsWith("condense[filtered]");
+        assertThat(result.output()).contains("✓ npm install");
         assertThat(result.output()).contains("vulnerabilit");
         assertCompressed(result);
     }
@@ -68,7 +70,7 @@ class MigratedFiltersRegressionTest extends FilterTestSupport {
     @DisplayName("LsFilter produces (empty directory) for empty list")
     void lsFilter_emptyDirectory() {
         FilterResult result = lsFilter.apply("ls", success(""), config, 0, false);
-        assertThat(result.output()).isEqualTo("(empty directory)");
+        assertThat(result.output()).isEqualTo("condense[filtered]\n(empty directory)");
     }
 
     @Test
@@ -113,7 +115,7 @@ class MigratedFiltersRegressionTest extends FilterTestSupport {
         String passing = fixture("eslint", "passing");
         FilterResult result = eslintFilter.apply("eslint", success(passing), config, 0, false);
 
-        assertThat(result.output()).isEqualTo("✓ no lint issues");
+        assertThat(result.output()).isEqualTo("condense[filtered]\n✓ no lint issues");
     }
 
     @Test
@@ -157,6 +159,6 @@ class MigratedFiltersRegressionTest extends FilterTestSupport {
         ExecutionResult exec = new ExecutionResult(0, json, "", 50L);
         FilterResult result = eslintFilter.apply("eslint --format json", exec, config, 0, false);
 
-        assertThat(result.output()).isEqualTo("✓ no lint issues");
+        assertThat(result.output()).isEqualTo("condense[filtered]\n✓ no lint issues");
     }
 }

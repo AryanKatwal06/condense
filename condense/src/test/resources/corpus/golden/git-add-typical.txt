@@ -1,1 +1,2 @@
+condense[filtered]
 ✓ staged 15 file(s)

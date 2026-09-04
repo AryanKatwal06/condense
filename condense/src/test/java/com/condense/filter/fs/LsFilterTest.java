@@ -21,7 +21,7 @@ class LsFilterTest extends FilterTestSupport {
     @Test
     void emptyDirectory_returnsEmptyDirectoryIndicator() {
         FilterResult r = filter.apply("ls", success(""), config, 0, false);
-        assertThat(r.output()).isEqualTo("(empty directory)");
+        assertThat(r.output()).isEqualTo("condense[filtered]\n(empty directory)");
     }
 
     @Test

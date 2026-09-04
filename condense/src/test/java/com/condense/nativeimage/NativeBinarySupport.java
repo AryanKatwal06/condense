@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -65,16 +66,43 @@ public final class NativeBinarySupport {
      */
     public static CliResult run(Path configDir, Path dataDir, Path prependPathDir, String... args)
             throws Exception {
+        return run(configDir, dataDir, prependPathDir, null, null, args);
+    }
+
+    /**
+     * Runs the native binary. {@code extraEnv} values of {@code null} remove that
+     * variable from the child (needed so a CI hatch test can clear inherited CI indicators).
+     */
+    public static CliResult run(
+            Path configDir,
+            Path dataDir,
+            Path prependPathDir,
+            Path workDir,
+            Map<String, String> extraEnv,
+            String... args
+    ) throws Exception {
         File binary = requireNativeBinary();
         List<String> command = new ArrayList<>();
         command.add(binary.getAbsolutePath());
         command.addAll(List.of(args));
 
         ProcessBuilder builder = new ProcessBuilder(command);
+        if (workDir != null) {
+            builder.directory(workDir.toFile());
+        }
         builder.environment().put(CONFIG_DIR_ENV, configDir.toAbsolutePath().toString());
         builder.environment().put(DATA_DIR_ENV, dataDir.toAbsolutePath().toString());
         if (prependPathDir != null) {
             prependPath(builder, prependPathDir);
+        }
+        if (extraEnv != null) {
+            for (Map.Entry<String, String> entry : extraEnv.entrySet()) {
+                if (entry.getValue() == null) {
+                    builder.environment().remove(entry.getKey());
+                } else {
+                    builder.environment().put(entry.getKey(), entry.getValue());
+                }
+            }
         }
         builder.redirectErrorStream(false);
 

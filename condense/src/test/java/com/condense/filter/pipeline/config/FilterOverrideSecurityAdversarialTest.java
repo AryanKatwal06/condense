@@ -1,10 +1,10 @@
 package com.condense.filter.pipeline.config;
 
-import com.condense.core.PlatformDirs;
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.RegexTimeoutException;
 import com.condense.filter.strategy.TimeoutCharSequence;
+import com.condense.trust.TrustTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -39,7 +39,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.writeString(overrideFile, maliciousToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = isolatedLoader();
         FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
 
         assertThat(result.isValid()).isFalse();
@@ -76,7 +76,7 @@ class FilterOverrideSecurityAdversarialTest {
             return;
         }
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = isolatedLoader();
         FilterOverrideValidationResult result = loader.validateFile(symlinkTarget, projectDir);
 
         assertThat(result.isValid()).isFalse();
@@ -116,7 +116,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.writeString(overrideFile, badParamsToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = isolatedLoader();
         FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
 
         assertThat(result.isValid()).isFalse();
@@ -143,7 +143,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.writeString(overrideFile, badRegexToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = isolatedLoader();
         FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
 
         assertThat(result.isValid()).isFalse();
@@ -168,7 +168,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.writeString(overrideFile, noCaptureToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = isolatedLoader();
         FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
 
         assertThat(result.isValid()).isFalse();
@@ -193,7 +193,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.writeString(overrideFile, badActionToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = isolatedLoader();
         FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
 
         assertThat(result.isValid()).isFalse();
@@ -213,7 +213,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.write(overrideFile, garbage);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = isolatedLoader();
         FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
 
         assertThat(result.isValid()).isFalse();
@@ -244,7 +244,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.writeString(overrideFile, redosToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = TrustTestSupport.trustedLoader(tempDir.resolve("adv-redos-group"), projectDir);
         FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
         assertThat(result.isValid()).isTrue();
 
@@ -286,7 +286,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.writeString(overrideFile, redosSmToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = TrustTestSupport.trustedLoader(tempDir.resolve("adv-redos-sm"), projectDir);
         FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
         assertThat(result.isValid()).isTrue();
 
@@ -324,7 +324,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.writeString(overrideFile, safeToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = TrustTestSupport.trustedLoader(tempDir.resolve("adv-safe-regex"), projectDir);
         FilterPipeline defaultPipeline = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
         FilterPipeline resolved = loader.resolvePipeline("safe-logs", defaultPipeline, projectDir);
         assertThat(resolved).isNotSameAs(defaultPipeline);
@@ -375,7 +375,7 @@ class FilterOverrideSecurityAdversarialTest {
         Path overrideFile = condenseDir.resolve("filters.toml");
         Files.writeString(overrideFile, oversizedToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = isolatedLoader();
         FilterOverrideValidationResult result = loader.validateFile(overrideFile, projectDir);
 
         assertThat(result.isValid()).isFalse();
@@ -389,5 +389,9 @@ class FilterOverrideSecurityAdversarialTest {
         FilterPipeline resolvedTransitions = loader.resolvePipeline("oversized-transitions", defaultPipeline, projectDir);
         assertThat(resolvedPattern).isSameAs(defaultPipeline);
         assertThat(resolvedTransitions).isSameAs(defaultPipeline);
+    }
+
+    private FilterOverrideLoader isolatedLoader() throws IOException {
+        return TrustTestSupport.isolatedLoader(tempDir.resolve("adv-cfg-" + System.nanoTime()));
     }
 }

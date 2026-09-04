@@ -1,7 +1,10 @@
 package com.condense.filter.pipeline.config;
 
 import com.condense.core.PlatformDirs;
+import com.condense.core.SafePathValidator;
 import com.condense.filter.pipeline.FilterPipeline;
+import com.condense.trust.FilterRisk;
+import com.condense.trust.TrustGate;
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
@@ -10,7 +13,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -51,6 +53,7 @@ public class FilterOverrideLoader {
     public static final Set<String> ALLOWED_STRATEGIES = StageFactory.ALLOWED_ALIASES;
 
     private final PlatformDirs platformDirs;
+    private final TrustGate trustGate;
     private final Map<Path, CachedOverride> projectConfigCache = new java.util.concurrent.ConcurrentHashMap<>();
     private volatile CachedOverride globalConfigCache = null;
     private final Object globalCacheLock = new Object();
@@ -73,7 +76,12 @@ public class FilterOverrideLoader {
 
     @Inject
     public FilterOverrideLoader(PlatformDirs platformDirs) {
+        this(platformDirs, platformDirs == null ? new TrustGate() : new TrustGate(platformDirs));
+    }
+
+    public FilterOverrideLoader(PlatformDirs platformDirs, TrustGate trustGate) {
         this.platformDirs = platformDirs;
+        this.trustGate = trustGate != null ? trustGate : new TrustGate(platformDirs);
     }
 
     /**
@@ -179,44 +187,43 @@ public class FilterOverrideLoader {
             return ParsedFileResult.invalid(FilterOverrideValidationResult.notFound(file));
         }
 
-        // Security check: canonicalize and verify path safety
-        try {
-            Path realFile = file.toRealPath();
-            if (expectedParent != null) {
-                Path realParent = Files.exists(expectedParent)
-                    ? expectedParent.toRealPath()
-                    : expectedParent.toAbsolutePath().normalize();
-
-                if (!realFile.startsWith(realParent)) {
-                    return ParsedFileResult.invalid(FilterOverrideValidationResult.securityViolation(
-                        file,
-                        "Path traversal or symlink escape: file '" + realFile + "' resolves outside expected directory '" + realParent + "'"
-                    ));
-                }
+        if (expectedParent != null) {
+            SafePathValidator.ContainmentResult containment = SafePathValidator.contain(file, expectedParent);
+            if (!containment.contained()) {
+                return ParsedFileResult.invalid(FilterOverrideValidationResult.securityViolation(
+                    file, containment.reason()));
             }
-        } catch (IOException e) {
-            return ParsedFileResult.invalid(FilterOverrideValidationResult.securityViolation(
-                file,
-                "Cannot resolve canonical path for '" + file + "': " + e.getMessage()
-            ));
         }
 
-        // Syntax validation: parse TOML once
+        byte[] sourceBytes;
+        try {
+            sourceBytes = Files.readAllBytes(file);
+        } catch (Exception e) {
+            return ParsedFileResult.invalid(FilterOverrideValidationResult.syntaxError(
+                file, formatParseError("Cannot read override file", e)));
+        }
+        return parseAndValidateBytes(file, sourceBytes);
+    }
+
+    /**
+     * Validates already-read bytes. Callers that must hash the displayed buffer
+     * should read once and pass that same array here.
+     */
+    public ParsedFileResult parseAndValidateBytes(Path file, byte[] sourceBytes) {
         FilterOverrideConfig.FileConfig config;
         try {
-            String source = Files.readString(file);
-            config = TOML.readValue(source, FilterOverrideConfig.FileConfig.class);
+            config = TOML.readValue(sourceBytes == null ? new byte[0] : sourceBytes, FilterOverrideConfig.FileConfig.class);
             if (config == null || config.filters() == null) {
-                return ParsedFileResult.of(FilterOverrideValidationResult.valid(file, 0), config);
+                return ParsedFileResult.of(FilterOverrideValidationResult.valid(file, 0), config, sourceBytes);
             }
         } catch (UnrecognizedPropertyException e) {
-            String text = readQuietly(file);
+            String text = sourceText(sourceBytes);
             return ParsedFileResult.invalid(FilterOverrideValidationResult.semanticError(
                 file, List.of(unknownKeyError(e, text).format())));
         } catch (JsonMappingException e) {
             UnrecognizedPropertyException unknown = findUnknownKey(e);
             if (unknown != null) {
-                String text = readQuietly(file);
+                String text = sourceText(sourceBytes);
                 return ParsedFileResult.invalid(FilterOverrideValidationResult.semanticError(
                     file, List.of(unknownKeyError(unknown, text).format())));
             }
@@ -227,7 +234,6 @@ public class FilterOverrideLoader {
                 file, formatParseError("TOML parse error", e)));
         }
 
-        // Semantic validation: inspect filters and stages
         List<String> errors = new ArrayList<>();
         if (config.schemaVersion() == null || config.schemaVersion() != FilterOverrideConfig.SCHEMA_VERSION) {
             errors.add(new DefinitionError(
@@ -267,7 +273,7 @@ public class FilterOverrideLoader {
             return ParsedFileResult.invalid(FilterOverrideValidationResult.semanticError(file, errors));
         }
 
-        return ParsedFileResult.of(FilterOverrideValidationResult.valid(file, filterCount), config);
+        return ParsedFileResult.of(FilterOverrideValidationResult.valid(file, filterCount), config, sourceBytes);
     }
 
     /**
@@ -321,6 +327,16 @@ public class FilterOverrideLoader {
             }
 
             if (parsed.fileConfig() == null || parsed.fileConfig().filters() == null) {
+                return CachedOverride.EMPTY;
+            }
+
+            Path canonical = projectOverrideFile.toRealPath();
+            byte[] bytes = parsed.sourceBytes() != null ? parsed.sourceBytes() : Files.readAllBytes(canonical);
+            var required = FilterRisk.requiredCapabilities(parsed.fileConfig());
+            TrustGate.Result decision = trustGate.decide(canonical, bytes, required);
+            if (!decision.apply()) {
+                log.warnf("Skipping project filter override at %s (%s)", projectOverrideFile, decision.reason());
+                System.err.println(TrustGate.SKIP_HINT);
                 return CachedOverride.EMPTY;
             }
 
@@ -400,14 +416,19 @@ public class FilterOverrideLoader {
 
     public record ParsedFileResult(
         FilterOverrideValidationResult validationResult,
-        FilterOverrideConfig.FileConfig fileConfig
+        FilterOverrideConfig.FileConfig fileConfig,
+        byte[] sourceBytes
     ) {
-        public static ParsedFileResult of(FilterOverrideValidationResult result, FilterOverrideConfig.FileConfig config) {
-            return new ParsedFileResult(result, config);
+        public static ParsedFileResult of(
+            FilterOverrideValidationResult result,
+            FilterOverrideConfig.FileConfig config,
+            byte[] sourceBytes
+        ) {
+            return new ParsedFileResult(result, config, sourceBytes);
         }
 
         public static ParsedFileResult invalid(FilterOverrideValidationResult result) {
-            return new ParsedFileResult(result, null);
+            return new ParsedFileResult(result, null, null);
         }
     }
 
@@ -488,12 +509,11 @@ public class FilterOverrideLoader {
         return -1;
     }
 
-    private static String readQuietly(Path file) {
-        try {
-            return Files.readString(file);
-        } catch (Exception ignored) {
+    private static String sourceText(byte[] bytes) {
+        if (bytes == null) {
             return null;
         }
+        return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
     }
 
     static String formatParseError(String prefix, Exception e) {

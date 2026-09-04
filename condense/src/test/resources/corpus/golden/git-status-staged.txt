@@ -1,1 +1,2 @@
+condense[filtered]
 [feature/new-filter] staged: 2

@@ -21,7 +21,8 @@ import picocli.CommandLine.Option;
     description = "Read and write Condense configuration.",
     mixinStandardHelpOptions = true,
     subcommands = {
-        ConfigValidateCommand.class
+        ConfigValidateCommand.class,
+        ConfigTrustCommand.class
     },
     footer = {
         "",
@@ -36,6 +37,7 @@ import picocli.CommandLine.Option;
         "",
         "Commands:",
         "  validate                 Validate filter override files (.condense/filters.toml)",
+        "  trust                    Review and trust a project filter override",
         "",
         "Valid keys:",
         "  tee.enabled              true | false",
@@ -115,7 +117,7 @@ public class ConfigCommand implements Runnable {
             }
 
             // No flag: print help
-            System.out.println("Usage: condense config --list | --get KEY | --set KEY=VALUE | --reset | validate");
+            System.out.println("Usage: condense config --list | --get KEY | --set KEY=VALUE | --reset | validate | trust");
             System.out.println("Run 'condense config --help' for full details.");
 
         } catch (IllegalArgumentException e) {

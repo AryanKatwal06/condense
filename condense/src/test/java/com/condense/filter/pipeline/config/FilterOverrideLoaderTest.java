@@ -3,13 +3,19 @@ package com.condense.filter.pipeline.config;
 import com.condense.core.PlatformDirs;
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.trust.Capability;
+import com.condense.trust.TrustGate;
+import com.condense.trust.TrustTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,15 +26,8 @@ class FilterOverrideLoaderTest {
 
     @Test
     @DisplayName("Built-in default pipeline is returned when no override files exist")
-    void testDefaultPipelineWhenNoOverrides() {
-        PlatformDirs platformDirs = new PlatformDirs() {
-            @Override
-            public Path resolveConfigDir() {
-                return tempDir.resolve("non_existent_config");
-            }
-        };
-
-        FilterOverrideLoader loader = new FilterOverrideLoader(platformDirs);
+    void testDefaultPipelineWhenNoOverrides() throws IOException {
+        FilterOverrideLoader loader = isolatedLoader("no-overrides");
         FilterPipeline defaultPipeline = FilterPipeline.of((input, ctx) -> StageResult.continueWith("DEFAULT: " + input));
 
         FilterPipeline resolved = loader.resolvePipeline("npm install", defaultPipeline, tempDir.resolve("empty_project"));
@@ -63,20 +62,14 @@ class FilterOverrideLoaderTest {
             """;
         Files.writeString(configDir.resolve("filters.toml"), globalToml);
 
-        PlatformDirs platformDirs = new PlatformDirs() {
-            @Override
-            public Path resolveConfigDir() {
-                return configDir;
-            }
-        };
-
+        PlatformDirs platformDirs = TrustTestSupport.dirs(configDir);
+        TrustTestSupport.trustProject(platformDirs, projectDir);
         FilterOverrideLoader loader = new FilterOverrideLoader(platformDirs);
         FilterPipeline defaultPipeline = FilterPipeline.of((input, ctx) -> StageResult.continueWith("DEFAULT: " + input));
 
         FilterPipeline resolved = loader.resolvePipeline("npm install", defaultPipeline, projectDir);
         assertThat(resolved).isNotSameAs(defaultPipeline);
 
-        // Project override has ansi_strip
         String input = "\u001B[32mhello\u001B[0m";
         assertThat(resolved.execute(input)).isEqualTo("hello");
     }
@@ -98,14 +91,7 @@ class FilterOverrideLoaderTest {
             """;
         Files.writeString(configDir.resolve("filters.toml"), globalToml);
 
-        PlatformDirs platformDirs = new PlatformDirs() {
-            @Override
-            public Path resolveConfigDir() {
-                return configDir;
-            }
-        };
-
-        FilterOverrideLoader loader = new FilterOverrideLoader(platformDirs);
+        FilterOverrideLoader loader = new FilterOverrideLoader(TrustTestSupport.dirs(configDir));
         FilterPipeline defaultPipeline = FilterPipeline.of((input, ctx) -> StageResult.continueWith("DEFAULT"));
 
         FilterPipeline resolved = loader.resolvePipeline("ls", defaultPipeline, projectDir);
@@ -119,23 +105,16 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Deduplication strategy parameters are correctly parsed and applied")
     void testDeduplicationStrategyParameters() throws IOException {
-        Path projectDir = tempDir.resolve("dedup-project");
-        Path condenseDir = projectDir.resolve(".condense");
-        Files.createDirectories(condenseDir);
-
-        String toml = """
+        Path projectDir = writeProject("dedup-project", """
             schema_version = 1
             [filters."custom-cmd"]
             stages = [
               { strategy = "deduplication", window_size = 5 }
             ]
-            """;
-        Files.writeString(condenseDir.resolve("filters.toml"), toml);
+            """);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
-        FilterPipeline defaultPipeline = FilterPipeline.of();
-
-        FilterPipeline resolved = loader.resolvePipeline("custom-cmd", defaultPipeline, projectDir);
+        FilterOverrideLoader loader = trustedLoader("dedup-cfg", projectDir);
+        FilterPipeline resolved = loader.resolvePipeline("custom-cmd", FilterPipeline.of(), projectDir);
         String input = "line1\nline1\nline1\nline2";
         assertThat(resolved.execute(input)).isEqualTo("line1 (×3)\nline2");
     }
@@ -143,20 +122,15 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Grouping strategy parameters are correctly parsed and applied")
     void testGroupingStrategyParameters() throws IOException {
-        Path projectDir = tempDir.resolve("group-project");
-        Path condenseDir = projectDir.resolve(".condense");
-        Files.createDirectories(condenseDir);
-
-        String toml = """
+        Path projectDir = writeProject("group-project", """
             schema_version = 1
             [filters."lint"]
             stages = [
               { strategy = "grouping", pattern = "rule: (\\\\S+)", include_other = true }
             ]
-            """;
-        Files.writeString(condenseDir.resolve("filters.toml"), toml);
+            """);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = trustedLoader("group-cfg", projectDir);
         FilterPipeline resolved = loader.resolvePipeline("lint", FilterPipeline.of(), projectDir);
 
         String input = "rule: no-unused-vars\nrule: no-unused-vars\nrule: eqeqeq\nother error";
@@ -169,20 +143,15 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("StateMachine strategy transitions and default actions are parsed and applied")
     void testStateMachineStrategyConfiguration() throws IOException {
-        Path projectDir = tempDir.resolve("sm-project");
-        Path condenseDir = projectDir.resolve(".condense");
-        Files.createDirectories(condenseDir);
-
-        String toml = """
+        Path projectDir = writeProject("sm-project", """
             schema_version = 1
             [filters."build-log"]
             stages = [
               { strategy = "state_machine", initial_state = "IDLE", transitions = [{ from_state = "IDLE", pattern = "^START", action = "DISCARD", next_state = "CAPTURING" }, { from_state = "CAPTURING", pattern = "^ERROR:", action = "EMIT", next_state = "CAPTURING" }, { from_state = "CAPTURING", pattern = "^STOP", action = "DISCARD", next_state = "IDLE" }], default_actions = { CAPTURING = "DISCARD", IDLE = "DISCARD" } }
             ]
-            """;
-        Files.writeString(condenseDir.resolve("filters.toml"), toml);
+            """);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = trustedLoader("sm-cfg", projectDir);
         FilterPipeline resolved = loader.resolvePipeline("build-log", FilterPipeline.of(), projectDir);
 
         String input = "INFO: init\nSTART\nINFO: compiling\nERROR: null pointer\nERROR: timeout\nSTOP\nINFO: done";
@@ -193,13 +162,9 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Fail-open: Malformed TOML safely falls back to default pipeline")
     void testFailOpenOnMalformedToml() throws IOException {
-        Path projectDir = tempDir.resolve("broken-project");
-        Path condenseDir = projectDir.resolve(".condense");
-        Files.createDirectories(condenseDir);
+        Path projectDir = writeProject("broken-project", "INVALID [[ TOML == syntax :::");
 
-        Files.writeString(condenseDir.resolve("filters.toml"), "INVALID [[ TOML == syntax :::");
-
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = isolatedLoader("broken-cfg");
         FilterPipeline defaultPipeline = FilterPipeline.of((input, ctx) -> StageResult.continueWith("SAFE_FALLBACK"));
 
         FilterPipeline resolved = loader.resolvePipeline("npm install", defaultPipeline, projectDir);
@@ -210,47 +175,43 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Caching: Repeated lookups avoid redundant filesystem I/O")
     void testCacheAvoidsRedundantFileSystemWorkOnRepeatedInvocations() throws IOException {
-        Path projectDir = tempDir.resolve("cached-project");
-        Path condenseDir = projectDir.resolve(".condense");
-        Files.createDirectories(condenseDir);
-
-        String toml = """
+        Path projectDir = writeProject("cached-project", """
             schema_version = 1
             [filters."npm install"]
             stages = [
               { strategy = "ansi_strip" }
             ]
-            """;
-        Path overrideFile = condenseDir.resolve("filters.toml");
-        Files.writeString(overrideFile, toml);
+            """);
+        Path overrideFile = projectDir.resolve(".condense/filters.toml");
 
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = trustedLoader("cached-cfg", projectDir);
         FilterPipeline defaultPipeline = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
 
-        // First call: reads from disk, caches pipeline
         FilterPipeline first = loader.resolvePipeline("npm install", defaultPipeline, projectDir);
         assertThat(first).isNotSameAs(defaultPipeline);
         assertThat(first.execute("\u001B[31merror\u001B[0m")).isEqualTo("error");
 
-        // Physically delete file from disk to prove subsequent call does not touch disk
         Files.delete(overrideFile);
         assertThat(Files.exists(overrideFile)).isFalse();
 
-        // Second call: served from in-memory cache without hitting disk
         FilterPipeline second = loader.resolvePipeline("npm install", defaultPipeline, projectDir);
         assertThat(second).isSameAs(first);
         assertThat(second.execute("\u001B[31merror\u001B[0m")).isEqualTo("error");
 
-        // Negative caching test: non-existent override cached
         Path emptyProject = tempDir.resolve("empty-cached-project");
         Files.createDirectories(emptyProject);
 
         FilterPipeline noOverrideFirst = loader.resolvePipeline("ls", defaultPipeline, emptyProject);
         assertThat(noOverrideFirst).isSameAs(defaultPipeline);
 
-        // Now create a file on disk; because negative existence is cached, second call still returns default without I/O
         Files.createDirectories(emptyProject.resolve(".condense"));
-        Files.writeString(emptyProject.resolve(".condense/filters.toml"), toml);
+        Files.writeString(emptyProject.resolve(".condense/filters.toml"), """
+            schema_version = 1
+            [filters."npm install"]
+            stages = [
+              { strategy = "ansi_strip" }
+            ]
+            """);
 
         FilterPipeline noOverrideSecond = loader.resolvePipeline("ls", defaultPipeline, emptyProject);
         assertThat(noOverrideSecond).isSameAs(defaultPipeline);
@@ -259,45 +220,37 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Caching: Cache invalidation reloads modified configuration from disk")
     void testCacheInvalidationReloadsModifiedFiles() throws IOException {
-        Path projectDir = tempDir.resolve("invalidation-project");
-        Path condenseDir = projectDir.resolve(".condense");
-        Files.createDirectories(condenseDir);
-
-        String tomlV1 = """
+        Path projectDir = writeProject("invalidation-project", """
             schema_version = 1
             [filters."cmd"]
             stages = [
               { strategy = "ansi_strip" }
             ]
-            """;
-        Path overrideFile = condenseDir.resolve("filters.toml");
-        Files.writeString(overrideFile, tomlV1);
-
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+            """);
+        Path overrideFile = projectDir.resolve(".condense/filters.toml");
+        Path configDir = tempDir.resolve("inv-cfg");
+        PlatformDirs dirs = TrustTestSupport.dirs(configDir);
+        TrustTestSupport.trustProject(dirs, projectDir);
+        FilterOverrideLoader loader = new FilterOverrideLoader(dirs);
         FilterPipeline defaultPipeline = FilterPipeline.of();
 
-        // Initial load: Version 1 (ansi_strip)
         FilterPipeline v1 = loader.resolvePipeline("cmd", defaultPipeline, projectDir);
         assertThat(v1.execute("\u001B[32mhello\u001B[0m")).isEqualTo("hello");
 
-        // Update file on disk to Version 2 (deduplication)
-        String tomlV2 = """
+        Files.writeString(overrideFile, """
             schema_version = 1
             [filters."cmd"]
             stages = [
               { strategy = "deduplication", window_size = 5 }
             ]
-            """;
-        Files.writeString(overrideFile, tomlV2);
+            """);
 
-        // Before invalidation: cache serves Version 1
         FilterPipeline stillV1 = loader.resolvePipeline("cmd", defaultPipeline, projectDir);
         assertThat(stillV1).isSameAs(v1);
 
-        // Invalidate cache for project
         loader.invalidateCache(projectDir);
+        TrustTestSupport.trustProject(dirs, projectDir);
 
-        // After invalidation: reloads Version 2 from disk
         FilterPipeline v2 = loader.resolvePipeline("cmd", defaultPipeline, projectDir);
         assertThat(v2).isNotSameAs(v1);
         assertThat(v2.execute("repeat\nrepeat\nother")).isEqualTo("repeat (×2)\nother");
@@ -306,26 +259,22 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Caching: Different project directories maintain isolated cache entries")
     void testMultiDirectoryIsolation() throws IOException {
-        Path projectA = tempDir.resolve("project-a");
-        Path projectB = tempDir.resolve("project-b");
-        Files.createDirectories(projectA.resolve(".condense"));
-        Files.createDirectories(projectB.resolve(".condense"));
-
-        String tomlA = """
+        Path projectA = writeProject("project-a", """
             schema_version = 1
             [filters."shared-cmd"]
             stages = [ { strategy = "ansi_strip" } ]
-            """;
-        String tomlB = """
+            """);
+        Path projectB = writeProject("project-b", """
             schema_version = 1
             [filters."shared-cmd"]
             stages = [ { strategy = "tree_compression" } ]
-            """;
+            """);
 
-        Files.writeString(projectA.resolve(".condense/filters.toml"), tomlA);
-        Files.writeString(projectB.resolve(".condense/filters.toml"), tomlB);
-
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        Path configDir = tempDir.resolve("multi-cfg");
+        PlatformDirs dirs = TrustTestSupport.dirs(configDir);
+        TrustTestSupport.trustProject(dirs, projectA);
+        TrustTestSupport.trustProject(dirs, projectB);
+        FilterOverrideLoader loader = new FilterOverrideLoader(dirs);
         FilterPipeline defaultPipeline = FilterPipeline.of();
 
         FilterPipeline pipelineA = loader.resolvePipeline("shared-cmd", defaultPipeline, projectA);
@@ -339,14 +288,12 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Prefix match applies override for npm install --verbose")
     void testPrefixCommandMatching() throws IOException {
-        Path projectDir = tempDir.resolve("prefix-project");
-        Files.createDirectories(projectDir.resolve(".condense"));
-        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+        Path projectDir = writeProject("prefix-project", """
             schema_version = 1
             [filters."npm install"]
             stages = [ { strategy = "ansi_strip" } ]
             """);
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = trustedLoader("prefix-cfg", projectDir);
         FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
         FilterPipeline resolved = loader.resolvePipeline("npm install --verbose", fallback, projectDir);
         assertThat(resolved.execute("\u001B[31mred\u001B[0m")).isEqualTo("red");
@@ -355,14 +302,12 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Empty stages replace the default pipeline with identity")
     void testEmptyStagesReplaceDefault() throws IOException {
-        Path projectDir = tempDir.resolve("empty-stages");
-        Files.createDirectories(projectDir.resolve(".condense"));
-        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+        Path projectDir = writeProject("empty-stages", """
             schema_version = 1
             [filters."ls"]
             stages = []
             """);
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = trustedLoader("empty-cfg", projectDir);
         FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
         FilterPipeline resolved = loader.resolvePipeline("ls", fallback, projectDir);
         assertThat(resolved).isNotSameAs(fallback);
@@ -372,14 +317,12 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("json_structure override is constructible")
     void testJsonStructureOverride() throws IOException {
-        Path projectDir = tempDir.resolve("json-project");
-        Files.createDirectories(projectDir.resolve(".condense"));
-        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+        Path projectDir = writeProject("json-project", """
             schema_version = 1
             [filters."aws"]
             stages = [ { strategy = "json_structure" } ]
             """);
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = trustedLoader("json-cfg", projectDir);
         FilterPipeline resolved = loader.resolvePipeline("aws", FilterPipeline.of(), projectDir);
         assertThat(resolved.execute("not-json")).isEqualTo("not-json");
     }
@@ -387,9 +330,7 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Global override applies when project file exists but command is unmatched")
     void testGlobalWhenProjectFileMissesCommand() throws IOException {
-        Path projectDir = tempDir.resolve("partial-project");
-        Files.createDirectories(projectDir.resolve(".condense"));
-        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+        Path projectDir = writeProject("partial-project", """
             schema_version = 1
             [filters."ls"]
             stages = [ { strategy = "ansi_strip" } ]
@@ -401,12 +342,8 @@ class FilterOverrideLoaderTest {
             [filters."npm install"]
             stages = [ { strategy = "ansi_strip" } ]
             """);
-        PlatformDirs platformDirs = new PlatformDirs() {
-            @Override
-            public Path resolveConfigDir() {
-                return configDir;
-            }
-        };
+        PlatformDirs platformDirs = TrustTestSupport.dirs(configDir);
+        TrustTestSupport.trustProject(platformDirs, projectDir);
         FilterOverrideLoader loader = new FilterOverrideLoader(platformDirs);
         FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
         FilterPipeline resolved = loader.resolvePipeline("npm install", fallback, projectDir);
@@ -416,14 +353,12 @@ class FilterOverrideLoaderTest {
     @Test
     @DisplayName("Concurrent resolve does not throw")
     void testConcurrentResolve() throws Exception {
-        Path projectDir = tempDir.resolve("concurrent-project");
-        Files.createDirectories(projectDir.resolve(".condense"));
-        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+        Path projectDir = writeProject("concurrent-project", """
             schema_version = 1
             [filters."ls"]
             stages = [ { strategy = "ansi_strip" } ]
             """);
-        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterOverrideLoader loader = trustedLoader("concurrent-cfg", projectDir);
         FilterPipeline fallback = FilterPipeline.of();
         var pool = java.util.concurrent.Executors.newFixedThreadPool(8);
         try {
@@ -437,5 +372,111 @@ class FilterOverrideLoaderTest {
         } finally {
             pool.shutdownNow();
         }
+    }
+
+    @Test
+    @DisplayName("Untrusted project override is skipped and hints on stderr")
+    void untrustedProjectOverrideIsSkipped() throws IOException {
+        Path projectDir = writeProject("untrusted-project", """
+            schema_version = 1
+            [filters."npm install"]
+            stages = [ { strategy = "ansi_strip" } ]
+            """);
+        FilterOverrideLoader loader = isolatedLoader("untrusted-cfg");
+        FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        try {
+            System.setErr(new PrintStream(err));
+            FilterPipeline resolved = loader.resolvePipeline("npm install", fallback, projectDir);
+            assertThat(resolved).isSameAs(fallback);
+        } finally {
+            System.setErr(originalErr);
+        }
+        assertThat(err.toString()).contains(TrustGate.SKIP_HINT);
+    }
+
+    @Test
+    @DisplayName("Hash change skips a previously trusted project file")
+    void hashChangeSkipsPreviouslyTrustedFile() throws IOException {
+        Path projectDir = writeProject("hash-project", """
+            schema_version = 1
+            [filters."cmd"]
+            stages = [ { strategy = "ansi_strip" } ]
+            """);
+        Path configDir = tempDir.resolve("hash-cfg");
+        PlatformDirs dirs = TrustTestSupport.dirs(configDir);
+        TrustTestSupport.trustProject(dirs, projectDir);
+        FilterOverrideLoader loader = new FilterOverrideLoader(dirs);
+        FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+
+        assertThat(loader.resolvePipeline("cmd", fallback, projectDir).execute("\u001B[32mhi\u001B[0m"))
+            .isEqualTo("hi");
+
+        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+            schema_version = 1
+            [filters."cmd"]
+            stages = [ { strategy = "deduplication", window_size = 5 } ]
+            """);
+        loader.invalidateCache(projectDir);
+
+        FilterPipeline afterChange = loader.resolvePipeline("cmd", fallback, projectDir);
+        assertThat(afterChange).isSameAs(fallback);
+    }
+
+    @Test
+    @DisplayName("Reshape file with reduce-only grant is skipped")
+    void reshapeFileWithReduceGrantIsSkipped() throws IOException {
+        Path projectDir = writeProject("reshape-project", """
+            schema_version = 1
+            [filters."lint"]
+            stages = [ { strategy = "grouping", pattern = "rule: (\\\\S+)" } ]
+            """);
+        Path configDir = tempDir.resolve("reshape-cfg");
+        PlatformDirs dirs = TrustTestSupport.dirs(configDir);
+        TrustTestSupport.trustProject(dirs, projectDir, EnumSet.of(Capability.REDUCE));
+        FilterOverrideLoader loader = new FilterOverrideLoader(dirs);
+        FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+
+        assertThat(loader.resolvePipeline("lint", fallback, projectDir)).isSameAs(fallback);
+    }
+
+    @Test
+    @DisplayName("Global override still applies when the project file is untrusted")
+    void globalAppliesWhenProjectFileIsUntrusted() throws IOException {
+        Path projectDir = writeProject("untrusted-vs-global", """
+            schema_version = 1
+            [filters."npm install"]
+            stages = [ { strategy = "ansi_strip" } ]
+            """);
+        Path configDir = tempDir.resolve("global-untrusted");
+        Files.createDirectories(configDir);
+        Files.writeString(configDir.resolve("filters.toml"), """
+            schema_version = 1
+            [filters."npm install"]
+            stages = [ { strategy = "deduplication", window_size = 5 } ]
+            """);
+        FilterOverrideLoader loader = new FilterOverrideLoader(TrustTestSupport.dirs(configDir));
+        FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+
+        FilterPipeline resolved = loader.resolvePipeline("npm install", fallback, projectDir);
+        assertThat(resolved).isNotSameAs(fallback);
+        assertThat(resolved.execute("warn\nwarn")).isEqualTo("warn (×2)");
+    }
+
+    private Path writeProject(String name, String toml) throws IOException {
+        Path projectDir = tempDir.resolve(name);
+        Files.createDirectories(projectDir.resolve(".condense"));
+        Files.writeString(projectDir.resolve(".condense/filters.toml"), toml);
+        return projectDir;
+    }
+
+    private FilterOverrideLoader isolatedLoader(String configName) throws IOException {
+        return TrustTestSupport.isolatedLoader(tempDir.resolve(configName));
+    }
+
+    private FilterOverrideLoader trustedLoader(String configName, Path projectDir) throws IOException {
+        return TrustTestSupport.trustedLoader(tempDir.resolve(configName), projectDir);
     }
 }

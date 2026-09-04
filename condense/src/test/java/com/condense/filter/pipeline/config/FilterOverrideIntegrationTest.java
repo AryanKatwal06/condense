@@ -6,6 +6,7 @@ import com.condense.core.FilterResult;
 import com.condense.filter.fs.LsFilter;
 import com.condense.filter.node.ESLintFilter;
 import com.condense.filter.node.NpmInstallFilter;
+import com.condense.trust.TrustTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -33,7 +34,7 @@ class FilterOverrideIntegrationTest {
         );
 
         FilterResult filterResult = filter.apply("npm install", result, CondenseConfig.defaults(), 0, false);
-        assertThat(filterResult.output()).isEqualTo("✓ npm install: 42 packages | found 0 vulnerabilit");
+        assertThat(filterResult.output()).isEqualTo("condense[filtered]\n✓ npm install: 42 packages | found 0 vulnerabilit");
     }
 
     @Test
@@ -53,7 +54,7 @@ class FilterOverrideIntegrationTest {
             """;
         Files.writeString(condenseDir.resolve("filters.toml"), customToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader();
+        FilterOverrideLoader loader = TrustTestSupport.trustedLoader(tempDir.resolve("npm-cfg"), projectDir);
         NpmInstallFilter filter = new NpmInstallFilter(new FilterOverrideLoader() {
             @Override
             public com.condense.filter.pipeline.FilterPipeline resolvePipeline(
@@ -66,7 +67,7 @@ class FilterOverrideIntegrationTest {
         ExecutionResult result = new ExecutionResult(0, rawOutput, "", 200L);
 
         FilterResult filterResult = filter.apply("npm install", result, CondenseConfig.defaults(), 0, false);
-        assertThat(filterResult.output()).isEqualTo("warning: deprecated pkg (×3)");
+        assertThat(filterResult.output()).isEqualTo("condense[filtered]\nwarning: deprecated pkg (×3)");
     }
 
     @Test
@@ -100,7 +101,7 @@ class FilterOverrideIntegrationTest {
             """;
         Files.writeString(condenseDir.resolve("filters.toml"), customToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader();
+        FilterOverrideLoader loader = TrustTestSupport.trustedLoader(tempDir.resolve("ls-cfg"), projectDir);
         LsFilter filter = new LsFilter(new FilterOverrideLoader() {
             @Override
             public com.condense.filter.pipeline.FilterPipeline resolvePipeline(
@@ -116,7 +117,7 @@ class FilterOverrideIntegrationTest {
         ExecutionResult result = new ExecutionResult(0, fileList, "", 50L);
         FilterResult filterResult = filter.apply("ls", result, CondenseConfig.defaults(), 0, false);
 
-        assertThat(filterResult.output()).isEqualTo("duplicate_entry.txt (×14)");
+        assertThat(filterResult.output()).isEqualTo("condense[filtered]\nduplicate_entry.txt (×14)");
     }
 
     @Test
@@ -153,7 +154,7 @@ class FilterOverrideIntegrationTest {
             """;
         Files.writeString(condenseDir.resolve("filters.toml"), customToml);
 
-        FilterOverrideLoader loader = new FilterOverrideLoader();
+        FilterOverrideLoader loader = TrustTestSupport.trustedLoader(tempDir.resolve("eslint-cfg"), projectDir);
         ESLintFilter filter = new ESLintFilter(new FilterOverrideLoader() {
             @Override
             public com.condense.filter.pipeline.FilterPipeline resolvePipeline(

@@ -1,1 +1,2 @@
+condense[filtered]
 [main] untracked: 3

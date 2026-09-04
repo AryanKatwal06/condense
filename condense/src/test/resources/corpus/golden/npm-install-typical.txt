@@ -1,1 +1,2 @@
+condense[filtered]
 ✓ npm install: 243 packages | found 0 vulnerabilit

@@ -4,6 +4,7 @@ import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.stage.*;
 import com.condense.filter.strategy.*;
+import com.condense.trust.Capability;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -77,6 +78,36 @@ public final class StageFactory {
 
     public static boolean isAllowed(String strategy) {
         return ALLOWED_ALIASES.contains(normalize(strategy));
+    }
+
+    /**
+     * Capability class for a strategy alias. Unknown aliases are treated as reshape
+     * (they will fail validation before a trusted file can apply them).
+     */
+    public static Capability capabilityOf(String strategy) {
+        return switch (normalize(strategy)) {
+            case "ansi_strip", "ansi-strip", "ansi",
+                 "tail_lines", "tail-lines",
+                 "head_tail", "head-tail",
+                 "tree_compression", "tree-compression", "tree",
+                 "deduplication", "dedup" -> Capability.REDUCE;
+            case "regex_capture", "regex-capture",
+                 "state_machine", "state-machine" -> Capability.REWRITE;
+            default -> Capability.RESHAPE;
+        };
+    }
+
+    public static Set<Capability> requiredCapabilities(List<FilterOverrideConfig.StageDef> stages) {
+        if (stages == null || stages.isEmpty()) {
+            return Set.of(Capability.REDUCE);
+        }
+        Set<Capability> caps = new LinkedHashSet<>();
+        for (FilterOverrideConfig.StageDef stage : stages) {
+            if (stage != null && stage.strategy() != null && !stage.strategy().isBlank()) {
+                caps.add(capabilityOf(stage.strategy()));
+            }
+        }
+        return caps.isEmpty() ? Set.of(Capability.REDUCE) : Set.copyOf(caps);
     }
 
     public static FilterPipeline buildPipeline(List<FilterOverrideConfig.StageDef> stages) {

@@ -1,2 +1,3 @@
+condense[filtered]
 Test Suites: 3 passed, 3 total
 Tests:       10 passed, 10 total

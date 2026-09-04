@@ -28,6 +28,7 @@ public class SafePathValidator {
         "condense.db-wal",
         "condense.db-shm",
         "config.toml",
+        "trust.json",
         ".install_dir",
         ".condense_install_dir"
     );
@@ -103,6 +104,57 @@ public class SafePathValidator {
             }
         }
         return Collections.unmodifiableList(dirs);
+    }
+
+    /**
+     * Result of {@link #contain(Path, Path)} — a file must resolve inside {@code expectedParent}.
+     */
+    public record ContainmentResult(boolean contained, String reason, Path realFile, Path realParent) {
+        public static ContainmentResult ok(Path realFile, Path realParent) {
+            return new ContainmentResult(true, "contained", realFile, realParent);
+        }
+
+        public static ContainmentResult rejected(String reason) {
+            return new ContainmentResult(false, reason, null, null);
+        }
+    }
+
+    /**
+     * Canonicalize {@code file} and require it to stay inside {@code expectedParent}.
+     * Used for project {@code .condense/filters.toml} (outside condense-owned dirs)
+     * and for writes into the config directory.
+     */
+    public static ContainmentResult contain(Path file, Path expectedParent) {
+        if (file == null || expectedParent == null) {
+            return ContainmentResult.rejected("file or parent is null");
+        }
+        try {
+            Path realParent = Files.exists(expectedParent)
+                ? expectedParent.toRealPath()
+                : expectedParent.toAbsolutePath().normalize();
+            if (Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
+                Path realFile = file.toRealPath();
+                if (!realFile.startsWith(realParent)) {
+                    return ContainmentResult.rejected(
+                        "Path traversal or symlink escape: file '" + realFile
+                            + "' resolves outside expected directory '" + realParent + "'"
+                    );
+                }
+                return ContainmentResult.ok(realFile, realParent);
+            }
+            Path normalized = file.toAbsolutePath().normalize();
+            Path normalizedParent = expectedParent.toAbsolutePath().normalize();
+            if (!normalized.startsWith(realParent) && !normalized.startsWith(normalizedParent)) {
+                return ContainmentResult.rejected(
+                    "Path '" + normalized + "' is outside expected directory '" + realParent + "'"
+                );
+            }
+            return ContainmentResult.ok(normalized, realParent);
+        } catch (IOException e) {
+            return ContainmentResult.rejected(
+                "Cannot resolve canonical path for '" + file + "': " + e.getMessage()
+            );
+        }
     }
 
     /**

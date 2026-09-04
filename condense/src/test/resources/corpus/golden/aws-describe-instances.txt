@@ -1,3 +1,4 @@
+condense[filtered]
 {
   "Reservations" : [ {
     "ReservationId" : "<string>",

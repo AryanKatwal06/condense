@@ -1,1 +1,2 @@
+condense[filtered]
 ✓ Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.82s

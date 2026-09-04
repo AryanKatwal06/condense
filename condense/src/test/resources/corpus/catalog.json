@@ -135,7 +135,8 @@
       "command": "mvn",
       "fixture": "fixtures/mvn/failure.txt",
       "exit_code": 1,
-      "savings_floor": 60,
+      "savings_floor": 52,
+      "meets_contribution_bar": false,
       "critical_signals": ["ERROR", "cannot find symbol"]
     },
     {
@@ -215,7 +216,7 @@
       "command": "git status",
       "fixture": "fixtures/git-status/detached-head.txt",
       "exit_code": 0,
-      "savings_floor": 47,
+      "savings_floor": 18,
       "meets_contribution_bar": false,
       "critical_signals": ["detached@abc1234f", "clean"]
     },
@@ -224,7 +225,8 @@
       "command": "git status",
       "fixture": "fixtures/git-status/porcelain-mixed.txt",
       "exit_code": 0,
-      "savings_floor": 60,
+      "savings_floor": 39,
+      "meets_contribution_bar": false,
       "critical_signals": ["staged:", "modified:", "untracked:"]
     },
     {
@@ -232,7 +234,7 @@
       "command": "git diff",
       "fixture": "fixtures/git-diff/stat.txt",
       "exit_code": 0,
-      "savings_floor": 28,
+      "savings_floor": 0,
       "meets_contribution_bar": false,
       "critical_signals": ["files changed"]
     },
@@ -265,7 +267,8 @@
       "command": "git commit",
       "fixture": "fixtures/git-commit/typical.txt",
       "exit_code": 0,
-      "savings_floor": 60,
+      "savings_floor": 48,
+      "meets_contribution_bar": false,
       "critical_signals": ["main", "7f3a9c2"]
     },
     {
@@ -330,7 +333,7 @@
       "command": "docker ps",
       "fixture": "fixtures/docker-ps/typical.txt",
       "exit_code": 0,
-      "savings_floor": 35,
+      "savings_floor": 29,
       "meets_contribution_bar": false,
       "critical_signals": ["web-server", "database"]
     },
@@ -397,7 +400,7 @@
       "command": "cargo test",
       "fixture": "fixtures/cargo-test/passing.txt",
       "exit_code": 0,
-      "savings_floor": 49,
+      "savings_floor": 42,
       "meets_contribution_bar": false,
       "critical_signals": ["3 passed"]
     },
@@ -414,7 +417,7 @@
       "command": "cargo build",
       "fixture": "fixtures/cargo-build/typical.txt",
       "exit_code": 0,
-      "savings_floor": 32,
+      "savings_floor": 15,
       "meets_contribution_bar": false,
       "critical_signals": ["Finished"]
     }

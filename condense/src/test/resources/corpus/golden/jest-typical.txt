@@ -1,3 +1,4 @@
+condense[filtered]
 jest: 2 suite(s) failed
   FAIL: src/components/Button.test.js
   FAIL: src/api/auth.test.js

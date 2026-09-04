@@ -163,4 +163,37 @@ class SafePathValidatorTest {
         assertThat(result.isSafe()).isFalse();
         assertThat(result.status()).isEqualTo(SafePathValidator.Status.OUTSIDE_ALLOWED_LOCATION);
     }
+
+    @Test
+    void validateDirectoryForDeletion_acceptsTrustJson() throws IOException {
+        Files.writeString(fakeConfigDir.resolve("config.toml"), "x=1");
+        Files.writeString(fakeConfigDir.resolve("trust.json"), "{}");
+
+        SafePathValidator.ValidationResult result = validator.validateDirectoryForDeletion(fakeConfigDir);
+        assertThat(result.isSafe()).isTrue();
+    }
+
+    @Test
+    void containAcceptsFileInsideParent() throws IOException {
+        Path project = tempDir.resolve("proj");
+        Path file = project.resolve(".condense/filters.toml");
+        Files.createDirectories(file.getParent());
+        Files.writeString(file, "schema_version = 1\n");
+
+        SafePathValidator.ContainmentResult result = SafePathValidator.contain(file, project);
+        assertThat(result.contained()).isTrue();
+        assertThat(result.realFile()).isEqualTo(file.toRealPath());
+    }
+
+    @Test
+    void containRejectsFileOutsideParent() throws IOException {
+        Path project = tempDir.resolve("proj");
+        Files.createDirectories(project);
+        Path outside = tempDir.resolve("outside.toml");
+        Files.writeString(outside, "x");
+
+        SafePathValidator.ContainmentResult result = SafePathValidator.contain(outside, project);
+        assertThat(result.contained()).isFalse();
+        assertThat(result.reason()).contains("outside");
+    }
 }

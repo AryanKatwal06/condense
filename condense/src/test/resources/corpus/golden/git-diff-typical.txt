@@ -1,1 +1,2 @@
+condense[filtered]
 +2 / -1 lines

@@ -1,3 +1,4 @@
+condense[filtered]
 Data line 1 with additional padding characters to ensure total file size exceeds two thousand characters limit.
 Data line 2 with additional padding characters to ensure total file size exceeds two thousand characters limit.
 Data line 3 with additional padding characters to ensure total file size exceeds two thousand characters limit.

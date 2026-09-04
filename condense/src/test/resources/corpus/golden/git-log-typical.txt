@@ -1,3 +1,4 @@
+condense[filtered]
 a1b2c3d4 Fix token estimator bound
 b2c3d4e5 Isolate native IT config and data dirs
 c3d4e5f6 Raise compiler release to Java 21
