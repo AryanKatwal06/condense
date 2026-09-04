@@ -61,6 +61,10 @@ jobs:
           - os: ubuntu-latest
             artifact-name: condense-linux-x64-dynamic
             binary-name: condense-runner
+            install-musl: true
+          - os: ubuntu-24.04-arm
+            artifact-name: condense-linux-aarch64
+            binary-name: condense-runner
           - os: windows-latest
             artifact-name: condense-windows-x64
             binary-name: condense-runner.exe
@@ -94,8 +98,8 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven-
 
-      - name: Install musl toolchain and zlib (Linux only)
-        if: runner.os == 'Linux'
+      - name: Install musl toolchain and zlib (linux-x64 only)
+        if: matrix.install-musl
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y musl-tools
@@ -126,6 +130,32 @@ jobs:
             exit 1
           fi
           echo "✓ Native image built without fallback"
+
+      - name: Native integration tests
+        shell: bash
+        run: |
+          mvn failsafe:integration-test failsafe:verify \
+            -DskipITs=false \
+            -Dnative.image.path="${PWD}/target/condense-runner" \
+            --no-transfer-progress -B
+
+      - name: Enforce uncompressed binary size ceiling
+        shell: bash
+        run: |
+          CEILING=83886080
+          BINARY="target/${{ matrix.binary-name }}"
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            SIZE=$(stat -f%z "$BINARY")
+          elif [[ "${{ runner.os }}" == "Windows" ]]; then
+            SIZE=$(powershell -NoProfile -Command "(Get-Item '$BINARY').Length")
+          else
+            SIZE=$(stat -c%s "$BINARY")
+          fi
+          echo "Uncompressed binary size: $SIZE bytes (ceiling $CEILING = 80 MiB)"
+          if [ "$SIZE" -gt "$CEILING" ]; then
+            echo "FAIL: uncompressed native image is $SIZE bytes, exceeds ceiling of $CEILING (80 MiB)"
+            exit 1
+          fi
 
       - name: Smoke tests (Unix)
         if: runner.os != 'Windows'
