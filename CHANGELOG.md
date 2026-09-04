@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Added / Improved
+- Replaced the mixed byte/UTF-16 `/4` token heuristic with `utf8_weighted_v1`, a UTF-8 code-point estimator used for both files and strings. `condense gain` now labels counts as estimates and reports a p95 relative-error bound of 35% vs cl100k_base. See [docs/token-estimator.md](docs/token-estimator.md).
 - Set the compiler language level to Java 21 so bytecode matches GraalVM 21 CI and the documented toolchain.
 - Added `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` overrides in `PlatformDirs` so tests and power users can redirect config and analytics state on every OS, including macOS.
 - Native integration tests now run via Failsafe in CI (`NativeCliIT`, `NativeAnalyticsIT`) on linux-x64, linux-aarch64, macos-aarch64, and windows-x64, using isolated directories instead of the real user database.

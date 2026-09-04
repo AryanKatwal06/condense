@@ -34,6 +34,8 @@ condense --version / --help
 | `TeeMode.java` | `com.condense.core` | Enum: `FAILURES`, `ALWAYS`, `NEVER` with case-insensitive Jackson parsing |
 | `ConfigLoader.java` | `com.condense.core` | Loads `config.toml` via Jackson TOML; returns defaults if file missing |
 | `TrackingRepository.java` | `com.condense.core` | Lazy SQLite connection; auto-creates schema; insert/count methods |
+| `TokenCounter.java` | `com.condense.core` | Static facade over `Utf8WeightedTokenEstimator` |
+| `Utf8WeightedTokenEstimator.java` | `com.condense.core` | Code-point token estimate; UTF-8 file path; published p95 vs cl100k_base |
 
 ## Key Design Decisions
 
@@ -46,6 +48,8 @@ condense --version / --help
 4. **Config defaults**: When no `config.toml` exists (first run), `CondenseConfig.defaults()` provides sensible production defaults. The app works correctly out of the box.
 
 5. **GraalVM native image**: All reflection-heavy classes are registered in `reflect-config.json`. SQLite JNI classes are registered in `jni-config.json`. The `--no-fallback` flag ensures the build fails hard if any class is missing.
+
+6. **Token estimates, not tokenizer counts**: Analytics use `utf8_weighted_v1` (code-point walk, dense CJK/emoji, Latin ÷ 4). Files and strings share one function. `condense gain` publishes the estimator name and a p95 relative-error bound vs cl100k_base. There is no tokenizer in the native image; the yardstick is test-scoped. See `docs/token-estimator.md`.
 
 ## Technology Stack
 

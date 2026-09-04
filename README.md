@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build](https://github.com/AryanKatwal06/condense/actions/workflows/build.yml/badge.svg)](https://github.com/AryanKatwal06/condense/actions/workflows/build.yml)
 
-**Condense** sits between your AI coding assistant and the shell. It filters command output so the AI sees a compact summary instead of thousands of raw lines — saving 60-92% of context window tokens.
+**Condense** sits between your AI coding assistant and the shell. It filters command output so the AI sees a compact summary instead of thousands of raw lines — typically cutting estimated context-window tokens by 60–92%. Those percentages are estimates (`utf8_weighted_v1`, p95 ±35% vs cl100k_base); see [docs/token-estimator.md](docs/token-estimator.md).
 
 ---
 
@@ -12,7 +12,7 @@
 
 When an AI coding agent runs `pytest`, `cargo test`, `git diff`, or `kubectl pods`, it receives thousands of lines of raw output. This consumes massive context window tokens even when 95% of that output is irrelevant noise (passing tests, redundant file paths, ANSI escape codes, progress bars, etc.). This leads to slower response times, degraded AI reasoning (due to "lost in the middle" effects), and high API costs.
 
-Condense solves this. It sits between the AI agent and the shell, intercepts command output, applies command-specific compression logic, and returns only the signal the AI actually needs. For example, a failed `pytest` run that produces 2,400 lines of output becomes 8 lines showing only the failed tests and summary. In production analytics, across 513 commands recorded, 960,552 input tokens were reduced to 73,705 output tokens — a **92% savings**.
+Condense solves this. It sits between the AI agent and the shell, intercepts command output, applies command-specific compression logic, and returns only the signal the AI actually needs. For example, a failed `pytest` run that produces 2,400 lines of output becomes 8 lines showing only the failed tests and summary. In production analytics, across 513 commands recorded, an estimated 960,552 input tokens were reduced to 73,705 output tokens — a **92% savings**. Token figures from `condense gain` are estimates, not tokenizer-grade counts ([docs/token-estimator.md](docs/token-estimator.md)).
 
 ## How It Works
 
@@ -196,7 +196,7 @@ condense makes no network calls during normal operation. The only exception is t
 
 ## condense gain (Analytics)
 
-`condense gain` gives you a detailed breakdown of your token savings.
+`condense gain` gives you a detailed breakdown of estimated token savings. Counts are produced by `utf8_weighted_v1` (p95 relative error 35% vs cl100k_base). The JSON form includes an `estimator` object; existing fields are unchanged.
 
 ```bash
 $ condense gain --graph

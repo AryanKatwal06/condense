@@ -28,11 +28,11 @@ mvn failsafe:integration-test failsafe:verify -DskipITs=false   # native ITs aga
 
 Native integration tests (`NativeCliIT`, `NativeAnalyticsIT`) require `native.image.path` and **fail rather than skip** if the binary is missing. They set `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` on the child process so they never write the developer's real analytics database.
 
-See [docs/perf-baseline.md](docs/perf-baseline.md) for what CI measures (invocation overhead, native size ceiling, cold start).
+See [docs/perf-baseline.md](docs/perf-baseline.md) for what CI measures (invocation overhead, native size ceiling, cold start). Token estimates are documented in [docs/token-estimator.md](docs/token-estimator.md); `TokenEstimatorAccuracyTest` fails `mvn test` if p95 error vs cl100k_base exceeds the published bound.
 
 ## Adding a New Command Filter
 
-**Contribution Bar:** The project requires at least 60% token savings per filter PR. All new filters must demonstrate ≥60% token savings using the Java golden fixture framework.
+**Contribution Bar:** The project requires at least 60% **estimated** token savings per filter PR, measured with `utf8_weighted_v1` (see [docs/token-estimator.md](docs/token-estimator.md)). All new filters must demonstrate ≥60% savings using the Java golden fixture framework.
 
 Adding support for a new command (e.g. `helm`) takes five steps:
 

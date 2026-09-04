@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 4 September 2026 (audited line-by-line against the live tree).
+**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 2 code landed).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main`, commit `fe4ad98`, synced with `origin/main` (0 ahead / 0 behind).
+**Branch at handoff:** `main` after Phase 2. Confirm with `git log -1` and origin before starting Phase 3.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -146,10 +146,10 @@ CLI args
 ### 4.4 Token accounting (`core/TokenCounter.java`)
 
 ```java
-public static int count(String text) { return (text.length() + 3) / 4; }
+public static int count(String text) { return Utf8WeightedTokenEstimator.INSTANCE.count(text); }
 ```
 
-Heuristic 1 token ≈ 4 characters. File counting uses `Files.size(file) / 4` — **bytes, not UTF-8 code points**, so non-ASCII output inflates the "raw" side of every savings figure. Deliberately not a real tokenizer (avoids tiktoken-class native-image and startup cost). Phase 2 owns this.
+`utf8_weighted_v1` walks Unicode code points. CJK / Hangul / kana / emoji are dense (1 token each); Latin runs use ceiling division by 4. `count(Path)` decodes the file as UTF-8 with replacement and uses the same function — never `Files.size()`. Published p95 relative error vs cl100k_base is **0.35**. `gain` JSON includes an `estimator` object; text output labels counts as estimates. See `docs/token-estimator.md`.
 
 ### 4.5 CLI surface
 
@@ -297,13 +297,13 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 
 | # | Item | Evidence | Owner |
 |---|---|---|---|
-| D1 | `java.version` is `17` while ARCHITECTURE.md, CONTRIBUTING.md and all CI say 21 | `condense/pom.xml:9` | Phase 1 |
-| D2 | Native Failsafe ITs never run in CI (`-DskipTests`) | `build.yml` build step | Phase 1 |
-| D3 | `TrackingRepositoryNativeIT` mutates the developer's real `condense.db`; macOS cannot be redirected | `PlatformDirs` has no env override | Phase 1 |
-| D4 | `reflect-config.json` has 6 duplicate class registrations; registration is a manual checklist with no drift test | verified duplicate scan | Phase 1 |
-| D5 | No linux-aarch64 CI or release job, though the POM profile and `install.sh` both promise that artifact | `build.yml`, `release.yml`, `install.sh` | Phase 1 |
-| D6 | `install.sh` header advertises Intel macOS support; the detector then `exit 1`s for `Darwin/x86_64` | `condense/install.sh` | Phase 1 |
-| D7 | Token counting is a `/4` heuristic and mixes **bytes** (files) with **chars** (strings) | `TokenCounter` | Phase 2 |
+| D1 | ~~`java.version` is `17` while docs/CI say 21~~ **FIXED** | POM `java.version` 21; bytecode major 65 | Phase 1 |
+| D2 | ~~Native Failsafe ITs never run in CI~~ **FIXED** | Failsafe after native package on four OS jobs | Phase 1 |
+| D3 | ~~Native IT mutates real `condense.db`; macOS cannot be redirected~~ **FIXED** | `CONDENSE_CONFIG_DIR` / `CONDENSE_DATA_DIR` | Phase 1 |
+| D4 | ~~Duplicate reflect-config entries; no drift test~~ **FIXED** | `ReflectConfigDriftTest` | Phase 1 |
+| D5 | ~~No linux-aarch64 CI or release job~~ **FIXED** | `ubuntu-24.04-arm` in build.yml and release.yml | Phase 1 |
+| D6 | ~~`install.sh` header advertises Intel macOS prebuilts~~ **FIXED** | Header matches shipped platforms | Phase 1 |
+| D7 | ~~Token counting is a `/4` heuristic mixing bytes and chars~~ **FIXED** | `utf8_weighted_v1`; file and string share one UTF-8 code-point function; published p95 0.35 vs cl100k_base | Phase 2 |
 | D8 | No machine-enforced savings or fidelity gate; the "≥60% savings" bar is prose only | `CONTRIBUTING.md` | Phase 3 |
 | D9 | 29 domain filters are not on `FilterPipeline` | grep for `FilterPipeline` under `filter/` | Phase 4 |
 | D10 | `StrategyRegistry` silently last-wins on duplicate command prefixes | `LinkedHashMap.put` with no check | Phase 4 |
@@ -391,7 +391,7 @@ Three sequential efforts the 17-phase roadmap builds directly on top of. Commit 
 
 ## 8. This engagement: what was actually done
 
-Two turns of work, both **planning only**. No production file was modified.
+Two turns of planning, then Phase 1 and Phase 2 code.
 
 | Activity | Status | Notes |
 |---|---|---|
@@ -400,17 +400,19 @@ Two turns of work, both **planning only**. No production file was modified.
 | Correction of the commissioning brief | **COMPLETED** | Seven material corrections; see §11.3 |
 | 17-phase roadmap | **COMPLETED as titles + intent** | Written into the Cursor plan file. That file's YAML holds all 17 titles; its body was a placeholder and now points here |
 | Phase 1 implementation plan | **COMPLETED** | Revised 4 Sep 2026, then authorized with "proceed" |
-| Phase 1 code | **LANDED** | Java 21, env overrides, drift test, Failsafe native ITs, linux-aarch64 matrix, 80 MiB size ceiling. Native proof is CI. |
-| Phases 2–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
-| This handoff | **COMPLETED** | Written, then audited against the live tree and rewritten |
+| Phase 1 code | **LANDED** | Java 21, env overrides, drift test, Failsafe native ITs, linux-aarch64 matrix, 80 MiB size ceiling. Native proof is CI run 33860368090. |
+| Phase 2 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "start executing" |
+| Phase 2 code | **LANDED** | `utf8_weighted_v1`, UTF-8 file/string agreement, published p95 0.35 vs cl100k_base, `gain` estimator metadata. Native proof is the next green `NativeAnalyticsIT` run. |
+| Phases 3–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| This handoff | **COMPLETED** | Written, audited, then updated as phases landed |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1` is marked `completed`, `p2`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1` and `p2` are marked `completed`, `p3`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 code has landed.** Phases 2–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 and Phase 2 code have landed.** Phases 3–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -521,7 +523,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 ### Phase 2 — Token accounting correctness
 
-**Status: PENDING**
+**Status: CODE LANDED 4 Sep 2026.** Native-image proof is the next green `NativeAnalyticsIT` in `build.yml` (estimator object in `gain --format json`).
 
 **Goal.** Savings numbers a reviewer can defend. Replace the `/4` heuristic with a calibrated estimator, fix the bytes-vs-code-points confusion, document measured error bounds, and surface uncertainty in `gain`.
 
@@ -536,6 +538,18 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 **Native.** Identical behavior JVM vs native, with no locale or default-charset dependence.
 
 **Exit criteria shape.** Estimator error within a stated p95 bound on the checked-in corpus; a regression test proving byte/char correctness on non-ASCII input; `gain` reports a bound, not a bare number.
+
+**What shipped (implementation, 4 Sep 2026).**
+
+- `TokenEstimator` + `Utf8WeightedTokenEstimator` (`utf8_weighted_v1`). Latin divisor **4** chosen over 3 after measuring both on the corpus (divisor 3 raised p95 from 0.33 to 0.46).
+- `TokenCounter` is a facade. `count(Path)` reads UTF-8 with replacement; `Files.size` is gone. `ExecutionResult` test helper writes UTF-8 explicitly.
+- Corpus: 38 filter fixtures + 6 Unicode samples. Reference = cl100k_base via **test-scoped** jtokkit 1.1.0. Measured p95 relative error **0.333**; published **0.35**; CI gate **0.40**.
+- `GainReport.estimator` (`name`, `reference`, `p95_rel_error`). Text summary labels counts as estimates. No SQLite schema change.
+- `NativeAnalyticsIT` asserts the estimator object. `EstimatorInfo` is in `reflect-config.json` and the drift test.
+- Docs: `docs/token-estimator.md`; README / CONTRIBUTING / ARCHITECTURE honesty.
+- Local JVM proof: `mvn test` **326 run, 0 failures, 6 skipped**. Native proof is CI.
+
+**What later phases need from this one.** Honest token numbers for Phase 3 savings gates; a published bound Phase 8 can reuse in `explain`; no tokenizer in the native image.
 
 ---
 
@@ -899,9 +913,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1 code landed 4 Sep 2026. JVM tests passed locally (`mvn test`, 321 run, class-file major version 65). Native Failsafe and linux-aarch64 still need a green GitHub Actions run — this Windows workspace cannot produce those binaries.
+**Where we are.** Phase 2 code landed 4 Sep 2026. JVM tests passed locally (`mvn test`, 326 run, 0 failures, 6 skipped). Native proof for the new `gain` JSON `estimator` object is the next green `NativeAnalyticsIT` in `build.yml` — this Windows workspace does not build native images.
 
-**Do not start Phase 2 code.** Present a complete Phase 2 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 3 code.** Present a complete Phase 3 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -916,14 +930,14 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Verify before doing anything**
 
-5. `git status --short` and `git log --oneline -5`. If `HEAD` is not `fe4ad98`, someone has worked since this handoff — reconcile §13 against reality and update this file.
-6. Confirm none of the Phase 1 files listed in §9 already exist.
-7. Check the most recent GitHub Actions run. Do not assume the native builds are currently green (§12).
+5. `git status --short` and `git log --oneline -5`. Reconcile §13 against `HEAD` and update this file if someone has worked since the last stop point.
+6. Confirm Phase 2 files exist (`Utf8WeightedTokenEstimator`, `docs/token-estimator.md`, `EstimatorInfo`) and that `TokenCounter.count(Path)` no longer uses `Files.size`.
+7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12).
 
 **Then, and only then**
 
-8. Phase 1 code has landed. Confirm CI native jobs (including Failsafe class names in the log and linux-aarch64) before treating Phase 1 as fully accepted.
-9. **Do not start Phase 2 code.** Present a complete Phase 2 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all 17 phases.
+8. Phase 2 code has landed. Confirm `NativeAnalyticsIT` still appears in native job logs and that `gain --format json` contains `estimator`.
+9. **Do not start Phase 3 code.** Present a complete Phase 3 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 
