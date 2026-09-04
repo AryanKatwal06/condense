@@ -17,15 +17,15 @@ public final class GroupingStrategy implements FilterStage {
     private final long timeoutMillis;
 
     public GroupingStrategy() {
-        this(Pattern.compile("(.*)"), false, 0);
+        this(Pattern.compile("(.*)"), false, BoundedRegex.TIMEOUT_MS);
     }
 
     public GroupingStrategy(Pattern keyPattern) {
-        this(keyPattern, false, 0);
+        this(keyPattern, false, BoundedRegex.TIMEOUT_MS);
     }
 
     public GroupingStrategy(Pattern keyPattern, boolean includeOther) {
-        this(keyPattern, includeOther, 0);
+        this(keyPattern, includeOther, BoundedRegex.TIMEOUT_MS);
     }
 
     public GroupingStrategy(Pattern keyPattern, boolean includeOther, long timeoutMillis) {
@@ -56,7 +56,7 @@ public final class GroupingStrategy implements FilterStage {
      */
     public static Map<String, Integer> group(
             List<String> lines, Pattern keyPattern, boolean includeOther) {
-        return group(lines, keyPattern, includeOther, 0);
+        return group(lines, keyPattern, includeOther, BoundedRegex.TIMEOUT_MS);
     }
 
     /**
@@ -76,10 +76,7 @@ public final class GroupingStrategy implements FilterStage {
         int other = 0;
 
         for (String line : lines) {
-            CharSequence lineSeq = timeoutMillis > 0
-                ? new TimeoutCharSequence(line, timeoutMillis, keyPattern.pattern())
-                : line;
-            var m = keyPattern.matcher(lineSeq);
+            var m = BoundedRegex.matcher(keyPattern, line);
             if (m.find()) {
                 String key = m.group(1).trim();
                 counts.merge(key, 1, Integer::sum);

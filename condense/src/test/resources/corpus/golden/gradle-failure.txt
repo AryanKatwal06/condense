@@ -1,0 +1,11 @@
+✗ BUILD FAILED
+> Task :clean UP-TO-DATE
+> Task :compileJava
+> Task :processResources
+> Task :classes
+> Task :compileTestJava FAILED
+FAILURE: Build failed with an exception.
+> Compilation failed; see the compiler error output for details.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.

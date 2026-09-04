@@ -1,9 +1,16 @@
 package com.condense.filter.python;
 
 import com.condense.annotation.CommandFilter;
-import com.condense.core.*;
+import com.condense.core.CondenseConfig;
+import com.condense.core.ExecutionResult;
+import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterPipeline;
+import com.condense.filter.pipeline.PipelineBackedFilter;
+import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.config.FilterOverrideLoader;
+import com.condense.filter.strategy.BoundedRegex;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.logging.Logger;
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,64 +18,75 @@ import java.util.regex.Pattern;
 
 @CommandFilter("pytest")
 @ApplicationScoped
-public class PytestFilter implements FilterStrategy {
+public class PytestFilter extends PipelineBackedFilter {
 
-    private static final Logger log = Logger.getLogger(PytestFilter.class);
+    public PytestFilter() {
+        super();
+    }
 
-    private static final Pattern FAILED_LINE  = Pattern.compile("^FAILED\\s+");
-    private static final Pattern ERROR_LINE   = Pattern.compile("^ERROR\\s+");
-    private static final Pattern SUMMARY_LINE = Pattern.compile("^=+.*=+$");
-    private static final Pattern SHORT_TEST_SUMMARY = Pattern.compile("short test summary");
+    @Inject
+    public PytestFilter(FilterOverrideLoader overrideLoader) {
+        super(overrideLoader);
+    }
 
     @Override
-    public FilterResult apply(String command, ExecutionResult result,
-                              CondenseConfig config, int verbose, boolean ultraCompact) {
-        try {
+    protected String selectInput(String command, ExecutionResult result,
+                                 CondenseConfig config, int verbose, boolean ultraCompact) {
+        return result.hasStderr() ? result.readStderr() : result.readStdout();
+    }
+
+    @Override
+    protected FilterPipeline buildPipeline() {
+        return FilterPipeline.of(PytestSummaryStage.INSTANCE);
+    }
+
+    static final class PytestSummaryStage implements com.condense.filter.pipeline.FilterStage {
+        static final PytestSummaryStage INSTANCE = new PytestSummaryStage();
+        private static final Pattern FAILED_LINE = Pattern.compile("^FAILED\\s+");
+        private static final Pattern ERROR_LINE = Pattern.compile("^ERROR\\s+");
+        private static final Pattern SUMMARY_LINE = Pattern.compile("^=+.*=+$");
+        private static final Pattern SHORT_TEST_SUMMARY = Pattern.compile("short test summary");
+
+        @Override
+        public StageResult process(String raw, FilterContext context) {
             List<String> output = new ArrayList<>();
             boolean inShortSummary = false;
             String lastLineStr = "";
 
-            try (java.util.stream.Stream<String> stream = result.hasStderr() ? result.stderrLines() : result.stdoutLines()) {
-                for (String line : (Iterable<String>) stream::iterator) {
-                    if (!line.isBlank()) {
-                        lastLineStr = line;
-                    }
-                    if (SHORT_TEST_SUMMARY.matcher(line).find()) {
-                        inShortSummary = true;
-                        continue;
-                    }
-                    if (inShortSummary) {
-                        if (FAILED_LINE.matcher(line).find() || ERROR_LINE.matcher(line).find()) {
-                            output.add(line.trim());
-                        } else if (SUMMARY_LINE.matcher(line).find()) {
-                            // Final summary line (passed/failed count)
-                            output.add(line.trim());
-                            inShortSummary = false;
-                        }
-                    } else if (SUMMARY_LINE.matcher(line).find()
-                            && (line.contains("passed") || line.contains("failed")
-                                || line.contains("error"))) {
-                        // Final result line — always emit
+            for (String line : raw.lines().toList()) {
+                if (!line.isBlank()) {
+                    lastLineStr = line;
+                }
+                if (BoundedRegex.find(SHORT_TEST_SUMMARY, line)) {
+                    inShortSummary = true;
+                    continue;
+                }
+                if (inShortSummary) {
+                    if (BoundedRegex.find(FAILED_LINE, line) || BoundedRegex.find(ERROR_LINE, line)) {
                         output.add(line.trim());
+                    } else if (BoundedRegex.find(SUMMARY_LINE, line)) {
+                        output.add(line.trim());
+                        inShortSummary = false;
                     }
+                } else if (BoundedRegex.find(SUMMARY_LINE, line)
+                    && (line.contains("passed") || line.contains("failed") || line.contains("error"))) {
+                    output.add(line.trim());
                 }
             }
 
             if (output.isEmpty()) {
-                // No failures found
-                return FilterResult.of(result, lastLineStr.isBlank() ? "✓ all tests passed" : lastLineStr);
+                return StageResult.continueWith(lastLineStr.isBlank() ? "✓ all tests passed" : lastLineStr);
             }
 
-            CondenseConfig.CommandConfig cc = config.commandConfig("pytest");
-            int limit = cc.maxFailures(Integer.MAX_VALUE);
+            CondenseConfig config = context.config();
+            int limit = config != null
+                ? config.commandConfig("pytest").maxFailures(Integer.MAX_VALUE)
+                : Integer.MAX_VALUE;
             List<String> shown = output.size() > limit ? output.subList(0, limit) : output;
-            if (output.size() > limit) shown = new ArrayList<>(shown);
-
-            return FilterResult.of(result, String.join("\n", shown));
-
-        } catch (Exception e) {
-            log.warnf("PytestFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result);
+            if (output.size() > limit) {
+                shown = new ArrayList<>(shown);
+            }
+            return StageResult.continueWith(String.join("\n", shown));
         }
     }
 }

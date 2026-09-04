@@ -48,7 +48,7 @@ public class StrategyRegistry {
                         cls.getSimpleName());
                     continue;
                 }
-                registry.put(key, instance);
+                PrefixIndex.put(registry, key, instance);
                 log.debugf("Registered '%s' → %s", key, cls.getSimpleName());
             }
         }

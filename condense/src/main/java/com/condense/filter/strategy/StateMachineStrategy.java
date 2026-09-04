@@ -83,17 +83,12 @@ public final class StateMachineStrategy implements FilterStage {
 
         /** On matching line in {@code fromState}: apply {@code action}, move to {@code nextState}. */
         public Builder on(String fromState, Pattern pattern, Action action, String nextState) {
-            return on(fromState, pattern, action, nextState, 0);
+            return on(fromState, pattern, action, nextState, BoundedRegex.TIMEOUT_MS);
         }
 
         /** On matching line in {@code fromState} with bounded timeout: apply {@code action}, move to {@code nextState}. */
         public Builder on(String fromState, Pattern pattern, Action action, String nextState, long timeoutMillis) {
-            transitions.add(new Transition(fromState, line -> {
-                CharSequence lineSeq = timeoutMillis > 0
-                    ? new TimeoutCharSequence(line, timeoutMillis, pattern.pattern())
-                    : line;
-                return pattern.matcher(lineSeq).find();
-            }, action, nextState));
+            transitions.add(new Transition(fromState, line -> BoundedRegex.find(pattern, line), action, nextState));
             return this;
         }
 

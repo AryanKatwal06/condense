@@ -1,0 +1,3 @@
+18 match(es) in 2 file(s)
+  src/app.js: 12
+  src/utils.js: 6

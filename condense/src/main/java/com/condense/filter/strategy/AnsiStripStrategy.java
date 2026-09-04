@@ -34,9 +34,10 @@ public final class AnsiStripStrategy implements FilterStage {
     public static String strip(String text) {
         if (text == null || text.isEmpty()) return "";
         // Remove CR-overwritten progress lines first
-        String noCr = CR_LINE_PATTERN.matcher(text).replaceAll("");
-        // Then strip ANSI codes
-        return ANSI_PATTERN.matcher(noCr).replaceAll("");
+        String noCr = BoundedRegex.replaceAll(
+            CR_LINE_PATTERN, text, "", BoundedRegex.DOCUMENT_TIMEOUT_MS);
+        return BoundedRegex.replaceAll(
+            ANSI_PATTERN, noCr, "", BoundedRegex.DOCUMENT_TIMEOUT_MS);
     }
 
     /**

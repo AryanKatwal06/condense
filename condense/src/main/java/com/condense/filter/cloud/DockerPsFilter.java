@@ -1,48 +1,46 @@
 package com.condense.filter.cloud;
 
 import com.condense.annotation.CommandFilter;
-import com.condense.core.*;
+import com.condense.core.CondenseConfig;
+import com.condense.core.ExecutionResult;
+import com.condense.core.FilterResult;
+import com.condense.filter.pipeline.FilterPipeline;
+import com.condense.filter.pipeline.PipelineBackedFilter;
+import com.condense.filter.pipeline.config.FilterOverrideLoader;
+import com.condense.filter.strategy.DockerPsStage;
 import jakarta.enterprise.context.ApplicationScoped;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
+import jakarta.inject.Inject;
 
 @CommandFilter("docker ps")
 @ApplicationScoped
-public class DockerPsFilter implements FilterStrategy {
+public class DockerPsFilter extends PipelineBackedFilter {
 
-    private static final Pattern COLUMNS_PATTERN = Pattern.compile("\\s{2,}");
+    public DockerPsFilter() {
+        super();
+    }
+
+    @Inject
+    public DockerPsFilter(FilterOverrideLoader overrideLoader) {
+        super(overrideLoader);
+    }
 
     @Override
-    public FilterResult apply(String command, ExecutionResult result,
-                              CondenseConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result);
+    protected String selectInput(String command, ExecutionResult result,
+                                 CondenseConfig config, int verbose, boolean ultraCompact) {
+        return result.readStdout();
+    }
 
-        String raw = result.readStdout();
-        List<String> lines = raw.lines().toList();
-        if (lines.size() <= 1) return FilterResult.of(result, "(no containers running)");
-
-        // Parse docker ps tabular output: CONTAINER ID | IMAGE | STATUS | NAMES
-        List<String> compact = new ArrayList<>();
-        compact.add("ID       IMAGE                STATUS    NAME");
-        compact.add("─".repeat(55));
-
-        for (int i = 1; i < lines.size(); i++) {   // skip header
-            String line = lines.get(i);
-            if (line.isBlank()) continue;
-            String[] cols = COLUMNS_PATTERN.split(line);
-            if (cols.length < 7) {
-                compact.add(line.trim());
-                continue;
-            }
-            String id     = cols[0].length() > 8 ? cols[0].substring(0, 8) : cols[0];
-            String image  = cols[1].length() > 20 ? cols[1].substring(0, 19) + "…" : cols[1];
-            String status = cols[4].length() > 10 ? cols[4].substring(0, 10) : cols[4];
-            String name   = cols[cols.length - 1];
-            compact.add(String.format("%-8s %-20s %-10s %s", id, image, status, name));
+    @Override
+    protected FilterResult beforePipeline(String command, ExecutionResult result,
+                                         CondenseConfig config, int verbose, boolean ultraCompact) {
+        if (!result.succeeded()) {
+            return FilterResult.passthrough(result);
         }
+        return null;
+    }
 
-        return FilterResult.of(result, String.join("\n", compact));
+    @Override
+    protected FilterPipeline buildPipeline() {
+        return FilterPipeline.of(DockerPsStage.INSTANCE);
     }
 }

@@ -1,0 +1,1 @@
+✓ npm install: 312 packages | found 2 vulnerabilit

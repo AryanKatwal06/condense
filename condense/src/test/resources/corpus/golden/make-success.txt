@@ -1,0 +1,1 @@
+✓ make: To install, run 'sudo make install'.

@@ -1,0 +1,1 @@
+staged: 3 | modified: 2 | untracked: 2

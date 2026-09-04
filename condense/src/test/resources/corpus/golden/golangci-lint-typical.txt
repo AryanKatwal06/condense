@@ -1,0 +1,5 @@
+golangci-lint: 5 issue(s)
+  errcheck    : 2
+  golint      : 1
+  govet       : 1
+  ineffassign : 1

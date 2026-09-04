@@ -1,0 +1,3 @@
+tsc: 3 error(s)
+  src/api/client.ts: 2
+  src/utils/format.ts: 1

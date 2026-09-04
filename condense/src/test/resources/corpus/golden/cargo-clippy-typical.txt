@@ -1,0 +1,2 @@
+cargo clippy: 2 warning(s)
+  unused_variables : 2

@@ -1,0 +1,3 @@
+src/network.c:112:5: error: 'socket_fd' undeclared (first use in this function); did you mean 'socket_id'?
+src/network.c:115:18: error: expected ';' before 'return'
+make: *** [Makefile:24: obj/network.o] Error 1

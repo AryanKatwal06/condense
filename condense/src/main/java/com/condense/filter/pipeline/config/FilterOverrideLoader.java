@@ -64,6 +64,18 @@ public class FilterOverrideLoader {
     private volatile CachedOverride globalConfigCache = null;
     private final Object globalCacheLock = new Object();
 
+    private static final class StandaloneHolder {
+        private static final FilterOverrideLoader INSTANCE = new FilterOverrideLoader();
+    }
+
+    /**
+     * Shared loader for no-arg filter constructors (corpus, unit tests).
+     * Production CDI uses the {@code @ApplicationScoped} bean instead.
+     */
+    public static FilterOverrideLoader standalone() {
+        return StandaloneHolder.INSTANCE;
+    }
+
     public FilterOverrideLoader() {
         this(new PlatformDirs());
     }
@@ -543,7 +555,7 @@ public class FilterOverrideLoader {
                     } else {
                         try {
                             Pattern p = Pattern.compile(stage.pattern());
-                            if (p.matcher("").groupCount() < 1) {
+                            if (BoundedRegex.matcher(p, "").groupCount() < 1) {
                                 errors.add(location + " 'pattern' regex must contain at least one capture group (e.g. '(.*)')");
                             }
                         } catch (PatternSyntaxException e) {

@@ -1,0 +1,5 @@
+To github.com:org/repo.git
+ ! [rejected]        main -> main (non-fast-forward)
+error: failed to push some refs to 'github.com:org/repo.git'
+hint: Updates were rejected because the remote contains work that you do
+hint: not have locally. Pull and merge before pushing again.

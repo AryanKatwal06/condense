@@ -1,67 +1,74 @@
 package com.condense.filter.git;
 
 import com.condense.annotation.CommandFilter;
-import com.condense.core.*;
+import com.condense.core.CondenseConfig;
+import com.condense.core.ExecutionResult;
+import com.condense.core.FilterResult;
+import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterPipeline;
+import com.condense.filter.pipeline.PipelineBackedFilter;
+import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.config.FilterOverrideLoader;
+import com.condense.filter.strategy.BoundedRegex;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.logging.Logger;
+import jakarta.inject.Inject;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @CommandFilter("git diff")
 @ApplicationScoped
-public class GitDiffFilter implements FilterStrategy {
+public class GitDiffFilter extends PipelineBackedFilter {
 
-    private static final Logger log = Logger.getLogger(GitDiffFilter.class);
+    public GitDiffFilter() {
+        super();
+    }
 
-    // Matches "3 files changed, 45 insertions(+), 12 deletions(-)"
-    private static final Pattern STAT_SUMMARY =
-        Pattern.compile("(\\d+) files? changed.*");
-
-    // Matches diff stat file lines: " src/Foo.java | 12 ++"
-    private static final Pattern STAT_FILE_LINE =
-        Pattern.compile("^\\s+\\S.*\\|\\s*\\d+");
+    @Inject
+    public GitDiffFilter(FilterOverrideLoader overrideLoader) {
+        super(overrideLoader);
+    }
 
     @Override
-    public FilterResult apply(String command, ExecutionResult result,
-                              CondenseConfig config, int verbose, boolean ultraCompact) {
+    protected FilterResult beforePipeline(String command, ExecutionResult result,
+                                         CondenseConfig config, int verbose, boolean ultraCompact) {
         if (!result.succeeded() && result.readStdout().isBlank()) {
             return FilterResult.passthrough(result);
         }
+        return null;
+    }
 
-        try {
-            String stdout = result.readStdout();
-            String raw = stdout.isBlank() ? result.readStderr() : stdout;
+    @Override
+    protected FilterPipeline buildPipeline() {
+        return FilterPipeline.of(GitDiffSummaryStage.INSTANCE);
+    }
 
-            // Look for --stat summary line
-            Matcher m = STAT_SUMMARY.matcher(raw);
+    static final class GitDiffSummaryStage implements com.condense.filter.pipeline.FilterStage {
+        static final GitDiffSummaryStage INSTANCE = new GitDiffSummaryStage();
+        private static final Pattern STAT_SUMMARY = Pattern.compile("(\\d+) files? changed.*");
+        private static final Pattern STAT_FILE_LINE = Pattern.compile("^\\s+\\S.*\\|\\s*\\d+");
+
+        @Override
+        public StageResult process(String raw, FilterContext context) {
+            Matcher m = BoundedRegex.matcher(STAT_SUMMARY, raw);
             if (m.find()) {
                 String summary = m.group(0).trim();
-                if (verbose >= 2) {
-                    // Include per-file stats
+                if (context.verbose() >= 2) {
                     StringBuilder sb = new StringBuilder(summary).append('\n');
                     raw.lines()
-                        .filter(l -> STAT_FILE_LINE.matcher(l).find())
+                        .filter(l -> BoundedRegex.find(STAT_FILE_LINE, l))
                         .forEach(l -> sb.append("  ").append(l.trim()).append('\n'));
-                    return FilterResult.of(result, sb.toString().stripTrailing());
+                    return StageResult.continueWith(sb.toString().stripTrailing());
                 }
-                return FilterResult.of(result, summary);
+                return StageResult.continueWith(summary);
             }
 
-            // Plain diff — count patch lines
-            long added   = raw.lines().filter(l -> l.startsWith("+") && !l.startsWith("+++")).count();
+            long added = raw.lines().filter(l -> l.startsWith("+") && !l.startsWith("+++")).count();
             long removed = raw.lines().filter(l -> l.startsWith("-") && !l.startsWith("---")).count();
-
             if (added == 0 && removed == 0) {
-                return FilterResult.of(result, "no changes");
+                return StageResult.continueWith("no changes");
             }
-
-            String summary = "+" + added + " / -" + removed + " lines";
-            return FilterResult.of(result, summary);
-
-        } catch (Exception e) {
-            log.warnf("GitDiffFilter error: %s", e.getMessage());
-            return FilterResult.passthrough(result);
+            return StageResult.continueWith("+" + added + " / -" + removed + " lines");
         }
     }
 }

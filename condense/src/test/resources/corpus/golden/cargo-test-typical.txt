@@ -1,0 +1,4 @@
+cargo test: 2 failure(s)
+  FAILED: tests::test_multiply
+  FAILED: tests::test_modulo
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

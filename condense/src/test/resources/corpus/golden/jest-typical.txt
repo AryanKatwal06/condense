@@ -1,0 +1,5 @@
+jest: 2 suite(s) failed
+  FAIL: src/components/Button.test.js
+  FAIL: src/api/auth.test.js
+Test Suites: 2 failed, 1 passed, 3 total
+Tests:       2 failed, 8 passed, 10 total

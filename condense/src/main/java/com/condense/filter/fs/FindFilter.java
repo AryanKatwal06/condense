@@ -1,44 +1,60 @@
 package com.condense.filter.fs;
 
 import com.condense.annotation.CommandFilter;
-import com.condense.core.*;
+import com.condense.core.CondenseConfig;
+import com.condense.core.ExecutionResult;
+import com.condense.core.FilterResult;
+import com.condense.filter.pipeline.FilterPipeline;
+import com.condense.filter.pipeline.PipelineBackedFilter;
+import com.condense.filter.pipeline.config.FilterOverrideLoader;
+import com.condense.filter.strategy.AggregateByKeyStage;
 import jakarta.enterprise.context.ApplicationScoped;
-
-import java.util.Map;
+import jakarta.inject.Inject;
 
 @CommandFilter("find")
 @ApplicationScoped
-public class FindFilter implements FilterStrategy {
+public class FindFilter extends PipelineBackedFilter {
+
+    public FindFilter() {
+        super();
+    }
+
+    @Inject
+    public FindFilter(FilterOverrideLoader overrideLoader) {
+        super(overrideLoader);
+    }
 
     @Override
-    public FilterResult apply(String command, ExecutionResult result,
-                              CondenseConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result);
+    protected String selectInput(String command, ExecutionResult result,
+                                 CondenseConfig config, int verbose, boolean ultraCompact) {
+        return result.readStdout();
+    }
 
-        Map<String, Long> byExt = new java.util.HashMap<>();
-        long[] lineCount = {0};
-
-        try (java.util.stream.Stream<String> stream = result.stdoutLines()) {
-            stream.filter(l -> !l.isBlank()).forEach(l -> {
-                lineCount[0]++;
-                int dot = l.lastIndexOf('.');
-                String ext = dot >= 0 ? l.substring(dot) : "(no extension)";
-                byExt.merge(ext, 1L, Long::sum);
-            });
-        } catch (java.io.IOException e) {
+    @Override
+    protected FilterResult beforePipeline(String command, ExecutionResult result,
+                                         CondenseConfig config, int verbose, boolean ultraCompact) {
+        if (!result.succeeded()) {
             return FilterResult.passthrough(result);
         }
+        long lineCount = result.readStdout().lines().filter(l -> !l.isBlank()).count();
+        if (lineCount == 0) {
+            return FilterResult.of(result, "(no results)");
+        }
+        if (lineCount <= 10 || verbose >= 2) {
+            return FilterResult.passthrough(result);
+        }
+        return null;
+    }
 
-        if (lineCount[0] == 0) return FilterResult.of(result, "(no results)");
-        if (lineCount[0] <= 10 || verbose >= 2) return FilterResult.passthrough(result);
-
-        StringBuilder sb = new StringBuilder(lineCount[0] + " result(s)\n");
-        byExt.entrySet().stream()
-            .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-            .limit(10)
-            .forEach(e -> sb.append("  ").append(e.getKey()).append(": ")
-                .append(e.getValue()).append('\n'));
-
-        return FilterResult.of(result, sb.toString().stripTrailing());
+    @Override
+    protected FilterPipeline buildPipeline() {
+        return FilterPipeline.of(new AggregateByKeyStage(
+            line -> {
+                int dot = line.lastIndexOf('.');
+                return dot >= 0 ? line.substring(dot) : "(no extension)";
+            },
+            (lines, keys) -> lines + " result(s)",
+            10
+        ));
     }
 }

@@ -1,0 +1,4 @@
+vitest: 2 failure(s)
+  × divides by zero 2ms
+  × handles null input 2ms
+Tests  2 failed | 3 passed (5)

@@ -1,0 +1,4 @@
+go test: 2 failure(s)
+  FAIL: TestMultiply
+  FAIL: TestDivide
+passed: 1 | failed: 2

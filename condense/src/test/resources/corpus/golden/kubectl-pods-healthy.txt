@@ -1,0 +1,5 @@
+NAME                          READY   STATUS    RESTARTS   AGE
+api-deployment-7d4b9f-xkv2p   1/1     Running   0          2d
+api-deployment-7d4b9f-mnb3q   1/1     Running   0          2d
+db-statefulset-0              1/1     Running   0          5d
+redis-deployment-5f9c-p2x8k   1/1     Running   0          1d

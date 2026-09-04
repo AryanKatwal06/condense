@@ -1,0 +1,4 @@
+eslint: 2 error(s), 1 warning(s)
+  no-undef: 1
+  no-console: 1
+  no-unused-vars: 1

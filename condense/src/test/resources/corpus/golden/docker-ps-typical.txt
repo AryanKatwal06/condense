@@ -1,0 +1,4 @@
+ID       IMAGE                STATUS    NAME
+───────────────────────────────────────────────────────
+a1b2c3d4 nginx:latest         Up 2 minut web-server
+b2c3d4e5 postgres:13-alpine   Up 5 hours database

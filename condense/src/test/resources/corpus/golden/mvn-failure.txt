@@ -1,0 +1,5 @@
+✗ BUILD FAILURE
+[ERROR] COMPILATION ERROR :
+[ERROR] /src/main/java/com/example/App.java:[15,10] error: cannot find symbol
+[ERROR]   symbol:   variable undefined
+[ERROR]   location: class App

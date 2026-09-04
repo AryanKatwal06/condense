@@ -1,0 +1,1 @@
+eslint: 3 error(s), 2 warning(s)

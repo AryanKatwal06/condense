@@ -1,0 +1,23 @@
+{
+  "Reservations" : [ {
+    "ReservationId" : "<string>",
+    "OwnerId" : "<string>",
+    "Instances" : [ {
+      "InstanceId" : "<string>",
+      "InstanceType" : "<string>",
+      "State" : {
+        "Name" : "..."
+      },
+      "PublicIpAddress" : "<string>",
+      "PrivateIpAddress" : "<string>",
+      "Tags" : [ "..." ],
+      "LaunchTime" : "<string>",
+      "Placement" : {
+        "AvailabilityZone" : "..."
+      },
+      "SecurityGroups" : [ "..." ],
+      "NetworkInterfaces" : [ ],
+      "BlockDeviceMappings" : [ ]
+    } ]
+  } ]
+}

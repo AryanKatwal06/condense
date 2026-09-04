@@ -2,8 +2,15 @@ package com.condense.filter.cloud;
 
 import com.condense.annotation.CommandFilter;
 import com.condense.annotation.CommandFilters;
-import com.condense.core.*;
+import com.condense.core.CondenseConfig;
+import com.condense.core.ExecutionResult;
+import com.condense.core.FilterResult;
+import com.condense.filter.pipeline.FilterPipeline;
+import com.condense.filter.pipeline.PipelineBackedFilter;
+import com.condense.filter.pipeline.config.FilterOverrideLoader;
+import com.condense.filter.strategy.TailLinesStage;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import java.util.List;
 
@@ -13,23 +20,35 @@ import java.util.List;
     @CommandFilter("docker exec")
 })
 @ApplicationScoped
-public class DockerFilter implements FilterStrategy {
+public class DockerFilter extends PipelineBackedFilter {
 
     private static final int MAX_LOG_LINES = 30;
 
-    @Override
-    public FilterResult apply(String command, ExecutionResult result,
-                              CondenseConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result);
+    public DockerFilter() {
+        super();
+    }
 
+    @Inject
+    public DockerFilter(FilterOverrideLoader overrideLoader) {
+        super(overrideLoader);
+    }
+
+    @Override
+    protected FilterResult beforePipeline(String command, ExecutionResult result,
+                                         CondenseConfig config, int verbose, boolean ultraCompact) {
+        if (!result.succeeded()) {
+            return FilterResult.passthrough(result);
+        }
         String raw = result.readStdout().isBlank() ? result.readStderr() : result.readStdout();
         List<String> lines = raw.lines().filter(l -> !l.isBlank()).toList();
+        if (lines.size() <= MAX_LOG_LINES || verbose >= 2) {
+            return FilterResult.passthrough(result);
+        }
+        return null;
+    }
 
-        if (lines.size() <= MAX_LOG_LINES || verbose >= 2) return FilterResult.passthrough(result);
-
-        // Tail last MAX_LOG_LINES lines
-        List<String> tail = lines.subList(lines.size() - MAX_LOG_LINES, lines.size());
-        String header = "... (showing last " + MAX_LOG_LINES + " of " + lines.size() + " lines)\n";
-        return FilterResult.of(result, header + String.join("\n", tail));
+    @Override
+    protected FilterPipeline buildPipeline() {
+        return FilterPipeline.of(new TailLinesStage(MAX_LOG_LINES, true, false));
     }
 }

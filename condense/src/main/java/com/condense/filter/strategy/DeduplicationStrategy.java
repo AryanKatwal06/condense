@@ -63,7 +63,8 @@ public final class DeduplicationStrategy implements FilterStage {
                 // Update the result line in-place with new count
                 String base = result.get(resultIdx);
                 // Strip old "(×N)" suffix if present
-                String stripped = MULTIPLIER_PATTERN.matcher(base).replaceAll("").stripTrailing();
+                String stripped = BoundedRegex.replaceAll(
+                    MULTIPLIER_PATTERN, base, "", BoundedRegex.DOCUMENT_TIMEOUT_MS).stripTrailing();
                 result.set(resultIdx, stripped + " (×" + count + ")");
             } else {
                 int[] entry = {result.size(), 1};
