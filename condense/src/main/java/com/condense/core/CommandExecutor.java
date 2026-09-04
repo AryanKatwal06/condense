@@ -42,7 +42,7 @@ public class CommandExecutor {
 
         guardAgainstInfiniteLoop(args);
 
-        ProcessBuilder pb = new ProcessBuilder(args);
+        ProcessBuilder pb = new ProcessBuilder(resolveLaunchArgs(args));
         pb.directory(Path.of("").toAbsolutePath().toFile());
         pb.redirectErrorStream(false); // MUST be false — we read stdout/stderr separately
 
@@ -146,6 +146,21 @@ public class CommandExecutor {
     }
 
 
+
+    /**
+     * On Windows, resolve {@code PATHEXT} shims ({@code pytest.cmd}, {@code npm.cmd})
+     * that {@link ProcessBuilder} will not find by bare name.
+     */
+    private static List<String> resolveLaunchArgs(List<String> args) {
+        if (!WindowsCommandResolver.isWindows()) {
+            return args;
+        }
+        String path = System.getenv("PATH");
+        if (path == null) {
+            path = System.getenv("Path");
+        }
+        return WindowsCommandResolver.rewrite(args, path, System.getenv("PATHEXT"));
+    }
 
     /**
      * Guards against Condense executing itself, which would cause an infinite fork loop

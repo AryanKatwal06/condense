@@ -49,4 +49,4 @@ Seed **`20260904`**. 25 iterations per compressing entry. Mutations that keep ev
 
 ## Native smoke
 
-There is no `condense replay` CLI. `NativeCorpusIT` writes `fixtures/pytest/typical.txt` next to a stub `pytest` (`pytest.cmd` on Windows) that prints that fixture and exits 1, prepends that directory to `PATH`, and runs the native binary as `condense pytest`. Proof is the IT class name in `build.yml` native job logs.
+There is no `condense replay` CLI. `NativeCorpusIT` writes `fixtures/pytest/typical.txt` next to a stub `pytest` (`pytest.cmd` on Windows) that prints that fixture and exits 1, prepends that directory to `PATH`, and runs the native binary as `condense pytest`. On Windows the native binary resolves PATHEXT shims itself because `ProcessBuilder` will not find `pytest.cmd` by bare name. Proof is the IT class name in `build.yml` native job logs.

@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+- On Windows, `condense` now resolves PATHEXT shims such as `pytest.cmd` / `npm.cmd` before launching the child process. `ProcessBuilder` does not apply PATHEXT, which made `NativeCorpusIT` (and real `condense pytest`) fail with empty stdout.
+
 ### Added / Improved
 - CI now fails `mvn test` if a domain filter drops a declared critical signal or falls below its baked savings floor. The catalog is `condense/src/test/resources/corpus/catalog.json`. See [docs/fidelity-corpus.md](docs/fidelity-corpus.md).
 - Replaced the mixed byte/UTF-16 `/4` token heuristic with `utf8_weighted_v1`, a UTF-8 code-point estimator used for both files and strings. `condense gain` now labels counts as estimates and reports a p95 relative-error bound of 35% vs cl100k_base. See [docs/token-estimator.md](docs/token-estimator.md).

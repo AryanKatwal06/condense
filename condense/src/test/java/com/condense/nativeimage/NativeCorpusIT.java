@@ -52,10 +52,12 @@ class NativeCorpusIT {
         );
 
         assertThat(result.exitCode())
-            .as("proxied pytest exit code must pass through: stderr=%s", result.stderr())
+            .as("proxied pytest exit code must pass through: stdout=%s stderr=%s",
+                result.stdout(), result.stderr())
             .isEqualTo(1);
         assertThat(result.stdout())
-            .as("native dispatch must retain pytest critical signals: %s", result.stdout())
+            .as("native dispatch must retain pytest critical signals: stdout=%s stderr=%s",
+                result.stdout(), result.stderr())
             .contains("test_mul")
             .contains("failed");
     }

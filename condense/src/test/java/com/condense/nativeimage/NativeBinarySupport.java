@@ -103,7 +103,11 @@ public final class NativeBinarySupport {
         if (current == null) {
             current = "";
         }
-        env.put("PATH", extra + File.pathSeparator + current);
+        String joined = extra + File.pathSeparator + current;
+        env.put("PATH", joined);
+        if (isWindows()) {
+            env.put("Path", joined);
+        }
     }
 
     public static String[] trivialSucceedingCommand() {
