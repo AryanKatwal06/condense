@@ -5,10 +5,8 @@ import com.condense.annotation.CommandFilters;
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.core.FilterResult;
-import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.PipelineBackedFilter;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
-import com.condense.filter.strategy.TailLinesStage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -48,7 +46,7 @@ public class DockerFilter extends PipelineBackedFilter {
     }
 
     @Override
-    protected FilterPipeline buildPipeline() {
-        return FilterPipeline.of(new TailLinesStage(MAX_LOG_LINES, true, false));
+    protected String definitionName() {
+        return "docker-logs";
     }
 }

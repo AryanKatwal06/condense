@@ -1,0 +1,11 @@
+schema_version = 1
+name = "ruff"
+commands = ["ruff check", "ruff"]
+
+[[stages]]
+strategy = "ruff_summary"
+
+[[tests]]
+id = "rule-group"
+input = "src/a.py:1:1: F401 unused import\n"
+expected = "ruff: 1 issue(s)\n  F401 : 1"

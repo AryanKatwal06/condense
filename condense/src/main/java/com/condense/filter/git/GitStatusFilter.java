@@ -4,10 +4,8 @@ import com.condense.annotation.CommandFilter;
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.core.FilterResult;
-import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.PipelineBackedFilter;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
-import com.condense.filter.strategy.GitStatusStage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -40,7 +38,7 @@ public class GitStatusFilter extends PipelineBackedFilter {
     }
 
     @Override
-    protected FilterPipeline buildPipeline() {
-        return FilterPipeline.of(GitStatusStage.INSTANCE);
+    protected String definitionName() {
+        return "git-status";
     }
 }

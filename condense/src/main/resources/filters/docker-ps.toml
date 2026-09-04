@@ -1,0 +1,11 @@
+schema_version = 1
+name = "docker-ps"
+commands = ["docker ps"]
+
+[[stages]]
+strategy = "docker_ps"
+
+[[tests]]
+id = "empty-table"
+input = "CONTAINER ID   IMAGE\n"
+expected = "(no containers running)"

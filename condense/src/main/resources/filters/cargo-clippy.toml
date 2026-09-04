@@ -1,0 +1,11 @@
+schema_version = 1
+name = "cargo-clippy"
+commands = ["cargo clippy"]
+
+[[stages]]
+strategy = "cargo_clippy_summary"
+
+[[tests]]
+id = "warning-rule"
+input = "warning: unused variable\n"
+expected = "cargo clippy: 1 warning(s)\n  unused variable : 1"

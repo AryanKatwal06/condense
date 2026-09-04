@@ -1,10 +1,10 @@
 package com.condense.filter.pipeline.config;
 
-import com.condense.core.Mappers;
 import com.condense.core.PlatformDirs;
 import com.condense.filter.pipeline.FilterPipeline;
-import com.condense.filter.pipeline.FilterStage;
-import com.condense.filter.strategy.*;
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -15,8 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * Loads and validates declarative {@link FilterPipeline} overrides from TOML files.
@@ -25,7 +23,7 @@ import java.util.regex.PatternSyntaxException;
  * <ol>
  *   <li>Project-local override ({@code .condense/filters.toml} in project directory)</li>
  *   <li>User-global override ({@code filters.toml} in platform config directory)</li>
- *   <li>Built-in compiled default (the compiled Java pipeline)</li>
+ *   <li>Built-in definition ({@code classpath:filters/&lt;name&gt;.toml} via {@code BuiltinDefinitionCatalog})</li>
  * </ol>
  *
  * <p>Operates under a strict fail-open contract: if any override file is invalid,
@@ -36,28 +34,21 @@ import java.util.regex.PatternSyntaxException;
 public class FilterOverrideLoader {
 
     private static final Logger log = Logger.getLogger(FilterOverrideLoader.class);
-    private static final TomlMapper TOML = Mappers.TOML;
+    private static final TomlMapper TOML = DefinitionMappers.STRICT_TOML;
 
     public static final String PROJECT_OVERRIDE_REL_PATH = ".condense/filters.toml";
     public static final String GLOBAL_OVERRIDE_FILE_NAME = "filters.toml";
 
     /** Maximum allowed regex execution time in milliseconds for untrusted declarative patterns. */
-    public static final long OVERRIDE_REGEX_TIMEOUT_MS = 200L;
+    public static final long OVERRIDE_REGEX_TIMEOUT_MS = StageFactory.REGEX_TIMEOUT_MS;
 
     /** Maximum allowed character length for any declarative regex pattern. */
-    public static final int MAX_PATTERN_LENGTH = 500;
+    public static final int MAX_PATTERN_LENGTH = StageFactory.MAX_PATTERN_LENGTH;
 
     /** Maximum allowed number of transitions in a single state machine strategy. */
-    public static final int MAX_TRANSITIONS_COUNT = 50;
+    public static final int MAX_TRANSITIONS_COUNT = StageFactory.MAX_TRANSITIONS_COUNT;
 
-    public static final Set<String> ALLOWED_STRATEGIES = Set.of(
-        "ansi_strip", "ansi-strip", "ansi",
-        "tree_compression", "tree-compression", "tree",
-        "json_structure", "json-structure", "json",
-        "deduplication", "dedup",
-        "grouping", "group",
-        "state_machine", "state-machine"
-    );
+    public static final Set<String> ALLOWED_STRATEGIES = StageFactory.ALLOWED_ALIASES;
 
     private final PlatformDirs platformDirs;
     private final Map<Path, CachedOverride> projectConfigCache = new java.util.concurrent.ConcurrentHashMap<>();
@@ -145,7 +136,7 @@ public class FilterOverrideLoader {
             }
         }
 
-        // Tier 3: Built-in compiled default
+        // Tier 3: Builtin classpath definition (already compiled into defaultPipeline)
         return defaultPipeline;
     }
 
@@ -213,16 +204,41 @@ public class FilterOverrideLoader {
         // Syntax validation: parse TOML once
         FilterOverrideConfig.FileConfig config;
         try {
-            config = TOML.readValue(file.toFile(), FilterOverrideConfig.FileConfig.class);
+            String source = Files.readString(file);
+            config = TOML.readValue(source, FilterOverrideConfig.FileConfig.class);
             if (config == null || config.filters() == null) {
                 return ParsedFileResult.of(FilterOverrideValidationResult.valid(file, 0), config);
             }
+        } catch (UnrecognizedPropertyException e) {
+            String text = readQuietly(file);
+            return ParsedFileResult.invalid(FilterOverrideValidationResult.semanticError(
+                file, List.of(unknownKeyError(e, text).format())));
+        } catch (JsonMappingException e) {
+            UnrecognizedPropertyException unknown = findUnknownKey(e);
+            if (unknown != null) {
+                String text = readQuietly(file);
+                return ParsedFileResult.invalid(FilterOverrideValidationResult.semanticError(
+                    file, List.of(unknownKeyError(unknown, text).format())));
+            }
+            return ParsedFileResult.invalid(FilterOverrideValidationResult.syntaxError(
+                file, formatParseError("TOML parse error", e)));
         } catch (Exception e) {
-            return ParsedFileResult.invalid(FilterOverrideValidationResult.syntaxError(file, "TOML parse error: " + e.getMessage()));
+            return ParsedFileResult.invalid(FilterOverrideValidationResult.syntaxError(
+                file, formatParseError("TOML parse error", e)));
         }
 
         // Semantic validation: inspect filters and stages
         List<String> errors = new ArrayList<>();
+        if (config.schemaVersion() == null || config.schemaVersion() != FilterOverrideConfig.SCHEMA_VERSION) {
+            errors.add(new DefinitionError(
+                "schema_version",
+                null,
+                null,
+                "schema_version is required and must be " + FilterOverrideConfig.SCHEMA_VERSION
+                    + (config.schemaVersion() == null ? "" : ", got " + config.schemaVersion())
+            ).format());
+        }
+
         int filterCount = 0;
 
         for (Map.Entry<String, FilterOverrideConfig.FilterDef> entry : config.filters().entrySet()) {
@@ -241,7 +257,8 @@ public class FilterOverrideLoader {
             List<FilterOverrideConfig.StageDef> stages = filterDef.stages();
             for (int i = 0; i < stages.size(); i++) {
                 FilterOverrideConfig.StageDef stage = stages.get(i);
-                validateStage(filterKey, i, stage, errors);
+                String location = "[filters.\"" + filterKey + "\".stages[" + i + "]]";
+                StageFactory.validate(location, stage, errors);
             }
             filterCount++;
         }
@@ -422,203 +439,99 @@ public class FilterOverrideLoader {
     }
 
     private FilterPipeline buildPipelineFromDef(FilterOverrideConfig.FilterDef filterDef) {
-        FilterPipeline.Builder builder = FilterPipeline.builder();
-        if (filterDef.stages() == null || filterDef.stages().isEmpty()) {
-            return builder.build();
-        }
-
-        for (FilterOverrideConfig.StageDef stageDef : filterDef.stages()) {
-            FilterStage stage = instantiateStage(stageDef);
-            if (stage != null) {
-                builder.addStage(stage);
-            }
-        }
-
-        return builder.build();
+        return StageFactory.buildPipeline(filterDef.stages());
     }
 
-    private FilterStage instantiateStage(FilterOverrideConfig.StageDef stageDef) {
-        String strategyName = stageDef.strategy() != null
-            ? stageDef.strategy().trim().toLowerCase(Locale.ROOT)
-            : "";
-
-        return switch (strategyName) {
-            case "ansi_strip", "ansi-strip", "ansi" ->
-                AnsiStripStrategy.INSTANCE;
-
-            case "tree_compression", "tree-compression", "tree" ->
-                TreeCompressionStrategy.INSTANCE;
-
-            case "json_structure", "json-structure", "json" ->
-                JsonStructureStrategy.INSTANCE;
-
-            case "deduplication", "dedup" -> {
-                int window = (stageDef.windowSize() != null && stageDef.windowSize() > 0)
-                    ? stageDef.windowSize()
-                    : 50;
-                yield new DeduplicationStrategy(window);
+    private static UnrecognizedPropertyException findUnknownKey(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof UnrecognizedPropertyException unknown) {
+                return unknown;
             }
-
-            case "grouping", "group" -> {
-                Pattern pattern = stageDef.pattern() != null && !stageDef.pattern().isBlank()
-                    ? Pattern.compile(stageDef.pattern())
-                    : Pattern.compile("(.*)");
-                boolean includeOther = Boolean.TRUE.equals(stageDef.includeOther());
-                yield new GroupingStrategy(pattern, includeOther, OVERRIDE_REGEX_TIMEOUT_MS);
-            }
-
-            case "state_machine", "state-machine" ->
-                buildStateMachine(stageDef);
-
-            default -> {
-                log.warnf("Cannot instantiate unknown strategy '%s'", stageDef.strategy());
-                yield null;
-            }
-        };
+            current = current.getCause();
+        }
+        return null;
     }
 
-    private FilterStage buildStateMachine(FilterOverrideConfig.StageDef stageDef) {
-        String initialState = stageDef.initialState() != null ? stageDef.initialState().trim() : "START";
-        StateMachineStrategy.Builder builder = StateMachineStrategy.builder(initialState);
-
-        if (stageDef.transitions() != null) {
-            for (FilterOverrideConfig.TransitionDef t : stageDef.transitions()) {
-                if (t.fromState() == null || t.pattern() == null || t.nextState() == null) {
-                    continue;
-                }
-                Pattern p = Pattern.compile(t.pattern());
-                StateMachineStrategy.Action action = parseAction(t.action());
-                builder.on(t.fromState().trim(), p, action, t.nextState().trim(), OVERRIDE_REGEX_TIMEOUT_MS);
-            }
-        }
-
-        if (stageDef.defaultActions() != null) {
-            for (Map.Entry<String, String> entry : stageDef.defaultActions().entrySet()) {
-                StateMachineStrategy.Action action = parseAction(entry.getValue());
-                builder.defaultAction(entry.getKey().trim(), action);
-            }
-        }
-
-        return builder.build();
+    static DefinitionError unknownKeyError(UnrecognizedPropertyException e) {
+        return unknownKeyError(e, null);
     }
 
-    private StateMachineStrategy.Action parseAction(String actionStr) {
-        if (actionStr == null || actionStr.isBlank()) {
-            return StateMachineStrategy.Action.EMIT;
+    static DefinitionError unknownKeyError(UnrecognizedPropertyException e, String source) {
+        String path = jacksonPath(e);
+        JsonLocation loc = e.getLocation();
+        Integer line = loc != null && loc.getLineNr() > 0 ? loc.getLineNr() : null;
+        Integer column = loc != null && loc.getColumnNr() > 0 ? loc.getColumnNr() : null;
+        if (line == null && source != null && e.getPropertyName() != null) {
+            int found = findKeyLine(source, e.getPropertyName());
+            if (found > 0) {
+                line = found;
+            }
         }
+        return new DefinitionError(path, line, column, "Unknown key '" + e.getPropertyName() + "'");
+    }
+
+    static int findKeyLine(String source, String key) {
+        if (source == null || key == null || key.isBlank()) {
+            return -1;
+        }
+        String[] lines = source.split("\\R", -1);
+        String prefix = key + " ";
+        String equals = key + "=";
+        for (int i = 0; i < lines.length; i++) {
+            String trimmed = lines[i].trim();
+            if (trimmed.equals(key) || trimmed.startsWith(prefix) || trimmed.startsWith(equals)
+                || trimmed.startsWith(key + "\t")) {
+                return i + 1;
+            }
+        }
+        return -1;
+    }
+
+    private static String readQuietly(Path file) {
         try {
-            return StateMachineStrategy.Action.valueOf(actionStr.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            return StateMachineStrategy.Action.EMIT;
+            return Files.readString(file);
+        } catch (Exception ignored) {
+            return null;
         }
     }
 
-    private void validateStage(
-        String filterKey,
-        int stageIndex,
-        FilterOverrideConfig.StageDef stage,
-        List<String> errors
-    ) {
-        String location = String.format("[filters.\"%s\".stages[%d]]", filterKey, stageIndex);
-
-        if (stage == null) {
-            errors.add(location + " Stage configuration is null");
-            return;
+    static String formatParseError(String prefix, Exception e) {
+        JsonLocation loc = null;
+        if (e instanceof JsonMappingException mapping) {
+            loc = mapping.getLocation();
         }
-
-        String strategy = stage.strategy();
-        if (strategy == null || strategy.isBlank()) {
-            errors.add(location + " Missing required 'strategy' field");
-            return;
+        String message = prefix + ": " + e.getMessage();
+        if (loc != null && loc.getLineNr() > 0) {
+            return message + " (line " + loc.getLineNr() + ", col " + loc.getColumnNr() + ")";
         }
+        return message;
+    }
 
-        String normalized = strategy.trim().toLowerCase(Locale.ROOT);
-        if (!ALLOWED_STRATEGIES.contains(normalized)) {
-            errors.add(location + " Unknown strategy: '" + strategy + "'. Allowed strategies: " +
-                "ansi_strip, tree_compression, json_structure, deduplication, grouping, state_machine");
-            return;
+    private static String jacksonPath(UnrecognizedPropertyException e) {
+        if (e.getPath() == null || e.getPath().isEmpty()) {
+            return e.getPropertyName() != null ? e.getPropertyName() : "$";
         }
-
-        switch (normalized) {
-            case "deduplication", "dedup" -> {
-                if (stage.windowSize() != null) {
-                    if (stage.windowSize() <= 0 || stage.windowSize() > 10000) {
-                        errors.add(location + " 'window_size' must be between 1 and 10000, got: " + stage.windowSize());
-                    }
+        StringBuilder path = new StringBuilder();
+        for (JsonMappingException.Reference ref : e.getPath()) {
+            if (ref.getFieldName() != null) {
+                if (path.isEmpty()) {
+                    path.append(ref.getFieldName());
+                } else {
+                    path.append('.').append(ref.getFieldName());
                 }
-            }
-
-            case "grouping", "group" -> {
-                if (stage.pattern() != null && !stage.pattern().isBlank()) {
-                    if (stage.pattern().length() > MAX_PATTERN_LENGTH) {
-                        errors.add(location + " 'pattern' regex exceeds maximum allowed length of " + MAX_PATTERN_LENGTH + " characters");
-                    } else {
-                        try {
-                            Pattern p = Pattern.compile(stage.pattern());
-                            if (BoundedRegex.matcher(p, "").groupCount() < 1) {
-                                errors.add(location + " 'pattern' regex must contain at least one capture group (e.g. '(.*)')");
-                            }
-                        } catch (PatternSyntaxException e) {
-                            errors.add(location + " Invalid regex in 'pattern': " + e.getMessage());
-                        }
-                    }
-                }
-            }
-
-            case "state_machine", "state-machine" -> {
-                if (stage.initialState() == null || stage.initialState().isBlank()) {
-                    errors.add(location + " 'initial_state' must not be empty");
-                }
-                if (stage.transitions() != null) {
-                    if (stage.transitions().size() > MAX_TRANSITIONS_COUNT) {
-                        errors.add(location + " 'transitions' count exceeds maximum allowed limit of " + MAX_TRANSITIONS_COUNT);
-                    }
-                    for (int tIdx = 0; tIdx < stage.transitions().size(); tIdx++) {
-                        FilterOverrideConfig.TransitionDef t = stage.transitions().get(tIdx);
-                        String tLoc = location + String.format(".transitions[%d]", tIdx);
-                        if (t.fromState() == null || t.fromState().isBlank()) {
-                            errors.add(tLoc + " 'from_state' must not be empty");
-                        }
-                        if (t.nextState() == null || t.nextState().isBlank()) {
-                            errors.add(tLoc + " 'next_state' must not be empty");
-                        }
-                        if (t.pattern() == null || t.pattern().isBlank()) {
-                            errors.add(tLoc + " 'pattern' must not be empty");
-                        } else if (t.pattern().length() > MAX_PATTERN_LENGTH) {
-                            errors.add(tLoc + " 'pattern' regex exceeds maximum allowed length of " + MAX_PATTERN_LENGTH + " characters");
-                        } else {
-                            try {
-                                Pattern.compile(t.pattern());
-                            } catch (PatternSyntaxException e) {
-                                errors.add(tLoc + " Invalid regex in 'pattern': " + e.getMessage());
-                            }
-                        }
-                        if (t.action() != null && !t.action().isBlank()) {
-                            try {
-                                StateMachineStrategy.Action.valueOf(t.action().trim().toUpperCase(Locale.ROOT));
-                            } catch (IllegalArgumentException e) {
-                                errors.add(tLoc + " Invalid 'action': '" + t.action() + "'. Allowed: EMIT, DISCARD, COLLECT");
-                            }
-                        }
-                    }
-                }
-                if (stage.defaultActions() != null) {
-                    for (Map.Entry<String, String> entry : stage.defaultActions().entrySet()) {
-                        String act = entry.getValue();
-                        if (act != null && !act.isBlank()) {
-                            try {
-                                StateMachineStrategy.Action.valueOf(act.trim().toUpperCase(Locale.ROOT));
-                            } catch (IllegalArgumentException e) {
-                                errors.add(location + ".default_actions['" + entry.getKey() + "'] Invalid action: '" + act + "'. Allowed: EMIT, DISCARD, COLLECT");
-                            }
-                        }
-                    }
-                }
-            }
-
-            default -> {
-                // Stateless strategies (ansi_strip, tree_compression, json_structure) take no parameters
+            } else if (ref.getIndex() >= 0) {
+                path.append('[').append(ref.getIndex()).append(']');
             }
         }
+        if (e.getPropertyName() != null) {
+            String current = path.toString();
+            if (current.isEmpty()) {
+                path.append(e.getPropertyName());
+            } else if (!current.equals(e.getPropertyName()) && !current.endsWith("." + e.getPropertyName())) {
+                path.append('.').append(e.getPropertyName());
+            }
+        }
+        return path.isEmpty() ? "$" : path.toString();
     }
 }

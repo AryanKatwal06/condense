@@ -1,0 +1,14 @@
+schema_version = 1
+name = "grep"
+commands = ["grep", "rg"]
+
+[[stages]]
+strategy = "aggregate_by_key"
+key = "prefix_before_colon"
+header = "{lines} match(es) in {keys} file(s)"
+top_n = 10
+
+[[tests]]
+id = "by-file"
+input = "src/a.java: foo\nsrc/a.java: bar\nsrc/b.java: baz\n"
+expected = "3 match(es) in 2 file(s)\n  src/a.java: 2\n  src/b.java: 1"

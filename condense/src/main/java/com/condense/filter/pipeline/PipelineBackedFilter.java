@@ -4,6 +4,7 @@ import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.core.FilterResult;
 import com.condense.core.FilterStrategy;
+import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import org.jboss.logging.Logger;
 
@@ -14,7 +15,7 @@ import java.util.Objects;
  *
  * <p>{@link #apply} is final so a filter cannot grow a second parser. Subclasses
  * supply gates ({@link #beforePipeline}), the input stream ({@link #selectInput}),
- * and the compiled default pipeline ({@link #buildPipeline}).
+ * and {@link #definitionName()} for the classpath builtin pipeline.
  *
  * <p>Production CDI uses the injected {@link FilterOverrideLoader} singleton.
  * Corpus tests and {@code new XxxFilter()} use {@link FilterOverrideLoader#standalone()}
@@ -37,10 +38,17 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
     }
 
     /**
-     * Compiled default pipeline for this command. Called once from the constructor.
-     * Must not read instance fields that are assigned after {@code super(...)}.
+     * Builtin definition name under {@code classpath:filters/<name>.toml}.
+     * Called once from the constructor.
      */
-    protected abstract FilterPipeline buildPipeline();
+    protected abstract String definitionName();
+
+    /**
+     * Loads the compiled default pipeline from {@link BuiltinDefinitionCatalog}.
+     */
+    protected final FilterPipeline buildPipeline() {
+        return BuiltinDefinitionCatalog.standalone().requiredPipeline(definitionName());
+    }
 
     /**
      * Optional pre-pipeline gate. Return a result to skip the pipeline

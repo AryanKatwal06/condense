@@ -44,6 +44,7 @@ class FilterOverrideIntegrationTest {
         Files.createDirectories(condenseDir);
 
         String customToml = """
+            schema_version = 1
             [filters."npm install"]
             stages = [
               { strategy = "ansi_strip" },
@@ -91,6 +92,7 @@ class FilterOverrideIntegrationTest {
         Files.createDirectories(condenseDir);
 
         String customToml = """
+            schema_version = 1
             [filters."ls"]
             stages = [
               { strategy = "deduplication", window_size = 5 }
@@ -143,6 +145,7 @@ class FilterOverrideIntegrationTest {
         Files.createDirectories(condenseDir);
 
         String customToml = """
+            schema_version = 1
             [filters."eslint"]
             stages = [
               { strategy = "grouping", pattern = "error\\\\s+(.+)$", include_other = false }

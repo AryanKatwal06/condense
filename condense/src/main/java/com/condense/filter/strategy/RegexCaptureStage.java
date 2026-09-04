@@ -26,6 +26,23 @@ public final class RegexCaptureStage implements FilterStage {
         this.fallback = fallback != null ? fallback : "";
     }
 
+    /**
+     * Declarative constructor. {@code format} may contain {@code $1}, {@code $2}, {@code $0}.
+     */
+    public RegexCaptureStage(Pattern pattern, String format, String fallback) {
+        this(pattern, (matcher, ignored) -> expandTemplate(format != null ? format : "$0", matcher), fallback);
+    }
+
+    static String expandTemplate(String format, Matcher matcher) {
+        String out = format;
+        for (int i = matcher.groupCount(); i >= 1; i--) {
+            String group = matcher.group(i);
+            out = out.replace("$" + i, group != null ? group : "");
+        }
+        String whole = matcher.group(0);
+        return out.replace("$0", whole != null ? whole : "");
+    }
+
     @Override
     public StageResult process(String input, FilterContext context) {
         Matcher matcher = BoundedRegex.matcher(pattern, input != null ? input : "");

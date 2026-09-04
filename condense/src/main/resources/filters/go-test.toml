@@ -1,0 +1,11 @@
+schema_version = 1
+name = "go-test"
+commands = ["go test"]
+
+[[stages]]
+strategy = "json_lines"
+
+[[tests]]
+id = "plain-pass"
+input = "ok  \tpackage/foo\t0.01s\n"
+expected = "ok  \tpackage/foo\t0.01s\n"

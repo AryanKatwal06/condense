@@ -1,0 +1,14 @@
+schema_version = 1
+name = "npm-install"
+commands = ["npm install", "npm ci", "npm i"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "npm_install_summary"
+
+[[tests]]
+id = "packages-and-vulns"
+input = "added 12 packages in 3s\nfound 3 vulnerabilities (1 critical)\n"
+expected = "✓ npm install: 12 packages | found 3 vulnerabilit"

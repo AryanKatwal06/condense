@@ -1,0 +1,14 @@
+schema_version = 1
+name = "pip-install"
+commands = ["pip install", "pip3 install"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "pip_install_summary"
+
+[[tests]]
+id = "installed"
+input = "Collecting requests\nSuccessfully installed requests-2.0.0\n"
+expected = "Successfully installed requests-2.0.0"

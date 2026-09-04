@@ -5,10 +5,8 @@ import com.condense.annotation.CommandFilters;
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.core.FilterResult;
-import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.PipelineBackedFilter;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
-import com.condense.filter.strategy.AggregateByKeyStage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -54,14 +52,7 @@ public class GrepFilter extends PipelineBackedFilter {
     }
 
     @Override
-    protected FilterPipeline buildPipeline() {
-        return FilterPipeline.of(new AggregateByKeyStage(
-            line -> {
-                int colon = line.indexOf(':');
-                return colon > 0 ? line.substring(0, colon) : "(stdin)";
-            },
-            (lines, keys) -> lines + " match(es) in " + keys + " file(s)",
-            10
-        ));
+    protected String definitionName() {
+        return "grep";
     }
 }

@@ -44,6 +44,7 @@ class FilterOverrideLoaderTest {
         Files.createDirectories(projectCondenseDir);
 
         String projectToml = """
+            schema_version = 1
             [filters."npm install"]
             stages = [
               { strategy = "ansi_strip" }
@@ -54,6 +55,7 @@ class FilterOverrideLoaderTest {
         Path configDir = tempDir.resolve("global-config");
         Files.createDirectories(configDir);
         String globalToml = """
+            schema_version = 1
             [filters."npm install"]
             stages = [
               { strategy = "deduplication", window_size = 10 }
@@ -88,6 +90,7 @@ class FilterOverrideLoaderTest {
         Path configDir = tempDir.resolve("user-config");
         Files.createDirectories(configDir);
         String globalToml = """
+            schema_version = 1
             [filters."ls"]
             stages = [
               { strategy = "tree_compression" }
@@ -121,6 +124,7 @@ class FilterOverrideLoaderTest {
         Files.createDirectories(condenseDir);
 
         String toml = """
+            schema_version = 1
             [filters."custom-cmd"]
             stages = [
               { strategy = "deduplication", window_size = 5 }
@@ -144,6 +148,7 @@ class FilterOverrideLoaderTest {
         Files.createDirectories(condenseDir);
 
         String toml = """
+            schema_version = 1
             [filters."lint"]
             stages = [
               { strategy = "grouping", pattern = "rule: (\\\\S+)", include_other = true }
@@ -169,6 +174,7 @@ class FilterOverrideLoaderTest {
         Files.createDirectories(condenseDir);
 
         String toml = """
+            schema_version = 1
             [filters."build-log"]
             stages = [
               { strategy = "state_machine", initial_state = "IDLE", transitions = [{ from_state = "IDLE", pattern = "^START", action = "DISCARD", next_state = "CAPTURING" }, { from_state = "CAPTURING", pattern = "^ERROR:", action = "EMIT", next_state = "CAPTURING" }, { from_state = "CAPTURING", pattern = "^STOP", action = "DISCARD", next_state = "IDLE" }], default_actions = { CAPTURING = "DISCARD", IDLE = "DISCARD" } }
@@ -209,6 +215,7 @@ class FilterOverrideLoaderTest {
         Files.createDirectories(condenseDir);
 
         String toml = """
+            schema_version = 1
             [filters."npm install"]
             stages = [
               { strategy = "ansi_strip" }
@@ -257,6 +264,7 @@ class FilterOverrideLoaderTest {
         Files.createDirectories(condenseDir);
 
         String tomlV1 = """
+            schema_version = 1
             [filters."cmd"]
             stages = [
               { strategy = "ansi_strip" }
@@ -274,6 +282,7 @@ class FilterOverrideLoaderTest {
 
         // Update file on disk to Version 2 (deduplication)
         String tomlV2 = """
+            schema_version = 1
             [filters."cmd"]
             stages = [
               { strategy = "deduplication", window_size = 5 }
@@ -303,10 +312,12 @@ class FilterOverrideLoaderTest {
         Files.createDirectories(projectB.resolve(".condense"));
 
         String tomlA = """
+            schema_version = 1
             [filters."shared-cmd"]
             stages = [ { strategy = "ansi_strip" } ]
             """;
         String tomlB = """
+            schema_version = 1
             [filters."shared-cmd"]
             stages = [ { strategy = "tree_compression" } ]
             """;
@@ -323,5 +334,108 @@ class FilterOverrideLoaderTest {
         assertThat(pipelineA).isNotSameAs(pipelineB);
         assertThat(pipelineA.execute("\u001B[32mtext\u001B[0m")).isEqualTo("text");
         assertThat(pipelineB.execute("dir/file.txt\ndir/file2.txt")).contains("dir/");
+    }
+
+    @Test
+    @DisplayName("Prefix match applies override for npm install --verbose")
+    void testPrefixCommandMatching() throws IOException {
+        Path projectDir = tempDir.resolve("prefix-project");
+        Files.createDirectories(projectDir.resolve(".condense"));
+        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+            schema_version = 1
+            [filters."npm install"]
+            stages = [ { strategy = "ansi_strip" } ]
+            """);
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+        FilterPipeline resolved = loader.resolvePipeline("npm install --verbose", fallback, projectDir);
+        assertThat(resolved.execute("\u001B[31mred\u001B[0m")).isEqualTo("red");
+    }
+
+    @Test
+    @DisplayName("Empty stages replace the default pipeline with identity")
+    void testEmptyStagesReplaceDefault() throws IOException {
+        Path projectDir = tempDir.resolve("empty-stages");
+        Files.createDirectories(projectDir.resolve(".condense"));
+        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+            schema_version = 1
+            [filters."ls"]
+            stages = []
+            """);
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+        FilterPipeline resolved = loader.resolvePipeline("ls", fallback, projectDir);
+        assertThat(resolved).isNotSameAs(fallback);
+        assertThat(resolved.execute("keep me")).isEqualTo("keep me");
+    }
+
+    @Test
+    @DisplayName("json_structure override is constructible")
+    void testJsonStructureOverride() throws IOException {
+        Path projectDir = tempDir.resolve("json-project");
+        Files.createDirectories(projectDir.resolve(".condense"));
+        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+            schema_version = 1
+            [filters."aws"]
+            stages = [ { strategy = "json_structure" } ]
+            """);
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterPipeline resolved = loader.resolvePipeline("aws", FilterPipeline.of(), projectDir);
+        assertThat(resolved.execute("not-json")).isEqualTo("not-json");
+    }
+
+    @Test
+    @DisplayName("Global override applies when project file exists but command is unmatched")
+    void testGlobalWhenProjectFileMissesCommand() throws IOException {
+        Path projectDir = tempDir.resolve("partial-project");
+        Files.createDirectories(projectDir.resolve(".condense"));
+        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+            schema_version = 1
+            [filters."ls"]
+            stages = [ { strategy = "ansi_strip" } ]
+            """);
+        Path configDir = tempDir.resolve("global-partial");
+        Files.createDirectories(configDir);
+        Files.writeString(configDir.resolve("filters.toml"), """
+            schema_version = 1
+            [filters."npm install"]
+            stages = [ { strategy = "ansi_strip" } ]
+            """);
+        PlatformDirs platformDirs = new PlatformDirs() {
+            @Override
+            public Path resolveConfigDir() {
+                return configDir;
+            }
+        };
+        FilterOverrideLoader loader = new FilterOverrideLoader(platformDirs);
+        FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("DEFAULT"));
+        FilterPipeline resolved = loader.resolvePipeline("npm install", fallback, projectDir);
+        assertThat(resolved.execute("\u001B[32mhi\u001B[0m")).isEqualTo("hi");
+    }
+
+    @Test
+    @DisplayName("Concurrent resolve does not throw")
+    void testConcurrentResolve() throws Exception {
+        Path projectDir = tempDir.resolve("concurrent-project");
+        Files.createDirectories(projectDir.resolve(".condense"));
+        Files.writeString(projectDir.resolve(".condense/filters.toml"), """
+            schema_version = 1
+            [filters."ls"]
+            stages = [ { strategy = "ansi_strip" } ]
+            """);
+        FilterOverrideLoader loader = new FilterOverrideLoader(new PlatformDirs());
+        FilterPipeline fallback = FilterPipeline.of();
+        var pool = java.util.concurrent.Executors.newFixedThreadPool(8);
+        try {
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<?>>();
+            for (int i = 0; i < 32; i++) {
+                futures.add(pool.submit(() -> loader.resolvePipeline("ls", fallback, projectDir).execute("x")));
+            }
+            for (var future : futures) {
+                assertThat(future.get()).isEqualTo("x");
+            }
+        } finally {
+            pool.shutdownNow();
+        }
     }
 }

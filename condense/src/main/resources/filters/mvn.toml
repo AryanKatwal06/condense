@@ -1,0 +1,11 @@
+schema_version = 1
+name = "mvn"
+commands = ["mvn", "./mvnw"]
+
+[[stages]]
+strategy = "mvn_summary"
+
+[[tests]]
+id = "success"
+input = "Tests run: 4, Failures: 0\nBUILD SUCCESS\n"
+expected = "✓ BUILD SUCCESS — Tests run: 4, Failures: 0"

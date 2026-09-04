@@ -1,0 +1,11 @@
+schema_version = 1
+name = "tsc"
+commands = ["tsc"]
+
+[[stages]]
+strategy = "tsc_summary"
+
+[[tests]]
+id = "by-file"
+input = "src/a.ts(1,1): error TS123: x\nsrc/a.ts(2,1): error TS123: y\n"
+expected = "tsc: 2 error(s)\n  src/a.ts: 2"

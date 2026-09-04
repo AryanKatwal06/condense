@@ -1,0 +1,14 @@
+schema_version = 1
+name = "cargo-install"
+commands = ["cargo install", "cargo build"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "cargo_install_summary"
+
+[[tests]]
+id = "finished"
+input = "   Finished `dev` profile [unoptimized] target(s) in 1.23s\n"
+expected = "✓ Finished `dev` profile [unoptimized] target(s) in 1.23s"

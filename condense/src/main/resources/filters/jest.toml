@@ -1,0 +1,11 @@
+schema_version = 1
+name = "jest"
+commands = ["jest"]
+
+[[stages]]
+strategy = "jest_summary"
+
+[[tests]]
+id = "no-markers-passthrough"
+input = "watchman warning\n"
+expected = "watchman warning\n"

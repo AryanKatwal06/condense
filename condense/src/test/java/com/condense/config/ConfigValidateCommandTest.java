@@ -48,6 +48,7 @@ class ConfigValidateCommandTest {
     void testValidateExplicitValidFile() throws Exception {
         Path validFile = tempDir.resolve("valid-filters.toml");
         String toml = """
+            schema_version = 1
             [filters."ls"]
             stages = [
               { strategy = "tree_compression" }
@@ -81,6 +82,7 @@ class ConfigValidateCommandTest {
     void testValidateExplicitInvalidFile() throws Exception {
         Path invalidFile = tempDir.resolve("invalid-filters.toml");
         String toml = """
+            schema_version = 1
             [filters."bad-cmd"]
             stages = [
               { strategy = "unknown_strategy_name" }

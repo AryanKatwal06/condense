@@ -1,0 +1,14 @@
+schema_version = 1
+name = "docker-logs"
+commands = ["docker logs", "docker run", "docker exec"]
+
+[[stages]]
+strategy = "tail_lines"
+max_lines = 30
+skip_blank = true
+header_only_when_truncating = false
+
+[[tests]]
+id = "short-with-header"
+input = "line-a\nline-b\n"
+expected = "... (showing last 30 of 2 lines)\nline-a\nline-b"

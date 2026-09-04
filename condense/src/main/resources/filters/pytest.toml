@@ -1,0 +1,11 @@
+schema_version = 1
+name = "pytest"
+commands = ["pytest"]
+
+[[stages]]
+strategy = "pytest_summary"
+
+[[tests]]
+id = "short-summary"
+input = "===== short test summary info =====\nFAILED tests/test_a.py::test_one\n===== 1 failed in 0.10s =====\n"
+expected = "FAILED tests/test_a.py::test_one\n===== 1 failed in 0.10s ====="

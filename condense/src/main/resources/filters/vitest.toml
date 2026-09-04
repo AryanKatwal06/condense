@@ -1,0 +1,11 @@
+schema_version = 1
+name = "vitest"
+commands = ["vitest"]
+
+[[stages]]
+strategy = "vitest_summary"
+
+[[tests]]
+id = "no-markers-passthrough"
+input = "starting vitest\n"
+expected = "starting vitest\n"

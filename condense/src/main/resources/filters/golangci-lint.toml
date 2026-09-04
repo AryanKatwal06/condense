@@ -1,0 +1,11 @@
+schema_version = 1
+name = "golangci-lint"
+commands = ["golangci-lint run"]
+
+[[stages]]
+strategy = "golangci_summary"
+
+[[tests]]
+id = "linter-group"
+input = "foo.go:1:2: unused (unused)\n"
+expected = "golangci-lint: 1 issue(s)\n  unused : 1"

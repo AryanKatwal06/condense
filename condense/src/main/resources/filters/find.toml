@@ -1,0 +1,14 @@
+schema_version = 1
+name = "find"
+commands = ["find"]
+
+[[stages]]
+strategy = "aggregate_by_key"
+key = "file_extension"
+header = "{lines} result(s)"
+top_n = 10
+
+[[tests]]
+id = "by-extension"
+input = "src/a.java\nsrc/b.java\nREADME\n"
+expected = "3 result(s)\n  .java: 2\n  (no extension): 1"

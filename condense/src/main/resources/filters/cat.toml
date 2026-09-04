@@ -1,0 +1,11 @@
+schema_version = 1
+name = "cat"
+commands = ["cat", "read"]
+
+[[stages]]
+strategy = "cat_content"
+
+[[tests]]
+id = "short-passthrough"
+input = "hello\nworld\n"
+expected = "hello\nworld\n"

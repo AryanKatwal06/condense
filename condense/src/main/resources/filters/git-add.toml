@@ -1,0 +1,11 @@
+schema_version = 1
+name = "git-add"
+commands = ["git add"]
+
+[[stages]]
+strategy = "git_add_summary"
+
+[[tests]]
+id = "blank-staged"
+input = ""
+expected = "✓ staged"

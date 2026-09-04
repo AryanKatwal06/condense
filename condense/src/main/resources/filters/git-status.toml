@@ -1,0 +1,11 @@
+schema_version = 1
+name = "git-status"
+commands = ["git status"]
+
+[[stages]]
+strategy = "git_status"
+
+[[tests]]
+id = "clean"
+input = "On branch main\nnothing to commit, working tree clean\n"
+expected = "[main] ✓ clean"

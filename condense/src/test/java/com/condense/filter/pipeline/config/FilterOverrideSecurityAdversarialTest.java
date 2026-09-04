@@ -28,6 +28,7 @@ class FilterOverrideSecurityAdversarialTest {
         Files.createDirectories(condenseDir);
 
         String maliciousToml = """
+            schema_version = 1
             [filters."exploit"]
             stages = [
               { strategy = "java.lang.Runtime" },
@@ -62,6 +63,7 @@ class FilterOverrideSecurityAdversarialTest {
 
         Path outsideFile = outsideDir.resolve("malicious.toml");
         Files.writeString(outsideFile, """
+            schema_version = 1
             [filters."ls"]
             stages = [ { strategy = "ansi_strip" } ]
             """);
@@ -95,6 +97,7 @@ class FilterOverrideSecurityAdversarialTest {
         Files.createDirectories(condenseDir);
 
         String badParamsToml = """
+            schema_version = 1
             [filters."negative-window"]
             stages = [
               { strategy = "deduplication", window_size = -50 }
@@ -131,6 +134,7 @@ class FilterOverrideSecurityAdversarialTest {
         Files.createDirectories(condenseDir);
 
         String badRegexToml = """
+            schema_version = 1
             [filters."bad-grouping"]
             stages = [
               { strategy = "grouping", pattern = "[unclosed(pattern" }
@@ -155,6 +159,7 @@ class FilterOverrideSecurityAdversarialTest {
         Files.createDirectories(condenseDir);
 
         String noCaptureToml = """
+            schema_version = 1
             [filters."no-capture"]
             stages = [
               { strategy = "grouping", pattern = "no_capture_groups_here" }
@@ -179,6 +184,7 @@ class FilterOverrideSecurityAdversarialTest {
         Files.createDirectories(condenseDir);
 
         String badActionToml = """
+            schema_version = 1
             [filters."bad-sm"]
             stages = [
               { strategy = "state_machine", initial_state = "INIT", transitions = [{ from_state = "INIT", pattern = "^.*$", action = "EXECUTE_MALICIOUS_CODE", next_state = "INIT" }], default_actions = { INIT = "DESTROY" } }
@@ -229,6 +235,7 @@ class FilterOverrideSecurityAdversarialTest {
 
         // Pattern (a*)a*a*a*a*a*a*b exhibits genuine catastrophic backtracking on a...ac
         String redosToml = """
+            schema_version = 1
             [filters."redos-group"]
             stages = [
               { strategy = "grouping", pattern = "(a*)a*a*a*a*a*a*b" }
@@ -268,6 +275,7 @@ class FilterOverrideSecurityAdversarialTest {
         Files.createDirectories(condenseDir);
 
         String redosSmToml = """
+            schema_version = 1
             [filters."redos-sm"]
             stages = [
               { strategy = "state_machine", initial_state = "START", transitions = [
@@ -307,6 +315,7 @@ class FilterOverrideSecurityAdversarialTest {
         Files.createDirectories(condenseDir);
 
         String safeToml = """
+            schema_version = 1
             [filters."safe-logs"]
             stages = [
               { strategy = "grouping", pattern = '^\\[(INFO|WARN|ERROR)\\]\\s+(.*)$' }
@@ -351,6 +360,7 @@ class FilterOverrideSecurityAdversarialTest {
         }
 
         String oversizedToml = String.format("""
+            schema_version = 1
             [filters."oversized-pattern"]
             stages = [
               { strategy = "grouping", pattern = "(%s)" }

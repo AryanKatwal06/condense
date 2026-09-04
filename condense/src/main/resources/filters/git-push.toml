@@ -1,0 +1,11 @@
+schema_version = 1
+name = "git-push"
+commands = ["git push"]
+
+[[stages]]
+strategy = "git_push_summary"
+
+[[tests]]
+id = "up-to-date"
+input = "Everything up-to-date"
+expected = "✓ up-to-date (nothing pushed)"

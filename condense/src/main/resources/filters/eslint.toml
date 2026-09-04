@@ -1,0 +1,14 @@
+schema_version = 1
+name = "eslint"
+commands = ["eslint", "npx eslint"]
+
+[[stages]]
+strategy = "eslint_json"
+
+[[stages]]
+strategy = "eslint_text"
+
+[[tests]]
+id = "text-counts"
+input = "/path/to/file.js\n   1:5  error    Unexpected var  no-var\n   2:8  warning  Missing semi    semi\n"
+expected = "eslint: 1 error(s), 1 warning(s)\n  no-var : 1\n  semi   : 1"

@@ -3,10 +3,8 @@ package com.condense.filter.golang;
 import com.condense.annotation.CommandFilter;
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
-import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.PipelineBackedFilter;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
-import com.condense.filter.strategy.JsonLinesStage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -30,7 +28,7 @@ public class GoTestFilter extends PipelineBackedFilter {
     }
 
     @Override
-    protected FilterPipeline buildPipeline() {
-        return FilterPipeline.of(JsonLinesStage.INSTANCE);
+    protected String definitionName() {
+        return "go-test";
     }
 }

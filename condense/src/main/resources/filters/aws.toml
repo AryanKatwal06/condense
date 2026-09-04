@@ -1,0 +1,11 @@
+schema_version = 1
+name = "aws"
+commands = ["aws"]
+
+[[stages]]
+strategy = "json_structure"
+
+[[tests]]
+id = "non-json-passthrough"
+input = "not-json"
+expected = "not-json"

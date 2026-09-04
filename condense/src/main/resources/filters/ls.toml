@@ -1,0 +1,14 @@
+schema_version = 1
+name = "ls"
+commands = ["ls"]
+
+[[stages]]
+strategy = "tree_compression"
+
+[[stages]]
+strategy = "ls_empty_tree_fallback"
+
+[[tests]]
+id = "paths-tree"
+input = "src/a.java\nsrc/b.java\n"
+expected = "src/\n  a.java\n  b.java"

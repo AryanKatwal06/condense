@@ -1,0 +1,11 @@
+schema_version = 1
+name = "cargo-test"
+commands = ["cargo test"]
+
+[[stages]]
+strategy = "cargo_test_summary"
+
+[[tests]]
+id = "all-passed-line"
+input = "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n"
+expected = "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s"

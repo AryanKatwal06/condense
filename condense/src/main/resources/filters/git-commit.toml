@@ -1,0 +1,11 @@
+schema_version = 1
+name = "git-commit"
+commands = ["git commit"]
+
+[[stages]]
+strategy = "git_commit_summary"
+
+[[tests]]
+id = "commit-line"
+input = "[main abcdef12] fix parser"
+expected = "✓ committed [main] abcdef12 — fix parser"

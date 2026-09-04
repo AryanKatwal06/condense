@@ -1,0 +1,14 @@
+schema_version = 1
+name = "docker-build"
+commands = ["docker build"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "docker_build_summary"
+
+[[tests]]
+id = "tagged"
+input = "Successfully built abcdef12\nSuccessfully tagged app:latest\n"
+expected = "✓ docker build: abcdef12 → app:latest"

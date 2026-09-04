@@ -4,10 +4,7 @@ import com.condense.annotation.CommandFilter;
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.core.FilterResult;
-import com.condense.filter.pipeline.FilterContext;
-import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.PipelineBackedFilter;
-import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -41,20 +38,7 @@ public class GitAddFilter extends PipelineBackedFilter {
     }
 
     @Override
-    protected FilterPipeline buildPipeline() {
-        return FilterPipeline.of(GitAddSummaryStage.INSTANCE);
-    }
-
-    static final class GitAddSummaryStage implements com.condense.filter.pipeline.FilterStage {
-        static final GitAddSummaryStage INSTANCE = new GitAddSummaryStage();
-
-        @Override
-        public StageResult process(String raw, FilterContext context) {
-            if (raw.isBlank()) {
-                return StageResult.continueWith("✓ staged");
-            }
-            long fileCount = raw.lines().filter(l -> !l.isBlank()).count();
-            return StageResult.continueWith("✓ staged " + fileCount + " file(s)");
-        }
+    protected String definitionName() {
+        return "git-add";
     }
 }

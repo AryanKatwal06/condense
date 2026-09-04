@@ -1,0 +1,11 @@
+schema_version = 1
+name = "git-diff"
+commands = ["git diff"]
+
+[[stages]]
+strategy = "git_diff_summary"
+
+[[tests]]
+id = "stat-summary"
+input = " 1 file changed, 3 insertions(+)"
+expected = "1 file changed, 3 insertions(+)"

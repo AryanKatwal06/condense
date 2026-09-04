@@ -1,0 +1,11 @@
+schema_version = 1
+name = "kubectl"
+commands = ["kubectl"]
+
+[[stages]]
+strategy = "kubectl_dispatch"
+
+[[tests]]
+id = "passthrough-without-subcommand"
+input = "NAME  READY\npod   1/1\n"
+expected = "NAME  READY\npod   1/1\n"

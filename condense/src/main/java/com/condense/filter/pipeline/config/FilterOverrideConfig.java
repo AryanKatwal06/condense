@@ -1,6 +1,5 @@
 package com.condense.filter.pipeline.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
@@ -9,15 +8,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Root and nested configuration structures for declarative filter overrides.
+ * Root and nested configuration structures for declarative filter overrides (schema v1).
  */
 public final class FilterOverrideConfig {
+
+    public static final int SCHEMA_VERSION = 1;
 
     private FilterOverrideConfig() {}
 
     @RegisterForReflection
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public record FileConfig(
+        @JsonProperty("schema_version")
+        Integer schemaVersion,
+
         @JsonProperty("filters")
         Map<String, FilterDef> filters
     ) {
@@ -28,12 +31,11 @@ public final class FilterOverrideConfig {
         }
 
         public FileConfig() {
-            this(Collections.emptyMap());
+            this(null, Collections.emptyMap());
         }
     }
 
     @RegisterForReflection
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public record FilterDef(
         @JsonProperty("stages")
         List<StageDef> stages
@@ -50,7 +52,6 @@ public final class FilterOverrideConfig {
     }
 
     @RegisterForReflection
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public record StageDef(
         @JsonProperty("strategy")
         String strategy,
@@ -71,7 +72,37 @@ public final class FilterOverrideConfig {
         List<TransitionDef> transitions,
 
         @JsonProperty("default_actions")
-        Map<String, String> defaultActions
+        Map<String, String> defaultActions,
+
+        @JsonProperty("max_lines")
+        Integer maxLines,
+
+        @JsonProperty("skip_blank")
+        Boolean skipBlank,
+
+        @JsonProperty("header_only_when_truncating")
+        Boolean headerOnlyWhenTruncating,
+
+        @JsonProperty("head")
+        Integer head,
+
+        @JsonProperty("tail")
+        Integer tail,
+
+        @JsonProperty("key")
+        String key,
+
+        @JsonProperty("header")
+        String header,
+
+        @JsonProperty("top_n")
+        Integer topN,
+
+        @JsonProperty("format")
+        String format,
+
+        @JsonProperty("fallback")
+        String fallback
     ) {
         public StageDef {
             if (transitions == null) {
@@ -83,12 +114,12 @@ public final class FilterOverrideConfig {
         }
 
         public StageDef() {
-            this(null, null, null, null, null, Collections.emptyList(), Collections.emptyMap());
+            this(null, null, null, null, null, Collections.emptyList(), Collections.emptyMap(),
+                null, null, null, null, null, null, null, null, null, null);
         }
     }
 
     @RegisterForReflection
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public record TransitionDef(
         @JsonProperty("from_state")
         String fromState,

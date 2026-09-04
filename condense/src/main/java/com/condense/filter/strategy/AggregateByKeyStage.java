@@ -21,10 +21,38 @@ public final class AggregateByKeyStage implements FilterStage {
     private final HeaderFormatter header;
     private final int topN;
 
+    public static final String KEY_PREFIX_BEFORE_COLON = "prefix_before_colon";
+    public static final String KEY_FILE_EXTENSION = "file_extension";
+
     public AggregateByKeyStage(Function<String, String> keyOf, HeaderFormatter header, int topN) {
         this.keyOf = keyOf;
         this.header = header;
         this.topN = topN;
+    }
+
+    /**
+     * Declarative constructor. {@code key} is a closed preset; {@code headerTemplate}
+     * may contain {@code {lines}} and {@code {keys}}.
+     */
+    public static AggregateByKeyStage ofPreset(String key, String headerTemplate, int topN) {
+        Function<String, String> keyOf = switch (key == null ? "" : key.trim().toLowerCase()) {
+            case KEY_PREFIX_BEFORE_COLON -> line -> {
+                int colon = line.indexOf(':');
+                return colon > 0 ? line.substring(0, colon) : "(stdin)";
+            };
+            case KEY_FILE_EXTENSION -> line -> {
+                int dot = line.lastIndexOf('.');
+                return dot >= 0 ? line.substring(dot) : "(no extension)";
+            };
+            default -> throw new IllegalArgumentException(
+                "Unknown aggregate_by_key preset: " + key
+                    + ". Allowed: " + KEY_PREFIX_BEFORE_COLON + ", " + KEY_FILE_EXTENSION);
+        };
+        String template = headerTemplate != null ? headerTemplate : "";
+        HeaderFormatter formatter = (lines, keys) -> template
+            .replace("{lines}", Integer.toString(lines))
+            .replace("{keys}", Integer.toString(keys));
+        return new AggregateByKeyStage(keyOf, formatter, topN);
     }
 
     @Override

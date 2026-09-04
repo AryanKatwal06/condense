@@ -1,0 +1,11 @@
+schema_version = 1
+name = "git-log"
+commands = ["git log"]
+
+[[stages]]
+strategy = "git_log"
+
+[[tests]]
+id = "one-commit"
+input = "commit abcdef1234567890\nAuthor: A\nDate: now\n\n    first commit\n"
+expected = "abcdef12 first commit"

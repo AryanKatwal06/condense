@@ -1,0 +1,11 @@
+schema_version = 1
+name = "make"
+commands = ["make"]
+
+[[stages]]
+strategy = "make_summary"
+
+[[tests]]
+id = "last-line"
+input = "cc -c main.c\ncc -o app main.o\n"
+expected = "✓ make: cc -o app main.o"

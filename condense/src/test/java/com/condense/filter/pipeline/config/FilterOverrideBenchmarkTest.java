@@ -61,6 +61,7 @@ class FilterOverrideBenchmarkTest {
         Files.createDirectories(condenseDir);
 
         String toml = """
+            schema_version = 1
             [filters."npm install"]
             stages = [
               { strategy = "ansi_strip" }

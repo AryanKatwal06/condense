@@ -409,6 +409,10 @@
   { "name": "com.condense.filter.pipeline.config.FilterOverrideConfig$TransitionDef", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.filter.pipeline.config.FilterOverrideValidationResult", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.filter.pipeline.config.FilterOverrideValidationResult$Status", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.DefinitionError", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.BuiltinDefinition", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.BuiltinDefinition$InlineTest", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.BuiltinDefinition$Index", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.filter.pipeline.config.FilterOverrideLoader", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.config.ConfigValidateCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
 ]

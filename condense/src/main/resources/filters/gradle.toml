@@ -1,0 +1,11 @@
+schema_version = 1
+name = "gradle"
+commands = ["gradle", "./gradlew"]
+
+[[stages]]
+strategy = "gradle_summary"
+
+[[tests]]
+id = "success"
+input = "BUILD SUCCESSFUL in 2s\n"
+expected = "✓ BUILD SUCCESSFUL in 2s"
