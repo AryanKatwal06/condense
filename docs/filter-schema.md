@@ -46,9 +46,11 @@ Overrides do not carry `name` or `[[tests]]`. `stages = []` replaces the default
 
 ## Precedence
 
-1. Project `.condense/filters.toml` (fail-open: invalid file → warn → next tier)
-2. User-global `filters.toml` in the config directory (fail-open)
-3. Builtin `classpath:filters/<name>.toml` via `BuiltinDefinitionCatalog` (fail-closed)
+1. Project `.condense/filters.toml` (untrusted until TOFU or a valid CI hatch; fail-open on invalid TOML; capability ceiling always applies)
+2. User-global `filters.toml` in the config directory (trusted by location; fail-open; no capability ceiling)
+3. Builtin `classpath:filters/<name>.toml` via `BuiltinDefinitionCatalog` (fail-closed; TCB)
+
+Project overrides that are untrusted, hash-changed, or above the granted capability class are skipped. Review is `condense config trust`. See [trust.md](trust.md).
 
 `PythonFilter` is a Java router and has no TOML file.
 
@@ -87,7 +89,7 @@ Generic aliases (canonical snake_case; hyphen/short aliases exist for the origin
 Named command-specific aliases (no user params; trusted Java):  
 `git_add_summary`, `git_commit_summary`, `git_diff_summary`, `git_log`, `git_push_summary`, `ls_empty_tree_fallback`, `cat_content`, `docker_build_summary`, `kubectl_dispatch`, `cargo_clippy_summary`, `cargo_install_summary`, `cargo_test_summary`, `gradle_summary`, `make_summary`, `mvn_summary`, `eslint_json`, `eslint_text`, `jest_summary`, `npm_install_summary`, `tsc_summary`, `vitest_summary`, `golangci_summary`, `pip_install_summary`, `pytest_summary`, `ruff_summary`.
 
-User overrides may use any alias in v1. Capability restriction is Phase 6.
+User overrides may use any alias in v1. Project files still need a matching capability grant (`reduce` / `reshape` / `rewrite`). See [trust.md](trust.md).
 
 ## Adding a definition
 

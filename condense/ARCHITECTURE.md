@@ -55,7 +55,9 @@ condense --version / --help
 
 8. **Universal pipeline**: Every domain filter except the `PythonFilter` router extends `PipelineBackedFilter`. `apply()` is final: gates, then `FilterOverrideLoader.resolvePipeline`, then `FilterPipeline.execute`. Duplicate `@CommandFilter` prefixes from two classes fail `@PostConstruct` via `PrefixIndex`. Every regex in the filter package goes through `BoundedRegex` at 200 ms.
 
-9. **Three-tier filter composition**: Project `.condense/filters.toml` (fail-open) then user-global `filters.toml` (fail-open) then builtin `classpath:filters/<name>.toml` via `BuiltinDefinitionCatalog` (fail-closed). Enumeration is `filters/index.toml` — never a classpath directory walk. `StageFactory` is a hardcoded switch. Schema v1 requires `schema_version = 1` and rejects unknown keys. See `docs/filter-schema.md`.
+9. **Three-tier filter composition**: Project `.condense/filters.toml` (TOFU + capability ceiling) then user-global `filters.toml` (trusted by location) then builtin `classpath:filters/<name>.toml` via `BuiltinDefinitionCatalog` (fail-closed). Enumeration is `filters/index.toml` — never a classpath directory walk. `StageFactory` is a hardcoded switch. Schema v1 requires `schema_version = 1` and rejects unknown keys. See `docs/filter-schema.md` and `docs/trust.md`.
+
+10. **Trust and provenance**: Project overrides are skipped until `condense config trust` (or a CI hatch that also has a listed CI indicator). `FilterResult.of` stamps `condense[filtered]`; impersonating lines become `condense[quoted]`. See `docs/trust.md`.
 
 ## Technology Stack
 

@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 5 code landed).
+**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 6 code landed).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 5. Confirm with `git log -1` and origin before starting Phase 6.
+**Branch at handoff:** `main` after Phase 6. Confirm with `git log -1` and origin before starting Phase 7.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -191,17 +191,16 @@ Parsing is Jackson `TomlMapper` into `@RegisterForReflection` records. Command l
 | Control | Detail |
 |---|---|
 | Strategy dispatch | Hardcoded `switch` on lowercased alias strings. **No reflection, no dynamic class loading** — a hostile file structurally cannot name a Java class to execute |
-| Path safety | Inline `toRealPath()` + `startsWith(realParent)` + `LinkOption.NOFOLLOW_LINKS`. **Does not call `SafePathValidator`** — it duplicates the pattern instead |
+| Path safety | `SafePathValidator.contain(file, expectedParent)` (`toRealPath` + `startsWith` + `NOFOLLOW_LINKS`) |
 | ReDoS | Override-supplied regexes get a **200 ms** in-thread budget via `TimeoutCharSequence` (deadline checked every 256 `charAt` calls, no threads — native-image friendly) |
 | Static budgets | Pattern length ≤ 500; state-machine transitions ≤ 50; dedup window 1–10000; grouping pattern must have ≥1 capture group |
 | Failure mode | Fail-open at every tier: bad file → warn → fall through to the next tier |
 
 **Cache:** `ConcurrentHashMap<Path, CachedOverride>` for project configs, `volatile` + double-checked lock for the global config, and a per-`CachedOverride` pipeline map. **Negative results are cached**, so a `filters.toml` created after first lookup is invisible until `invalidateCache()`. No file-watch.
 
-**Two real weaknesses here:**
+**Trust.** Project `.condense/filters.toml` goes through `TrustGate` after a valid parse. Untrusted, hash-changed, or under-granted files are skipped (stderr hint; child's exit code unchanged). User-global and builtin files are not TOFU'd. Review is `condense config trust`. See [docs/trust.md](docs/trust.md).
 
-- Production filters inject the `@ApplicationScoped` `FilterOverrideLoader`. Corpus / `new XxxFilter()` share `FilterOverrideLoader.standalone()`.
-- **There is no trust gate.** Any `.condense/filters.toml` that parses is applied. A repository you merely cloned can therefore reshape what your agent sees. This is Condense's largest open security gap and is **Phase 6**. The blast radius is now every command, because every domain filter resolves overrides.
+Production filters inject the `@ApplicationScoped` `FilterOverrideLoader`. Corpus / `new XxxFilter()` share `FilterOverrideLoader.standalone()`.
 
 ### 4.9 Persistence (`core/TrackingRepository.java`)
 
@@ -311,8 +310,8 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D11 | ~~Built-in `ESLintFilter` constructs `GroupingStrategy` with `timeoutMillis = 0`~~ **FIXED** | `GroupingStrategy` / `BoundedRegex` default 200 ms | Phase 4 |
 | D12 | ~~Migrated filters `new FilterOverrideLoader()` in constructors~~ **FIXED** | CDI inject + `standalone()` singleton | Phase 4 |
 | D13 | ~~No built-in declarative filter definitions~~ **FIXED** | `filters/index.toml` + 31 definition files; `PipelineBackedFilter.buildPipeline()` loads the catalog | Phase 5 |
-| D14 | **No trust gate on project-supplied `.condense/filters.toml`** — a cloned repo can reshape agent-visible output | `FilterOverrideLoader.load` | Phase 6 |
-| D15 | No output provenance: an agent cannot distinguish Condense-generated summary text from tool output | by inspection | Phase 6 |
+| D14 | ~~No trust gate on project-supplied `.condense/filters.toml`~~ **FIXED** | `TrustGate` + `{configDir}/trust.json`; skip until TOFU or CI hatch | Phase 6 |
+| D15 | ~~No output provenance~~ **FIXED** | `FilterResult.of` stamps `condense[filtered]`; impersonators become `condense[quoted]` | Phase 6 |
 | D16 | No schema versioning or migrations; existing DBs never gain columns | `initSchema` runs only when file absent | Phase 7 |
 | D17 | No WAL, no `busy_timeout` — concurrent agent sessions share one DB | `TrackingRepository.connection()` | Phase 7 |
 | D18 | No retention for `commands` rows or `{dataDir}/tee/` files — unbounded growth | no `DELETE FROM` anywhere | Phase 7 |
@@ -653,7 +652,9 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 ### Phase 6 — Trust boundary and capability model
 
-**Status: PENDING**
+**Status: LANDED** (4 Sep 2026)
+
+**Shipped.** `TrustGate` + `{configDir}/trust.json` (SHA-256 of the displayed buffer). Project overrides skip until `condense config trust` or a CI hatch that also has a listed CI indicator. Capability classes `reduce` / `reshape` / `rewrite`; missing grant skips the whole file. `FilterResult.of` stamps `condense[filtered]`. 49 filtered goldens updated; `python-c/typical` and `git-push/rejected` stay passthrough. Floors remesured where the header dropped a row below its old floor. `NativeTrustIT` added; `NativeCorpusIT` kept. Spec: [docs/trust.md](docs/trust.md).
 
 **Goal.** A repository you merely cloned must not be able to change what your agent sees. Fail-closed trust-on-first-use with content hashing, invalidation on change, TOCTOU-safe review (read once, display and hash the same buffer), a CI escape hatch that requires a genuine CI indicator, risk classification at review time, plus a **capability model** limiting what an override may do at all. And **output provenance**, so a hostile tool output cannot impersonate Condense's own summary annotations.
 
@@ -960,9 +961,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 5 code landed 4 Sep 2026. Builtin pipelines are `classpath:filters/*.toml`. JVM proof is `mvn test` (379 run, 0 failures, 6 skipped) plus `mvn package -DskipTests` (validator at `process-classes`; a planted unknown key failed the package and was reverted). Native proof is the next green `NativeBuiltinDefinitionIT` and `NativeCorpusIT` in `build.yml` — this Windows workspace does not build native images.
+**Where we are.** Phase 6 code landed 4 Sep 2026. Project overrides are TOFU-gated; filtered output is stamped `condense[filtered]`. JVM proof is `mvn test` (Surefire excludes `*IT.java`). Native proof is the next green `NativeTrustIT` and `NativeCorpusIT` in `build.yml` — this Windows workspace does not build native images.
 
-**Do not start Phase 6 code.** Present a complete Phase 6 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 7 code.** Present a complete Phase 7 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -983,8 +984,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 5 code has landed. Confirm `NativeBuiltinDefinitionIT` and `NativeCorpusIT` appear in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
-9. **Do not start Phase 6 code.** Present a complete Phase 6 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 6 code has landed. Confirm `NativeTrustIT` and `NativeCorpusIT` appear in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
+9. **Do not start Phase 7 code.** Present a complete Phase 7 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 
