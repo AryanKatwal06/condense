@@ -9,11 +9,14 @@
 #   4. Installs to ~/.local/bin (Linux) or /usr/local/bin (macOS)
 #   5. Prints the installed version to confirm success
 #
-# Supported platforms:
-#   Linux x64 (glibc and musl — fully static)
-#   Linux aarch64 (fully static)
-#   macOS x64 (Intel)
+# Supported prebuilt platforms:
+#   Linux x64 (glibc, dynamically linked)
+#   Linux aarch64 (glibc, dynamically linked)
 #   macOS aarch64 (Apple Silicon)
+#   Windows x64 (use install.ps1)
+#
+# Not available as prebuilts (build from source):
+#   macOS x64 (Intel)
 #
 # Requirements: curl or wget, sha256sum or shasum
 

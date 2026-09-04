@@ -7,10 +7,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Added / Improved
+- Set the compiler language level to Java 21 so bytecode matches GraalVM 21 CI and the documented toolchain.
+- Added `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` overrides in `PlatformDirs` so tests and power users can redirect config and analytics state on every OS, including macOS.
+- Native integration tests now run via Failsafe in CI (`NativeCliIT`, `NativeAnalyticsIT`) on linux-x64, linux-aarch64, macos-aarch64, and windows-x64, using isolated directories instead of the real user database.
+- Added `ReflectConfigDriftTest` to fail `mvn test` when a `FilterStrategy` or Jackson-bound type is missing from `reflect-config.json`, and removed duplicate native-image registrations.
+- Added linux-aarch64 native jobs to CI and release (`ubuntu-24.04-arm`) so the installer download of that artifact is honest.
+- Recorded a JVM invocation-overhead baseline and an 80 MiB uncompressed native-image size ceiling. See [docs/perf-baseline.md](docs/perf-baseline.md).
 - **Declarative Filter Override System**: Introduced TOML-based schema and `FilterOverrideLoader` supporting a 3-tier precedence model (project-local `.condense/filters.toml` → user-global `filters.toml` → built-in compiled default) with fail-open error handling and strict security guards against symlink escapes, path traversal, and unauthorized code execution.
 - **Configuration Validation Subcommand**: Added `condense config validate` (`ConfigValidateCommand`) with `--project`, `--global`, and `--file` options to provide structured, itemized diagnostics for filter override configurations.
 - **Filter Pipeline Architecture & Hardening**: Introduced composable `FilterPipeline` abstraction with fail-open stage error handling, core strategy library, and hardened GraalVM reflection configuration.
-- **Test Lifecycle Isolation**: Added defensive `<exclude>**/*IT.java</exclude>` configuration to `maven-surefire-plugin` with documented rationale, guarding against integration tests (such as `TrackingRepositoryNativeIT`) running during unit test execution under broadened CLI test selectors.
+- **Test Lifecycle Isolation**: Added defensive `<exclude>**/*IT.java</exclude>` configuration to `maven-surefire-plugin` with documented rationale, guarding against native integration tests running during unit test execution under broadened CLI test selectors.
 
 ## [1.0.0] — 2026-08-24
 

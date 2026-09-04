@@ -20,16 +20,21 @@ mvn verify          # builds, tests, confirms everything works
 ## Running Tests
 
 ```bash
-mvn test                          # unit tests (JVM)
-mvn verify                        # full build + test suite
+mvn test                          # unit tests (JVM), including ReflectConfigDriftTest
+mvn verify                        # full build + JVM test suite (Failsafe ITs stay skipped)
 mvn package -Pnative -DskipTests  # native image build (takes 2-5 minutes)
+mvn failsafe:integration-test failsafe:verify -DskipITs=false   # native ITs against the built binary
 ```
+
+Native integration tests (`NativeCliIT`, `NativeAnalyticsIT`) require `native.image.path` and **fail rather than skip** if the binary is missing. They set `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` on the child process so they never write the developer's real analytics database.
+
+See [docs/perf-baseline.md](docs/perf-baseline.md) for what CI measures (invocation overhead, native size ceiling, cold start).
 
 ## Adding a New Command Filter
 
 **Contribution Bar:** The project requires at least 60% token savings per filter PR. All new filters must demonstrate ≥60% token savings using the Java golden fixture framework.
 
-Adding support for a new command (e.g. `helm`) takes four steps:
+Adding support for a new command (e.g. `helm`) takes five steps:
 
 ### 1. Create the filter class
 
@@ -108,29 +113,34 @@ class HelmFilterTest extends FilterTestSupport {
 }
 ```
 
-### 4. Add to reflect-config.json
+### 4. Keep reflect-config.json in sync
 
-Add this entry to `src/main/resources/META-INF/native-image/reflect-config.json`:
+`ReflectConfigDriftTest` runs in `mvn test` and fails if a new `FilterStrategy` (or a Jackson-bound config/analytics type) is missing from `src/main/resources/META-INF/native-image/reflect-config.json`, or if a class name is registered twice. Add an entry for the new filter:
+
 ```json
 { "name": "com.condense.filter.cloud.HelmFilter",
   "allDeclaredConstructors": true, "allDeclaredMethods": true }
 ```
 
+Do not treat this as an optional checklist item. If the JSON is stale, the JVM test fails before a 10-minute native build would.
+
 ### 5. Verify and submit
 
 ```bash
-mvn verify                            # all tests must pass
-mvn package -Pnative -DskipTests      # native image must build
-./target/condense-runner helm list         # smoke test with a real helm install
+mvn test                              # includes ReflectConfigDriftTest
+mvn package -Pnative -DskipTests      # native image must build with --no-fallback
+mvn failsafe:integration-test failsafe:verify -DskipITs=false
+./target/condense-runner helm list    # smoke test with a real helm install
 ```
 
-Then open a pull request. The PR template will ask you to confirm:
+Then open a pull request. Confirm:
+
 - [ ] Filter class implemented with `@CommandFilter` and `@ApplicationScoped`
 - [ ] Fixture files created with real command output
 - [ ] Tests written covering typical + failure cases
-- [ ] reflect-config.json updated
-- [ ] `mvn verify` passes
+- [ ] `ReflectConfigDriftTest` passes (`mvn test`)
 - [ ] Native image builds without fallback
+- [ ] Native Failsafe ITs pass when the binary is present
 
 ## Code Style
 

@@ -8,8 +8,7 @@ class Condense < Formula
     # Update this hash when submitting to the package registry
     sha256 "0000000000000000000000000000000000000000000000000000000000000000"
   elsif OS.mac? && Hardware::CPU.intel?
-    url "https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-macos-x64"
-    sha256 "9a68f45b718607a9b240d9a345c362fe1bae64ad753d70826d73a490dc3d4a0d"
+    odie "Intel macOS pre-built binaries are not available. Build from source: https://github.com/AryanKatwal06/condense#building-from-source"
   elsif OS.linux? && Hardware::CPU.arm?
     url "https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-linux-aarch64"
     # Update this hash when submitting to the package registry

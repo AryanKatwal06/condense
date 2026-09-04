@@ -29,7 +29,7 @@ condense --version / --help
 | `CondenseMain.java` | `com.condense` | Quarkus entry point; wires picocli `CommandLine` with CDI factory |
 | `CondenseRootCommand.java` | `com.condense` | Root `@Command`; handles `--help`, `--version`, `-v`, `-u` |
 | `VersionProvider.java` | `com.condense` | Reads version from `version.properties`; implements `IVersionProvider` |
-| `PlatformDirs.java` | `com.condense.core` | OS-specific path resolution (XDG on Linux, Library on macOS, AppData on Windows) |
+| `PlatformDirs.java` | `com.condense.core` | OS-specific path resolution, overridable via `CONDENSE_CONFIG_DIR` / `CONDENSE_DATA_DIR` |
 | `CondenseConfig.java` | `com.condense.core` | Root config record with `HooksConfig` and `TeeConfig` nested records |
 | `TeeMode.java` | `com.condense.core` | Enum: `FAILURES`, `ALWAYS`, `NEVER` with case-insensitive Jackson parsing |
 | `ConfigLoader.java` | `com.condense.core` | Loads `config.toml` via Jackson TOML; returns defaults if file missing |
@@ -41,7 +41,7 @@ condense --version / --help
 
 2. **Non-fatal analytics**: `TrackingRepository.insert()` catches all `SQLException` and logs a warning — it never throws. Analytics must not break the primary CLI proxy function.
 
-3. **Platform directories**: `PlatformDirs` follows XDG Base Directory Specification on Linux, standard macOS Library paths, and Windows `%APPDATA%`. Directories are created automatically on first access.
+3. **Platform directories**: `PlatformDirs` follows XDG Base Directory Specification on Linux, standard macOS Library paths, and Windows `%APPDATA%`. Optional environment variables `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` take highest precedence (blank is treated as unset) so tests and power users can redirect state without touching the real user profile. Directories are created automatically on first access.
 
 4. **Config defaults**: When no `config.toml` exists (first run), `CondenseConfig.defaults()` provides sensible production defaults. The app works correctly out of the box.
 
