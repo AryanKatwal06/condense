@@ -10,15 +10,25 @@ import java.nio.file.Path;
 /**
  * Resolves platform-appropriate configuration and data directories.
  *
+ * <p>Optional overrides, highest precedence, blank treated as unset:
  * <ul>
- *   <li>Linux: XDG_CONFIG_HOME/condense (config), XDG_DATA_HOME/condense (data),
- *       falling back to ~/.config/condense and ~/.local/share/condense</li>
- *   <li>macOS: ~/Library/Application Support/condense (both)</li>
- *   <li>Windows: %APPDATA%\condense (both)</li>
+ *   <li>{@code CONDENSE_CONFIG_DIR} — config directory</li>
+ *   <li>{@code CONDENSE_DATA_DIR} — data directory (analytics DB, tee files)</li>
+ * </ul>
+ *
+ * <p>When those are unset:
+ * <ul>
+ *   <li>Linux: {@code XDG_CONFIG_HOME}/condense (config), {@code XDG_DATA_HOME}/condense (data),
+ *       falling back to {@code ~/.config/condense} and {@code ~/.local/share/condense}</li>
+ *   <li>macOS: {@code ~/Library/Application Support/condense} (both)</li>
+ *   <li>Windows: {@code %APPDATA%}\condense (both)</li>
  * </ul>
  */
 @ApplicationScoped
 public class PlatformDirs {
+
+    static final String CONFIG_DIR_ENV = "CONDENSE_CONFIG_DIR";
+    static final String DATA_DIR_ENV = "CONDENSE_DATA_DIR";
 
     private static final Logger log = Logger.getLogger(PlatformDirs.class);
 
@@ -52,46 +62,93 @@ public class PlatformDirs {
         return resolveDataBase();
     }
 
-
-
     private Path resolveConfigBase() {
-        String os = os();
-        if (os.contains("mac")) {
-            return home("Library", "Application Support", "condense");
-        }
-        if (os.contains("win")) {
-            String appData = System.getenv("APPDATA");
-            return appData != null
-                ? Path.of(appData, "condense")
-                : home("AppData", "Roaming", "condense");
-        }
-        // Linux / Unix
-        String xdg = System.getenv("XDG_CONFIG_HOME");
-        return (xdg != null && !xdg.isBlank())
-            ? Path.of(xdg, "condense")
-            : home(".config", "condense");
+        return resolveConfigBase(
+            os(),
+            env(CONFIG_DIR_ENV),
+            env("XDG_CONFIG_HOME"),
+            env("APPDATA"),
+            System.getProperty("user.home", "")
+        );
     }
 
     private Path resolveDataBase() {
-        String os = os();
-        if (os.contains("mac")) {
-            return home("Library", "Application Support", "condense");
-        }
-        if (os.contains("win")) {
-            String appData = System.getenv("APPDATA");
-            return appData != null
-                ? Path.of(appData, "condense")
-                : home("AppData", "Roaming", "condense");
-        }
-        // Linux / Unix
-        String xdg = System.getenv("XDG_DATA_HOME");
-        return (xdg != null && !xdg.isBlank())
-            ? Path.of(xdg, "condense")
-            : home(".local", "share", "condense");
+        return resolveDataBase(
+            os(),
+            env(DATA_DIR_ENV),
+            env("XDG_DATA_HOME"),
+            env("APPDATA"),
+            System.getProperty("user.home", "")
+        );
     }
 
-    private static Path home(String... parts) {
-        return Path.of(System.getProperty("user.home"), parts);
+    /**
+     * Resolves the config directory from already-read environment values.
+     * Package-private so unit tests can cover overrides without mutating process env.
+     */
+    static Path resolveConfigBase(
+        String osName,
+        String condenseConfigDir,
+        String xdgConfigHome,
+        String appData,
+        String userHome
+    ) {
+        if (notBlank(condenseConfigDir)) {
+            return Path.of(condenseConfigDir.trim());
+        }
+        String os = osName == null ? "" : osName.toLowerCase();
+        if (os.contains("mac")) {
+            return home(userHome, "Library", "Application Support", "condense");
+        }
+        if (os.contains("win")) {
+            return notBlank(appData)
+                ? Path.of(appData.trim(), "condense")
+                : home(userHome, "AppData", "Roaming", "condense");
+        }
+        return notBlank(xdgConfigHome)
+            ? Path.of(xdgConfigHome.trim(), "condense")
+            : home(userHome, ".config", "condense");
+    }
+
+    /**
+     * Resolves the data directory from already-read environment values.
+     * Package-private so unit tests can cover overrides without mutating process env.
+     */
+    static Path resolveDataBase(
+        String osName,
+        String condenseDataDir,
+        String xdgDataHome,
+        String appData,
+        String userHome
+    ) {
+        if (notBlank(condenseDataDir)) {
+            return Path.of(condenseDataDir.trim());
+        }
+        String os = osName == null ? "" : osName.toLowerCase();
+        if (os.contains("mac")) {
+            return home(userHome, "Library", "Application Support", "condense");
+        }
+        if (os.contains("win")) {
+            return notBlank(appData)
+                ? Path.of(appData.trim(), "condense")
+                : home(userHome, "AppData", "Roaming", "condense");
+        }
+        return notBlank(xdgDataHome)
+            ? Path.of(xdgDataHome.trim(), "condense")
+            : home(userHome, ".local", "share", "condense");
+    }
+
+    static String env(String name) {
+        String value = System.getenv(name);
+        return notBlank(value) ? value.trim() : null;
+    }
+
+    static boolean notBlank(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private static Path home(String userHome, String... parts) {
+        return Path.of(userHome == null ? "" : userHome, parts);
     }
 
     private static String os() {
