@@ -38,18 +38,18 @@ public class DoctorCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        DoctorReport report = doctor.diagnose();
         try {
+            DoctorReport report = doctor.diagnose();
             if ("json".equalsIgnoreCase(format)) {
                 System.out.println(Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(report));
             } else {
                 printText(report);
             }
+            return report.ok() ? 0 : 1;
         } catch (Exception e) {
             System.err.println("condense doctor: error: " + e.getMessage());
             return 1;
         }
-        return report.ok() ? 0 : 1;
     }
 
     private static void printText(DoctorReport report) {

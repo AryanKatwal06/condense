@@ -72,7 +72,9 @@ class NativePersistenceIT {
         NativeBinarySupport.CliResult doctor = NativeBinarySupport.run(
             configDir, dataDir, "doctor", "--format", "json"
         );
-        assertThat(doctor.exitCode()).isZero();
+        assertThat(doctor.exitCode())
+            .as("doctor stdout=%s stderr=%s", doctor.stdout(), doctor.stderr())
+            .isZero();
         JsonNode diagnosis = JSON.readTree(doctor.stdout());
         assertThat(diagnosis.get("schema_version").asInt()).isEqualTo(SchemaMigrator.TARGET_VERSION);
         assertThat(diagnosis.get("empty_tracking_reason").isNull()).isTrue();
@@ -88,7 +90,9 @@ class NativePersistenceIT {
         NativeBinarySupport.CliResult doctor = NativeBinarySupport.run(
             configDir, dataDir, "doctor", "--format", "json"
         );
-        assertThat(doctor.exitCode()).isZero();
+        assertThat(doctor.exitCode())
+            .as("doctor stdout=%s stderr=%s", doctor.stdout(), doctor.stderr())
+            .isZero();
         JsonNode diagnosis = JSON.readTree(doctor.stdout());
         assertThat(diagnosis.get("empty_tracking_reason").asText())
             .isIn("no_database", "hooks_absent", "zero_rows");

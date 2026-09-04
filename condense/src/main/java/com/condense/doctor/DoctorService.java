@@ -16,8 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Assembles a {@link DoctorReport}. Opening the analytics DB migrates and prunes;
@@ -103,7 +103,7 @@ public class DoctorService {
             tracking.oldestCommandTs(),
             tracking.newestCommandTs(),
             tracking.countOutcomes(),
-            Map.copyOf(tracking.outcomeCountsByKind()),
+            new LinkedHashMap<>(tracking.outcomeCountsByKind()),
             pathString(trust.path()),
             trust.entries(),
             trust.readable(),
@@ -113,7 +113,7 @@ public class DoctorService {
             teeFiles,
             tee == null ? null : tee.oldestMtimeEpoch(),
             tee == null ? 0 : tee.remainingOld(),
-            List.copyOf(warnings),
+            new ArrayList<>(warnings),
             nextStep(emptyReason)
         );
     }

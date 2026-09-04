@@ -37,6 +37,10 @@ class DoctorServiceTest {
         assertThat(json.has("empty_tracking_reason")).isTrue();
         assertThat(json.has("schema_version")).isTrue();
         assertThat(json.has("next_step")).isTrue();
+        assertThat(json.get("outcomes_by_kind").isObject()).isTrue();
+        assertThat(json.get("warnings").isArray()).isTrue();
+        assertThat(report.outcomesByKind()).isInstanceOf(java.util.LinkedHashMap.class);
+        assertThat(report.warnings()).isInstanceOf(java.util.ArrayList.class);
 
         DoctorCommand command = new DoctorCommand(fixture.service);
         assertThat(command.call()).isZero();
