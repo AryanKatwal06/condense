@@ -1,0 +1,4 @@
+src/main/java/com/example/你好.java:14: error: 找不到符号
+  modified:   docs/ガイド.md
+npm error 无法解析依赖 "left-pad"
+git status on branch 機能/ログイン

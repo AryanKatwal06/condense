@@ -1,0 +1,3 @@
+[31merror[0m compilation failed
+[32mPASS[0m src/foo.test.ts
+[1m[33mwarning[0m unused variable

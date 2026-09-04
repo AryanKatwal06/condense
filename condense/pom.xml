@@ -65,6 +65,13 @@
             <version>3.26.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- Yardstick only. Must not appear in the native image. -->
+        <dependency>
+            <groupId>com.knuddels</groupId>
+            <artifactId>jtokkit</artifactId>
+            <version>1.1.0</version>
+            <scope>test</scope>
+        </dependency>
         <!-- picocli annotation processor — generates man page and shell completions -->
         <dependency>
             <groupId>info.picocli</groupId>
