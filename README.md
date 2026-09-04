@@ -301,7 +301,7 @@ cd condense/condense
 
 ## Contributing
 
-Pull requests are open. New compressing filters need a `corpus/catalog.json` row that meets the 60% estimated-savings floor (or an enumerated exemption) and 100% critical-signal retention. CI enforces both on JVM; `NativeCorpusIT` smokes one catalog entry through the native binary. See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/fidelity-corpus.md](docs/fidelity-corpus.md).
+Pull requests are open. New compressing filters extend `PipelineBackedFilter` (do not override `apply`), go through `BoundedRegex`, and need a `corpus/catalog.json` row plus a `corpus/golden/` lock. The catalog row must meet the 60% estimated-savings floor (or an enumerated exemption) and 100% critical-signal retention. CI enforces those gates on JVM; `NativeCorpusIT` smokes one catalog entry through the native binary. See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/fidelity-corpus.md](docs/fidelity-corpus.md).
 
 ---
 

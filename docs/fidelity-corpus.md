@@ -29,8 +29,9 @@ Exactly one of `savings_floor` or `savings_exemption` is required.
 | `FidelityCorpusTest` | A missing critical signal, or `savingsPct()` below the baked floor |
 | `CorpusFuzzTest` | `apply` throws, or a signal that is still in the mutated input is missing from filtered output |
 | `NativeCorpusIT` | The native binary, with a PATH-stubbed `pytest`, drops `test_mul` / `failed` or fails to pass through exit code 1 |
+| `GoldenLockTest` | Filtered output differs by even one byte from `corpus/golden/{id}.txt` |
 
-Filters are constructed with their no-arg constructor (same as existing `*FilterTest` classes), not via CDI.
+Filters are constructed with their no-arg constructor (same as existing `*FilterTest` classes), not via CDI. Phase 4 added a byte lock of that constructor path so a pipeline migration cannot change agent-visible output silently. Reviewed diffs are listed in [pipeline-migration-diffs.md](pipeline-migration-diffs.md).
 
 ## Floor policy
 

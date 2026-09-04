@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 3 code landed).
+**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 4 code landed).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 3. Confirm with `git log -1` and origin before starting Phase 4.
+**Branch at handoff:** `main` after Phase 4. Confirm with `git log -1` and origin before starting Phase 5.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -141,7 +141,7 @@ CLI args
 
 `@PostConstruct` walks CDI `Instance<FilterStrategy>` handles, reads `@CommandFilter` via `getAnnotationsByType(...)` (**runtime annotation reflection** — hence the `reflect-config.json` entries for the annotations), lowercases keys into a `LinkedHashMap`, and skips `PassthroughStrategy`. Lookup joins argv from longest prefix down to length 1, so `git status --short` resolves `git status` before `git`.
 
-**No duplicate-key detection.** Two filters claiming the same prefix silently last-write-wins in CDI iteration order. Phase 4.
+**Duplicate prefixes fail fast.** `PrefixIndex.put` throws `IllegalStateException` at `@PostConstruct` if two different classes claim the same key. Same class, many prefixes is allowed.
 
 ### 4.4 Token accounting (`core/TokenCounter.java`)
 
@@ -164,8 +164,9 @@ Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus
 - **32 domain filter classes**, plus `PassthroughStrategy` = **33 classes implementing `FilterStrategy`**.
 - Package breakdown: `git` 6, `node` 5, `cloud` 5, `python` 4, `fs` 4, `cargo` 3, `build` 3, `golang` 2. (6+5+5+4+4+3+3+2 = 32.)
 - **~47 registered command prefixes** across those 32 classes (several filters claim multiple prefixes, e.g. `CargoInstallFilter` → `cargo install` + `cargo build`; `GrepFilter` → `grep` + `rg`; `CatFilter` → `cat` + `read`).
-- **Exactly 3 filters are migrated onto `FilterPipeline`:** `NpmInstallFilter`, `LsFilter`, `ESLintFilter`. The other **29** remain imperative `apply()` implementations. (Earlier notes said "33 not migrated" — that counted infrastructure classes. The number of *domain filters awaiting migration* is **29**.)
-- **6 strategy classes implement `FilterStage`:** `AnsiStripStrategy`, `DeduplicationStrategy`, `GroupingStrategy`, `JsonStructureStrategy`, `StateMachineStrategy`, `TreeCompressionStrategy`. Supporting: `TimeoutCharSequence`, `RegexTimeoutException`.
+- **All 31 compressing domain filters extend `PipelineBackedFilter`.** `PythonFilter` is the documented router (`python -m pytest` → `PytestFilter`; `python -c` stays identity). `PassthroughStrategy` remains the unmatched-command fallback and does not extend the adapter.
+- **`apply()` is final on the adapter.** Gates live in `beforePipeline`; parsing lives in named `FilterStage`s. No-arg constructors used by the corpus share `FilterOverrideLoader.standalone()`.
+- **Shared stages:** the original six (`AnsiStrip`, `Deduplication`, `Grouping`, `JsonStructure`, `StateMachine`, `TreeCompression`) plus `TailLinesStage`, `HeadTailStage`, `AggregateByKeyStage`, `RegexCaptureStage`, `GitStatusStage`, `JsonLinesStage`, `DockerPsStage`. Supporting: `BoundedRegex`, `TimeoutCharSequence`, `RegexTimeoutException`.
 
 ### 4.7 Pipeline (`filter/pipeline/`)
 
@@ -199,8 +200,8 @@ Parsing is Jackson `TomlMapper` into `@RegisterForReflection` records. Command l
 
 **Two real weaknesses here:**
 
-- The three migrated filters call `new FilterOverrideLoader()` in their no-arg constructors, so they get **private caches** rather than the `@ApplicationScoped` singleton.
-- **There is no trust gate.** Any `.condense/filters.toml` that parses is applied. A repository you merely cloned can therefore reshape what your agent sees. This is Condense's largest open security gap and is **Phase 6**.
+- Production filters inject the `@ApplicationScoped` `FilterOverrideLoader`. Corpus / `new XxxFilter()` share `FilterOverrideLoader.standalone()`.
+- **There is no trust gate.** Any `.condense/filters.toml` that parses is applied. A repository you merely cloned can therefore reshape what your agent sees. This is Condense's largest open security gap and is **Phase 6**. The blast radius is now every command, because every domain filter resolves overrides.
 
 ### 4.9 Persistence (`core/TrackingRepository.java`)
 
@@ -305,11 +306,11 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D6 | ~~`install.sh` header advertises Intel macOS prebuilts~~ **FIXED** | Header matches shipped platforms | Phase 1 |
 | D7 | ~~Token counting is a `/4` heuristic mixing bytes and chars~~ **FIXED** | `utf8_weighted_v1`; file and string share one UTF-8 code-point function; published p95 0.35 vs cl100k_base | Phase 2 |
 | D8 | ~~No machine-enforced savings or fidelity gate; the "≥60% savings" bar is prose only~~ **FIXED** | `corpus/catalog.json` + `FidelityCorpusTest`; 100% critical-signal retention; baked floors | Phase 3 |
-| D9 | 29 domain filters are not on `FilterPipeline` | grep for `FilterPipeline` under `filter/` | Phase 4 |
-| D10 | `StrategyRegistry` silently last-wins on duplicate command prefixes | `LinkedHashMap.put` with no check | Phase 4 |
-| D11 | Built-in `ESLintFilter` constructs `GroupingStrategy` with `timeoutMillis = 0` → **unbounded regex**, while the override path is bounded at 200 ms | `ESLintFilter` | Phase 4 |
-| D12 | Migrated filters `new FilterOverrideLoader()` in constructors, bypassing the CDI singleton cache | `NpmInstallFilter`, `LsFilter`, `ESLintFilter` | Phase 4/5 |
-| D13 | No built-in declarative filter definitions; only 3 filters are override-capable | no `resources/filters/*.toml` exists | Phase 5 |
+| D9 | ~~29 domain filters are not on `FilterPipeline`~~ **FIXED** | 31 extend `PipelineBackedFilter`; `PythonFilter` routes | Phase 4 |
+| D10 | ~~`StrategyRegistry` silently last-wins on duplicate command prefixes~~ **FIXED** | `PrefixIndex` throws at `@PostConstruct` | Phase 4 |
+| D11 | ~~Built-in `ESLintFilter` constructs `GroupingStrategy` with `timeoutMillis = 0`~~ **FIXED** | `GroupingStrategy` / `BoundedRegex` default 200 ms | Phase 4 |
+| D12 | ~~Migrated filters `new FilterOverrideLoader()` in constructors~~ **FIXED** | CDI inject + `standalone()` singleton | Phase 4 |
+| D13 | No built-in declarative filter definitions (every filter is now override-capable via the Java pipeline) | no `resources/filters/*.toml` exists | Phase 5 |
 | D14 | **No trust gate on project-supplied `.condense/filters.toml`** — a cloned repo can reshape agent-visible output | `FilterOverrideLoader.load` | Phase 6 |
 | D15 | No output provenance: an agent cannot distinguish Condense-generated summary text from tool output | by inspection | Phase 6 |
 | D16 | No schema versioning or migrations; existing DBs never gain columns | `initSchema` runs only when file absent | Phase 7 |
@@ -391,7 +392,7 @@ Three sequential efforts the 17-phase roadmap builds directly on top of. Commit 
 
 ## 8. This engagement: what was actually done
 
-Two turns of planning, then Phase 1, Phase 2, and Phase 3 code.
+Two turns of planning, then Phase 1, Phase 2, Phase 3, and Phase 4 code.
 
 | Activity | Status | Notes |
 |---|---|---|
@@ -405,16 +406,18 @@ Two turns of planning, then Phase 1, Phase 2, and Phase 3 code.
 | Phase 2 code | **LANDED** | `utf8_weighted_v1`, UTF-8 file/string agreement, published p95 0.35 vs cl100k_base, `gain` estimator metadata. Native proof is the next green `NativeAnalyticsIT` run. |
 | Phase 3 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "start executing" |
 | Phase 3 code | **LANDED** | Versioned catalog (51 entries, 32/32 domain filters), 100% critical-signal retention, baked savings floors, seeded fuzz, `NativeCorpusIT`. Native proof is the next green `NativeCorpusIT` run. |
-| Phases 4–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 4 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "EXECUTE" / "start executing" |
+| Phase 4 code | **LANDED** | Universal `PipelineBackedFilter`; 51-row golden lock; `PrefixIndex`; `BoundedRegex` 200 ms (5 s document budget for ANSI/dedup); CDI + `standalone()` loader. Native proof is `NativeCorpusIT` through pipeline-backed `pytest`. |
+| Phases 5–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | This handoff | **COMPLETED** | Written, audited, then updated as phases landed |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`, `p2`, and `p3` are marked `completed`, `p4`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p4` are marked `completed`, `p5`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1, Phase 2, and Phase 3 code have landed.** Phases 4–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 4 code have landed.** Phases 5–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -591,7 +594,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 ### Phase 4 — Universal pipeline migration
 
-**Status: PENDING**
+**Status: CODE LANDED 4 Sep 2026.** Native-image proof is the next green `NativeCorpusIT` (`condense pytest` through `PipelineBackedFilter`).
 
 **Goal.** Move the remaining **29** domain filters onto `FilterPipeline`, so exactly one execution engine exists. Add duplicate-prefix detection to `StrategyRegistry`. Bound **every** regex, including the built-in ESLint `GroupingStrategy` currently at `timeoutMillis = 0`. Inject `FilterOverrideLoader` rather than constructing it per filter.
 
@@ -601,9 +604,18 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 **Fixes.** D9, D10, D11, D12.
 
-**Native.** Every migrated class must remain reachable and registered — Phase 1's drift test is the mechanism that keeps this honest.
+**What shipped (implementation, 4 Sep 2026).**
 
-**Exit criteria shape.** No class implements `FilterStrategy` directly except `PassthroughStrategy`; output is byte-identical to pre-migration across the entire corpus, or every diff is explicitly reviewed and recorded; duplicate prefixes fail fast at startup.
+- `PipelineBackedFilter` with final `apply()`, overridable `beforePipeline` / `selectInput` / `buildPipeline`.
+- All 31 compressing domain filters extend it. `PythonFilter` injects `@CommandFilter("pytest") PytestFilter` and passthroughs `python -c`.
+- Slice-0 golden lock: 51 files under `corpus/golden/`, `GoldenLockTest`. `docs/pipeline-migration-diffs.md` has no reviewed diffs — output is byte-identical to pre-migration.
+- `PrefixIndex` fail-fast; `PrefixIndexTest` plants a two-class collision.
+- `BoundedRegex` at 200 ms (same as `OVERRIDE_REGEX_TIMEOUT_MS`). Document-level ANSI/dedup uses a 5 s budget because a 10 MB capture cannot share a per-line 200 ms clock. `BoundedRegexUsageTest` walks filter sources.
+- `FilterOverrideLoader.standalone()` for no-arg / corpus constructors. CDI `@Inject` uses the application-scoped bean.
+- `ALLOWED_STRATEGIES` unchanged. No new Maven dependency.
+- Local JVM proof: `mvn test` green (358 run, 0 failures, 6 skipped). Native proof is the next green `NativeCorpusIT`.
+
+**What later phases need from this one.** A single `execute` path Phase 5 can replace with data; one choke point Phase 6 can trust-gate; real named stages Phase 9 can mark streamable.
 
 ---
 
@@ -934,9 +946,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 3 code landed 4 Sep 2026. JVM tests passed locally (`mvn test`, 337 run, 0 failures, 6 skipped). Native proof for the corpus smoke is the next green `NativeCorpusIT` in `build.yml` — this Windows workspace does not build native images.
+**Where we are.** Phase 4 code landed 4 Sep 2026. JVM tests passed locally (`mvn test`, 358 run, 0 failures, 6 skipped). Native proof for pipeline-backed `pytest` is the next green `NativeCorpusIT` in `build.yml` — this Windows workspace does not build native images.
 
-**Do not start Phase 4 code.** Present a complete Phase 4 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 5 code.** Present a complete Phase 5 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -952,13 +964,13 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 **Verify before doing anything**
 
 5. `git status --short` and `git log --oneline -5`. Reconcile §13 against `HEAD` and update this file if someone has worked since the last stop point.
-6. Confirm Phase 3 files exist (`corpus/catalog.json`, `FidelityCorpusTest`, `NativeCorpusIT`, `docs/fidelity-corpus.md`) and that no filter `apply()` method changed in this phase.
+6. Confirm Phase 4 files exist (`PipelineBackedFilter`, `BoundedRegex`, `PrefixIndex`, `corpus/golden/`, `GoldenLockTest`) and that `GoldenLockTest` is green.
 7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12). Confirm `NativeCorpusIT` appears in native job logs.
 
 **Then, and only then**
 
-8. Phase 3 code has landed. Confirm `NativeCorpusIT` still appears in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
-9. **Do not start Phase 4 code.** Present a complete Phase 4 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 4 code has landed. Confirm `NativeCorpusIT` still appears in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
+9. **Do not start Phase 5 code.** Present a complete Phase 5 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 
