@@ -52,7 +52,7 @@ Summary: 1 failed, 411 passed in 12.45s
 
 ## Installation
 
-### Linux (x64)
+### Linux (x64 and aarch64)
 ```bash
 curl -fsSL https://github.com/AryanKatwal06/condense/releases/latest/download/install.sh | bash
 ```
@@ -287,14 +287,14 @@ This indicates that condense encountered an error when attempting to write to or
 
 ## Building from Source
 
-Prerequisites: Java 17+ / GraalVM JDK 21 (Mandrel 23.1+ recommended), Maven 3.9+
+Prerequisites: GraalVM JDK 21 (Mandrel 23.1+ recommended), Maven 3.9+
 
 ```bash
 git clone https://github.com/AryanKatwal06/condense.git
 cd condense/condense
 ./mvnw test                        # run all 140+ tests
 ./mvnw package -Pnative            # build native binary
-./target/condense --version        # verify
+./target/condense-runner --version # verify
 ```
 
 ---
