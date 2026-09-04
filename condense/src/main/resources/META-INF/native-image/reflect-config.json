@@ -18,6 +18,12 @@
     "allDeclaredFields": true
   },
   {
+    "name": "com.condense.core.CondenseConfig$CommandConfig",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
     "name": "com.condense.core.TeeMode",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
@@ -379,7 +385,6 @@
     "allDeclaredMethods": true
   },
   { "name": "com.condense.analytics.GainCommand",       "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
-  { "name": "com.condense.analytics.GainReport",        "allDeclaredConstructors": true, "allDeclaredMethods": true },
   { "name": "com.condense.analytics.GainRepository",    "allDeclaredConstructors": true, "allDeclaredMethods": true },
   { "name": "com.condense.analytics.AsciiGraphRenderer","allDeclaredMethods": true },
   { "name": "com.condense.hooks.InitCommand",           "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
@@ -388,11 +393,6 @@
   { "name": "com.condense.hooks.HookTool",              "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.config.ConfigCommand",        "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.config.ConfigWriter",         "allDeclaredConstructors": true, "allDeclaredMethods": true },
-  { "name": "com.condense.core.TrackingRepository$AggregateStats", "allDeclaredConstructors": true, "allDeclaredMethods": true },
-  { "name": "com.condense.core.TrackingRepository$DailyStat",      "allDeclaredConstructors": true, "allDeclaredMethods": true },
-  { "name": "com.condense.core.TrackingRepository$WeeklyStat",     "allDeclaredConstructors": true, "allDeclaredMethods": true },
-  { "name": "com.condense.core.TrackingRepository$TopCommand",     "allDeclaredConstructors": true, "allDeclaredMethods": true },
-  { "name": "com.condense.core.TrackingRepository$RecentCommand",  "allDeclaredConstructors": true, "allDeclaredMethods": true },
   { "name": "com.condense.uninstall.UninstallCommand",             "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.core.SafePathValidator",                 "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.core.PackageManagerDetector",            "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
