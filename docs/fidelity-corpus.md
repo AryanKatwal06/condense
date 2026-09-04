@@ -33,6 +33,8 @@ Exactly one of `savings_floor` or `savings_exemption` is required.
 
 Filters are constructed with their no-arg constructor (same as existing `*FilterTest` classes), not via CDI. Phase 4 added a byte lock of that constructor path so a pipeline migration cannot change agent-visible output silently. Reviewed diffs are listed in [pipeline-migration-diffs.md](pipeline-migration-diffs.md).
 
+Builtin pipelines are data. Each `PipelineBackedFilter` loads `classpath:filters/<definitionName>.toml` through `BuiltinDefinitionCatalog`. The 51-row golden lock is still the product fidelity contract; inline `[[tests]]` in those TOML files are small wiring checks, not a second corpus. See [filter-schema.md](filter-schema.md).
+
 ## Floor policy
 
 Measured with `utf8_weighted_v1` (`FilterResult.savingsPct()`).
@@ -50,4 +52,4 @@ Seed **`20260904`**. 25 iterations per compressing entry. Mutations that keep ev
 
 ## Native smoke
 
-There is no `condense replay` CLI. `NativeCorpusIT` writes `fixtures/pytest/typical.txt` next to a stub `pytest` (`pytest.cmd` on Windows) that prints that fixture and exits 1, prepends that directory to `PATH`, and runs the native binary as `condense pytest`. On Windows the native binary resolves PATHEXT shims itself because `ProcessBuilder` will not find `pytest.cmd` by bare name. Proof is the IT class name in `build.yml` native job logs.
+There is no `condense replay` CLI. `NativeCorpusIT` writes `fixtures/pytest/typical.txt` next to a stub `pytest` (`pytest.cmd` on Windows) that prints that fixture and exits 1, prepends that directory to `PATH`, and runs the native binary as `condense pytest`. That path is now a classpath TOML pipeline inside the image. On Windows the native binary resolves PATHEXT shims itself because `ProcessBuilder` will not find `pytest.cmd` by bare name. `NativeBuiltinDefinitionIT` proves schema v1 `config validate` (including a promoted `tail_lines` override) inside the same binary. Proof is the IT class names in `build.yml` native job logs.

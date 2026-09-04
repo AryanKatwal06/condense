@@ -1,0 +1,99 @@
+# Filter schema v1
+
+Builtin pipelines and user overrides share one schema. Data is interpreted by a hardcoded `StageFactory` switch. A TOML file cannot name a Java class or register a new command.
+
+## Two document types
+
+**Builtin** — `condense/src/main/resources/filters/<name>.toml`, enumerated by `filters/index.toml`:
+
+```toml
+schema_version = 1
+name = "npm-install"
+commands = ["npm install", "npm ci", "npm i"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "npm_install_summary"
+
+[[tests]]
+id = "packages-and-vulns"
+input = """
+added 12 packages in 3s
+found 3 vulnerabilities (1 critical)
+"""
+expected = "✓ npm install: 12 packages | found 3 vulnerabilit"
+```
+
+**Override** — project `.condense/filters.toml` or user-global `filters.toml`:
+
+```toml
+schema_version = 1
+
+[filters."npm install"]
+stages = [
+  { strategy = "ansi_strip" },
+  { strategy = "tail_lines", max_lines = 20, skip_blank = true }
+]
+```
+
+Overrides do not carry `name` or `[[tests]]`. `stages = []` replaces the default with an identity pipeline; it does not merge.
+
+`schema_version = 1` is required. Unknown keys are rejected. Errors include a dotted path, and Jackson line/column when the parser (or a source scan fallback) can locate the key.
+
+`CondenseConfig` still uses a separate mapper that ignores unknown keys. Filter documents use `DefinitionMappers.STRICT_TOML`.
+
+## Precedence
+
+1. Project `.condense/filters.toml` (fail-open: invalid file → warn → next tier)
+2. User-global `filters.toml` in the config directory (fail-open)
+3. Builtin `classpath:filters/<name>.toml` via `BuiltinDefinitionCatalog` (fail-closed)
+
+`PythonFilter` is a Java router and has no TOML file.
+
+## Index rule
+
+Runtime loads **only** names listed in `filters/index.toml`, each via an exact resource path. It never walks a classpath directory. Graal includes `filters/.*\.toml` for `getResource`, not for directory listing.
+
+The Maven `process-classes` validator (`BuiltinDefinitionValidator`) asserts index ↔ files on disk ↔ every `PipelineBackedFilter.definitionName()` ↔ `@CommandFilter` prefixes (the last two via Surefire architecture tests).
+
+## Fail-closed vs fail-open
+
+| Surface | Invalid document |
+|---|---|
+| Builtin index + 31 definitions | Fail the build (`process-classes`) and fail catalog load |
+| User override | Warn and fall through to the next tier. `condense config validate` exits 1 |
+| Inline `[[tests]]` failure | Fail the **build**, not a proxied command |
+
+Override files without `schema_version` fail-open at runtime.
+
+## Stage vocabulary
+
+Generic aliases (canonical snake_case; hyphen/short aliases exist for the original six):
+
+| Strategy | Parameters |
+|---|---|
+| `ansi_strip`, `tree_compression`, `json_structure` | none |
+| `deduplication` | `window_size` (1–10000, default 50) |
+| `grouping` | `pattern` (≤500 chars, ≥1 group), `include_other` |
+| `state_machine` | `initial_state`, `transitions` (≤50), `default_actions` |
+| `tail_lines` | `max_lines`, `skip_blank`, `header_only_when_truncating` |
+| `head_tail` | `head`, `tail` |
+| `aggregate_by_key` | `key` in `{prefix_before_colon, file_extension}`, `header` (`{lines}`, `{keys}`), `top_n` |
+| `regex_capture` | `pattern`, `format` (`$1`, `$0`), `fallback` |
+| `git_status`, `json_lines`, `docker_ps` | none |
+
+Named command-specific aliases (no user params; trusted Java):  
+`git_add_summary`, `git_commit_summary`, `git_diff_summary`, `git_log`, `git_push_summary`, `ls_empty_tree_fallback`, `cat_content`, `docker_build_summary`, `kubectl_dispatch`, `cargo_clippy_summary`, `cargo_install_summary`, `cargo_test_summary`, `gradle_summary`, `make_summary`, `mvn_summary`, `eslint_json`, `eslint_text`, `jest_summary`, `npm_install_summary`, `tsc_summary`, `vitest_summary`, `golangci_summary`, `pip_install_summary`, `pytest_summary`, `ruff_summary`.
+
+User overrides may use any alias in v1. Capability restriction is Phase 6.
+
+## Adding a definition
+
+1. Add a thin `PipelineBackedFilter` with `definitionName()` and gates only. Do not override `buildPipeline()`.
+2. Write `src/main/resources/filters/<name>.toml` (`schema_version = 1`, unique `name`, `commands` matching `@CommandFilter`, `[[stages]]`, ≥1 `[[tests]]`).
+3. Append the name to `filters/index.toml`.
+4. Add corpus fixtures, a `catalog.json` row, and a golden lock. See [fidelity-corpus.md](fidelity-corpus.md) and [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+New Java is needed only when `StageFactory` lacks a stage. A TOML file cannot register a command; dispatch stays on `@CommandFilter`.

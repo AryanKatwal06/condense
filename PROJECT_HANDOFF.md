@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 4 code landed).
+**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 5 code landed).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 4. Confirm with `git log -1` and origin before starting Phase 5.
+**Branch at handoff:** `main` after Phase 5. Confirm with `git log -1` and origin before starting Phase 6.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -268,7 +268,7 @@ Set.of("condense.db", "condense.db-wal", "condense.db-shm",
 | `resource-config.json` | `com/condense/version.properties`, `filters/.*\.toml`, `hooks/.*`, `application.properties`, `org/sqlite/native/.*` |
 | `reflect-config.json` | Hand-maintained. **6 classes are registered twice**: `GainReport` and all five `TrackingRepository` nested records (`AggregateStats`, `DailyStat`, `WeeklyStat`, `TopCommand`, `RecentCommand`) |
 
-Two notes: `resource-config.json` already reserves `filters/.*\.toml`, but **no such resource files exist yet** — that pattern is pre-provisioned for Phase 5. And POM native args add `--initialize-at-build-time=com.condense` plus a per-OS `sqlite.native.exclude` regex that strips non-matching SQLite native libraries.
+`resource-config.json` includes `filters/.*\.toml`. Phase 5 ships `filters/index.toml` plus 31 definition files (no `python.toml`). Enumeration is the index; runtime never walks the directory. POM native args add `--initialize-at-build-time=com.condense` plus a per-OS `sqlite.native.exclude` regex that strips non-matching SQLite native libraries.
 
 ### 4.14 Build and CI
 
@@ -310,7 +310,7 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D10 | ~~`StrategyRegistry` silently last-wins on duplicate command prefixes~~ **FIXED** | `PrefixIndex` throws at `@PostConstruct` | Phase 4 |
 | D11 | ~~Built-in `ESLintFilter` constructs `GroupingStrategy` with `timeoutMillis = 0`~~ **FIXED** | `GroupingStrategy` / `BoundedRegex` default 200 ms | Phase 4 |
 | D12 | ~~Migrated filters `new FilterOverrideLoader()` in constructors~~ **FIXED** | CDI inject + `standalone()` singleton | Phase 4 |
-| D13 | No built-in declarative filter definitions (every filter is now override-capable via the Java pipeline) | no `resources/filters/*.toml` exists | Phase 5 |
+| D13 | ~~No built-in declarative filter definitions~~ **FIXED** | `filters/index.toml` + 31 definition files; `PipelineBackedFilter.buildPipeline()` loads the catalog | Phase 5 |
 | D14 | **No trust gate on project-supplied `.condense/filters.toml`** — a cloned repo can reshape agent-visible output | `FilterOverrideLoader.load` | Phase 6 |
 | D15 | No output provenance: an agent cannot distinguish Condense-generated summary text from tool output | by inspection | Phase 6 |
 | D16 | No schema versioning or migrations; existing DBs never gain columns | `initSchema` runs only when file absent | Phase 7 |
@@ -392,7 +392,7 @@ Three sequential efforts the 17-phase roadmap builds directly on top of. Commit 
 
 ## 8. This engagement: what was actually done
 
-Two turns of planning, then Phase 1, Phase 2, Phase 3, and Phase 4 code.
+Two turns of planning, then Phase 1 through Phase 5 code.
 
 | Activity | Status | Notes |
 |---|---|---|
@@ -408,16 +408,18 @@ Two turns of planning, then Phase 1, Phase 2, Phase 3, and Phase 4 code.
 | Phase 3 code | **LANDED** | Versioned catalog (51 entries, 32/32 domain filters), 100% critical-signal retention, baked savings floors, seeded fuzz, `NativeCorpusIT`. Native proof is the next green `NativeCorpusIT` run. |
 | Phase 4 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "EXECUTE" / "start executing" |
 | Phase 4 code | **LANDED** | Universal `PipelineBackedFilter`; 51-row golden lock; `PrefixIndex`; `BoundedRegex` 200 ms (5 s document budget for ANSI/dedup); CDI + `standalone()` loader. Native proof is `NativeCorpusIT` through pipeline-backed `pytest`. |
-| Phases 5–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 5 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "Implement the plan" |
+| Phase 5 code | **LANDED** | Schema v1 TOML builtins; `StageFactory`; `definitionName()`; `process-classes` validator; `NativeBuiltinDefinitionIT`. Native proof is CI `NativeBuiltinDefinitionIT` + `NativeCorpusIT`. |
+| Phases 6–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | This handoff | **COMPLETED** | Written, audited, then updated as phases landed |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p4` are marked `completed`, `p5`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p5` are marked `completed`, `p6`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 4 code have landed.** Phases 5–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 5 code have landed.** Phases 6–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -621,7 +623,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 ### Phase 5 — Declarative filter schema v1
 
-**Status: PENDING**
+**Status: CODE LANDED 4 Sep 2026.** Native-image proof is the next green `NativeBuiltinDefinitionIT` and `NativeCorpusIT` in `build.yml`.
 
 **Goal.** Filters expressible as data. A versioned schema (`schema_version` required), unknown-key rejection, typed validation with precise error locations, a stage vocabulary that covers what all 32 filters actually need, built-in defaults shipped as validated resources, **inline declarative test cases inside the definition files**, a test runner for them, and **build-time validation** that fails the Maven build on a syntax error or duplicate definition name.
 
@@ -629,11 +631,23 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 **Depends on.** Phase 4.
 
+**Fixes.** D13.
+
+**What shipped (implementation, 4 Sep 2026).**
+
+- Schema v1 for builtins and overrides: required `schema_version = 1`, unknown-key rejection via dedicated `DefinitionMappers.STRICT_TOML` (`Mappers.TOML` unchanged), `DefinitionError` with dotted path and line/column when available.
+- `StageFactory` hardcoded switch: promoted shared stages plus named command-specific aliases. `aggregate_by_key` presets and `regex_capture` string templates. No reflection.
+- 31 `filters/*.toml` files + `filters/index.toml`. `PipelineBackedFilter.buildPipeline()` is final and loads `BuiltinDefinitionCatalog`. Subclasses keep gates and `definitionName()`. `PythonFilter` unchanged.
+- Inline `[[tests]]` runner shared by Surefire and `BuiltinDefinitionValidator` (exec-maven-plugin at `process-classes`).
+- Loader gaps closed: prefix match, empty `stages = []` replacement, `json_structure`, global-when-project-unmatched, concurrent resolve, `TimeoutCharSequence`.
+- `NativeBuiltinDefinitionIT` for `config validate -f` (promoted `tail_lines`, missing version, unknown key). `NativeCorpusIT` remains the TOML-backed pytest proof.
+- Docs: `docs/filter-schema.md`; CONTRIBUTING / ARCHITECTURE / fidelity-corpus / CHANGELOG honesty.
+
 **Independence requirement.** Condense's own schema, its own stage names, its own `.condense/` paths. Do **not** transliterate Zap's `strip_ansi → replace → match_output → strip/keep_lines → truncate_lines_at → head/tail_lines → max_lines → on_empty` pipeline. Design equivalent capability from the existing `FilterStage` vocabulary, adding only stages justified by a real filter's needs.
 
-**Deliberately better than Zap.** Zap has the right idea — 57 built-in TOML filters, inline `[[tests.*]]` cases, `build.rs` validating and rejecting duplicates at compile time, `zap verify --require-all` — but no CI, so none of it is enforced. Condense should gate on it. Zap also lacks precise validation error locations.
+**Deliberately better than Zap.** Zap has the right idea — 57 built-in TOML filters, inline `[[tests.*]]` cases, `build.rs` validating and rejecting duplicates at compile time, `zap verify --require-all` — but no CI, so none of it is enforced. Condense gates in Maven `process-classes` (survives `-DskipTests`) and Failsafe.
 
-**Native.** `resource-config.json` already reserves `filters/.*\.toml`. Definitions are **data interpreted by a hardcoded dispatch**, never a path to loading code.
+**Native.** Definitions are **data interpreted by a hardcoded dispatch**, never a path to loading code. Catalog load opens `filters/index.toml` and exactly listed files.
 
 ---
 
@@ -946,9 +960,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 4 code landed 4 Sep 2026. JVM tests passed locally (`mvn test`, 358 run, 0 failures, 6 skipped). Native proof for pipeline-backed `pytest` is the next green `NativeCorpusIT` in `build.yml` — this Windows workspace does not build native images.
+**Where we are.** Phase 5 code landed 4 Sep 2026. Builtin pipelines are `classpath:filters/*.toml`. JVM proof is `mvn test` (379 run, 0 failures, 6 skipped) plus `mvn package -DskipTests` (validator at `process-classes`; a planted unknown key failed the package and was reverted). Native proof is the next green `NativeBuiltinDefinitionIT` and `NativeCorpusIT` in `build.yml` — this Windows workspace does not build native images.
 
-**Do not start Phase 5 code.** Present a complete Phase 5 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 6 code.** Present a complete Phase 6 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -969,8 +983,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 4 code has landed. Confirm `NativeCorpusIT` still appears in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
-9. **Do not start Phase 5 code.** Present a complete Phase 5 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 5 code has landed. Confirm `NativeBuiltinDefinitionIT` and `NativeCorpusIT` appear in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
+9. **Do not start Phase 6 code.** Present a complete Phase 6 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 
