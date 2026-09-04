@@ -16,6 +16,7 @@ import java.util.List;
  */
 @RegisterForReflection(targets = {
     GainReport.class,
+    EstimatorInfo.class,
     TrackingRepository.AggregateStats.class,
     TrackingRepository.DailyStat.class,
     TrackingRepository.WeeklyStat.class,
@@ -55,6 +56,15 @@ public record GainReport(
     List<TopCommand> topCommands,
 
     @JsonProperty("daily")
-    List<DailyStat> daily
+    List<DailyStat> daily,
 
-) {}
+    @JsonProperty("estimator")
+    EstimatorInfo estimator
+
+) {
+    public GainReport {
+        if (estimator == null) {
+            estimator = EstimatorInfo.current();
+        }
+    }
+}

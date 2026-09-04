@@ -1,6 +1,7 @@
 package com.condense.analytics;
 
 import com.condense.core.TrackingRepository;
+import com.condense.core.Utf8WeightedTokenEstimator;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.*;
@@ -33,6 +34,10 @@ class GainRepositoryTest {
         assertThat(report.totalCommands()).isGreaterThan(0);
         assertThat(report.tokensSaved()).isGreaterThan(0);
         assertThat(report.savingsPct()).isGreaterThan(0);
+        assertThat(report.estimator()).isNotNull();
+        assertThat(report.estimator().name()).isEqualTo(Utf8WeightedTokenEstimator.NAME);
+        assertThat(report.estimator().reference()).isEqualTo(Utf8WeightedTokenEstimator.REFERENCE_TOKENIZER);
+        assertThat(report.estimator().p95RelError()).isEqualTo(Utf8WeightedTokenEstimator.PUBLISHED_P95_REL_ERROR);
     }
 
     @Test

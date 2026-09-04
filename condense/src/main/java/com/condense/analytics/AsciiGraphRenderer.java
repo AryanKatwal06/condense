@@ -47,11 +47,12 @@ public final class AsciiGraphRenderer {
      * ════════════════════════════════════════════════════════════
      *
      * Total commands:    127
-     * Input tokens:      48,302
-     * Output tokens:      9,142
-     * Tokens saved:      39,160 (81.1%)
+     * Input tokens (est.):  48,302
+     * Output tokens (est.):  9,142
+     * Tokens saved (est.):  39,160 (81.1%)
      * Total exec time:      612ms (avg 4ms)
      * Efficiency meter: ████████████████████░░░░ 81.1%
+     * Estimator:            utf8_weighted_v1  p95 ±35% vs cl100k_base
      * </pre>
      */
     public static String renderSummary(GainReport report) {
@@ -63,15 +64,16 @@ public final class AsciiGraphRenderer {
 
         return title + "\n" +
                DIVIDER + "\n\n" +
-               line("Total commands",  fmt(report.totalCommands())) +
-               line("Input tokens",    fmt(report.inputTokens())) +
-               line("Output tokens",   fmt(report.outputTokens())) +
-               line("Tokens saved",    fmt(report.tokensSaved())
+               line("Total commands",       fmt(report.totalCommands())) +
+               line("Input tokens (est.)",  fmt(report.inputTokens())) +
+               line("Output tokens (est.)", fmt(report.outputTokens())) +
+               line("Tokens saved (est.)",  fmt(report.tokensSaved())
                    + " (" + String.format("%.1f", pct) + "%)") +
                line("Total exec time", report.totalExecMs() + "ms"
                    + " (avg " + report.avgExecMs() + "ms)") +
                "Efficiency meter: " + meter + " "
-                   + String.format("%.1f", pct) + "%";
+                   + String.format("%.1f", pct) + "%\n" +
+               line("Estimator", formatEstimator(report.estimator()));
     }
 
 
@@ -298,8 +300,14 @@ public final class AsciiGraphRenderer {
 
 
 
+    private static String formatEstimator(EstimatorInfo info) {
+        EstimatorInfo estimator = info == null ? EstimatorInfo.current() : info;
+        int pct = (int) Math.round(estimator.p95RelError() * 100);
+        return estimator.name() + "  p95 ±" + pct + "% vs " + estimator.reference();
+    }
+
     private static String line(String label, String value) {
-        return String.format("%-18s %s%n", label + ":", value);
+        return String.format("%-22s %s%n", label + ":", value);
     }
 
     private static String fmt(long n) {

@@ -48,7 +48,8 @@ public class GainRepository {
             agg.sumExecMs(),
             agg.avgExecMs(),
             top,
-            daily
+            daily,
+            EstimatorInfo.current()
         );
     }
 

@@ -2,6 +2,7 @@ package com.condense.nativeimage;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.condense.core.Utf8WeightedTokenEstimator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -44,5 +45,13 @@ class NativeAnalyticsIT {
         assertThat(report.get("total_commands").asLong())
             .as("gain JSON after a proxied command must report at least one row: %s", gain.stdout())
             .isGreaterThanOrEqualTo(1);
+        JsonNode estimator = report.get("estimator");
+        assertThat(estimator)
+            .as("gain JSON must include estimator metadata: %s", gain.stdout())
+            .isNotNull();
+        assertThat(estimator.get("name").asText()).isEqualTo(Utf8WeightedTokenEstimator.NAME);
+        assertThat(estimator.get("reference").asText()).isEqualTo(Utf8WeightedTokenEstimator.REFERENCE_TOKENIZER);
+        assertThat(estimator.get("p95_rel_error").asDouble())
+            .isEqualTo(Utf8WeightedTokenEstimator.PUBLISHED_P95_REL_ERROR);
     }
 }

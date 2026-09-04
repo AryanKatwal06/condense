@@ -41,6 +41,12 @@
     "allDeclaredFields": true
   },
   {
+    "name": "com.condense.analytics.EstimatorInfo",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
     "name": "com.condense.core.TrackingRepository$AggregateStats",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,

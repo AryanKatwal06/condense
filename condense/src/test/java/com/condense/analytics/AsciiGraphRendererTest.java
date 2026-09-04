@@ -57,21 +57,25 @@ class AsciiGraphRendererTest {
     @Test
     void renderSummary_containsAllRequiredFields() {
         GainReport report = new GainReport(
-            "global", 30, 127L, 48302L, 9142L, 39160L, 81, 612L, 4L, List.of(), List.of());
+            "global", 30, 127L, 48302L, 9142L, 39160L, 81, 612L, 4L, List.of(), List.of(), null);
         String output = AsciiGraphRenderer.renderSummary(report);
 
         assertThat(output).contains("Total commands");
         assertThat(output).contains("127");
-        assertThat(output).contains("Tokens saved");
+        assertThat(output).contains("Tokens saved (est.)");
+        assertThat(output).contains("Input tokens (est.)");
         assertThat(output).contains("Efficiency meter");
         assertThat(output).contains("Global Scope");
         assertThat(output).contains("81");
+        assertThat(output).contains("utf8_weighted_v1");
+        assertThat(output).contains("cl100k_base");
+        assertThat(output).contains("p95");
     }
 
     @Test
     void renderSummary_containsDivider() {
         GainReport report = new GainReport(
-            "global", 30, 0L, 0L, 0L, 0L, 0, 0L, 0L, List.of(), List.of());
+            "global", 30, 0L, 0L, 0L, 0L, 0, 0L, 0L, List.of(), List.of(), null);
         assertThat(AsciiGraphRenderer.renderSummary(report)).contains("════");
     }
 

@@ -60,6 +60,7 @@ class ReflectConfigDriftTest {
             FilterOverrideValidationResult.class.getName(),
             FilterOverrideValidationResult.Status.class.getName(),
             com.condense.analytics.GainReport.class.getName(),
+            com.condense.analytics.EstimatorInfo.class.getName(),
             TrackingRepository.AggregateStats.class.getName(),
             TrackingRepository.DailyStat.class.getName(),
             TrackingRepository.WeeklyStat.class.getName(),
