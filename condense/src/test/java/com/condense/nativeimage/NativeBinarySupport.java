@@ -56,6 +56,15 @@ public final class NativeBinarySupport {
     }
 
     public static CliResult run(Path configDir, Path dataDir, String... args) throws Exception {
+        return run(configDir, dataDir, null, args);
+    }
+
+    /**
+     * Runs the native binary. When {@code prependPathDir} is non-null it is
+     * prepended to {@code PATH} so a stub child command can be resolved.
+     */
+    public static CliResult run(Path configDir, Path dataDir, Path prependPathDir, String... args)
+            throws Exception {
         File binary = requireNativeBinary();
         List<String> command = new ArrayList<>();
         command.add(binary.getAbsolutePath());
@@ -64,6 +73,9 @@ public final class NativeBinarySupport {
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.environment().put(CONFIG_DIR_ENV, configDir.toAbsolutePath().toString());
         builder.environment().put(DATA_DIR_ENV, dataDir.toAbsolutePath().toString());
+        if (prependPathDir != null) {
+            prependPath(builder, prependPathDir);
+        }
         builder.redirectErrorStream(false);
 
         Process process = builder.start();
@@ -79,6 +91,19 @@ public final class NativeBinarySupport {
         stdout.join();
         stderr.join();
         return new CliResult(process.exitValue(), stdout.text(), stderr.text());
+    }
+
+    private static void prependPath(ProcessBuilder builder, Path extraDir) {
+        String extra = extraDir.toAbsolutePath().toString();
+        var env = builder.environment();
+        String current = env.get("PATH");
+        if (current == null) {
+            current = env.get("Path");
+        }
+        if (current == null) {
+            current = "";
+        }
+        env.put("PATH", extra + File.pathSeparator + current);
     }
 
     public static String[] trivialSucceedingCommand() {

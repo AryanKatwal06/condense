@@ -12,7 +12,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Base class providing fixture loading and assertion helpers for filter tests.
  *
  * <p>Fixture files live under {@code src/test/resources/fixtures/{command-name}/}.
- * Each fixture directory must contain at least {@code typical.txt}.
+ * A directory may use any stem ({@code typical.txt}, {@code failure.txt},
+ * {@code clean.txt}, …). The fidelity catalog in {@code corpus/catalog.json}
+ * is the machine-checked list of those files.
  */
 public abstract class FilterTestSupport {
 

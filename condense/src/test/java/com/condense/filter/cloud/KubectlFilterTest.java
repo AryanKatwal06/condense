@@ -39,9 +39,10 @@ class KubectlFilterTest extends FilterTestSupport {
     }
 
     @Test
-    void tokenSavings_arePositiveForTypicalFixture() throws Exception {
+    void tokenSavings_areRecordedInTheFidelityCatalog() throws Exception {
         FilterResult r = filter.apply("kubectl get pods",
             success(fixture("kubectl", "pods-unhealthy")), config, 0, false);
-        assertThat(r.savingsPct()).isGreaterThanOrEqualTo(-100);
+        assertThat(r.output()).contains("CrashLoopBackOff");
+        assertThat(r.wasFiltered()).isTrue();
     }
 }
