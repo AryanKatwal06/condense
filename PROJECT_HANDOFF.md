@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 2 code landed).
+**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 3 code landed).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 2. Confirm with `git log -1` and origin before starting Phase 3.
+**Branch at handoff:** `main` after Phase 3. Confirm with `git log -1` and origin before starting Phase 4.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -81,7 +81,7 @@ code-condenser/
 │  ├─ install.sh, install.ps1, uninstall.sh
 │  ├─ packaging/{completions,deb,homebrew,man,rpm,scoop,winget}
 │  └─ src/{main,test}/...
-├─ docs/{HOOKS.md, social-preview.svg}
+├─ docs/{HOOKS.md, token-estimator.md, fidelity-corpus.md, perf-baseline.md, social-preview.svg}
 ├─ README.md, CHANGELOG.md, CONTRIBUTING.md, SECURITY.md, LICENSE, NOTICE
 └─ PROJECT_HANDOFF.md             ← this file
 ```
@@ -304,7 +304,7 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D5 | ~~No linux-aarch64 CI or release job~~ **FIXED** | `ubuntu-24.04-arm` in build.yml and release.yml | Phase 1 |
 | D6 | ~~`install.sh` header advertises Intel macOS prebuilts~~ **FIXED** | Header matches shipped platforms | Phase 1 |
 | D7 | ~~Token counting is a `/4` heuristic mixing bytes and chars~~ **FIXED** | `utf8_weighted_v1`; file and string share one UTF-8 code-point function; published p95 0.35 vs cl100k_base | Phase 2 |
-| D8 | No machine-enforced savings or fidelity gate; the "≥60% savings" bar is prose only | `CONTRIBUTING.md` | Phase 3 |
+| D8 | ~~No machine-enforced savings or fidelity gate; the "≥60% savings" bar is prose only~~ **FIXED** | `corpus/catalog.json` + `FidelityCorpusTest`; 100% critical-signal retention; baked floors | Phase 3 |
 | D9 | 29 domain filters are not on `FilterPipeline` | grep for `FilterPipeline` under `filter/` | Phase 4 |
 | D10 | `StrategyRegistry` silently last-wins on duplicate command prefixes | `LinkedHashMap.put` with no check | Phase 4 |
 | D11 | Built-in `ESLintFilter` constructs `GroupingStrategy` with `timeoutMillis = 0` → **unbounded regex**, while the override path is bounded at 200 ms | `ESLintFilter` | Phase 4 |
@@ -391,7 +391,7 @@ Three sequential efforts the 17-phase roadmap builds directly on top of. Commit 
 
 ## 8. This engagement: what was actually done
 
-Two turns of planning, then Phase 1 and Phase 2 code.
+Two turns of planning, then Phase 1, Phase 2, and Phase 3 code.
 
 | Activity | Status | Notes |
 |---|---|---|
@@ -403,16 +403,18 @@ Two turns of planning, then Phase 1 and Phase 2 code.
 | Phase 1 code | **LANDED** | Java 21, env overrides, drift test, Failsafe native ITs, linux-aarch64 matrix, 80 MiB size ceiling. Native proof is CI run 33860368090. |
 | Phase 2 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "start executing" |
 | Phase 2 code | **LANDED** | `utf8_weighted_v1`, UTF-8 file/string agreement, published p95 0.35 vs cl100k_base, `gain` estimator metadata. Native proof is the next green `NativeAnalyticsIT` run. |
-| Phases 3–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 3 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "start executing" |
+| Phase 3 code | **LANDED** | Versioned catalog (51 entries, 32/32 domain filters), 100% critical-signal retention, baked savings floors, seeded fuzz, `NativeCorpusIT`. Native proof is the next green `NativeCorpusIT` run. |
+| Phases 4–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | This handoff | **COMPLETED** | Written, audited, then updated as phases landed |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1` and `p2` are marked `completed`, `p3`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`, `p2`, and `p3` are marked `completed`, `p4`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 and Phase 2 code have landed.** Phases 3–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1, Phase 2, and Phase 3 code have landed.** Phases 4–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -555,19 +557,35 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 ### Phase 3 — Golden corpus and machine-checkable fidelity contract
 
-**Status: PENDING**
+**Status: CODE LANDED 4 Sep 2026.** Native-image proof is the next green `NativeCorpusIT` in `build.yml` (PATH-stubbed `pytest` through the real binary).
 
 **Goal.** A versioned corpus of real command outputs with per-command declared **critical signals**, plus CI gates for (a) a savings floor where appropriate and (b) **100% critical-signal retention** — failures, error lines, and exit-relevant summary lines must never be filtered away.
 
 **Why here.** This is the safety net Phase 4's mass migration and Phase 9's streaming rewrite both need. Gates must come after Phase 2 so the numbers they enforce are honest.
 
-**Depends on.** Phases 1–2. Builds on the existing `FilterTestSupport` harness and `src/test/resources/fixtures/` (38 files across 20 command directories today).
+**Depends on.** Phases 1–2. Builds on the existing `FilterTestSupport` harness and `src/test/resources/fixtures/` (38 files across 20 command directories at the start of this phase).
 
 **Introduces.** The critical-signal invariant; corpus structure and versioning; CI gate jobs; property-based adversarial fuzzing that must never crash and never drop a critical signal.
 
 **Deliberately better than Zap.** Zap's `CONTRIBUTING.md` asks for ≥60% savings and its `zap verify --require-all` exists to enforce inline filter tests — but Zap has **no CI at all**, so neither is ever enforced. Condense must actually fail the build.
 
 **Native.** Gates run against filter logic in JVM for speed; at least one corpus smoke must run through the native binary so the corpus cannot silently diverge from shipped behavior.
+
+**What shipped (implementation, 4 Sep 2026).**
+
+- Catalog `condense/src/test/resources/corpus/catalog.json`, `schema_version` **1**, unknown keys rejected. **51 entries** covering all **32** domain filters (`PassthroughStrategy` excluded). Filters are constructed with their no-arg constructor, not CDI.
+- Gates in `mvn test`: `CorpusCatalogLoadTest`, `CorpusCoverageTest`, `FidelityCorpusTest` (100% literal-substring retention + baked floor), `CorpusFuzzTest`. Completeness fails if a new `FilterStrategy` has no row, or a new compressing row has floor &lt; 60.
+- Floor policy, measured with `utf8_weighted_v1`, then baked. **No filter `apply()` rewrite.** ≥60% → floor 60. Compresses but below 60% → measured minus 5-point cushion and `meets_contribution_bar: false`. Structurally cannot compress → enumerated `savings_exemption`.
+- Grandfathered floors: `jest/typical` 47, `git-status/detached-head` 47, `git-diff/stat` 28, `cat/large` 27, `docker-ps/typical` 35, `docker-logs/long` 18, `aws/describe-instances` 15, `cargo-test/passing` 49, `cargo-build/typical` 32.
+- Exemptions: `python-c/typical` `intentional_identity`; `git-push/rejected` `passthrough`; `ruff-check/passing`, `kubectl/pods-unhealthy` (−9%), `kubectl/pods-healthy` (0%) `too_small`.
+- New fixtures for the 11 previously uncovered filters plus `cat/large` and `ls/large` (those tests existed without committed fixture files).
+- Seeded fuzz seed **`20260904`**, 25 iterations per compressing entry. Mutations keep every critical substring already in the raw fixture: prefix noise (skipped for JSON and git porcelain) and extra blank lines. Non-blank suffix and ANSI wrapping were dropped because last-line and header-classified parsers would then drop a signal that is still in the input — not a fair retention probe, and not a license to change filters.
+- `NativeCorpusIT` PATH-stubs `pytest` / `pytest.cmd` to print `fixtures/pytest/typical.txt` and exit 1, then runs the native binary as `condense pytest`. `NativeBinarySupport.run` gained an optional PATH prepend. No new CLI, no jqwik, no new GitHub workflow.
+- `KubectlFilterTest` no-op `≥ -100` savings assert removed; the catalog records the `too_small` fact.
+- Docs: `docs/fidelity-corpus.md`; README / CONTRIBUTING / ARCHITECTURE honesty. `docs/token-estimator.md` notes the accuracy sample grew to n=59 (p95 0.366, still under the 0.40 gate); published bound 0.35 is unchanged.
+- Local JVM proof: `mvn test` **337 run, 0 failures, 6 skipped**. Native proof is CI.
+
+**What later phases need from this one.** A before/after check Phase 4 can migrate against; a fidelity contract Phase 9 streaming must not break; a contribution bar Phase 14 can attach to every new command.
 
 ---
 
@@ -906,6 +924,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 | `.cursor/` untracked and not ignored | `git status --short` plus reading `.gitignore` |
 | Branch synced at `fe4ad98` | `git log`, `git rev-list --left-right --count origin/main...HEAD` |
 | Zap facts | GitHub API for repo metadata, recursive tree, `.github` (404), and issues; raw file reads for the source files in §11.2 |
+| Phase 3 catalog covers 32 domain filters | `CorpusCoverageTest` plus `grep implements FilterStrategy` |
+| Phase 3 floors match measured savings | `FidelityCorpusTest` printed table, 4 Sep 2026; floors baked as measured−5 or 60 |
+| Phase 3 fuzz does not change filters | `git diff` on `src/main/java/com/condense/filter` is empty for this phase |
 
 **Not verified in this workspace (and why):** no native binary was built (this is a Windows dev box without the full GraalVM native toolchain configured here), so all native-image claims come from reading workflow definitions, POM profiles, and the Graal config files rather than from a local build. Do not assume native builds are currently green; **check the latest Actions run before starting Phase 1**.
 
@@ -913,9 +934,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 2 code landed 4 Sep 2026. JVM tests passed locally (`mvn test`, 326 run, 0 failures, 6 skipped). Native proof for the new `gain` JSON `estimator` object is the next green `NativeAnalyticsIT` in `build.yml` — this Windows workspace does not build native images.
+**Where we are.** Phase 3 code landed 4 Sep 2026. JVM tests passed locally (`mvn test`, 337 run, 0 failures, 6 skipped). Native proof for the corpus smoke is the next green `NativeCorpusIT` in `build.yml` — this Windows workspace does not build native images.
 
-**Do not start Phase 3 code.** Present a complete Phase 3 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 4 code.** Present a complete Phase 4 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -931,13 +952,13 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 **Verify before doing anything**
 
 5. `git status --short` and `git log --oneline -5`. Reconcile §13 against `HEAD` and update this file if someone has worked since the last stop point.
-6. Confirm Phase 2 files exist (`Utf8WeightedTokenEstimator`, `docs/token-estimator.md`, `EstimatorInfo`) and that `TokenCounter.count(Path)` no longer uses `Files.size`.
-7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12).
+6. Confirm Phase 3 files exist (`corpus/catalog.json`, `FidelityCorpusTest`, `NativeCorpusIT`, `docs/fidelity-corpus.md`) and that no filter `apply()` method changed in this phase.
+7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12). Confirm `NativeCorpusIT` appears in native job logs.
 
 **Then, and only then**
 
-8. Phase 2 code has landed. Confirm `NativeAnalyticsIT` still appears in native job logs and that `gain --format json` contains `estimator`.
-9. **Do not start Phase 3 code.** Present a complete Phase 3 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 3 code has landed. Confirm `NativeCorpusIT` still appears in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
+9. **Do not start Phase 4 code.** Present a complete Phase 4 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

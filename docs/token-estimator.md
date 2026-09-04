@@ -20,7 +20,7 @@ The same function is used for strings and files. `TokenCounter` is a static faca
 |---|---|
 | Estimator name | `utf8_weighted_v1` |
 | Reference tokenizer | `cl100k_base` (jtokkit, **test scope only**) |
-| Measured p95 relative error | 0.333 on 46 corpus files (38 filter fixtures + 6 Unicode samples + empty + long Latin) |
+| Measured p95 relative error | 0.366 on 59 corpus files (51 filter fixtures + 6 Unicode samples + empty + long Latin). The Phase 2 46-file sample measured 0.333; the published bound and CI gate did not change. |
 | **Published p95 relative error** | **0.35** (35%) |
 | CI gate | published + 0.05 = 0.40 |
 

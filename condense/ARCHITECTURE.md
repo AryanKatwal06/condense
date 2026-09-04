@@ -51,6 +51,8 @@ condense --version / --help
 
 6. **Token estimates, not tokenizer counts**: Analytics use `utf8_weighted_v1` (code-point walk, dense CJK/emoji, Latin ÷ 4). Files and strings share one function. `condense gain` publishes the estimator name and a p95 relative-error bound vs cl100k_base. There is no tokenizer in the native image; the yardstick is test-scoped. See `docs/token-estimator.md`.
 
+7. **Fidelity corpus**: Every domain filter has a row in the test-only `corpus/catalog.json`. `FidelityCorpusTest` requires 100% critical-signal retention and a baked savings floor. See `docs/fidelity-corpus.md`.
+
 ## Technology Stack
 
 - **Java 21** — language level

@@ -26,13 +26,13 @@ mvn package -Pnative -DskipTests  # native image build (takes 2-5 minutes)
 mvn failsafe:integration-test failsafe:verify -DskipITs=false   # native ITs against the built binary
 ```
 
-Native integration tests (`NativeCliIT`, `NativeAnalyticsIT`) require `native.image.path` and **fail rather than skip** if the binary is missing. They set `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` on the child process so they never write the developer's real analytics database.
+Native integration tests (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`) require `native.image.path` and **fail rather than skip** if the binary is missing. They set `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` on the child process so they never write the developer's real analytics database.
 
-See [docs/perf-baseline.md](docs/perf-baseline.md) for what CI measures (invocation overhead, native size ceiling, cold start). Token estimates are documented in [docs/token-estimator.md](docs/token-estimator.md); `TokenEstimatorAccuracyTest` fails `mvn test` if p95 error vs cl100k_base exceeds the published bound.
+See [docs/perf-baseline.md](docs/perf-baseline.md) for what CI measures (invocation overhead, native size ceiling, cold start). Token estimates are documented in [docs/token-estimator.md](docs/token-estimator.md); `TokenEstimatorAccuracyTest` fails `mvn test` if p95 error vs cl100k_base exceeds the published bound. Filter fidelity is documented in [docs/fidelity-corpus.md](docs/fidelity-corpus.md); `FidelityCorpusTest` fails if a catalogued critical signal is dropped or a baked savings floor is missed.
 
 ## Adding a New Command Filter
 
-**Contribution Bar:** The project requires at least 60% **estimated** token savings per filter PR, measured with `utf8_weighted_v1` (see [docs/token-estimator.md](docs/token-estimator.md)). All new filters must demonstrate ≥60% savings using the Java golden fixture framework.
+**Contribution Bar:** A new compressing filter must add a row to `condense/src/test/resources/corpus/catalog.json` with `savings_floor` ≥ 60, measured with `utf8_weighted_v1` (see [docs/token-estimator.md](docs/token-estimator.md) and [docs/fidelity-corpus.md](docs/fidelity-corpus.md)). `FidelityCorpusTest` enforces 100% critical-signal retention. Entries that structurally cannot compress must declare `savings_exemption` (`passthrough`, `too_small`, `verbose_mode`, `failure_verbatim`, `intentional_identity`). Do not set `meets_contribution_bar: false` on new work — that flag is only for grandfathered fixtures that already shipped below 60%.
 
 Adding support for a new command (e.g. `helm`) takes five steps:
 
@@ -70,12 +70,14 @@ public class HelmFilter implements FilterStrategy {
 - Never modify the exit code — that's the caller's job
 - Keep the class stateless — one instance is reused for all invocations
 
-### 2. Create fixture files
+### 2. Create fixture files and a catalog row
 
 ```
 src/test/resources/fixtures/helm/typical.txt   — real helm output (copy from terminal)
 src/test/resources/fixtures/helm/failure.txt   — failed command output
 ```
+
+Add an entry to `src/test/resources/corpus/catalog.json` with `critical_signals` (literal substrings that must survive filtering) and either `savings_floor` ≥ 60 or a listed `savings_exemption`. `CorpusCoverageTest` fails `mvn test` if the new `FilterStrategy` has no row.
 
 ### 3. Write tests
 
@@ -137,8 +139,9 @@ Then open a pull request. Confirm:
 
 - [ ] Filter class implemented with `@CommandFilter` and `@ApplicationScoped`
 - [ ] Fixture files created with real command output
+- [ ] Catalog row in `corpus/catalog.json` (60% floor or an enumerated exemption; critical signals retained)
 - [ ] Tests written covering typical + failure cases
-- [ ] `ReflectConfigDriftTest` passes (`mvn test`)
+- [ ] `ReflectConfigDriftTest` and `FidelityCorpusTest` pass (`mvn test`)
 - [ ] Native image builds without fallback
 - [ ] Native Failsafe ITs pass when the binary is present
 

@@ -36,4 +36,4 @@ Wall-clock on shared CI runners is noisy. A generous relative bound keeps this f
 
 ## What is not measured here
 
-Token-savings percentages, filter fidelity, native per-command latency, and release-time budgets. Those belong to later phases that depend on this baseline.
+Filter fidelity and baked savings floors are gated by the Phase 3 corpus (`docs/fidelity-corpus.md`). Native per-command latency and release-time budgets still belong to later phases.

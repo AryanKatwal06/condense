@@ -7,10 +7,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Added / Improved
+- CI now fails `mvn test` if a domain filter drops a declared critical signal or falls below its baked savings floor. The catalog is `condense/src/test/resources/corpus/catalog.json`. See [docs/fidelity-corpus.md](docs/fidelity-corpus.md).
 - Replaced the mixed byte/UTF-16 `/4` token heuristic with `utf8_weighted_v1`, a UTF-8 code-point estimator used for both files and strings. `condense gain` now labels counts as estimates and reports a p95 relative-error bound of 35% vs cl100k_base. See [docs/token-estimator.md](docs/token-estimator.md).
 - Set the compiler language level to Java 21 so bytecode matches GraalVM 21 CI and the documented toolchain.
 - Added `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` overrides in `PlatformDirs` so tests and power users can redirect config and analytics state on every OS, including macOS.
-- Native integration tests now run via Failsafe in CI (`NativeCliIT`, `NativeAnalyticsIT`) on linux-x64, linux-aarch64, macos-aarch64, and windows-x64, using isolated directories instead of the real user database.
+- Native integration tests now run via Failsafe in CI (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`) on linux-x64, linux-aarch64, macos-aarch64, and windows-x64, using isolated directories instead of the real user database.
 - Added `ReflectConfigDriftTest` to fail `mvn test` when a `FilterStrategy` or Jackson-bound type is missing from `reflect-config.json`, and removed duplicate native-image registrations.
 - Added linux-aarch64 native jobs to CI and release (`ubuntu-24.04-arm`) so the installer download of that artifact is honest.
 - Recorded a JVM invocation-overhead baseline and an 80 MiB uncompressed native-image size ceiling. See [docs/perf-baseline.md](docs/perf-baseline.md).

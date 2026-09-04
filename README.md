@@ -292,7 +292,7 @@ Prerequisites: GraalVM JDK 21 (Mandrel 23.1+ recommended), Maven 3.9+
 ```bash
 git clone https://github.com/AryanKatwal06/condense.git
 cd condense/condense
-./mvnw test                        # run all 140+ tests
+./mvnw test                        # run the JVM test suite
 ./mvnw package -Pnative            # build native binary
 ./target/condense-runner --version # verify
 ```
@@ -301,7 +301,7 @@ cd condense/condense
 
 ## Contributing
 
-Pull requests are open. New command filters must demonstrate ≥60% token savings using golden fixture tests, and existing tests must pass. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Pull requests are open. New compressing filters need a `corpus/catalog.json` row that meets the 60% estimated-savings floor (or an enumerated exemption) and 100% critical-signal retention. CI enforces both on JVM; `NativeCorpusIT` smokes one catalog entry through the native binary. See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/fidelity-corpus.md](docs/fidelity-corpus.md).
 
 ---
 
