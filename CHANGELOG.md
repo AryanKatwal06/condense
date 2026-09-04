@@ -7,9 +7,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Fixed
+- `condense uninstall --purge` no longer aborts when `{dataDir}/tee/` or `{configDir}/filters.toml` exist. Those are Condense-owned and are removed with the rest of the allowlisted tree.
 - On Windows, `condense` now resolves PATHEXT shims such as `pytest.cmd` / `npm.cmd` before launching the child process. `ProcessBuilder` does not apply PATHEXT, which made `NativeCorpusIT` (and real `condense pytest`) fail with empty stdout.
 
 ### Added / Improved
+- **Persistence reliability.** Existing analytics databases are migrated with `PRAGMA user_version` (target 1). Every open enables WAL and `busy_timeout=5000`, prunes `commands`, `filter_outcomes`, and tee files older than 90 days, and records filter fail-open events. `condense doctor` (text and `--format json`) names why `gain` is empty. Native proof is `NativePersistenceIT` migrating a runtime-created v0 file inside the binary. See [docs/persistence.md](docs/persistence.md).
 - **Trust boundary and capability model.** Project `.condense/filters.toml` is skipped until `condense config trust` pins its SHA-256 (or a CI hatch that also has a listed CI indicator). `CONDENSE_TRUST_PROJECT_FILTERS` alone — for example from `.envrc` — does not apply project overrides. After trust, the file still cannot use stages above the granted class (`reduce` / `reshape` / `rewrite`); a missing grant skips the whole file. See [docs/trust.md](docs/trust.md).
 - **Output provenance.** Every `FilterResult.of` line starts with `condense[filtered]`. Impersonating lines become `condense[quoted]`. Passthrough is unstamped. The 51-row golden lock was updated for that header; inline TOML `[[tests]]` are unchanged.
 - **Declarative filter schema v1.** Every compressing filter's default pipeline loads from `classpath:filters/<name>.toml` (31 files plus `index.toml`; `PythonFilter` stays a Java router). Documents require `schema_version = 1` and reject unknown keys. `StageFactory` is a hardcoded switch covering generic stages and named command summaries. Builtin definitions fail-closed; user overrides still fail-open. `BuiltinDefinitionValidator` runs at Maven `process-classes` so `mvn package -Pnative -DskipTests` still checks the resources. Override files without `schema_version` fail-open at runtime; `condense config validate` reports the error. See [docs/filter-schema.md](docs/filter-schema.md).
@@ -18,7 +20,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Replaced the mixed byte/UTF-16 `/4` token heuristic with `utf8_weighted_v1`, a UTF-8 code-point estimator used for both files and strings. `condense gain` now labels counts as estimates and reports a p95 relative-error bound of 35% vs cl100k_base. See [docs/token-estimator.md](docs/token-estimator.md).
 - Set the compiler language level to Java 21 so bytecode matches GraalVM 21 CI and the documented toolchain.
 - Added `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` overrides in `PlatformDirs` so tests and power users can redirect config and analytics state on every OS, including macOS.
-- Native integration tests now run via Failsafe in CI (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`) on linux-x64, linux-aarch64, macos-aarch64, and windows-x64, using isolated directories instead of the real user database.
+- Native integration tests now run via Failsafe in CI (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativePersistenceIT`) on linux-x64, linux-aarch64, macos-aarch64, and windows-x64, using isolated directories instead of the real user database.
 - Added `ReflectConfigDriftTest` to fail `mvn test` when a `FilterStrategy` or Jackson-bound type is missing from `reflect-config.json`, and removed duplicate native-image registrations.
 - Added linux-aarch64 native jobs to CI and release (`ubuntu-24.04-arm`) so the installer download of that artifact is honest.
 - Recorded a JVM invocation-overhead baseline and an 80 MiB uncompressed native-image size ceiling. See [docs/perf-baseline.md](docs/perf-baseline.md).

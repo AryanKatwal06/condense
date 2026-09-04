@@ -1,53 +1,109 @@
 package com.condense.core;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
+import com.condense.filter.pipeline.FilterIncident;
+import com.condense.persist.RetentionPolicy;
+import com.condense.persist.SchemaMigrator;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
-@QuarkusTest
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TrackingRepositoryTest {
 
-    @Inject
-    TrackingRepository repo;
+    @TempDir
+    Path tempDir;
 
-    @Test
-    @Order(1)
-    void schemaIsCreatedOnFirstAccess() {
-        // countAll() triggers schema creation
-        long count = repo.countAll();
-        assertThat(count).isGreaterThanOrEqualTo(0L);
+    private TrackingRepository repo;
+
+    @BeforeEach
+    void setUp() {
+        repo = new TrackingRepository(new IsolatedPlatformDirs(
+            tempDir.resolve("config"),
+            tempDir.resolve("data")
+        ));
+    }
+
+    @AfterEach
+    void tearDown() {
+        repo.close();
     }
 
     @Test
-    @Order(2)
+    void schemaIsCreatedOnFirstAccess() throws Exception {
+        assertThat(repo.countAll()).isZero();
+        Path db = tempDir.resolve("data").resolve("condense.db");
+        assertThat(db).exists();
+        Driver driver = new org.sqlite.JDBC();
+        try (Connection connection = driver.connect("jdbc:sqlite:" + db.toAbsolutePath(), new Properties());
+             Statement st = connection.createStatement();
+             ResultSet version = st.executeQuery("PRAGMA user_version")) {
+            assertThat(version.next()).isTrue();
+            assertThat(version.getInt(1)).isEqualTo(SchemaMigrator.TARGET_VERSION);
+        }
+        assertThat(repo.journalMode()).isEqualToIgnoringCase("wal");
+    }
+
+    @Test
     void insertIncreasesCount() {
         long before = repo.countAll();
         repo.insert("git status", "abc123def456", "/tmp/project", 500, 100, 42L);
-        long after = repo.countAll();
-        assertThat(after).isEqualTo(before + 1);
+        assertThat(repo.countAll()).isEqualTo(before + 1);
     }
 
     @Test
-    @Order(3)
     void insertWithNullProjectDoesNotThrow() {
         long before = repo.countAll();
         repo.insert("ls -la", null, "/tmp", 200, 50, 5L);
-        long after = repo.countAll();
-        assertThat(after).isEqualTo(before + 1);
+        assertThat(repo.countAll()).isEqualTo(before + 1);
     }
 
     @Test
-    @Order(4)
     void insertNeverThrowsEvenWithInvalidData() {
-        // Should log WARN, not throw
-        org.assertj.core.api.Assertions.assertThatCode(
-            () -> repo.insert("", null, null, -1, -1, -1L)
-        ).doesNotThrowAnyException();
+        assertThatCode(() -> repo.insert("", null, null, -1, -1, -1L))
+            .doesNotThrowAnyException();
+    }
+
+    @Test
+    void insertOutcomeIsFailOpenAndQueryable() {
+        repo.insert("pytest", "abc123def456", "/tmp", 10, 4, 3L);
+        assertThatCode(() -> repo.insertOutcome(
+            "pytest",
+            "abc123def456",
+            FilterIncident.stageException("ThrowingStage", "boom")
+        )).doesNotThrowAnyException();
+        assertThat(repo.countOutcomes()).isEqualTo(1);
+        assertThat(repo.outcomeCountsByKind())
+            .containsEntry(FilterIncident.KIND_STAGE_EXCEPTION, 1L);
+        assertThat(repo.isDegraded()).isFalse();
+    }
+
+    @Test
+    void pruneDeletesExpiredRowsAndKeepsRecent() {
+        long now = System.currentTimeMillis() / 1000L;
+        long expired = RetentionPolicy.cutoffEpochSeconds(now) - 60;
+        repo.insertAt(expired, "old cmd", "proj", "/tmp", 10, 2, 1L);
+        repo.insertAt(now, "new cmd", "proj", "/tmp", 10, 2, 1L);
+        repo.close();
+
+        TrackingRepository reopened = new TrackingRepository(new IsolatedPlatformDirs(
+            tempDir.resolve("config"),
+            tempDir.resolve("data")
+        ));
+        try {
+            assertThat(reopened.countAll()).isEqualTo(1);
+            assertThat(reopened.queryRecent(5, null).get(0).command()).isEqualTo("new cmd");
+        } finally {
+            reopened.close();
+        }
     }
 }

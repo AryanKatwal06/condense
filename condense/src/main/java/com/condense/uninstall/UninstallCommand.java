@@ -478,9 +478,12 @@ public class UninstallCommand implements Callable<Integer> {
         try (DirectoryStream<Path> entries = Files.newDirectoryStream(dir)) {
             for (Path entry : entries) {
                 if (Files.isDirectory(entry)) {
-                    // Subdirectories are rejected upstream by SafePathValidator.
-                    // If one appears (e.g. filesystem race), skip it rather than recursing.
-                    log.warnf("Skipping unexpected subdirectory during cleanup: %s", entry);
+                    String name = entry.getFileName().toString();
+                    if (SafePathValidator.KNOWN_CONDENSE_DIRECTORIES.contains(name)) {
+                        deleteDirectoryContentsAndSelf(entry);
+                    } else {
+                        log.warnf("Skipping unexpected subdirectory during cleanup: %s", entry);
+                    }
                     continue;
                 }
                 Files.delete(entry);

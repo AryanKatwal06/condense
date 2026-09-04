@@ -1,17 +1,23 @@
 package com.condense.core;
 
-
+import com.condense.filter.pipeline.FilterIncident;
+import com.condense.persist.RetentionPolicy;
+import com.condense.persist.SchemaMigrator;
+import com.condense.persist.TeeRetention;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @ApplicationScoped
@@ -19,38 +25,72 @@ public class TrackingRepository {
 
     private static final Logger log = Logger.getLogger(TrackingRepository.class);
 
-    private static final String CREATE_TABLE = """
-        CREATE TABLE IF NOT EXISTS commands (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            ts         INTEGER NOT NULL,
-            command    TEXT    NOT NULL,
-            project    TEXT,
-            cwd        TEXT,
-            raw_tokens INTEGER NOT NULL,
-            out_tokens INTEGER NOT NULL,
-            exec_ms    INTEGER NOT NULL
-        )
-        """;
-
-    private static final String CREATE_IDX_TS =
-        "CREATE INDEX IF NOT EXISTS idx_commands_ts ON commands(ts)";
-
-    private static final String CREATE_IDX_PROJECT =
-        "CREATE INDEX IF NOT EXISTS idx_commands_project ON commands(project)";
-
     private static final String INSERT = """
         INSERT INTO commands(ts, command, project, cwd, raw_tokens, out_tokens, exec_ms)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
 
-    @Inject
-    PlatformDirs platformDirs;
+    private static final String INSERT_OUTCOME = """
+        INSERT INTO filter_outcomes(ts, command, project, filter_name, kind, stage_name, fallback_succeeded, detail)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+    private final PlatformDirs platformDirs;
 
     private Connection connection;
     private volatile boolean degraded = false;
+    private volatile boolean migrateFailed = false;
+    private volatile boolean schemaAhead = false;
+    private volatile int lastSchemaVersion = -1;
+    private volatile String lastJournalMode = "";
+    private volatile TeeRetention.SweepResult lastTeeSweep = TeeRetention.SweepResult.empty();
+
+    @Inject
+    public TrackingRepository(PlatformDirs platformDirs) {
+        this.platformDirs = platformDirs;
+    }
 
     public boolean isDegraded() {
         return degraded;
+    }
+
+    public boolean isMigrateFailed() {
+        return migrateFailed;
+    }
+
+    public boolean isSchemaAhead() {
+        return schemaAhead;
+    }
+
+    public int schemaVersion() {
+        try {
+            return SchemaMigrator.readUserVersion(connection());
+        } catch (SQLException e) {
+            this.degraded = true;
+            log.warnf(e, "Failed to read schema version: %s", e.getMessage());
+            return lastSchemaVersion;
+        }
+    }
+
+    public String journalMode() {
+        if (lastJournalMode != null && !lastJournalMode.isBlank()) {
+            return lastJournalMode;
+        }
+        try {
+            lastJournalMode = SchemaMigrator.readJournalMode(connection());
+            return lastJournalMode;
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to read journal_mode: %s", e.getMessage());
+            return lastJournalMode == null ? "" : lastJournalMode;
+        }
+    }
+
+    public boolean databaseFileExists() {
+        return Files.exists(platformDirs.resolveDataDir().resolve("condense.db"));
+    }
+
+    public TeeRetention.SweepResult lastTeeSweep() {
+        return lastTeeSweep;
     }
 
     /**
@@ -65,9 +105,15 @@ public class TrackingRepository {
      */
     public void insert(String command, String project, String cwd,
                        int rawTokens, int outTokens, long execMs) {
+        insertAt(System.currentTimeMillis() / 1000L, command, project, cwd, rawTokens, outTokens, execMs);
+    }
+
+    /** Package-visible so retention tests can plant expired rows. */
+    void insertAt(long ts, String command, String project, String cwd,
+                  int rawTokens, int outTokens, long execMs) {
         try {
             try (PreparedStatement ps = connection().prepareStatement(INSERT)) {
-                ps.setLong(1, System.currentTimeMillis() / 1000L);
+                ps.setLong(1, ts);
                 ps.setString(2, command);
                 ps.setString(3, project);
                 ps.setString(4, cwd);
@@ -82,6 +128,40 @@ public class TrackingRepository {
         }
     }
 
+    /**
+     * Persists fail-open filter incidents. Failures here do not mark the
+     * commands ledger as degraded — token analytics must keep working.
+     */
+    public void insertOutcomes(String command, String project, List<FilterIncident> incidents) {
+        if (incidents == null || incidents.isEmpty()) {
+            return;
+        }
+        for (FilterIncident incident : incidents) {
+            insertOutcome(command, project, incident);
+        }
+    }
+
+    public void insertOutcome(String command, String project, FilterIncident incident) {
+        if (incident == null) {
+            return;
+        }
+        try {
+            try (PreparedStatement ps = connection().prepareStatement(INSERT_OUTCOME)) {
+                ps.setLong(1, System.currentTimeMillis() / 1000L);
+                ps.setString(2, command);
+                ps.setString(3, project);
+                ps.setString(4, incident.filterName());
+                ps.setString(5, incident.kind());
+                ps.setString(6, incident.stageName());
+                ps.setInt(7, incident.fallbackSucceeded() ? 1 : 0);
+                ps.setString(8, incident.detail());
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to record filter outcome for '%s': %s", command, e.getMessage());
+        }
+    }
+
     /** Used in tests and by {@code condense gain}. */
     public long countAll() {
         try (Statement st = connection().createStatement();
@@ -92,6 +172,38 @@ public class TrackingRepository {
             log.warnf(e, "Failed to count commands: %s", e.getMessage());
             return 0L;
         }
+    }
+
+    public long countOutcomes() {
+        try (Statement st = connection().createStatement();
+             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM filter_outcomes")) {
+            return rs.next() ? rs.getLong(1) : 0L;
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to count filter outcomes: %s", e.getMessage());
+            return 0L;
+        }
+    }
+
+    public Long oldestCommandTs() {
+        return commandTsBound("MIN(ts)");
+    }
+
+    public Long newestCommandTs() {
+        return commandTsBound("MAX(ts)");
+    }
+
+    public Map<String, Long> outcomeCountsByKind() {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        try (Statement st = connection().createStatement();
+             ResultSet rs = st.executeQuery(
+                 "SELECT kind, COUNT(*) AS total FROM filter_outcomes GROUP BY kind ORDER BY kind")) {
+            while (rs.next()) {
+                counts.put(rs.getString("kind"), rs.getLong("total"));
+            }
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to aggregate filter outcomes: %s", e.getMessage());
+        }
+        return counts;
     }
 
     /**
@@ -318,6 +430,19 @@ public class TrackingRepository {
         if (projectHash != null) ps.setString(2, projectHash);
     }
 
+    private Long commandTsBound(String aggregate) {
+        try (Statement st = connection().createStatement();
+             ResultSet rs = st.executeQuery("SELECT " + aggregate + " FROM commands")) {
+            if (rs.next()) {
+                long value = rs.getLong(1);
+                return rs.wasNull() ? null : value;
+            }
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to read command timestamp bound: %s", e.getMessage());
+        }
+        return null;
+    }
+
     public void close() {
         if (connection != null) {
             try {
@@ -326,6 +451,7 @@ public class TrackingRepository {
             } catch (SQLException e) {
                 log.warnf("Failed to close SQLite connection: %s", e.getMessage());
             }
+            connection = null;
         }
     }
 
@@ -333,26 +459,67 @@ public class TrackingRepository {
 
     private Connection connection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            java.nio.file.Path dbFile = platformDirs.getDatabaseFile();
-            boolean dbExists = java.nio.file.Files.exists(dbFile);
-            String url = "jdbc:sqlite:" + dbFile.toAbsolutePath();
-            java.sql.Driver driver = new org.sqlite.JDBC();
-            connection = driver.connect(url, new java.util.Properties());
-            if (connection == null) {
-                throw new SQLException("SQLite driver did not accept URL: " + url);
-            }
-            if (!dbExists) {
-                initSchema();
+            try {
+                java.nio.file.Path dbFile = platformDirs.getDatabaseFile();
+                String url = "jdbc:sqlite:" + dbFile.toAbsolutePath();
+                java.sql.Driver driver = new org.sqlite.JDBC();
+                connection = driver.connect(url, new java.util.Properties());
+                if (connection == null) {
+                    throw new SQLException("SQLite driver did not accept URL: " + url);
+                }
+                applyPragmas(connection);
+                try {
+                    SchemaMigrator.Result migrated = SchemaMigrator.migrate(connection);
+                    this.schemaAhead = migrated.schemaAhead();
+                    this.lastSchemaVersion = migrated.version();
+                    this.migrateFailed = false;
+                } catch (SQLException e) {
+                    this.migrateFailed = true;
+                    throw e;
+                }
+                prune(connection);
+            } catch (SQLException e) {
+                this.degraded = true;
+                throw e;
             }
         }
         return connection;
     }
 
-    private void initSchema() throws SQLException {
+    private void applyPragmas(Connection connection) {
         try (Statement st = connection.createStatement()) {
-            st.executeUpdate(CREATE_TABLE);
-            st.executeUpdate(CREATE_IDX_TS);
-            st.executeUpdate(CREATE_IDX_PROJECT);
+            st.execute("PRAGMA busy_timeout = 5000");
+        } catch (SQLException e) {
+            log.warnf("Could not set busy_timeout: %s", e.getMessage());
+        }
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery("PRAGMA journal_mode = WAL")) {
+            if (rs.next()) {
+                lastJournalMode = rs.getString(1);
+            }
+        } catch (SQLException e) {
+            log.warnf("Could not enable WAL: %s", e.getMessage());
+        }
+    }
+
+    private void prune(Connection connection) {
+        long cutoff = RetentionPolicy.cutoffEpochSeconds();
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM commands WHERE ts < ?")) {
+            ps.setLong(1, cutoff);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            log.warnf("Command retention prune failed: %s", e.getMessage());
+        }
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM filter_outcomes WHERE ts < ?")) {
+            ps.setLong(1, cutoff);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            log.warnf("Outcome retention prune failed: %s", e.getMessage());
+        }
+        try {
+            lastTeeSweep = TeeRetention.prune(platformDirs.getDataDir());
+        } catch (RuntimeException e) {
+            log.warnf("Tee retention sweep failed: %s", e.getMessage());
         }
     }
 }

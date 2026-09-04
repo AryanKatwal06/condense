@@ -174,6 +174,29 @@ class SafePathValidatorTest {
     }
 
     @Test
+    void validateDirectoryForDeletion_acceptsFiltersTomlAndTeeFiles() throws IOException {
+        Files.writeString(fakeConfigDir.resolve("filters.toml"), "schema_version = 1\n");
+        Path tee = fakeDataDir.resolve("tee");
+        Files.createDirectories(tee);
+        Files.writeString(tee.resolve("abcd1234-1700000000.txt"), "dump");
+        Files.writeString(fakeDataDir.resolve("condense.db"), "db");
+
+        assertThat(validator.validateDirectoryForDeletion(fakeConfigDir).isSafe()).isTrue();
+        assertThat(validator.validateDirectoryForDeletion(fakeDataDir).isSafe()).isTrue();
+    }
+
+    @Test
+    void validateDirectoryForDeletion_rejectsNestedDirectoryInsideTee() throws IOException {
+        Path nested = fakeDataDir.resolve("tee").resolve("nested");
+        Files.createDirectories(nested);
+
+        SafePathValidator.ValidationResult result = validator.validateDirectoryForDeletion(fakeDataDir);
+        assertThat(result.isSafe()).isFalse();
+        assertThat(result.status()).isEqualTo(SafePathValidator.Status.UNEXPECTED_CONTENTS);
+        assertThat(result.unexpectedEntries()).contains(nested);
+    }
+
+    @Test
     void containAcceptsFileInsideParent() throws IOException {
         Path project = tempDir.resolve("proj");
         Path file = project.resolve(".condense/filters.toml");

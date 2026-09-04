@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 6 code landed).
+**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 7 code landed).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 6. Confirm with `git log -1` and origin before starting Phase 7.
+**Branch at handoff:** `main` after Phase 7. Confirm with `git log -1` and origin before starting Phase 8.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -153,7 +153,7 @@ public static int count(String text) { return Utf8WeightedTokenEstimator.INSTANC
 
 ### 4.5 CLI surface
 
-Registered subcommands: `gain`, `init`, `config` (with nested `validate`), `completion`, `update`, `mcp`, `uninstall`. Default (no subcommand) = proxy mode.
+Registered subcommands: `gain`, `doctor`, `init`, `config` (with nested `validate` and `trust`), `completion`, `update`, `mcp`, `uninstall`. Default (no subcommand) = proxy mode.
 
 Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus standard help/version.
 
@@ -227,9 +227,9 @@ java.sql.Driver driver = new org.sqlite.JDBC();
 connection = driver.connect(url, new java.util.Properties());
 ```
 
-Missing, all confirmed absent: `PRAGMA user_version`, any migration runner, `ALTER TABLE`, WAL journal mode, `busy_timeout`, retention/pruning, and any parse-failure or filter-outcome table. Schema is created only when the DB file does not exist, so **an existing DB never gets new columns**. Writes are synchronous, one `INSERT` per command, and fail-open (`degraded = true` + warn on `SQLException`). DB lives at `{dataDir}/condense.db`. Tee files under `{dataDir}/tee/` also have no pruning. All of this is **Phase 7**.
+Every open applies `PRAGMA busy_timeout=5000`, `PRAGMA journal_mode=WAL` (fail-open), then `SchemaMigrator` (`PRAGMA user_version`, target **1**). Version 1 keeps `commands` unchanged and adds `filter_outcomes` for fail-open incidents. Newer-than-us schemas skip migrations. Retention is 90 days for both tables and a bounded tee sweep (256 unlinks, no symlink follow). Writes stay synchronous and fail-open. Spec: [docs/persistence.md](docs/persistence.md).
 
-`gain` (`analytics/`) supports the default summary, `--graph`, `--history [N]`, `--daily`, `--weekly`, `--top N`, `--format json`, `--since DAYS` (default 30), `--all`, and project-vs-global scope. Degraded persistence prints `⚠ analytics unavailable — persistence failed, see logs` to stderr.
+`gain` (`analytics/`) supports the default summary, `--graph`, `--history [N]`, `--daily`, `--weekly`, `--top N`, `--format json`, `--since DAYS` (default 30), `--all`, and project-vs-global scope. Degraded persistence prints `⚠ analytics unavailable — persistence failed, see logs` to stderr. An empty healthy store prints `No tracking data yet. Run condense doctor to see why.` `condense doctor` (text / `--format json`) names `empty_tracking_reason`.
 
 ### 4.10 Platform directories (`core/PlatformDirs.java`)
 
@@ -243,14 +243,15 @@ Missing, all confirmed absent: `PRAGMA user_version`, any migration runner, `ALT
 
 ### 4.11 Path safety (`core/SafePathValidator.java`)
 
-Allowed roots are the resolved config and data dirs. Files are checked for nominal containment, then existence, then `toRealPath()` symlink-escape. Directory purge walks entries and refuses on any subdirectory or any filename outside this allowlist:
+Allowed roots are the resolved config and data dirs. Files are checked for nominal containment, then existence, then `toRealPath()` symlink-escape. Directory purge allows known files plus the `tee/` directory when it contains only regular files:
 
 ```java
-Set.of("condense.db", "condense.db-wal", "condense.db-shm",
-       "config.toml", ".install_dir", ".condense_install_dir")
+KNOWN_CONDENSE_FILES = Set.of("condense.db", "condense.db-wal", "condense.db-shm",
+    "config.toml", "trust.json", "filters.toml", ".install_dir", ".condense_install_dir");
+KNOWN_CONDENSE_DIRECTORIES = Set.of("tee");
 ```
 
-**Two omissions confirmed:** the `tee/` subdirectory and the user-global `filters.toml`. Either present on disk makes `condense uninstall --purge` abort with `UNEXPECTED_CONTENTS` rather than completing. Real bug; see §5.
+`uninstall --purge` recurses into known directories. Unknown files or nested dirs still abort with `UNEXPECTED_CONTENTS`.
 
 ### 4.12 Hooks (`hooks/`)
 
@@ -312,11 +313,11 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D13 | ~~No built-in declarative filter definitions~~ **FIXED** | `filters/index.toml` + 31 definition files; `PipelineBackedFilter.buildPipeline()` loads the catalog | Phase 5 |
 | D14 | ~~No trust gate on project-supplied `.condense/filters.toml`~~ **FIXED** | `TrustGate` + `{configDir}/trust.json`; skip until TOFU or CI hatch | Phase 6 |
 | D15 | ~~No output provenance~~ **FIXED** | `FilterResult.of` stamps `condense[filtered]`; impersonators become `condense[quoted]` | Phase 6 |
-| D16 | No schema versioning or migrations; existing DBs never gain columns | `initSchema` runs only when file absent | Phase 7 |
-| D17 | No WAL, no `busy_timeout` — concurrent agent sessions share one DB | `TrackingRepository.connection()` | Phase 7 |
-| D18 | No retention for `commands` rows or `{dataDir}/tee/` files — unbounded growth | no `DELETE FROM` anywhere | Phase 7 |
-| D19 | Filter failures are logged only, never persisted as queryable analytics | no failures table | Phase 7 |
-| D20 | `SafePathValidator.KNOWN_CONDENSE_FILES` omits **`tee/`** and **`filters.toml`**, so `--purge` aborts when either exists | `SafePathValidator:26-33` | Phase 7 (or a dedicated fix, with approval) |
+| D16 | ~~No schema versioning or migrations~~ **FIXED** | `PRAGMA user_version` target 1; `SchemaMigrator` | Phase 7 |
+| D17 | ~~No WAL, no `busy_timeout`~~ **FIXED** | applied on every open | Phase 7 |
+| D18 | ~~No retention~~ **FIXED** | 90-day DELETE + bounded tee sweep | Phase 7 |
+| D19 | ~~Filter failures logged only~~ **FIXED** | `filter_outcomes` for stage/apply fallbacks | Phase 7 |
+| D20 | ~~`--purge` aborts on `tee/` and `filters.toml`~~ **FIXED** | allowlist + known-dir recursion | Phase 7 |
 | D21 | `gain --top N` is ignored when `N == 10` because the branch is `if (top != 10)` and the default is `10` | `GainCommand:123` | Phase 8 (or a dedicated fix) |
 | D22 | No explainability — nothing shows which stage dropped which lines | by inspection | Phase 8 |
 | D23 | Filtering is capture-only; nothing is emitted until the child exits | `CondenseRootCommand.call()` ordering | Phase 9 |
@@ -409,16 +410,19 @@ Two turns of planning, then Phase 1 through Phase 5 code.
 | Phase 4 code | **LANDED** | Universal `PipelineBackedFilter`; 51-row golden lock; `PrefixIndex`; `BoundedRegex` 200 ms (5 s document budget for ANSI/dedup); CDI + `standalone()` loader. Native proof is `NativeCorpusIT` through pipeline-backed `pytest`. |
 | Phase 5 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "Implement the plan" |
 | Phase 5 code | **LANDED** | Schema v1 TOML builtins; `StageFactory`; `definitionName()`; `process-classes` validator; `NativeBuiltinDefinitionIT`. Native proof is CI `NativeBuiltinDefinitionIT` + `NativeCorpusIT`. |
-| Phases 6–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 6 code | **LANDED** | `TrustGate` + `{configDir}/trust.json`; capability grants; `condense[filtered]` provenance; `NativeTrustIT`. |
+| Phase 7 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized |
+| Phase 7 code | **LANDED** | `user_version` 1, WAL, `busy_timeout`, 90-day retention, `filter_outcomes`, `condense doctor`, D20 purge allowlist. Native proof is the next green `NativePersistenceIT`. |
+| Phases 8–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | This handoff | **COMPLETED** | Written, audited, then updated as phases landed |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p5` are marked `completed`, `p6`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p7` are marked `completed`, `p8`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 5 code have landed.** Phases 6–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 7 code have landed.** Phases 8–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -674,7 +678,9 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 ### Phase 7 — Persistence reliability
 
-**Status: PENDING**
+**Status: LANDED** (4 Sep 2026)
+
+**Shipped.** `SchemaMigrator` (`PRAGMA user_version` target 1) on every open; WAL + `busy_timeout=5000`; 90-day retention for `commands`, `filter_outcomes`, and a bounded tee sweep; incidents-only outcome table (`stage_exception`, `apply_fallback`); `condense doctor` text/`--format json`; D20 `tee/` + `filters.toml` purge allowlist. Native proof is the next green `NativePersistenceIT`. Spec: [docs/persistence.md](docs/persistence.md).
 
 **Goal.** Analytics that are correct, bounded, and self-diagnosing. `PRAGMA user_version` with a forward-only migration runner; WAL plus `busy_timeout`; retention for both DB rows and tee files; a filter-outcome / parse-failure table recording whether fallback succeeded; and `condense doctor`, which actively verifies DB writability, driver initialization, schema version, and hook health, and explains **why** tracking is empty.
 
@@ -961,9 +967,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 6 code landed 4 Sep 2026. Project overrides are TOFU-gated; filtered output is stamped `condense[filtered]`. JVM proof is `mvn test` (Surefire excludes `*IT.java`). Native proof is the next green `NativeTrustIT` and `NativeCorpusIT` in `build.yml` — this Windows workspace does not build native images.
+**Where we are.** Phase 7 code landed 4 Sep 2026. Analytics DBs migrate to `user_version` 1 with WAL and retention; `condense doctor` explains empty gain. JVM proof is `mvn test` (Surefire excludes `*IT.java`). Native proof is the next green `NativePersistenceIT` in `build.yml` — this Windows workspace does not build native images.
 
-**Do not start Phase 7 code.** Present a complete Phase 7 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 8 code.** Present a complete Phase 8 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -984,8 +990,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 6 code has landed. Confirm `NativeTrustIT` and `NativeCorpusIT` appear in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
-9. **Do not start Phase 7 code.** Present a complete Phase 7 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 7 code has landed. Confirm `NativePersistenceIT` appears in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
+9. **Do not start Phase 8 code.** Present a complete Phase 8 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

@@ -29,9 +29,16 @@ public class SafePathValidator {
         "condense.db-shm",
         "config.toml",
         "trust.json",
+        "filters.toml",
         ".install_dir",
         ".condense_install_dir"
     );
+
+    /**
+     * Recognized condense-owned subdirectory names under the data or config root.
+     * Contents are validated one level deep as regular files only.
+     */
+    public static final Set<String> KNOWN_CONDENSE_DIRECTORIES = Set.of("tee");
 
     private final PlatformDirs platformDirs;
     private final Path binaryPath;
@@ -267,23 +274,24 @@ public class SafePathValidator {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
             for (Path entry : stream) {
                 String fileName = entry.getFileName().toString();
-                if (Files.isDirectory(entry)) {
-                    // Unexpected subdirectory inside condense data/config root
-                    unexpected.add(entry);
+                if (isDirectoryEntry(entry)) {
+                    if (KNOWN_CONDENSE_DIRECTORIES.contains(fileName)) {
+                        ValidationResult nested = validateKnownDirectory(entry);
+                        if (nested.status() == Status.SYMLINK_ESCAPE || nested.status() == Status.ERROR) {
+                            return nested;
+                        }
+                        if (!nested.isSafe()) {
+                            unexpected.addAll(nested.unexpectedEntries());
+                        }
+                    } else {
+                        unexpected.add(entry);
+                    }
                 } else if (!KNOWN_CONDENSE_FILES.contains(fileName)) {
-                    // Unrecognized file
                     unexpected.add(entry);
                 } else if (Files.isSymbolicLink(entry)) {
-                    // Even if known filename, if it's a symlink pointing outside, reject
-                    try {
-                        Path realEntry = entry.toRealPath();
-                        if (!isInsideCondenseOwnedLocation(realEntry)) {
-                            return ValidationResult.symlinkEscape(
-                                "Safety refusal: Entry symlink '" + entry + "' points outside allowed locations to '" + realEntry + "'."
-                            );
-                        }
-                    } catch (IOException e) {
-                        return ValidationResult.symlinkEscape("Safety refusal: Cannot resolve entry symlink '" + entry + "': " + e.getMessage());
+                    ValidationResult symlink = rejectEscapingSymlink(entry);
+                    if (symlink != null) {
+                        return symlink;
                     }
                 }
             }
@@ -299,6 +307,60 @@ public class SafePathValidator {
         }
 
         return ValidationResult.safe("Directory '" + dir + "' contains only recognized condense files and is safe for deletion.");
+    }
+
+    private ValidationResult validateKnownDirectory(Path dir) {
+        if (Files.isSymbolicLink(dir)) {
+            ValidationResult symlink = rejectEscapingSymlink(dir);
+            if (symlink != null) {
+                return symlink;
+            }
+        }
+        List<Path> unexpected = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+            for (Path entry : stream) {
+                if (isDirectoryEntry(entry)) {
+                    unexpected.add(entry);
+                    continue;
+                }
+                if (Files.isSymbolicLink(entry)) {
+                    ValidationResult symlink = rejectEscapingSymlink(entry);
+                    if (symlink != null) {
+                        return symlink;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            return ValidationResult.error("Failed to inspect known directory '" + dir + "': " + e.getMessage());
+        }
+        if (!unexpected.isEmpty()) {
+            return ValidationResult.unexpected(
+                "Known directory '" + dir + "' contains nested directories and is not safe for deletion.",
+                unexpected
+            );
+        }
+        return ValidationResult.safe("Known directory '" + dir + "' contains only regular files.");
+    }
+
+    private ValidationResult rejectEscapingSymlink(Path entry) {
+        try {
+            Path realEntry = entry.toRealPath();
+            if (!isInsideCondenseOwnedLocation(realEntry)) {
+                return ValidationResult.symlinkEscape(
+                    "Safety refusal: Entry symlink '" + entry + "' points outside allowed locations to '" + realEntry + "'."
+                );
+            }
+        } catch (IOException e) {
+            return ValidationResult.symlinkEscape(
+                "Safety refusal: Cannot resolve entry symlink '" + entry + "': " + e.getMessage()
+            );
+        }
+        return null;
+    }
+
+    private static boolean isDirectoryEntry(Path entry) {
+        return Files.isDirectory(entry, LinkOption.NOFOLLOW_LINKS)
+            || (Files.isSymbolicLink(entry) && Files.isDirectory(entry));
     }
 
     private ValidationResult validateBinarySelf(Path target) {

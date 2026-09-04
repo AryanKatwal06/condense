@@ -71,4 +71,4 @@ Every `FilterResult.of` output starts with `condense[filtered]`. A whole line eq
 
 ## Path containment
 
-Loader and trust-store writes call `SafePathValidator.contain(file, expectedParent)`. Project files live outside condense-owned directories, so `validateFileTarget` is not reused. `trust.json` is on the uninstall `--purge` allowlist. User `filters.toml` and `tee/` stay Phase 7 (D20).
+Loader and trust-store writes call `SafePathValidator.contain(file, expectedParent)`. Project files live outside condense-owned directories, so `validateFileTarget` is not reused. `trust.json`, user `filters.toml`, and `tee/` are on the uninstall `--purge` allowlist.

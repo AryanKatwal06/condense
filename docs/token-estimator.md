@@ -48,7 +48,7 @@ JSON keeps the existing fields (`input_tokens`, `output_tokens`, `tokens_saved`,
 
 ## Historical rows
 
-SQLite schema is unchanged in this phase (`raw_tokens` / `out_tokens` stay integers). Rows written before this estimator used `(length or byte-size) / 4`. New rows use `utf8_weighted_v1`. A mixed window in `gain` is therefore possible until Phase 7 migrations. The estimator metadata describes **how new counts are produced**, not a rewrite of stored history.
+`raw_tokens` / `out_tokens` stay integers. Rows written before this estimator used `(length or byte-size) / 4`. New rows use `utf8_weighted_v1`. Stored history is never rewritten, so a mixed window in `gain` is permanent. The estimator metadata describes **how new counts are produced**. See [persistence.md](persistence.md).
 
 ## Why not a real tokenizer in the binary
 

@@ -307,6 +307,31 @@ class UninstallCommandTest {
     }
 
     @Test
+    void purge_succeedsWhenTeeAndFiltersTomlAreTheOnlyExtras() throws IOException {
+        Path db = fakeDataDir.resolve("condense.db");
+        Path teeFile = fakeDataDir.resolve("tee").resolve("abcd1234-1700000000.txt");
+        Path filters = fakeConfigDir.resolve("filters.toml");
+        Files.writeString(db, "db");
+        Files.createDirectories(teeFile.getParent());
+        Files.writeString(teeFile, "dump");
+        Files.writeString(filters, "schema_version = 1\n");
+
+        UninstallCommand cmd = new UninstallCommand();
+        cmd.platformDirs = platformDirs;
+        cmd.hookInstaller = hookInstaller;
+        cmd.purge = true;
+        cmd.yes = true;
+
+        Integer exitCode = cmd.call();
+        assertThat(exitCode).isEqualTo(0);
+        assertThat(Files.exists(db)).isFalse();
+        assertThat(Files.exists(teeFile)).isFalse();
+        assertThat(Files.exists(filters)).isFalse();
+        assertThat(Files.exists(fakeDataDir)).isFalse();
+        assertThat(Files.exists(fakeConfigDir)).isFalse();
+    }
+
+    @Test
     void partialFailure_returnsExitCodeOneWhenHookFails() {
         HookInstaller failingHooks = new HookInstaller() {
             @Override

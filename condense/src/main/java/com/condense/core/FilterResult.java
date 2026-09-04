@@ -1,7 +1,10 @@
 package com.condense.core;
 
+import com.condense.filter.pipeline.FilterIncident;
 import com.condense.trust.Provenance;
 import org.jboss.logging.Logger;
+
+import java.util.List;
 
 /**
  * The output produced by a {@link FilterStrategy} after compressing a command's
@@ -12,15 +15,25 @@ import org.jboss.logging.Logger;
  * @param outTokens   estimated token count of {@code output}
  * @param wasFiltered true if any compression was applied; false if output is
  *                    identical to raw (passthrough scenario)
+ * @param incidents   fail-open events to persist; empty for intentional passthrough
  */
 public record FilterResult(
     String output,
     int rawTokens,
     int outTokens,
-    boolean wasFiltered
+    boolean wasFiltered,
+    List<FilterIncident> incidents
 ) {
 
     private static final Logger log = Logger.getLogger(FilterResult.class);
+
+    public FilterResult {
+        incidents = incidents == null || incidents.isEmpty() ? List.of() : List.copyOf(incidents);
+    }
+
+    public FilterResult(String output, int rawTokens, int outTokens, boolean wasFiltered) {
+        this(output, rawTokens, outTokens, wasFiltered, List.of());
+    }
 
     /** Percentage of tokens saved, 0–100. Returns 0 if rawTokens is 0. */
     public int savingsPct() {
@@ -44,9 +57,33 @@ public record FilterResult(
     }
 
     /**
+     * Apply-level fail-open: same visible output as {@link #passthrough} plus a persistable incident.
+     */
+    public static FilterResult fallbackPassthrough(ExecutionResult result, String filterName, String detail) {
+        int tokens = 0;
+        try {
+            if (result.stdoutFile() != null) tokens += TokenCounter.count(result.stdoutFile());
+            if (result.stderrFile() != null) tokens += TokenCounter.count(result.stderrFile());
+        } catch (Exception e) {
+            log.debugf("Token counting failed in fallbackPassthrough: %s", e.getMessage());
+        }
+        return new FilterResult(
+            Provenance.passthrough(result.combined()),
+            tokens,
+            tokens,
+            false,
+            List.of(FilterIncident.applyFallback(filterName, detail))
+        );
+    }
+
+    /**
      * Convenience factory: build a FilterResult for a successfully compressed output.
      */
     public static FilterResult of(ExecutionResult result, String filteredOutput) {
+        return of(result, filteredOutput, List.of());
+    }
+
+    public static FilterResult of(ExecutionResult result, String filteredOutput, List<FilterIncident> incidents) {
         int rawTokens = 0;
         try {
             if (result.stdoutFile() != null) rawTokens += TokenCounter.count(result.stdoutFile());
@@ -54,13 +91,14 @@ public record FilterResult(
         } catch (Exception e) {
             log.debugf("Token counting failed in of: %s", e.getMessage());
         }
-        
+
         String stamped = Provenance.stamp(filteredOutput);
         return new FilterResult(
             stamped,
             rawTokens,
             TokenCounter.count(stamped),
-            true
+            true,
+            incidents
         );
     }
 }

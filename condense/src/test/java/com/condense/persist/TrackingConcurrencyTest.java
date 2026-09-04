@@ -1,0 +1,74 @@
+package com.condense.persist;
+
+import com.condense.core.IsolatedPlatformDirs;
+import com.condense.core.PlatformDirs;
+import com.condense.core.TrackingRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TrackingConcurrencyTest {
+
+    @TempDir
+    Path tempDir;
+
+    @Test
+    void fiveRepositoriesShareOneFileWithoutCorruption() throws Exception {
+        PlatformDirs dirs = new IsolatedPlatformDirs(tempDir.resolve("config"), tempDir.resolve("data"));
+        int repos = 5;
+        int insertsEach = 40;
+        ExecutorService pool = Executors.newFixedThreadPool(repos);
+        List<Callable<Integer>> tasks = new ArrayList<>();
+        for (int i = 0; i < repos; i++) {
+            final int repoId = i;
+            tasks.add(() -> {
+                TrackingRepository repo = new TrackingRepository(dirs);
+                try {
+                    for (int n = 0; n < insertsEach; n++) {
+                        repo.insert("cmd-" + repoId + "-" + n, "proj", "/tmp", 10, 2, 1L);
+                    }
+                    return insertsEach;
+                } finally {
+                    repo.close();
+                }
+            });
+        }
+
+        int written = 0;
+        for (Future<Integer> future : pool.invokeAll(tasks)) {
+            written += future.get();
+        }
+        pool.shutdownNow();
+        assertThat(written).isEqualTo(repos * insertsEach);
+
+        TrackingRepository check = new TrackingRepository(dirs);
+        try {
+            assertThat(check.countAll()).isEqualTo(repos * insertsEach);
+        } finally {
+            check.close();
+        }
+
+        Path db = tempDir.resolve("data").resolve("condense.db");
+        Driver driver = new org.sqlite.JDBC();
+        try (Connection connection = driver.connect("jdbc:sqlite:" + db.toAbsolutePath(), new Properties());
+             Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery("PRAGMA integrity_check")) {
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getString(1)).isEqualTo("ok");
+        }
+    }
+}

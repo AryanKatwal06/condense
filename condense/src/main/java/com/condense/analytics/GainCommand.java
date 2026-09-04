@@ -135,6 +135,8 @@ public class GainCommand implements Runnable {
         } finally {
             if (gainRepo.isDegraded()) {
                 System.err.println("⚠ analytics unavailable — persistence failed, see logs");
+            } else if (gainRepo.hasNoCommands()) {
+                System.err.println("No tracking data yet. Run condense doctor to see why.");
             }
             gainRepo.close();
         }

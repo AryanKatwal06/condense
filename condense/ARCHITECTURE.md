@@ -19,7 +19,7 @@ condense --version / --help
         ├── ConfigLoader → reads ~/.config/condense/config.toml (or platform equivalent)
         │     └── CondenseConfig (record) + TeeMode (enum)
         ├── PlatformDirs → resolves config/data dirs per OS
-        └── TrackingRepository → creates SQLite schema at ~/.local/share/condense/condense.db
+        └── TrackingRepository → SQLite at {dataDir}/condense.db (user_version, WAL, retention)
 ```
 
 ## File Responsibilities
@@ -33,7 +33,9 @@ condense --version / --help
 | `CondenseConfig.java` | `com.condense.core` | Root config record with `HooksConfig` and `TeeConfig` nested records |
 | `TeeMode.java` | `com.condense.core` | Enum: `FAILURES`, `ALWAYS`, `NEVER` with case-insensitive Jackson parsing |
 | `ConfigLoader.java` | `com.condense.core` | Loads `config.toml` via Jackson TOML; returns defaults if file missing |
-| `TrackingRepository.java` | `com.condense.core` | Lazy SQLite connection; auto-creates schema; insert/count methods |
+| `TrackingRepository.java` | `com.condense.core` | Lazy SQLite via direct JDBC; migrates `user_version`, WAL, retention, filter outcomes |
+| `SchemaMigrator.java` | `com.condense.persist` | Forward-only `PRAGMA user_version` migrations |
+| `DoctorCommand.java` | `com.condense.doctor` | `condense doctor` — empty-gain diagnosis, text and JSON |
 | `TokenCounter.java` | `com.condense.core` | Static facade over `Utf8WeightedTokenEstimator` |
 | `Utf8WeightedTokenEstimator.java` | `com.condense.core` | Code-point token estimate; UTF-8 file path; published p95 vs cl100k_base |
 

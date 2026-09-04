@@ -69,6 +69,8 @@ public class FilterPipeline {
             } catch (Exception e) {
                 log.warnf("Stage %s threw an exception during pipeline execution: %s",
                     stage.getClass().getName(), e.getMessage());
+                ctx.recordIncident(FilterIncident.stageException(
+                    stage.getClass().getSimpleName(), e.getMessage()));
                 continue;
             }
             if (stageResult == null) {

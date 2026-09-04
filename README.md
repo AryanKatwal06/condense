@@ -185,7 +185,7 @@ Condense is built as a GraalVM native image for instant startup.
 
 ## Privacy
 
-**condense collects zero telemetry.** All analytics data (`condense gain`) is stored locally in a SQLite database at:
+**condense collects zero telemetry.** All analytics data (`condense gain`) is stored locally in a SQLite database. Schema versioning, WAL, retention, and `condense doctor` are documented in [docs/persistence.md](docs/persistence.md). Default path:
 - Linux: `~/.local/share/condense/condense.db`
 - macOS: `~/Library/Application Support/condense/condense.db`
 - Windows: `%APPDATA%\condense\condense.db`
@@ -223,6 +223,8 @@ Top Commands by Tokens Saved:
 ...
 ```
 Other flags include `--daily`, `--weekly`, `--top 10`, `--scope project`, `--since 7`, and `--format json`.
+
+If `gain` is empty, run `condense doctor` (or `condense doctor --format json`). It names why tracking is empty without changing any proxied command.
 
 ---
 
@@ -266,7 +268,7 @@ Run `condense update` to automatically check GitHub Releases, download the corre
 ## Troubleshooting
 
 ### Persistence Failure Warning in `condense gain`
-If you run `condense gain` and see the warning:
+If `gain` prints `No tracking data yet. Run condense doctor to see why.`, start with `condense doctor`. If you instead see the warning:
 ```text
 ⚠ analytics unavailable — persistence failed, see logs
 ```

@@ -74,7 +74,11 @@ class ReflectConfigDriftTest {
             com.condense.trust.TrustRecord.class.getName(),
             com.condense.trust.Capability.class.getName(),
             com.condense.trust.TrustDecision.class.getName(),
-            com.condense.config.ConfigTrustCommand.class.getName()
+            com.condense.config.ConfigTrustCommand.class.getName(),
+            com.condense.doctor.DoctorCommand.class.getName(),
+            com.condense.doctor.DoctorReport.class.getName(),
+            com.condense.doctor.DoctorReport.HookStatus.class.getName(),
+            com.condense.doctor.DoctorService.class.getName()
         );
     }
 

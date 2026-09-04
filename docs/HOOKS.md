@@ -126,9 +126,9 @@ When enabled, condense trades human readability for maximum token efficiency by 
 ## Troubleshooting
 
 ### "condense gain shows 0 commands recorded"
-This means condense isn't being run, or it cannot initialize its local SQLite database.
+Run `condense doctor`. It names the reason (`no_database`, `hooks_absent`, `zero_rows`, `unreadable`, and others) and the data directory it inspected.
 1. Make sure you actually installed the hooks (`condense init -g`) and restarted your AI agent.
-2. Check if the database path is writable. On Linux/macOS, this is `~/.local/share/condense/condense.db`. On Windows, it is `%LOCALAPPDATA%\condense\condense.db`.
+2. Check that the database path is writable. On Linux this is `$XDG_DATA_HOME/condense` or `~/.local/share/condense`. On macOS, `~/Library/Application Support/condense`. On Windows, `%APPDATA%\condense`. Override with `CONDENSE_DATA_DIR` if you need to.
 
 ### "The hook doesn't seem to be firing"
 1. Verify the hook file exists (see paths above).

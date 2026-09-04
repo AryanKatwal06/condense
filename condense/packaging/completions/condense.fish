@@ -11,6 +11,7 @@ complete -c condense -l help               -d 'Show help'
 
 # Subcommands
 complete -c condense -n '__fish_use_subcommand' -a gain   -d 'Show token savings analytics'
+complete -c condense -n '__fish_use_subcommand' -a doctor -d 'Diagnose persistence and empty analytics'
 complete -c condense -n '__fish_use_subcommand' -a init   -d 'Install AI tool hooks'
 complete -c condense -n '__fish_use_subcommand' -a config -d 'Read and write configuration'
 
@@ -29,6 +30,8 @@ complete -c condense -n '__fish_seen_subcommand_from gain' -l top     -d 'Top N 
 complete -c condense -n '__fish_seen_subcommand_from gain' -l since   -d 'Last N days' -r
 complete -c condense -n '__fish_seen_subcommand_from gain' -l all     -d 'All-time data'
 complete -c condense -n '__fish_seen_subcommand_from gain' -l format  -d 'Output format' -r -a 'text json'
+
+complete -c condense -n '__fish_seen_subcommand_from doctor' -l format -d 'Output format' -r -a 'text json'
 
 # init options
 complete -c condense -n '__fish_seen_subcommand_from init' -s g -l global  -d 'Install all hooks'

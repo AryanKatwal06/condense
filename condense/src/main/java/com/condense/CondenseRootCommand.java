@@ -17,6 +17,7 @@ import java.util.List;
     versionProvider = VersionProvider.class,
     subcommands = {
         com.condense.analytics.GainCommand.class,
+        com.condense.doctor.DoctorCommand.class,
         com.condense.hooks.InitCommand.class,
         com.condense.config.ConfigCommand.class,
         com.condense.CompletionCommand.class,
@@ -44,6 +45,7 @@ import java.util.List;
         "  condense cargo test          # Test failures only",
         "  condense pytest              # Failures + summary line",
         "  condense gain                # Token savings report",
+        "  condense doctor              # Why gain is empty",
         "  condense init -g             # Install AI tool hooks"
     }
 )
@@ -120,14 +122,16 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
             System.out.flush();
 
             // Synchronous analytics insertion AFTER output is flushed
+            String project = ProjectFingerprint.ofCurrentDir();
             tracking.insert(
                 commandStr,
-                ProjectFingerprint.ofCurrentDir(),
+                project,
                 System.getProperty("user.dir"),
                 filtered.rawTokens(),
                 filtered.outTokens(),
                 result.durationMs()
             );
+            tracking.insertOutcomes(commandStr, project, filtered.incidents());
 
             return result.exitCode();
 

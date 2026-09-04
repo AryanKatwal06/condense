@@ -18,8 +18,12 @@ import java.util.List;
 @ApplicationScoped
 public class GainRepository {
 
+    private final TrackingRepository tracking;
+
     @Inject
-    TrackingRepository tracking;
+    public GainRepository(TrackingRepository tracking) {
+        this.tracking = tracking;
+    }
 
     /**
      * Builds a {@link GainReport} for the given scope and time window.
@@ -71,6 +75,10 @@ public class GainRepository {
 
     public boolean isDegraded() {
         return tracking.isDegraded();
+    }
+
+    public boolean hasNoCommands() {
+        return tracking.countAll() == 0;
     }
 
     public void close() {

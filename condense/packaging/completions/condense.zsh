@@ -6,6 +6,7 @@ _condense() {
 
   commands=(
     'gain:Show token savings analytics'
+    'doctor:Diagnose persistence and empty analytics'
     'init:Install AI tool hooks'
     'config:Read and write configuration'
   )
@@ -53,6 +54,10 @@ _condense() {
             '--top=[Top N commands]:N:(5 10 20)' \
             '--since=[Last N days]:N:(7 14 30 90)' \
             '--all[All-time data]' \
+            '--format=[Output format]:format:(text json)'
+          ;;
+        doctor)
+          _arguments \
             '--format=[Output format]:format:(text json)'
           ;;
         init)

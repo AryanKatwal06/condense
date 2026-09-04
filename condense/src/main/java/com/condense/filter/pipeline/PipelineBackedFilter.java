@@ -8,6 +8,7 @@ import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import org.jboss.logging.Logger;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -88,6 +89,11 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
         return defaultPipeline;
     }
 
+    private String filterName() {
+        String simple = getClass().getSimpleName();
+        return simple == null || simple.isBlank() ? getClass().getName() : simple;
+    }
+
     @Override
     public final FilterResult apply(
             String command,
@@ -103,11 +109,16 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
             String raw = selectInput(command, result, config, verbose, ultraCompact);
             FilterContext context = FilterContext.of(command, result, config, verbose, ultraCompact);
             FilterPipeline active = overrideLoader.resolvePipeline(command, defaultPipeline);
-            return FilterResult.of(result, active.execute(raw, context));
+            String filtered = active.execute(raw, context);
+            String filterName = filterName();
+            List<FilterIncident> incidents = context.incidents().stream()
+                .map(incident -> incident.withFilterName(filterName))
+                .toList();
+            return FilterResult.of(result, filtered, incidents);
         } catch (Exception e) {
             log.warnf("%s error: %s — falling back to passthrough",
-                getClass().getSimpleName(), e.getMessage());
-            return FilterResult.passthrough(result);
+                filterName(), e.getMessage());
+            return FilterResult.fallbackPassthrough(result, filterName(), e.getMessage());
         }
     }
 }
