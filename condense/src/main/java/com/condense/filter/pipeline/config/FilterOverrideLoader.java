@@ -335,7 +335,7 @@ public class FilterOverrideLoader {
             var required = FilterRisk.requiredCapabilities(parsed.fileConfig());
             TrustGate.Result decision = trustGate.decide(canonical, bytes, required);
             if (!decision.apply()) {
-                log.warnf("Skipping project filter override at %s (%s)", projectOverrideFile, decision.reason());
+                log.debugf("Skipping project filter override at %s (%s)", projectOverrideFile, decision.reason());
                 System.err.println(TrustGate.SKIP_HINT);
                 return CachedOverride.EMPTY;
             }

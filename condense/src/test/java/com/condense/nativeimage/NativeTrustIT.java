@@ -1,6 +1,7 @@
 package com.condense.nativeimage;
 
 import com.condense.trust.CiIndicator;
+import com.condense.trust.TrustGate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -31,6 +32,7 @@ class NativeTrustIT {
         assertThat(result.exitCode()).isEqualTo(1);
         assertThat(result.stdout()).contains("failed");
         assertThat(result.stdout()).contains("test_mul");
+        assertThat(result.stdout()).doesNotContain("Skipping project filter override");
         assertThat(result.stderr()).contains("condense config trust");
     }
 
@@ -73,7 +75,12 @@ class NativeTrustIT {
         Harness harness = Harness.create(tempDir.resolve("stamp"));
         NativeBinarySupport.CliResult result = harness.runPytest();
         assertThat(result.exitCode()).isEqualTo(1);
-        assertThat(result.stdout()).startsWith("condense[filtered]");
+        assertThat(result.stderr()).contains(TrustGate.SKIP_HINT);
+        assertThat(result.stdout())
+            .as("skip notices must stay on stderr so filtered stdout is stamped: stdout=%s stderr=%s",
+                result.stdout(), result.stderr())
+            .doesNotContain("Skipping project filter override")
+            .startsWith("condense[filtered]");
     }
 
     private record Harness(Path configDir, Path dataDir, Path workDir, Path stubDir) {
