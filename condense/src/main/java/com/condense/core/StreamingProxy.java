@@ -82,7 +82,7 @@ public final class StreamingProxy {
         LiveSession live = new LiveSession(pipeline, command, config, verbose, ultraCompact, liveOut);
         ExecutionResult result = executor.execute(args, CommandExecutor.resolveProxyTimeout(), live);
         live.finishDecoders();
-        if (live.capped) {
+        if (live.capped && err != null && !err.checkError()) {
             err.println("condense: output capped at 10MB");
         }
         FilterResult gate = pipelineFilter.evaluateGate(command, result, config, verbose, ultraCompact);
@@ -152,7 +152,7 @@ public final class StreamingProxy {
         RawSession raw = new RawSession(liveOut);
         ExecutionResult result = executor.execute(args, CommandExecutor.resolveProxyTimeout(), raw);
         raw.finish();
-        if (raw.capped) {
+        if (raw.capped && err != null && !err.checkError()) {
             err.println("condense: output capped at 10MB");
         }
         FilterResult passthrough = FilterResult.passthrough(result)
@@ -188,6 +188,9 @@ public final class StreamingProxy {
         }
 
         private synchronized void print(String line) {
+            if (out.checkError()) {
+                return;
+            }
             out.println(Provenance.passthrough(line));
         }
 
@@ -357,14 +360,18 @@ public final class StreamingProxy {
             public void emit(String line) {
                 String value = Provenance.neutralize(line == null ? "" : line);
                 if (!stamped) {
-                    out.println(Provenance.STAMP);
+                    if (!out.checkError()) {
+                        out.println(Provenance.STAMP);
+                    }
                     stamped = true;
                 }
                 if (collected.length() > 0) {
                     collected.append('\n');
                 }
                 collected.append(value);
-                out.println(value);
+                if (!out.checkError()) {
+                    out.println(value);
+                }
                 emittedAny = true;
             }
 

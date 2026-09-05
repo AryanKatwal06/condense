@@ -101,7 +101,7 @@ public class ProxyService {
                 commandStr, strategy.getClass().getSimpleName(), result, filtered));
         }
 
-        if (out != null) {
+        if (out != null && !out.checkError()) {
             if (json) {
                 String jsonText = JsonRenderer.render(filtered.document());
                 out.print(jsonText);
@@ -115,7 +115,7 @@ public class ProxyService {
                     out.println();
                 }
             }
-            if (teePath != null) {
+            if (teePath != null && !out.checkError()) {
                 out.println("[raw output saved to: " + teePath + "]");
             }
             out.flush();

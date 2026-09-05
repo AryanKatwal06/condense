@@ -15,6 +15,9 @@ import java.util.function.Consumer;
  */
 public final class Utf8LineDecoder {
 
+    /** Hard cap on the current line. Exceeding it emits a truncated line and continues. */
+    public static final int MAX_LINE_CHARS = 1024 * 1024;
+
     private final Consumer<String> onLine;
     private final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
         .onMalformedInput(CodingErrorAction.REPLACE)
@@ -86,6 +89,9 @@ public final class Utf8LineDecoder {
                 continue;
             }
             line.append(c);
+            if (line.length() >= MAX_LINE_CHARS) {
+                emit();
+            }
         }
     }
 
