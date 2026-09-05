@@ -24,9 +24,11 @@ class HookIntegrityTest {
         assertThat(HookIntegrity.verify(null, HookTool.CURSOR, script)).isEqualTo(HookIntegrity.UNMANAGED);
 
         Files.writeString(script, HookTemplate.SENTINEL + "\necho ok\n");
+        assertThat(HookIntegrity.verify(null, HookTool.CURSOR, script)).isEqualTo(HookIntegrity.UNMANAGED);
         IsolatedPlatformDirs dirs = new IsolatedPlatformDirs(tempDir.resolve("cfg"), tempDir.resolve("data"));
         TrackingRepository tracking = new TrackingRepository(dirs);
         try {
+            assertThat(HookIntegrity.verify(tracking, HookTool.CURSOR, script)).isEqualTo(HookIntegrity.UNMANAGED);
             String sha = HookIntegrity.hashFile(script);
             tracking.upsertHookBaseline("CURSOR", script.toString(), sha);
             assertThat(HookIntegrity.verify(tracking, HookTool.CURSOR, script)).isEqualTo(HookIntegrity.OK);

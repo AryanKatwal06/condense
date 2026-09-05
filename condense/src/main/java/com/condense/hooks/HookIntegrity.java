@@ -38,11 +38,11 @@ public final class HookIntegrity {
             }
             String actual = TrustStore.sha256Hex(content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             if (tracking == null) {
-                return OK;
+                return UNMANAGED;
             }
             TrackingRepository.HookBaseline baseline = tracking.findHookBaseline(tool.name());
             if (baseline == null) {
-                return OK;
+                return UNMANAGED;
             }
             return baseline.sha256().equals(actual) ? OK : TAMPERED;
         } catch (IOException e) {

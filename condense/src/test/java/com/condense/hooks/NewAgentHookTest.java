@@ -69,6 +69,23 @@ class NewAgentHookTest {
         }
     }
 
+    @Test
+    void backupFailureLeavesThirdPartyConfigUntouched() throws Exception {
+        Path config = home.resolve(".cursor").resolve("hooks.json");
+        Files.createDirectories(config.getParent());
+        String original = "{ \"version\": 1, \"keep\": \"mine\" }\n";
+        Files.writeString(config, original);
+
+        Path backups = home.resolve("data").resolve("backups");
+        Files.createDirectories(backups.getParent());
+        Files.writeString(backups, "not-a-directory");
+
+        HookInstaller.InstallResult result = installer.install(HookTool.CURSOR);
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).containsIgnoringCase("fail");
+        assertThat(Files.readString(config)).isEqualTo(original);
+    }
+
     @Vetoed
     static final class EmptyConfig extends com.condense.core.ConfigLoader {
         @Override
