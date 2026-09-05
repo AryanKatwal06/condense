@@ -85,5 +85,6 @@ test_update.py
 Test*.java
 Test*.class
 *.py
+!condense/src/main/resources/hooks/**/*.py
 temp_*.md
 temp_*.txt

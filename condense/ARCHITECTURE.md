@@ -76,7 +76,9 @@ condense --version / --help
 
 12. **Structured diagnostics IR**: Exemplar stages populate a `DocumentBuilder` sidecar on `FilterContext`. `TextRenderer` is the default CLI; `JsonRenderer` emits schema 1. Everyone else, gates, and IR-build failures wrap existing text as `kind=opaque`. `--format json` waits for the child to exit. See `docs/ir.md`.
 
-13. **MCP over stdio**: `condense mcp --start` is a hand-rolled JSON-RPC server (no extra Maven dependency). `run` returns the Phase 11 envelope; `explain` / `read` / `gain` / `doctor` reuse existing records. MCP paths go through `ReadPathGate`. Logs go to stderr so stdout stays JSON-RPC-only. See `docs/mcp.md`.
+13. **MCP over stdio**: `condense mcp --start` is a hand-rolled JSON-RPC server (no extra Maven dependency). `run` returns the Phase 11 envelope; `explain` / `read` / `gain` / `doctor` reuse existing records. MCP paths go through `ReadPathGate`. Logs go to stderr so stdout stays JSON-RPC-only. MCP is the preferred agent path; hooks are the fallback. See `docs/mcp.md`.
+
+14. **Hook integrity**: `HookBackup` copies an existing third-party config before merge (fail-closed). `HookIntegrity` SHA-256s Condense-owned scripts into `hook_baselines`. Analytics schema target is 2. Matched hook commands deny with a retry string containing `condense `; they never rewrite-and-allow. See `docs/HOOKS.md`.
 
 ## Technology Stack
 

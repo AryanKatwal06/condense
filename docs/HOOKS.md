@@ -1,6 +1,10 @@
 # Condense Hooks Documentation
 
-Condense integrates with AI coding assistants by installing "hooks" that automatically intercept shell commands and route them through `condense`. This means the AI never has to know condense exists; it simply runs `pytest`, and the hook silently rewrites it to `condense pytest` (or rejects it and tells the AI to retry, depending on the tool's hook capabilities).
+**MCP is the preferred agent path** (`condense mcp --start`). Hooks are the fallback for tools that still spawn a shell.
+
+Condense can install hooks that intercept matching shell commands and tell the agent to retry as `condense <command>`. Matched commands are **denied with a retry message**. They are never rewritten and auto-allowed. Unmatched commands and parse failures pass through.
+
+After a successful install, Condense stores a SHA-256 baseline of each **Condense-owned script** (not the third-party JSON, which users may edit). `condense init --show` and `condense doctor` report `ok` / `missing` / `tampered` / `unmanaged`. Before merging into an existing third-party config, Condense copies it to `{dataDir}/backups/{tool}-{epoch}{ext}`. If that backup cannot be written, the original file is left untouched.
 
 This document explains exactly how each hook works mechanically, where files are placed, and how to troubleshoot.
 
@@ -10,18 +14,18 @@ This document explains exactly how each hook works mechanically, where files are
 
 ### Claude Code
 
-- **Mechanism**: `PreToolUse` (JSON stdin/stdout). Claude Code passes the planned tool invocation as JSON via stdin to the hook. Condense's hook script parses this, identifies supported commands (like `git`, `cargo`, `pytest`), modifies the `command` field to prepend `condense `, and writes the modified JSON to stdout. This transparently rewrites the command before it runs.
+- **Mechanism**: `PreToolUse` (JSON stdin/stdout). Claude Code passes the planned tool invocation as JSON via stdin. Matching bare commands are **denied** with a reason that tells the model to retry as `condense <command>`. The hook does not rewrite `tool_input` and does not emit `permissionDecision: allow` for a rewritten command.
 - **Locations**:
   - **macOS/Linux**:
     - Config: `~/.claude/settings.json` (adds a `Bash` matcher entry under `PreToolUse`)
     - Script: `~/.claude/hooks/condense-hook.sh`
   - **Windows**:
     - Config: `%USERPROFILE%\.claude\settings.json`
-    - Script: `%USERPROFILE%\.claude\hooks\condense-hook.ps1`
-- **What gets installed**: A shell script that reads JSON from `stdin`, checks if `tool_name == "Bash"`, extracts the command, and if it matches `CONDENSE_COMMANDS`, returns a JSON object allowing the command but modifying the `tool_input.command`.
+    - Script: `%USERPROFILE%\.claude\hooks\condense-hook.sh` (the installer writes the same `.sh` script; there is no Claude `.ps1` in this release)
+- **What gets installed**: A shell script that reads JSON from `stdin`, checks if `tool_name == "Bash"`, extracts the command, and if it matches `CONDENSE_COMMANDS`, returns a deny decision plus a retry message containing `condense `.
 - **Verification**: 
   - Manual: `echo '{"tool_name": "Bash", "tool_input": {"command": "git status"}}' | ~/.claude/hooks/condense-hook.sh`
-  - Live: Open Claude Code, ask it to run `git status`. You will see it run `condense git status`. Run `condense gain` afterward to verify the tokens were saved.
+  - Live: Open Claude Code, ask it to run `git status`. It should refuse the bare command and retry through condense. Run `condense gain` afterward to verify the tokens were saved.
 - **Caveats**: Claude Code resolves multiple `PreToolUse` hooks in parallel. If you have competing Bash hooks that also attempt to rewrite the command, the composition order is undefined and condense may not reliably intercept.
 - **Manual Removal**: Remove the `condense-hook.sh` entry from `~/.claude/settings.json` and delete the script.
 
@@ -34,7 +38,7 @@ This document explains exactly how each hook works mechanically, where files are
     - Script: `~/.cursor/hooks/condense-hook.sh`
   - **Windows**:
     - Config: `%USERPROFILE%\.cursor\hooks.json`
-    - Script: `%USERPROFILE%\.cursor\hooks\condense-hook.ps1`
+    - Script: `%USERPROFILE%\.cursor\hooks\condense-hook.sh` (no Cursor `.ps1` in this release)
 - **What gets installed**: A script that intercepts `beforeShellExecution`. If the bare command matches our list, it responds with `{"continue": false, "permission": "deny", "agentMessage": "..."}`.
 - **Verification**: 
   - Manual: `echo '{"command": "npm install"}' | ~/.cursor/hooks/condense-hook.sh`
@@ -65,7 +69,7 @@ This document explains exactly how each hook works mechanically, where files are
     - Script: `~/.gemini/hooks/condense-hook.sh`
   - **Windows**:
     - Config: `%USERPROFILE%\.gemini\settings.json`
-    - Script: `%USERPROFILE%\.gemini\hooks\condense-hook.ps1`
+    - Script: `%USERPROFILE%\.gemini\hooks\condense-hook.sh` (no Gemini `.ps1` in this release)
 - **What gets installed**: A python-powered shell script to safely parse Gemini's tool JSON and gracefully deny commands. Note that any stdout outside of the JSON response breaks Gemini's parser, so the script enforces strict stdout silence.
 - **Verification**: Ask Gemini to run a test suite. It will retry using condense.
 - **Caveats**: **Requires a paid API key.** As of June 2026, the free tier for Gemini CLI has been deprecated and does not support tool hooks.
@@ -95,6 +99,37 @@ This document explains exactly how each hook works mechanically, where files are
   - Manual: `echo '{"preToolUse": {"toolName": "execute_command", "parameters": {"command": "git status"}}}' | ~/Documents/Cline/Rules/Hooks/PreToolUse`
   - Live: Have Cline execute a shell command like `cargo check`.
 - **Caveats**: **macOS/Linux only.** Cline does not currently support hooks on Windows. Furthermore, Cline only supports a *single* `PreToolUse` script. If you already have one, Condense will refuse to overwrite it and will print instructions on how to manually merge the logic.
+
+### Codex
+
+- **Mechanism**: `~/.codex/hooks.json` `PreToolUse` matcher `Bash`, `type: command`. Deny matching Bash commands with a retry message. Codex can mutate input; Condense does not.
+- **Locations**: config `~/.codex/hooks.json`, script `~/.codex/hooks/condense-hook.sh`.
+- **Caveats**: You must trust the hook in Codex `/hooks`. Condense does not write a vendor trust hash.
+
+### Antigravity
+
+- **Mechanism**: `PreToolUse` matcher `run_command` under `~/.gemini/antigravity-cli/hooks.json`. Deny/ask only.
+- **Locations**: config `~/.gemini/antigravity-cli/hooks.json`, script `~/.gemini/antigravity-cli/hooks/condense-hook.sh`.
+
+### OpenCode
+
+- **Mechanism**: Minimal Node plugin that deny-redirects matching shell/terminal tools, plus a conservative merge of `~/.config/opencode/hooks.json`.
+- **Locations**: plugin `~/.config/opencode/plugins/condense.js`, enable file `~/.config/opencode/hooks.json`.
+
+### Kilo Code
+
+- **Mechanism**: `PreToolUse` matcher `Bash` in `~/.config/kilo/hooks.json`. Deny matching commands.
+- **Locations**: config `~/.config/kilo/hooks.json`, script `~/.config/kilo/hooks/condense-hook.sh`.
+
+### Hermes
+
+- **Mechanism**: Authored plugin (`plugin.yaml` + `__init__.py`) that cancels matching shell commands.
+- **Locations**: `~/.hermes/plugins/condense/` and a conservative enable line in `~/.hermes/config.yaml` when that file has no `condense` entry yet.
+
+### Pi
+
+- **Mechanism**: Authored TypeScript extension that denies matching shell/terminal tools.
+- **Locations**: `~/.pi/agent/extensions/condense.ts`.
 
 ---
 

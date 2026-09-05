@@ -56,7 +56,7 @@ complete -c condense -n '__fish_seen_subcommand_from init' -s g -l global  -d 'I
 complete -c condense -n '__fish_seen_subcommand_from init' -l show         -d 'Show hook status'
 complete -c condense -n '__fish_seen_subcommand_from init' -l remove       -d 'Remove all hooks'
 complete -c condense -n '__fish_seen_subcommand_from init' -l tool         -d 'Specific tool' -r \
-  -a 'claude-code cursor gemini windsurf copilot cline'
+  -a 'claude-code cursor gemini windsurf copilot cline codex opencode kilo antigravity hermes pi'
 
 # config options
 complete -c condense -n '__fish_seen_subcommand_from config' -l list  -d 'Print full config'

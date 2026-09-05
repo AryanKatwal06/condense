@@ -59,7 +59,7 @@ _condense_completion() {
       return 0
       ;;
     --tool)
-      COMPREPLY=($(compgen -W "claude-code cursor gemini windsurf copilot cline" -- "$cur"))
+      COMPREPLY=($(compgen -W "claude-code cursor gemini windsurf copilot cline codex opencode kilo antigravity hermes pi" -- "$cur"))
       return 0
       ;;
     --get|--set)

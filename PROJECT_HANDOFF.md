@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 12 MCP closeout).
+**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 13 hook integrity closeout).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 12. Confirm with `git log -1` and origin before starting Phase 13.
+**Branch at handoff:** `main` after Phase 13. Confirm with `git log -1` and origin before starting Phase 14.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -253,16 +253,16 @@ Allowed roots are the resolved config and data dirs. Files are checked for nomin
 ```java
 KNOWN_CONDENSE_FILES = Set.of("condense.db", "condense.db-wal", "condense.db-shm",
     "config.toml", "trust.json", "filters.toml", ".install_dir", ".condense_install_dir");
-KNOWN_CONDENSE_DIRECTORIES = Set.of("tee");
+KNOWN_CONDENSE_DIRECTORIES = Set.of("tee", "backups");
 ```
 
 `uninstall --purge` recurses into known directories. Unknown files or nested dirs still abort with `UNEXPECTED_CONTENTS`.
 
 ### 4.12 Hooks (`hooks/`)
 
-`HookTool` constants: `GENERIC_BASH`, `CLAUDE_CODE`, `CURSOR`, `GEMINI`, `WINDSURF`, `COPILOT`, `CLINE` (7). Templates under `src/main/resources/hooks/` include shell and PowerShell variants for Copilot and Windsurf. Idempotency is a sentinel string, `# Installed by: condense init`; removal only deletes files carrying it.
+`HookTool` constants: `GENERIC_BASH`, `CLAUDE_CODE`, `CURSOR`, `GEMINI`, `WINDSURF`, `COPILOT`, `CLINE`, `CODEX`, `OPENCODE`, `KILO`, `ANTIGRAVITY`, `HERMES`, `PI` (13). Templates under `src/main/resources/hooks/` include shell and PowerShell variants for Copilot and Windsurf. Idempotency is a sentinel string, `# Installed by: condense init`; removal only deletes files carrying it.
 
-**Absent:** any checksum, integrity, tamper, ownership, or permission verification of installed hooks, and **any backup of a third-party config file before merging into it** (Claude/Cursor/Gemini/Windsurf/Copilot JSON is edited in place). Phase 13.
+**Integrity.** SHA-256 baselines of Condense-owned scripts live in `hook_baselines` (not `trust.json`). `condense init --show` / `doctor` report `ok` / `missing` / `tampered` / `unmanaged`. Third-party configs are copied to `{dataDir}/backups/{tool}-{epoch}{ext}` before merge; backup failure is fail-closed. Claude (and every template) denies matching commands; no rewrite+allow. MCP is the preferred agent path.
 
 ### 4.13 Native image configuration
 
@@ -291,7 +291,7 @@ Surefire explicitly excludes `**/*IT.java` (documented rationale: prevent ITs fr
 | `release.yml` | tag `v*` | create-release → build-native (linux-x64, linux-aarch64, macos-aarch64, windows-x64) → build-deb → publish (checksums, cosign, CycloneDX SBOM). After package, **Failsafe and the 80 MiB ceiling match `build.yml`** (remediation R4) |
 | `phase3-verification.yml` | `workflow_dispatch` only | Linux x64 only: 300-run soak, permission-denial fail-open, 5-way concurrency + `PRAGMA integrity_check` |
 
-`native-builds` on `build.yml` builds with `mvn package -Pnative -DskipTests`, then **runs Failsafe** (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativeBuiltinDefinitionIT`, `NativeTrustIT`, `NativePersistenceIT`, `NativeExplainIT`, `NativeStreamingIT`, `NativeReadIT`). It then enforces an **80 MiB** uncompressed size ceiling (`83886080`), records binary size and 5× cold-start, keeps the uninstall/purge shell smokes, and pushes metrics to a `ci-metrics` branch.
+`native-builds` on `build.yml` builds with `mvn package -Pnative -DskipTests`, then **runs Failsafe** (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativeBuiltinDefinitionIT`, `NativeTrustIT`, `NativePersistenceIT`, `NativeExplainIT`, `NativeStreamingIT`, `NativeReadIT`, `NativeIrIT`, `NativeMcpIT`, `NativeHookIT`). It then enforces an **80 MiB** uncompressed size ceiling (`83886080`), records binary size and 5× cold-start, keeps the uninstall/purge shell smokes, and pushes metrics to a `ci-metrics` branch.
 
 Current native proof for `main` at `cdd3d43` is [Build & Test run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575) (all five jobs green). This Windows workspace does not build native images.
 
@@ -318,7 +318,7 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D13 | ~~No built-in declarative filter definitions~~ **FIXED** | `filters/index.toml` + 31 definition files; `PipelineBackedFilter.buildPipeline()` loads the catalog | Phase 5 |
 | D14 | ~~No trust gate on project-supplied `.condense/filters.toml`~~ **FIXED** | `TrustGate` + `{configDir}/trust.json`; skip until TOFU or CI hatch | Phase 6 |
 | D15 | ~~No output provenance~~ **FIXED** | `FilterResult.of` stamps `condense[filtered]`; impersonators become `condense[quoted]` | Phase 6 |
-| D16 | ~~No schema versioning or migrations~~ **FIXED** | `PRAGMA user_version` target 1; `SchemaMigrator` | Phase 7 |
+| D16 | ~~No schema versioning or migrations~~ **FIXED** | `PRAGMA user_version` target 2; stepwise `SchemaMigrator` | Phase 7 / 13 |
 | D17 | ~~No WAL, no `busy_timeout`~~ **FIXED** | applied on every open | Phase 7 |
 | D18 | ~~No retention~~ **FIXED** | 90-day DELETE + bounded tee sweep | Phase 7 |
 | D19 | ~~Filter failures logged only~~ **FIXED** | `filter_outcomes` for stage/apply fallbacks | Phase 7 |
@@ -329,8 +329,8 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D24 | ~~No token-optimized source-file reading capability at all~~ **FIXED** | `condense read` + language catalog + `NativeReadIT` | Phase 10 |
 | D25 | ~~No structured output IR; each filter emits ad-hoc text~~ **FIXED** | schema-1 `Document` + text/JSON renderers; unmigrated commands are `opaque` | Phase 11 |
 | D26 | ~~`condense mcp` is a stub~~ **FIXED** | stdio JSON-RPC MCP server; `run` returns schema-1 IR; `NativeMcpIT` | Phase 12 |
-| D27 | No hook integrity/tamper verification, and **no backup before editing third-party configs** | `hooks/HookInstaller.java` | Phase 13 |
-| D28 | Agent coverage is a strict subset of Zap's, plus a generic-bash fallback | `hooks/HookTool.java` | Phase 13 |
+| D27 | ~~No hook integrity/tamper verification, and no backup before editing third-party configs~~ **FIXED** | `HookBackup` + `HookIntegrity` + `hook_baselines` | Phase 13 |
+| D28 | ~~Agent coverage is a strict subset of Zap's, plus a generic-bash fallback~~ **FIXED** | Codex / OpenCode / Kilo / Antigravity / Hermes / Pi installers; Copilot / Windsurf / Cline kept | Phase 13 |
 | D29 | Benchmarks print numbers but assert nothing; no enforced performance budget | `FilterPipelineBenchmarkTest`, `FilterOverrideBenchmarkTest` | Phase 1 baseline, Phase 17 gate |
 
 ### Known test-coverage gaps (from the filter-subsystem audit)
@@ -348,7 +348,7 @@ The next agent will be misled by these if they trust the docs. They are **docume
 | `condense/ARCHITECTURE.md` file table | Lists only the bootstrap/config/analytics classes | Says nothing about the 32 filters, pipeline, or overrides — materially incomplete |
 | Root `README.md` supported-commands table | 30 rows | Code registers ~47 prefixes; undocumented ones include `docker run`, `docker exec`, `python -c`, `ruff`, `npx eslint`, `npm ci`, `npm i`, `pip3 install`, `./mvnw`, `./gradlew`. `condense read` is a subcommand, not a proxied prefix |
 
-Rows that used to live here and are **no longer true** (removed 5 Sep 2026, audit R0 / R8–R10): ARCHITECTURE vs POM Java 17 (both are 21); README "Java 17+" (now GraalVM JDK 21); CONTRIBUTING sample that did not compile (now `PipelineBackedFilter` + `definitionName()`); "add to reflect-config as a manual ritual" (drift test is the gate); README `[general] ultra_compact` (CLI `-u` only); CHANGELOG rc1 42/12/NDJSON (correction note added); missing PR template (`.github/PULL_REQUEST_TEMPLATE.md` exists). This §4 used to describe the pre-Phase-1 tree; that is corrected above.
+Rows that used to live here and are **no longer true** (removed 5 Sep 2026, audit R0 / R8–R10): ARCHITECTURE vs POM Java 17 (both are 21); README "Java 17+" (now GraalVM JDK 21); CONTRIBUTING sample that did not compile (now `PipelineBackedFilter` + `definitionName()`); "add to reflect-config as a manual ritual" (drift test is the gate); README `[general] ultra_compact` (CLI `-u` only); CHANGELOG rc1 42/12/NDJSON (correction note added); missing PR template (`.github/PULL_REQUEST_TEMPLATE.md` exists). Phase 13 also corrected `docs/HOOKS.md` claiming Windows `.ps1` scripts for Claude/Cursor/Gemini — the installer still writes `.sh` only. This §4 used to describe the pre-Phase-1 tree; that is corrected above.
 
 ---
 
@@ -417,18 +417,19 @@ Planning plus Phase 1 through Phase 10 code, then an independent audit of those 
 | Phase 10 code | **LANDED** | `condense read`; per-language scanner; original line numbers; builtin `languages/*.toml`; workspace containment; `NativeReadIT`. |
 | Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT`. |
 | Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read`; resources `gain`/`doctor`; `NativeMcpIT`. |
-| Phases 13–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 13 code | **LANDED** | Schema 2 hook audit; backup-before-merge; SHA-256 script baselines; Claude deny-not-rewrite; Codex/OpenCode/Kilo/Antigravity/Hermes/Pi; `NativeHookIT`. |
+| Phases 14–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (510 / 0 / 0 / 9 on this Windows JVM; 9 skips are POSIX `CommandExecutorTest`), and CI 33950449575. |
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 so §4 matches the live tree. |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p12` are marked `completed`, `p13`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p13` are marked `completed`, `p14`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 12 code have landed.** Phases 13–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 13 code have landed.** Phases 14–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -804,7 +805,9 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 ### Phase 13 — Hook integrity, backups, no-auto-allow, agent coverage
 
-**Status: PENDING**
+**Status: SHIPPED**
+
+**Shipped.** Stepwise schema 2 (`hook_events`, `hook_baselines`). Backup-before-merge of third-party configs into `{dataDir}/backups/` (flat, purge-safe). SHA-256 baselines of Condense-owned scripts; `--show` / `doctor` integrity. Claude deny-not-rewrite; `NoAutoAllowTest` over every template. Six new `HookTool` values with isolated-home tests. `NativeHookIT` never skips. MCP stays the preferred path.
 
 **Goal.** Make hook installation auditable and tamper-evident, stop editing third-party config files without a backup, adopt a conservative permission policy, and close the agent coverage gap.
 
@@ -988,9 +991,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–12 code landed. Audit remediation R0–R12 landed 5 Sep 2026 (hygiene, not a new numbered phase). `condense mcp --start` speaks MCP on stdio; `run` returns the schema-1 IR envelope. This Windows workspace does not build native images.
+**Where we are.** Phase 1–13 code landed. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. This Windows workspace does not build native images.
 
-**Do not start Phase 13 code.** Present a complete Phase 13 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 14 code.** Present a complete Phase 14 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -1011,8 +1014,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 12 code has landed. Confirm `NativeMcpIT` appears in native job logs, `GoldenLockTest` is green, and `condense mcp --help` mentions `--start`.
-9. **Do not start Phase 13 code.** Present a complete Phase 13 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 13 code has landed. Confirm `NativeHookIT` appears in native job logs, `GoldenLockTest` is green, and `condense init --help` mentions integrity and the new tool names.
+9. **Do not start Phase 14 code.** Present a complete Phase 14 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

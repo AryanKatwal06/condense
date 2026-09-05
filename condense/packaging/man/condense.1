@@ -76,9 +76,12 @@ map to the original file. Options must come before the path
 Unknown languages stay verbatim. JSON is never treated as C.
 .TP
 .B condense init
-Install AI tool hooks. Use \fBcondense init \-g\fR to install for all supported
-tools, \fBcondense init \-\-show\fR to check status, \fBcondense init \-\-remove\fR
-to uninstall.
+Install AI tool hooks (fallback; MCP is preferred). Use \fBcondense init \-g\fR
+to install for all supported tools, \fBcondense init \-\-show\fR to check status
+and integrity, \fBcondense init \-\-remove\fR to uninstall. Tools include
+Claude Code, Cursor, Gemini, Windsurf, Copilot, Cline, Codex, OpenCode,
+Kilo, Antigravity, Hermes, and Pi. Matched commands are denied with a retry
+message; they are never rewritten and auto-allowed.
 .TP
 .B condense config
 Read and write Condense configuration. Use \fBcondense config \-\-list\fR,

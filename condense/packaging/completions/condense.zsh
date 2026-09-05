@@ -87,7 +87,7 @@ _condense() {
             '(-g --global)'{-g,--global}'[Install for all tools]' \
             '--show[Show hook status]' \
             '--remove[Remove all hooks]' \
-            '--tool=[Specific tool]:tool:(claude-code cursor gemini windsurf copilot cline)'
+            '--tool=[Specific tool]:tool:(claude-code cursor gemini windsurf copilot cline codex opencode kilo antigravity hermes pi)'
           ;;
         config)
           _arguments \

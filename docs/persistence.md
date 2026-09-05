@@ -24,16 +24,18 @@ WAL plus `busy_timeout` is the multi-process contract: two agent sessions can sh
 
 ## Schema version
 
-`PRAGMA user_version` is the only version clock. This binary targets **1**.
+`PRAGMA user_version` is the only version clock. This binary targets **2**.
 
-Version 1 keeps the historical `commands` table unchanged and adds `filter_outcomes`:
+Version 1 keeps the historical `commands` table unchanged and adds `filter_outcomes`. Version 2 adds hook audit tables. Existing v0 and v1 files step through each missing version; the migrator does not jump from v1 to target without `applyV2`.
 
 | Table | Purpose |
 |---|---|
 | `commands` | One row per proxied command (token ledger for `condense gain`) |
 | `filter_outcomes` | Fail-open incidents only (`stage_exception`, `apply_fallback`) |
+| `hook_events` | Install / remove / backup / verify / tamper rows (`ts` is epoch seconds) |
+| `hook_baselines` | SHA-256 of each Condense-owned hook script |
 
-A database written by a newer binary (`user_version > 1`) is not migrated. Reads of `commands` still try; outcome writes fail-open. `condense doctor` reports `schema_ahead`.
+A database written by a newer binary (`user_version > 2`) is not migrated. Reads of `commands` still try; outcome and hook writes fail-open. `condense doctor` reports `schema_ahead`.
 
 Historical `raw_tokens` / `out_tokens` are never rewritten. Rows from before `utf8_weighted_v1` can sit next to new rows; `gain` publishes how **new** counts are produced.
 
@@ -43,9 +45,10 @@ Historical `raw_tokens` / `out_tokens` are never rewritten. Rows from before `ut
 
 - `DELETE FROM commands WHERE ts < cutoff`
 - `DELETE FROM filter_outcomes WHERE ts < cutoff`
-- Bounded sweep of `{dataDir}/tee` (max 256 unlinks, no symlink follow, files contained in `tee/` only)
+- `DELETE FROM hook_events WHERE ts < cutoff`
+- Bounded sweep of `{dataDir}/tee` and `{dataDir}/backups` (max 256 unlinks, no symlink follow, regular files one level deep)
 
-`condense uninstall --purge` may delete `tee/` and `{configDir}/filters.toml`. Those names are on the allowlist.
+`condense uninstall --purge` may delete `tee/`, `backups/`, and `{configDir}/filters.toml`. Those names are on the allowlist.
 
 ## `condense doctor`
 
@@ -70,4 +73,4 @@ Exit 0 when the store is usable, including “zero rows, and here is why.” Exi
 | `migrate_failed` | Schema migration failed |
 | `degraded` | Writes failed after a usable open |
 
-Native proof: `NativePersistenceIT` creates a v0 file at runtime, runs the native binary, and asserts `user_version = 1`, WAL, surviving seed row, and doctor JSON.
+Native proof: `NativePersistenceIT` creates a v0 file at runtime, runs the native binary, and asserts `user_version` equals the target, WAL, surviving seed row, and doctor JSON. A separate case seeds v1 and asserts `hook_events` exists after the binary opens the file. `NativeHookIT` repeats the v1→v2 proof with isolated hook homes.

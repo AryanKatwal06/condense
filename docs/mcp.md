@@ -1,6 +1,6 @@
 # MCP server
 
-Agents can call Condense as **tools and resources** over stdio instead of rewriting shell commands through hooks. Hook install stays available (`condense init`). There is no HTTP, SSE, Streamable HTTP, or OAuth transport.
+Agents can call Condense as **tools and resources** over stdio instead of rewriting shell commands through hooks. **MCP is the preferred agent path.** Hook install (`condense init`) is the fallback. There is no HTTP, SSE, Streamable HTTP, or OAuth transport.
 
 ```
 condense mcp            # print a client config snippet; exit 0
@@ -63,4 +63,4 @@ CLI `condense explain --input` is unchanged.
 
 ## Native proof
 
-`NativeMcpIT` (never skip) drives `condense mcp --start` on the GraalVM binary: initialize + `run` on PATH-stubbed pytest, contained vs escaped `read`, and `condense://gain`.
+`NativeMcpIT` (never skip) drives `condense mcp --start` on the GraalVM binary: initialize + `run` on PATH-stubbed pytest, contained vs escaped `read`, and `condense://gain`. `NativeHookIT` also sends initialize + `tools/list` so hook work cannot regress the preferred path.

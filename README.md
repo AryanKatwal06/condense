@@ -80,7 +80,7 @@ You can download the binary for your platform directly from the [GitHub Releases
 1. **Verify installation**: `condense --version`
 2. **Try it manually**: `condense git status` (see the compressed output yourself)
 3. **View your savings**: `condense gain` (shows your token analytics dashboard)
-4. **Set up AI tool integration**: `condense init -g` (installs hooks into your AI coding assistant so it automatically uses condense without changing commands)
+4. **Set up AI tool integration**: prefer `condense mcp --start` in your agent; `condense init -g` installs hooks as the fallback
 5. **Configure exclusions** (optional): Open `~/.config/condense/config.toml` (Linux), `~/Library/Application Support/condense/config.toml` (macOS), or `%APPDATA%\condense\config.toml` (Windows) and add commands to `exclude_commands` — for example `exclude_commands = ["make", "cat"]` to pass those through unfiltered.
 
 ---
@@ -128,16 +128,22 @@ For any unrecognized command, condense passes output through unchanged — it is
 
 ## AI Tool Integration
 
-Running `condense init -g` installs hooks into your AI coding assistant. This means every shell command your AI runs is automatically intercepted and filtered by condense — the AI never has to know condense exists.
+Prefer MCP (`condense mcp --start`). `condense init -g` installs hooks as the fallback: matching bare commands are denied with a retry message containing `condense `. They are never rewritten and auto-allowed. `condense init --show` and `condense doctor` report script integrity (`ok` / `missing` / `tampered` / `unmanaged`). Existing third-party configs are copied under `{dataDir}/backups/` before merge.
 
 | Tool | Hook mechanism | Status |
 |---|---|---|
-| Claude Code | PreToolUse JSON stdin/stdout — silently rewrites command | ✅ Supported |
-| Cursor | beforeShellExecution — denies and suggests condense prefix | ✅ Supported |
-| GitHub Copilot CLI | preToolUse deny/allow — cross-platform Bash + PowerShell | ✅ Supported |
-| Gemini CLI | BeforeTool deny/redirect — requires paid API key (free tier ended Jun 2026) | ✅ Supported |
-| Cline | PreToolUse executable script — macOS/Linux only (Cline doesn't support Windows hooks) | ✅ Supported |
-| Windsurf | pre_run_command exit-code hook — Beta; auto-retry behavior unconfirmed | ⚠️ Beta |
+| Claude Code | PreToolUse JSON — deny + retry as `condense <command>` | Supported |
+| Cursor | beforeShellExecution — deny + suggest condense prefix | Supported |
+| GitHub Copilot CLI | preToolUse deny/allow — cross-platform Bash + PowerShell | Supported |
+| Gemini CLI | BeforeTool deny/redirect — requires paid API key (free tier ended Jun 2026) | Supported |
+| Cline | PreToolUse executable script — macOS/Linux only (Cline doesn't support Windows hooks) | Supported |
+| Windsurf | pre_run_command exit-code hook — Beta; auto-retry behavior unconfirmed | Beta |
+| Codex | `~/.codex/hooks.json` PreToolUse / Bash — you must trust the hook in Codex `/hooks` | Supported |
+| OpenCode | Authored Node plugin + `~/.config/opencode/hooks.json` | Supported |
+| Kilo Code | `~/.config/kilo/hooks.json` PreToolUse / Bash | Supported |
+| Antigravity | `~/.gemini/antigravity-cli/hooks.json` PreToolUse / `run_command` | Supported |
+| Hermes | Authored plugin under `~/.hermes/plugins/condense/` | Supported |
+| Pi | Authored extension `~/.pi/agent/extensions/condense.ts` | Supported |
 
 `condense init --remove` removes all hooks. `condense init --tool <tool>` installs a hook for a specific tool only.
 
