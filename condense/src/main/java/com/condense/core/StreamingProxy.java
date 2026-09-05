@@ -11,9 +11,10 @@ import com.condense.filter.pipeline.StageSession;
 import com.condense.trust.Provenance;
 import org.jboss.logging.Logger;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.time.Duration;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,6 +83,33 @@ public final class StreamingProxy {
         FilterResult filtered = new FilterResult(
             stamped, tokenCount(result), TokenCounter.count(stamped), true, incidents);
         return new StreamedRun(filtered, result, live.emittedAny || live.stamped);
+    }
+
+    /**
+     * Same session chain as {@link #run} without a child process. Package-visible
+     * so stream-vs-capture tests cannot invent a second walker.
+     */
+    static String replay(FilterPipeline pipeline, String text, FilterContext completed) {
+        ByteArrayOutputStream discarded = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(discarded, true, StandardCharsets.UTF_8);
+        LiveSession live = new LiveSession(
+            pipeline,
+            completed.command(),
+            completed.config(),
+            completed.verbose(),
+            completed.ultraCompact(),
+            out
+        );
+        byte[] bytes = (text == null ? "" : text).getBytes(StandardCharsets.UTF_8);
+        if (bytes.length > 0) {
+            live.onStdout(bytes, bytes.length);
+        }
+        live.finishDecoders();
+        live.endOfInput(completed);
+        String body = live.collected();
+        return live.stamped
+            ? Provenance.STAMP + (body.isEmpty() ? "" : "\n" + body)
+            : Provenance.stamp(body);
     }
 
     private static StreamedRun runRaw(

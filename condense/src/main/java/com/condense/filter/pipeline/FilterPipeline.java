@@ -67,13 +67,6 @@ public class FilterPipeline {
     }
 
     /**
-     * Same engine as {@link #execute}. Kept so tests can name the incremental path.
-     */
-    public String executeIncremental(String input, FilterContext context) {
-        return execute(input, context);
-    }
-
-    /**
      * Executes all stages in sequence on the given input text.
      *
      * <p>If any stage throws an exception, it is caught, logged, and execution continues
