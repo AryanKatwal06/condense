@@ -36,7 +36,8 @@ class ExplainReportJsonTest {
             EstimatorInfo.current(),
             new ArrayList<>(),
             0,
-            true
+            true,
+            "capture"
         );
         assertThat(report.skippedTiers()).isInstanceOf(ArrayList.class);
         assertThat(report.stages()).isInstanceOf(ArrayList.class);
@@ -48,5 +49,6 @@ class ExplainReportJsonTest {
         assertThat(json.get("incidents").isArray()).isTrue();
         assertThat(json.get("estimator").get("name").asText())
             .isEqualTo(Utf8WeightedTokenEstimator.NAME);
+        assertThat(json.get("pipeline_mode").asText()).isEqualTo("capture");
     }
 }

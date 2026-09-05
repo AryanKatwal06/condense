@@ -23,6 +23,7 @@ public final class ExplainTextRenderer {
             out.append("  ").append(report.source());
         }
         out.append('\n');
+        out.append("Mode:      ").append(report.pipelineMode()).append('\n');
         if (report.skippedTiers() != null && !report.skippedTiers().isEmpty()) {
             out.append("Skipped:   ");
             boolean first = true;
@@ -50,13 +51,14 @@ public final class ExplainTextRenderer {
             formatEstimator(report.estimator())));
         if (report.stages() != null && !report.stages().isEmpty()) {
             out.append('\n');
-            out.append(String.format(Locale.ROOT, "  %-4s %-22s %10s %10s %s%n",
-                "#", "stage", "in → out", "drop/add", "tokens"));
+            out.append(String.format(Locale.ROOT, "  %-4s %-22s %-14s %10s %10s %s%n",
+                "#", "stage", "stream", "in → out", "drop/add", "tokens"));
             int index = 1;
             for (ExplainReport.Stage stage : report.stages()) {
-                out.append(String.format(Locale.ROOT, "  %-4d %-22s %4d → %-4d %4d/%-4d %d → %d%n",
+                out.append(String.format(Locale.ROOT, "  %-4d %-22s %-14s %4d → %-4d %4d/%-4d %d → %d%n",
                     index++,
                     stage.id(),
+                    stage.streamability(),
                     stage.inputLines(),
                     stage.outputLines(),
                     stage.droppedLines(),

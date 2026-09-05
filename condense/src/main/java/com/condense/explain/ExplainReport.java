@@ -40,7 +40,8 @@ public record ExplainReport(
     @JsonProperty("estimator") EstimatorInfo estimator,
     @JsonProperty("incidents") List<Incident> incidents,
     @JsonProperty("child_exit_code") int childExitCode,
-    @JsonProperty("ok") boolean ok
+    @JsonProperty("ok") boolean ok,
+    @JsonProperty("pipeline_mode") String pipelineMode
 ) {
     public ExplainReport {
         skippedTiers = copy(skippedTiers);
@@ -52,6 +53,7 @@ public record ExplainReport(
         filteredOutput = filteredOutput == null ? "" : filteredOutput;
         estimator = estimator == null ? EstimatorInfo.current() : estimator;
         provenance = provenance == null ? new ProvenanceInfo(false, null) : provenance;
+        pipelineMode = pipelineMode == null || pipelineMode.isBlank() ? "capture" : pipelineMode;
     }
 
     private static <T> List<T> copy(List<T> values) {
@@ -88,13 +90,15 @@ public record ExplainReport(
         @JsonProperty("added_sample") List<String> addedSample,
         @JsonProperty("dropped_truncated") boolean droppedTruncated,
         @JsonProperty("added_truncated") boolean addedTruncated,
-        @JsonProperty("detail") String detail
+        @JsonProperty("detail") String detail,
+        @JsonProperty("streamability") String streamability
     ) {
         public Stage {
             droppedSample = droppedSample == null ? new ArrayList<>() : new ArrayList<>(droppedSample);
             addedSample = addedSample == null ? new ArrayList<>() : new ArrayList<>(addedSample);
             id = id == null ? "" : id;
             status = status == null ? "" : status;
+            streamability = streamability == null || streamability.isBlank() ? "document" : streamability;
         }
     }
 

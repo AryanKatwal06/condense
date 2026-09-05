@@ -10,9 +10,12 @@ import com.condense.core.FilterStrategy;
 import com.condense.core.StrategyRegistry;
 import com.condense.core.TokenCounter;
 import com.condense.filter.pipeline.FilterExplainTrace;
+import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.LineDiff;
 import com.condense.filter.pipeline.PipelineBackedFilter;
+import com.condense.filter.pipeline.PipelineMode;
 import com.condense.filter.pipeline.StageTrace;
+import com.condense.filter.pipeline.Streamability;
 import com.condense.filter.pipeline.config.PipelineDecision;
 import com.condense.filter.python.PythonFilter;
 import com.condense.trust.Provenance;
@@ -154,7 +157,7 @@ public class ExplainService {
         String lastOutput = pipelineInput;
         if (trace.pipelineTrace() != null) {
             for (StageTrace stage : trace.pipelineTrace().stages()) {
-                stages.add(toStage(stage));
+                stages.add(toStage(stage, streamabilityOf(trace, stage.id())));
             }
             lastOutput = trace.pipelineTrace().output();
         }
@@ -169,7 +172,7 @@ public class ExplainService {
                 null,
                 Integer.MAX_VALUE
             );
-            stages.add(toStage(provenance));
+            stages.add(toStage(provenance, "document"));
             lastOutput = filtered.output();
         } else {
             lastOutput = filtered.output();
@@ -223,7 +226,8 @@ public class ExplainService {
             EstimatorInfo.current(),
             incidents,
             result.exitCode(),
-            !trace.applyFallback()
+            !trace.applyFallback(),
+            pipelineMode(trace)
         );
     }
 
@@ -262,11 +266,32 @@ public class ExplainService {
             EstimatorInfo.current(),
             new ArrayList<>(),
             result.exitCode(),
-            true
+            true,
+            "live_raw"
         );
     }
 
-    private static ExplainReport.Stage toStage(StageTrace stage) {
+    private static String pipelineMode(FilterExplainTrace trace) {
+        if (trace.gateFired() || trace.decision() == null || trace.decision().pipeline() == null) {
+            return "capture";
+        }
+        return trace.decision().pipeline().mode() == PipelineMode.STREAM ? "stream" : "capture";
+    }
+
+    private static String streamabilityOf(FilterExplainTrace trace, String id) {
+        if (trace.decision() == null || trace.decision().pipeline() == null) {
+            return "document";
+        }
+        for (FilterStage stage : trace.decision().pipeline().stages()) {
+            if (id.equals(stage.stageId())) {
+                Streamability streamability = stage.streamability();
+                return streamability.name().toLowerCase(java.util.Locale.ROOT);
+            }
+        }
+        return "document";
+    }
+
+    private static ExplainReport.Stage toStage(StageTrace stage, String streamability) {
         return new ExplainReport.Stage(
             stage.id(),
             stage.status(),
@@ -282,7 +307,8 @@ public class ExplainService {
             stage.addedSample(),
             stage.droppedTruncated(),
             stage.addedTruncated(),
-            stage.detail()
+            stage.detail(),
+            streamability
         );
     }
 

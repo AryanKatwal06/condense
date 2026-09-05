@@ -38,6 +38,8 @@ Skipped tiers use a closed reason set: `absent`, `invalid`, `untrusted`, `capabi
 
 A `beforePipeline` gate (for example a rejected `git push`) sets `gate.fired` and leaves compressing stages empty. Passthrough output is unstamped.
 
+JSON also reports `pipeline_mode` (`stream`, `capture`, or `live_raw`) and per-stage `streamability` (`order_local`, `windowed`, `finalize_only`, `document`). Mode is derived from those declarations — there is no `--stream` flag. See [docs/streaming.md](streaming.md).
+
 ## Native proof
 
 `NativeExplainIT` runs `explain --input <pytest fixture> --format json pytest` inside the shipped binary, checks the line identity, and asserts `gain --format json` still has `total_commands = 0`.

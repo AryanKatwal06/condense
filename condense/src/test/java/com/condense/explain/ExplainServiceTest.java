@@ -89,6 +89,7 @@ class ExplainServiceTest {
         ExplainReport report = service.explainStrategy(
             new PassthroughStrategy(), "unknown-tool", result, config, 0, false, 32, tempDir);
         assertThat(report.tier()).isEqualTo(PipelineDecision.TIER_PASSTHROUGH);
+        assertThat(report.pipelineMode()).isEqualTo("live_raw");
         assertThat(report.stages()).isEmpty();
         assertThat(report.wasFiltered()).isFalse();
     }
@@ -100,8 +101,13 @@ class ExplainServiceTest {
             "added 12 packages in 3s\nfound 3 vulnerabilities (1 critical)\n", "", 5L);
         ExplainReport report = service.explainStrategy(
             filter, "npm install", result, config, 0, false, 0, tempDir);
+        assertThat(report.pipelineMode()).isEqualTo("stream");
         assertThat(report.stages()).extracting(ExplainReport.Stage::id)
             .contains("ansi_strip", "npm_install_summary");
+        assertThat(report.stages())
+            .filteredOn(stage -> "npm_install_summary".equals(stage.id()))
+            .extracting(ExplainReport.Stage::streamability)
+            .containsExactly("order_local");
         assertThat(report.stages())
             .allMatch(stage -> stage.droppedSample().isEmpty());
         assertThat(report.stages().stream().mapToInt(ExplainReport.Stage::droppedLines).sum())

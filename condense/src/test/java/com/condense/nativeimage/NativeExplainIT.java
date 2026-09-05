@@ -62,6 +62,7 @@ class NativeExplainIT {
             .isZero();
         JsonNode report = JSON.readTree(explained.stdout());
         assertThat(report.get("tier").asText()).isEqualTo("builtin");
+        assertThat(report.get("pipeline_mode").asText()).isEqualTo("capture");
         assertThat(report.get("source").asText()).contains("pytest");
         assertThat(report.get("stages").isArray()).isTrue();
         assertThat(report.get("stages").size()).isGreaterThan(0);
