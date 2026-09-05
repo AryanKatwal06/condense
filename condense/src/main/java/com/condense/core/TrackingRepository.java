@@ -536,6 +536,80 @@ public class TrackingRepository {
         return result;
     }
 
+    /**
+     * Bounded recent command rows for {@code condense propose}. Fail-open empty.
+     * Does not change schema.
+     */
+    public List<ProposeCommandRow> queryProposeCommands(int limit, long sinceEpoch) {
+        int cap = Math.max(0, limit);
+        List<ProposeCommandRow> result = new ArrayList<>();
+        if (cap == 0) {
+            return result;
+        }
+        try (PreparedStatement ps = connection().prepareStatement(
+            """
+            SELECT ts, command, project, cwd, raw_tokens, out_tokens
+            FROM commands
+            WHERE ts >= ?
+            ORDER BY ts DESC
+            LIMIT ?
+            """
+        )) {
+            ps.setLong(1, sinceEpoch);
+            ps.setInt(2, cap);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new ProposeCommandRow(
+                        rs.getLong("ts"),
+                        rs.getString("command"),
+                        rs.getString("project"),
+                        rs.getString("cwd"),
+                        rs.getInt("raw_tokens"),
+                        rs.getInt("out_tokens")));
+                }
+            }
+        } catch (SQLException e) {
+            log.warnf(e, "queryProposeCommands failed: %s", e.getMessage());
+        }
+        return result;
+    }
+
+    /**
+     * Bounded recent fail-open incidents for {@code condense propose}. Fail-open empty.
+     */
+    public List<ProposeOutcomeRow> queryProposeOutcomes(int limit, long sinceEpoch) {
+        int cap = Math.max(0, limit);
+        List<ProposeOutcomeRow> result = new ArrayList<>();
+        if (cap == 0) {
+            return result;
+        }
+        try (PreparedStatement ps = connection().prepareStatement(
+            """
+            SELECT ts, command, project, kind
+            FROM filter_outcomes
+            WHERE ts >= ?
+              AND kind IN ('stage_exception', 'apply_fallback')
+            ORDER BY ts DESC
+            LIMIT ?
+            """
+        )) {
+            ps.setLong(1, sinceEpoch);
+            ps.setInt(2, cap);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new ProposeOutcomeRow(
+                        rs.getLong("ts"),
+                        rs.getString("command"),
+                        rs.getString("project"),
+                        rs.getString("kind")));
+                }
+            }
+        } catch (SQLException e) {
+            log.warnf(e, "queryProposeOutcomes failed: %s", e.getMessage());
+        }
+        return result;
+    }
+
 
 
     public record AggregateStats(
@@ -572,6 +646,12 @@ public class TrackingRepository {
             return rawTokens == 0 ? 0 : (int)(100L * (rawTokens - outTokens) / rawTokens);
         }
     }
+
+    public record ProposeCommandRow(
+        long ts, String command, String project, String cwd, int rawTokens, int outTokens) {}
+
+    public record ProposeOutcomeRow(
+        long ts, String command, String project, String kind) {}
 
 
 

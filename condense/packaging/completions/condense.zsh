@@ -8,6 +8,7 @@ _condense() {
     'gain:Show token savings analytics'
     'doctor:Diagnose persistence and empty analytics'
     'discover:Recommend filters from manifests and lockfiles'
+    'propose:Propose reviewable project filter overrides'
     'explain:Show which filter stages dropped which lines'
     'read:Read a source file with comment-strip or outline'
     'init:Install AI tool hooks'
@@ -93,6 +94,12 @@ _condense() {
           _arguments \
             '--format=[Output format]:format:(text json)' \
             '--root=[Narrow workspace root]:dir:_files -/'
+          ;;
+        propose)
+          _arguments \
+            '--format=[Output format]:format:(text json)' \
+            '--root=[Narrow workspace root]:dir:_files -/' \
+            '--write[Write filters.toml.proposed only]'
           ;;
         explain)
           _arguments \

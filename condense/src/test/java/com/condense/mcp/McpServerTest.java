@@ -101,7 +101,7 @@ class McpServerTest {
         JsonNode tools = McpMessages.RPC.readTree(response).get("result").get("tools");
         List<String> names = new ArrayList<>();
         tools.forEach(node -> names.add(node.get("name").asText()));
-        assertThat(names).containsExactly("run", "explain", "read", "discover");
+        assertThat(names).containsExactly("run", "explain", "read", "discover", "propose");
         assertThat(tools.get(0).get("inputSchema").get("type").asText()).isEqualTo("object");
     }
 

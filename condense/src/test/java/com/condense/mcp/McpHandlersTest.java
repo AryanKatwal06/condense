@@ -193,6 +193,7 @@ class McpHandlersTest {
         JsonNode root = McpMessages.RPC.readTree(response);
         String names = root.get("result").toString();
         assertThat(names).contains("\"name\":\"discover\"");
+        assertThat(names).contains("\"name\":\"propose\"");
         assertThat(names).contains("\"name\":\"run\"");
     }
 
@@ -217,6 +218,20 @@ class McpHandlersTest {
         JsonNode result = callTool("discover", "{\"root\":" + rootJson + "}");
         assertThat(result.path("isError").asBoolean(false)).isTrue();
         assertThat(result.get("content").get(0).get("text").asText()).contains("narrow");
+    }
+
+    @Test
+    void proposeReturnsSchemaOneAndWriteArgIsError() throws Exception {
+        JsonNode ok = callTool("propose", "{}");
+        assertThat(ok.path("isError").asBoolean(false)).isFalse();
+        com.fasterxml.jackson.databind.JsonNode report =
+            com.condense.core.Mappers.JSON.readTree(ok.get("content").get(0).get("text").asText());
+        assertThat(report.get("schema_version").asInt()).isEqualTo(1);
+        assertThat(report.has("proposals")).isTrue();
+
+        JsonNode write = callTool("propose", "{\"write\":true}");
+        assertThat(write.path("isError").asBoolean(false)).isTrue();
+        assertThat(write.get("content").get(0).get("text").asText()).contains("read-only");
     }
 
     @Test

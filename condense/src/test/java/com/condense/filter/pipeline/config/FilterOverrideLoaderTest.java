@@ -465,6 +465,25 @@ class FilterOverrideLoaderTest {
         assertThat(resolved.execute("warn\nwarn")).isEqualTo("warn (×2)");
     }
 
+    @Test
+    @DisplayName("Proposed sidecar is not loaded as a project override")
+    void proposedSidecarIsIgnored() throws IOException {
+        Path projectDir = tempDir.resolve("proposed-only");
+        Files.createDirectories(projectDir.resolve(".condense"));
+        Files.writeString(projectDir.resolve(".condense/filters.toml.proposed"), """
+            schema_version = 1
+            [filters."pytest"]
+            stages = [
+              { strategy = "grouping", pattern = "^(KEEPONLY)$", include_other = false }
+            ]
+            """);
+        FilterOverrideLoader loader = isolatedLoader("proposed-sidecar");
+        FilterPipeline fallback = FilterPipeline.of((in, ctx) -> StageResult.continueWith("failed"));
+        FilterPipeline resolved = loader.resolvePipeline("pytest", fallback, projectDir);
+        assertThat(resolved).isSameAs(fallback);
+        assertThat(resolved.execute("failed")).isEqualTo("failed");
+    }
+
     private Path writeProject(String name, String toml) throws IOException {
         Path projectDir = tempDir.resolve(name);
         Files.createDirectories(projectDir.resolve(".condense"));

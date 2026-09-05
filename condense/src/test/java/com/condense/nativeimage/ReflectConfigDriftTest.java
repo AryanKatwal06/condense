@@ -86,6 +86,16 @@ class ReflectConfigDriftTest {
             com.condense.discover.DiscoverDefinition.Extra.class.getName(),
             com.condense.discover.DiscoverDefinition.Index.class.getName(),
             com.condense.discover.DiscoverLimits.class.getName(),
+            com.condense.propose.ProposeCommand.class.getName(),
+            com.condense.propose.ProposeService.class.getName(),
+            com.condense.propose.ProposeWriter.class.getName(),
+            com.condense.propose.ProposeReport.class.getName(),
+            com.condense.propose.ProposeReport.Proposal.class.getName(),
+            com.condense.propose.ProposeReport.Evidence.class.getName(),
+            com.condense.propose.ProposeLimits.class.getName(),
+            com.condense.propose.ProposeToml.class.getName(),
+            TrackingRepository.ProposeCommandRow.class.getName(),
+            TrackingRepository.ProposeOutcomeRow.class.getName(),
             com.condense.persist.WriteFailureLedger.class.getName(),
             com.condense.persist.WriteFailureLedger.Snapshot.class.getName(),
             com.condense.doctor.DoctorCommand.class.getName(),
@@ -151,6 +161,11 @@ class ReflectConfigDriftTest {
         assertThat(com.condense.discover.DiscoverCommand.class.isAnnotationPresent(
                 io.quarkus.arc.Unremovable.class))
             .as("DiscoverCommand is created only via Picocli programmatic lookup; "
+                + "without @Unremovable Quarkus strips it from the native image")
+            .isTrue();
+        assertThat(com.condense.propose.ProposeCommand.class.isAnnotationPresent(
+                io.quarkus.arc.Unremovable.class))
+            .as("ProposeCommand is created only via Picocli programmatic lookup; "
                 + "without @Unremovable Quarkus strips it from the native image")
             .isTrue();
         assertThat(com.condense.doctor.DoctorCommand.class.isAnnotationPresent(

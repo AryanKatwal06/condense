@@ -14,6 +14,9 @@ condense \- high-performance CLI proxy that filters command output to save AI to
 .B condense discover
 [\fIOPTIONS\fR]
 .br
+.B condense propose
+[\fIOPTIONS\fR]
+.br
 .B condense explain
 [\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR...]
 .br
@@ -71,6 +74,12 @@ Recommend filter definitions from repository manifests and lockfiles.
 Does not change command dispatch. Use \fB\-\-format json\fR and
 \fB\-\-root DIR\fR (may only narrow the workspace).
 .TP
+.B condense propose
+Propose reviewable project override diffs from discovery and analytics.
+Never writes \fB.condense/filters.toml\fR. \fB\-\-write\fR creates
+\fB.condense/filters.toml.proposed\fR only. Review, copy, then
+\fBcondense config trust\fR.
+.TP
 .B condense explain
 Show which filter stages dropped or rewrote output, with line and token
 accounting. Options must come before the command
@@ -99,7 +108,7 @@ or \fBcondense config \-\-reset\fR.
 .B condense mcp
 Print an MCP client snippet, or start the stdio JSON-RPC server with
 \fBcondense mcp \-\-start\fR. Tools are \fBrun\fR, \fBexplain\fR,
-\fBread\fR, and \fBdiscover\fR. Resources are \fBcondense://gain\fR and
+\fBread\fR, \fBdiscover\fR, and \fBpropose\fR. Resources are \fBcondense://gain\fR and
 \fBcondense://doctor\fR.
 .SH EXAMPLES
 .TP
@@ -126,6 +135,9 @@ Show token savings dashboard:
 .TP
 Recommend filters for this repository:
 .B condense discover
+.TP
+Propose a reviewable project override sidecar:
+.B condense propose \-\-write
 .TP
 Start the MCP server on stdio:
 .B condense mcp \-\-start

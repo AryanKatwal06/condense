@@ -121,6 +121,7 @@ class NativeMcpIT {
         List<JsonNode> messages = jsonRpcLines(result.stdout());
         assertThat(messages).isNotEmpty();
         assertThat(messages.get(0).get("result").toString()).contains("\"name\":\"discover\"");
+        assertThat(messages.get(0).get("result").toString()).contains("\"name\":\"propose\"");
     }
 
     @Test

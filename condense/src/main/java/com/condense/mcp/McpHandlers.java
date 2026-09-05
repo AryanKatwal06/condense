@@ -12,6 +12,8 @@ import com.condense.ir.Document;
 import com.condense.ir.JsonRenderer;
 import com.condense.discover.DiscoverReport;
 import com.condense.discover.DiscoverService;
+import com.condense.propose.ProposeReport;
+import com.condense.propose.ProposeService;
 import com.condense.read.ReadLevel;
 import com.condense.read.ReadPathGate;
 import com.condense.read.ReadService;
@@ -38,6 +40,7 @@ public class McpHandlers {
     private final DoctorService doctor;
     private final TrackingRepository tracking;
     private final DiscoverService discover;
+    private final ProposeService propose;
 
     public McpHandlers() {
         this(null, null, null, null, null, null);
@@ -59,6 +62,7 @@ public class McpHandlers {
         this.doctor = doctor;
         this.tracking = tracking;
         this.discover = new DiscoverService();
+        this.propose = new ProposeService();
     }
 
     public JsonNode dispatch(String method, JsonNode params) {
@@ -101,7 +105,11 @@ public class McpHandlers {
             new McpMessages.ToolSpec(
                 "discover",
                 "Recommend filter definitions from repository manifests and lockfiles.",
-                discoverSchema())
+                discoverSchema()),
+            new McpMessages.ToolSpec(
+                "propose",
+                "Propose reviewable project filter overrides. Does not write filters.toml.",
+                proposeSchema())
         );
         return McpMessages.RPC.valueToTree(new McpMessages.ToolsListResult(tools));
     }
@@ -136,6 +144,7 @@ public class McpHandlers {
             case "explain" -> callExplain(args);
             case "read" -> callRead(args);
             case "discover" -> callDiscover(args);
+            case "propose" -> callPropose(args);
             default -> value(McpMessages.ToolResult.error("Unknown tool: " + name));
         };
     }
@@ -264,6 +273,19 @@ public class McpHandlers {
         return value(McpMessages.ToolResult.ok(compact(report)));
     }
 
+    private JsonNode callPropose(JsonNode args) {
+        if (args != null && args.has("write") && !args.get("write").isNull()) {
+            return value(McpMessages.ToolResult.error("propose is read-only; it cannot write files"));
+        }
+        String rootText = text(args, "root");
+        Path root = rootText == null ? null : Path.of(rootText);
+        ProposeReport report = propose.propose(cwd(), root, tracking);
+        if (report.failed()) {
+            return value(McpMessages.ToolResult.error(report.error()));
+        }
+        return value(McpMessages.ToolResult.ok(compact(report)));
+    }
+
     private void recordRead(String path, ReadLevel level, ReadService.Outcome outcome, long startedNanos) {
         if (tracking == null || outcome == null || !outcome.ok()) {
             return;
@@ -370,6 +392,16 @@ public class McpHandlers {
     }
 
     private static JsonNode discoverSchema() {
+        ObjectNode schema = McpMessages.RPC.createObjectNode();
+        schema.put("type", "object");
+        ObjectNode props = schema.putObject("properties");
+        props.putObject("root").put("type", "string")
+            .put("description", "Optional workspace root. May only narrow, not widen.");
+        schema.put("additionalProperties", false);
+        return schema;
+    }
+
+    private static JsonNode proposeSchema() {
         ObjectNode schema = McpMessages.RPC.createObjectNode();
         schema.put("type", "object");
         ObjectNode props = schema.putObject("properties");
