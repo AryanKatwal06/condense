@@ -1,0 +1,15 @@
+schema_version = 1
+name = "markdown"
+extensions = [".md"]
+family = "markdown"
+
+[[tests]]
+id = "html-comment"
+level = "comments"
+input = """
+# Title
+<!-- gone -->
+body
+"""
+expected_contains = ["# Title", "body"]
+expected_absent = ["gone"]

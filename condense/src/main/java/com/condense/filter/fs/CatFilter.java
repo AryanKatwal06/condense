@@ -1,7 +1,6 @@
 package com.condense.filter.fs;
 
 import com.condense.annotation.CommandFilter;
-import com.condense.annotation.CommandFilters;
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.core.FilterResult;
@@ -10,10 +9,7 @@ import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-@CommandFilters({
-    @CommandFilter("cat"),
-    @CommandFilter("read")
-})
+@CommandFilter("cat")
 @ApplicationScoped
 public class CatFilter extends PipelineBackedFilter {
 

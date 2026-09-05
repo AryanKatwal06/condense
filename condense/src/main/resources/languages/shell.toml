@@ -1,0 +1,28 @@
+schema_version = 1
+name = "shell"
+extensions = [".sh", ".bash", ".zsh"]
+filenames = ["Makefile", "Dockerfile"]
+family = "hash"
+line_comment = "#"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+
+[[outline]]
+name = "function"
+regex = '''^\s*(function\s+)?[\w-]+\s*\(\s*\)'''
+
+[[tests]]
+id = "hash-in-string"
+level = "comments"
+input = """
+url="http://example.com#frag"
+# drop this
+echo ok
+"""
+expected_contains = ["http://example.com#frag", "echo ok"]
+expected_absent = ["drop this"]

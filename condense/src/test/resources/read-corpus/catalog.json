@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "javascript/glob-string",
+      "language": "javascript",
+      "fixture": "read-corpus/fixtures/javascript-glob.txt",
+      "critical": ["src/**/*", "const y = 1;"]
+    },
+    {
+      "id": "json/packages-star",
+      "language": "json",
+      "fixture": "read-corpus/fixtures/json-packages.txt",
+      "critical": ["packages/*"]
+    },
+    {
+      "id": "java/star-string",
+      "language": "java",
+      "fixture": "read-corpus/fixtures/java-star.txt",
+      "critical": ["src/**/*", "int x = 1;"]
+    },
+    {
+      "id": "python/hash-string",
+      "language": "python",
+      "fixture": "read-corpus/fixtures/python-hash.txt",
+      "critical": ["http://example.com#frag", "x = 1"]
+    },
+    {
+      "id": "go/star-string",
+      "language": "go",
+      "fixture": "read-corpus/fixtures/go-star.txt",
+      "critical": ["src/**/*", "func Ok()"]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+schema_version = 1
+name = "html"
+extensions = [".html", ".htm"]
+family = "xml"
+
+[[outline]]
+name = "heading"
+regex = '''^\s*</?(html|head|body|main|section|article|h[1-6]|script|style)\b'''
+
+[[tests]]
+id = "html-comment"
+level = "comments"
+input = """
+<div class="src/**/*">
+<!-- gone -->
+<p>ok</p>
+"""
+expected_contains = ["src/**/*", "<p>ok</p>"]
+expected_absent = ["gone"]

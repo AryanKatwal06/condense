@@ -1,0 +1,36 @@
+schema_version = 1
+name = "java"
+extensions = [".java"]
+family = "c_like"
+line_comment = "//"
+block_comment_start = "/*"
+block_comment_end = "*/"
+nest_block_comments = false
+raw_strings = "java_text"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+escape = "\\"
+
+[[outline]]
+name = "type"
+regex = '''^\s*(public|protected|private|static|final|abstract|sealed|\s)*(class|interface|enum|record)\b'''
+
+[[outline]]
+name = "method"
+regex = '''^\s*(public|protected|private|static|final|synchronized|native|default|\s)*.+\(.*\)\s*(\{|throws|;|$)'''
+
+[[tests]]
+id = "keeps-star-in-string"
+level = "comments"
+input = """
+String glob = "src/**/*";
+/* gone */
+int x = 1;
+"""
+expected_contains = ["src/**/*", "int x = 1;"]
+expected_absent = ["gone"]

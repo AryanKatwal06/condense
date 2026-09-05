@@ -1,0 +1,36 @@
+schema_version = 1
+name = "typescript"
+extensions = [".ts", ".mts", ".cts"]
+family = "c_like"
+line_comment = "//"
+block_comment_start = "/*"
+block_comment_end = "*/"
+nest_block_comments = false
+raw_strings = "js_template"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+escape = "\\"
+
+[[outline]]
+name = "function"
+regex = '''^\s*(export\s+)?(async\s+)?function\b'''
+
+[[outline]]
+name = "type"
+regex = '''^\s*(export\s+)?(type|interface|enum|class)\b'''
+
+[[tests]]
+id = "keeps-star-in-string"
+level = "comments"
+input = """
+const glob: string = "src/**/*";
+/* gone */
+export function ok(): void {}
+"""
+expected_contains = ["src/**/*", "export function ok()"]
+expected_absent = ["gone"]

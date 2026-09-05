@@ -1,0 +1,36 @@
+schema_version = 1
+name = "cpp"
+extensions = [".cpp", ".cc", ".cxx", ".hpp", ".hh"]
+family = "c_like"
+line_comment = "//"
+block_comment_start = "/*"
+block_comment_end = "*/"
+nest_block_comments = false
+raw_strings = "cpp"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+escape = "\\"
+
+[[outline]]
+name = "function"
+regex = '''^\s*(template\b|[\w:<>,\s*&]+)\(.*\)\s*(const)?\s*\{?\s*$'''
+
+[[outline]]
+name = "type"
+regex = '''^\s*(template\b|class|struct|enum|namespace)\b'''
+
+[[tests]]
+id = "keeps-star-in-string"
+level = "comments"
+input = """
+auto glob = "src/**/*";
+/* gone */
+int ok() { return 1; }
+"""
+expected_contains = ["src/**/*", "int ok()"]
+expected_absent = ["gone"]

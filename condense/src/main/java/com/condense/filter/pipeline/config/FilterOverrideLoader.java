@@ -559,11 +559,11 @@ public class FilterOverrideLoader {
         return null;
     }
 
-    static DefinitionError unknownKeyError(UnrecognizedPropertyException e) {
+    public static DefinitionError unknownKeyError(UnrecognizedPropertyException e) {
         return unknownKeyError(e, null);
     }
 
-    static DefinitionError unknownKeyError(UnrecognizedPropertyException e, String source) {
+    public static DefinitionError unknownKeyError(UnrecognizedPropertyException e, String source) {
         String path = jacksonPath(e);
         JsonLocation loc = e.getLocation();
         Integer line = loc != null && loc.getLineNr() > 0 ? loc.getLineNr() : null;
@@ -601,7 +601,7 @@ public class FilterOverrideLoader {
         return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
     }
 
-    static String formatParseError(String prefix, Exception e) {
+    public static String formatParseError(String prefix, Exception e) {
         JsonLocation loc = null;
         if (e instanceof JsonMappingException mapping) {
             loc = mapping.getLocation();

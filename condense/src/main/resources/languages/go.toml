@@ -1,0 +1,40 @@
+schema_version = 1
+name = "go"
+extensions = [".go"]
+family = "c_like"
+line_comment = "//"
+block_comment_start = "/*"
+block_comment_end = "*/"
+nest_block_comments = false
+raw_strings = "go_raw"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+escape = "\\"
+
+[[outline]]
+name = "func"
+regex = '''^\s*func\b'''
+
+[[outline]]
+name = "type"
+regex = '''^\s*type\b'''
+
+[[outline]]
+name = "package"
+regex = '''^\s*(package|import)\b'''
+
+[[tests]]
+id = "keeps-star-in-string"
+level = "comments"
+input = """
+glob := "src/**/*"
+/* gone */
+func Ok() {}
+"""
+expected_contains = ["src/**/*", "func Ok()"]
+expected_absent = ["gone"]

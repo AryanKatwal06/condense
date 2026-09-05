@@ -1,0 +1,31 @@
+schema_version = 1
+name = "csharp"
+extensions = [".cs"]
+family = "c_like"
+line_comment = "//"
+block_comment_start = "/*"
+block_comment_end = "*/"
+nest_block_comments = false
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[outline]]
+name = "type"
+regex = '''^\s*(public|private|protected|internal|static|sealed|abstract|\s)*(class|interface|enum|record|struct)\b'''
+
+[[outline]]
+name = "method"
+regex = '''^\s*(public|private|protected|internal|static|\s)*.+\(.*\)\s*\{?\s*$'''
+
+[[tests]]
+id = "keeps-star-in-string"
+level = "comments"
+input = """
+var glob = "src/**/*";
+/* gone */
+public class Ok {}
+"""
+expected_contains = ["src/**/*", "public class Ok"]
+expected_absent = ["gone"]

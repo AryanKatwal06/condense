@@ -1,0 +1,32 @@
+schema_version = 1
+name = "kotlin"
+extensions = [".kt", ".kts"]
+family = "c_like"
+line_comment = "//"
+block_comment_start = "/*"
+block_comment_end = "*/"
+nest_block_comments = true
+raw_strings = "java_text"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[outline]]
+name = "type"
+regex = '''^\s*(public|private|internal|protected|abstract|data|sealed|\s)*(class|interface|object|enum class|fun)\b'''
+
+[[outline]]
+name = "fun"
+regex = '''^\s*(public|private|internal|protected|override|suspend|\s)*fun\b'''
+
+[[tests]]
+id = "keeps-star-in-string"
+level = "comments"
+input = """
+val glob = "src/**/*"
+/* gone */
+fun ok() {}
+"""
+expected_contains = ["src/**/*", "fun ok()"]
+expected_absent = ["gone"]

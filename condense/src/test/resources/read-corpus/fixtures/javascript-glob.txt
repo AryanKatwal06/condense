@@ -1,0 +1,3 @@
+let glob = "src/**/*";
+/* drop me */
+const y = 1;

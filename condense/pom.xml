@@ -160,6 +160,17 @@
                             <classpathScope>compile</classpathScope>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>validate-builtin-languages</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.condense.read.LanguageDefinitionValidator</mainClass>
+                            <classpathScope>compile</classpathScope>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

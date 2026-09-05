@@ -1,0 +1,28 @@
+schema_version = 1
+name = "ruby"
+extensions = [".rb"]
+family = "hash"
+line_comment = "#"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+
+[[outline]]
+name = "def"
+regex = '''^\s*(def|class|module)\b'''
+
+[[tests]]
+id = "hash-in-string"
+level = "comments"
+input = """
+glob = "src/**/*"
+# gone
+def ok
+end
+"""
+expected_contains = ["src/**/*", "def ok"]
+expected_absent = ["gone"]

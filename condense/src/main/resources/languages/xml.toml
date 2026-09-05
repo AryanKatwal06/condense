@@ -1,0 +1,19 @@
+schema_version = 1
+name = "xml"
+extensions = [".xml"]
+family = "xml"
+
+[[outline]]
+name = "element"
+regex = '''^\s*<[^!?/]'''
+
+[[tests]]
+id = "xml-comment"
+level = "comments"
+input = """
+<root path="src/**/*">
+<!-- gone -->
+<child/>
+"""
+expected_contains = ["src/**/*", "<child/>"]
+expected_absent = ["gone"]

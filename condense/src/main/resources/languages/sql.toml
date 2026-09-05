@@ -1,0 +1,30 @@
+schema_version = 1
+name = "sql"
+extensions = [".sql"]
+family = "sql"
+line_comment = "--"
+block_comment_start = "/*"
+block_comment_end = "*/"
+
+[[strings]]
+delimiter = "'"
+escape = "'"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[outline]]
+name = "ddl"
+regex = '''^\s*(CREATE|ALTER|DROP|SELECT|INSERT|UPDATE|DELETE|WITH)\b'''
+
+[[tests]]
+id = "keeps-star-in-string"
+level = "comments"
+input = """
+SELECT 'src/**/*';
+-- gone
+CREATE TABLE ok (id INT);
+"""
+expected_contains = ["src/**/*", "CREATE TABLE ok"]
+expected_absent = ["gone"]

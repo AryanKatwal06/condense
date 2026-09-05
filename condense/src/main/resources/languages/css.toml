@@ -1,0 +1,33 @@
+schema_version = 1
+name = "css"
+extensions = [".css"]
+family = "css"
+block_comment_start = "/*"
+block_comment_end = "*/"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+escape = "\\"
+
+[[outline]]
+name = "selector"
+regex = '''^\s*[^@\s].*\{\s*$'''
+
+[[outline]]
+name = "at"
+regex = '''^\s*@'''
+
+[[tests]]
+id = "block-comment"
+level = "comments"
+input = """
+.glob[href*="src/**/*"] { color: red; }
+/* gone */
+body { margin: 0; }
+"""
+expected_contains = ["src/**/*", "body { margin: 0; }"]
+expected_absent = ["gone"]

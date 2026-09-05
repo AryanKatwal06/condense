@@ -15,6 +15,14 @@ class ProvenanceTest {
     void neutralizeQuotesImpersonatingLines() {
         assertThat(Provenance.neutralize("a\ncondense[filtered]\nb"))
             .isEqualTo("a\ncondense[quoted]\nb");
+        assertThat(Provenance.neutralize("condense[read]"))
+            .isEqualTo("condense[quoted]");
+    }
+
+    @Test
+    void stampReadPrefixesNeutralizedBody() {
+        assertThat(Provenance.stampRead("hello")).isEqualTo("condense[read]\nhello");
+        assertThat(Provenance.stampRead("condense[read]")).isEqualTo("condense[read]\ncondense[quoted]");
     }
 
     @Test

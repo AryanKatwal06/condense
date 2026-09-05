@@ -1,0 +1,27 @@
+schema_version = 1
+name = "powershell"
+extensions = [".ps1"]
+family = "powershell"
+line_comment = "#"
+
+[[strings]]
+delimiter = "\""
+escape = "`"
+
+[[strings]]
+delimiter = "'"
+
+[[outline]]
+name = "function"
+regex = '''^\s*function\b'''
+
+[[tests]]
+id = "block-comment"
+level = "comments"
+input = """
+$url = "http://example.com#frag"
+<# gone #>
+function Ok {}
+"""
+expected_contains = ["http://example.com#frag", "function Ok"]
+expected_absent = ["gone"]

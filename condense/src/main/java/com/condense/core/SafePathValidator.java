@@ -126,6 +126,69 @@ public class SafePathValidator {
         }
     }
 
+    public static final int WORKSPACE_WALK_LIMIT = 64;
+
+    /**
+     * Walk parents looking for a {@code .git} marker. Stops after
+     * {@link #WORKSPACE_WALK_LIMIT} steps and does not follow directory symlinks.
+     * A {@code .git} <em>file</em> (git worktree) counts. If none is found, returns
+     * the normalized cwd.
+     */
+    public static Path resolveWorkspaceRoot(Path cwd) {
+        Path start = cwd == null
+            ? Path.of(System.getProperty("user.dir", "."))
+            : cwd;
+        Path current = start.toAbsolutePath().normalize();
+        Path fallback = current;
+        for (int i = 0; i < WORKSPACE_WALK_LIMIT; i++) {
+            Path git = current.resolve(".git");
+            if (Files.exists(git, LinkOption.NOFOLLOW_LINKS)) {
+                return current;
+            }
+            Path parent = current.getParent();
+            if (parent == null || parent.equals(current)) {
+                break;
+            }
+            current = parent;
+        }
+        return fallback;
+    }
+
+    /**
+     * True when {@code candidate} is {@code ancestor} or a descendant after canonicalization.
+     */
+    public static boolean isAtOrUnder(Path candidate, Path ancestor) {
+        if (candidate == null || ancestor == null) {
+            return false;
+        }
+        ContainmentResult result = contain(candidate, ancestor);
+        return result.contained();
+    }
+
+    /**
+     * {@link #contain(Path, Path)} plus a regular-file requirement.
+     */
+    public static ContainmentResult containReadable(Path file, Path root) {
+        ContainmentResult contained = contain(file, root);
+        if (!contained.contained()) {
+            return contained;
+        }
+        Path real = contained.realFile();
+        if (real == null) {
+            return ContainmentResult.rejected("file could not be resolved");
+        }
+        if (!Files.exists(real)) {
+            return ContainmentResult.rejected("file does not exist");
+        }
+        if (Files.isDirectory(real)) {
+            return ContainmentResult.rejected("path is a directory");
+        }
+        if (!Files.isRegularFile(real)) {
+            return ContainmentResult.rejected("path is not a regular file");
+        }
+        return contained;
+    }
+
     /**
      * Canonicalize {@code file} and require it to stay inside {@code expectedParent}.
      * Used for project {@code .condense/filters.toml} (outside condense-owned dirs)

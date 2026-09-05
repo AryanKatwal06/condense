@@ -1,0 +1,27 @@
+schema_version = 1
+name = "yaml"
+extensions = [".yml", ".yaml"]
+family = "hash"
+line_comment = "#"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+
+[[outline]]
+name = "key"
+regex = '''^\s*[\w.-]+\s*:'''
+
+[[tests]]
+id = "hash-in-string"
+level = "comments"
+input = """
+glob: "src/**/*"
+# gone
+ok: 1
+"""
+expected_contains = ["src/**/*", "ok: 1"]
+expected_absent = ["gone"]

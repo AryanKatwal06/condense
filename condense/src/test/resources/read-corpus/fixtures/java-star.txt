@@ -1,0 +1,3 @@
+String glob = "src/**/*";
+/* gone */
+int x = 1;

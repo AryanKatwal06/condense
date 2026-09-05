@@ -1,0 +1,40 @@
+schema_version = 1
+name = "javascript"
+extensions = [".js", ".mjs", ".cjs"]
+family = "c_like"
+line_comment = "//"
+block_comment_start = "/*"
+block_comment_end = "*/"
+nest_block_comments = false
+raw_strings = "js_template"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+escape = "\\"
+
+[[outline]]
+name = "function"
+regex = '''^\s*(export\s+)?(async\s+)?function\b'''
+
+[[outline]]
+name = "class"
+regex = '''^\s*(export\s+)?class\b'''
+
+[[outline]]
+name = "export"
+regex = '''^\s*export\b'''
+
+[[tests]]
+id = "keeps-glob-string"
+level = "comments"
+input = """
+let glob = "src/**/*";
+/* drop me */
+const y = 1;
+"""
+expected_contains = ["src/**/*", "const y = 1;"]
+expected_absent = ["drop me"]

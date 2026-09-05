@@ -6,6 +6,7 @@ package com.condense.trust;
 public final class Provenance {
 
     public static final String STAMP = "condense[filtered]";
+    public static final String READ_STAMP = "condense[read]";
     public static final String QUOTED = "condense[quoted]";
 
     private Provenance() {}
@@ -21,9 +22,13 @@ public final class Provenance {
                 out.append('\n');
             }
             first = false;
-            out.append(STAMP.equals(line) ? QUOTED : line);
+            out.append(isStampLine(line) ? QUOTED : line);
         }
         return out.toString();
+    }
+
+    public static boolean isStampLine(String line) {
+        return STAMP.equals(line) || READ_STAMP.equals(line);
     }
 
     public static String stamp(String body) {
@@ -32,6 +37,14 @@ public final class Provenance {
             return STAMP;
         }
         return STAMP + "\n" + clean;
+    }
+
+    public static String stampRead(String body) {
+        String clean = neutralize(body);
+        if (clean.isEmpty()) {
+            return READ_STAMP;
+        }
+        return READ_STAMP + "\n" + clean;
     }
 
     public static String passthrough(String body) {

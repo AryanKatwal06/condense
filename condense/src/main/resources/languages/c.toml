@@ -1,0 +1,35 @@
+schema_version = 1
+name = "c"
+extensions = [".c", ".h"]
+family = "c_like"
+line_comment = "//"
+block_comment_start = "/*"
+block_comment_end = "*/"
+nest_block_comments = false
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+escape = "\\"
+
+[[outline]]
+name = "function"
+regex = '''^\s*\w.+\(.*\)\s*\{?\s*$'''
+
+[[outline]]
+name = "struct"
+regex = '''^\s*(typedef\s+)?(struct|enum|union)\b'''
+
+[[tests]]
+id = "keeps-star-in-string"
+level = "comments"
+input = """
+const char *glob = "src/**/*";
+/* gone */
+int ok(void) { return 1; }
+"""
+expected_contains = ["src/**/*", "int ok(void)"]
+expected_absent = ["gone"]

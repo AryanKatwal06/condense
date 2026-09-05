@@ -1,0 +1,27 @@
+schema_version = 1
+definitions = [
+  "java",
+  "javascript",
+  "typescript",
+  "jsx",
+  "tsx",
+  "python",
+  "go",
+  "rust",
+  "c",
+  "cpp",
+  "csharp",
+  "kotlin",
+  "shell",
+  "powershell",
+  "html",
+  "xml",
+  "css",
+  "sql",
+  "json",
+  "toml",
+  "yaml",
+  "markdown",
+  "properties",
+  "ruby"
+]

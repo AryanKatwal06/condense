@@ -86,7 +86,17 @@ class ReflectConfigDriftTest {
             com.condense.explain.ExplainReport.Gate.class.getName(),
             com.condense.explain.ExplainReport.Stage.class.getName(),
             com.condense.explain.ExplainReport.ProvenanceInfo.class.getName(),
-            com.condense.explain.ExplainReport.Incident.class.getName()
+            com.condense.explain.ExplainReport.Incident.class.getName(),
+            com.condense.read.ReadCommand.class.getName(),
+            com.condense.read.ReadReport.class.getName(),
+            com.condense.read.ReadLevel.class.getName(),
+            com.condense.read.LanguageFamily.class.getName(),
+            com.condense.read.RawStringStyle.class.getName(),
+            com.condense.read.LanguageDefinition.class.getName(),
+            com.condense.read.LanguageDefinition.StringDef.class.getName(),
+            com.condense.read.LanguageDefinition.OutlinePattern.class.getName(),
+            com.condense.read.LanguageDefinition.InlineTest.class.getName(),
+            com.condense.read.LanguageDefinition.Index.class.getName()
         );
 
         assertThat(com.condense.doctor.DoctorCommand.class.isAnnotationPresent(
@@ -97,6 +107,11 @@ class ReflectConfigDriftTest {
         assertThat(com.condense.explain.ExplainCommand.class.isAnnotationPresent(
                 io.quarkus.arc.Unremovable.class))
             .as("ExplainCommand is created only via Picocli programmatic lookup; "
+                + "without @Unremovable Quarkus strips it from the native image")
+            .isTrue();
+        assertThat(com.condense.read.ReadCommand.class.isAnnotationPresent(
+                io.quarkus.arc.Unremovable.class))
+            .as("ReadCommand is created only via Picocli programmatic lookup; "
                 + "without @Unremovable Quarkus strips it from the native image")
             .isTrue();
     }

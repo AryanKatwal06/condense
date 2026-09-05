@@ -431,5 +431,15 @@
   { "name": "com.condense.explain.ExplainReport$Gate", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.explain.ExplainReport$Stage", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.explain.ExplainReport$ProvenanceInfo", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
-  { "name": "com.condense.explain.ExplainReport$Incident", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
+  { "name": "com.condense.explain.ExplainReport$Incident", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.ReadCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.ReadReport", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.ReadLevel", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.LanguageFamily", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.RawStringStyle", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.LanguageDefinition", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.LanguageDefinition$StringDef", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.LanguageDefinition$OutlinePattern", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.LanguageDefinition$InlineTest", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.read.LanguageDefinition$Index", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
 ]

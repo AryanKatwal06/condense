@@ -3,6 +3,7 @@
     "includes": [
       { "pattern": "com/condense/version\\.properties" },
       { "pattern": "filters/.*\\.toml" },
+      { "pattern": "languages/.*\\.toml" },
       { "pattern": "hooks/.*" },
       { "pattern": "application\\.properties" },
       { "pattern": "org/sqlite/native/.*" }

@@ -1,0 +1,13 @@
+schema_version = 1
+name = "json"
+extensions = [".json"]
+family = "data"
+
+[[tests]]
+id = "packages-star"
+level = "comments"
+input = """
+{"workspaces": ["packages/*"]}
+"""
+expected_contains = ["packages/*"]
+expected_absent = []

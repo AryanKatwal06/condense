@@ -1,6 +1,6 @@
 schema_version = 1
 name = "cat"
-commands = ["cat", "read"]
+commands = ["cat"]
 
 [[stages]]
 strategy = "cat_content"

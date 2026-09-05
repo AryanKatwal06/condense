@@ -1,0 +1,24 @@
+schema_version = 1
+name = "properties"
+extensions = [".properties"]
+family = "hash"
+line_comment = "#"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[outline]]
+name = "key"
+regex = '''^\s*[^#!\s].*='''
+
+[[tests]]
+id = "hash-comment"
+level = "comments"
+input = """
+glob=src/**/*
+# gone
+ok=1
+"""
+expected_contains = ["src/**/*", "ok=1"]
+expected_absent = ["gone"]

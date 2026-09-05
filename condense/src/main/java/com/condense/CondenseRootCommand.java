@@ -29,6 +29,7 @@ import java.util.List;
         com.condense.analytics.GainCommand.class,
         com.condense.doctor.DoctorCommand.class,
         com.condense.explain.ExplainCommand.class,
+        com.condense.read.ReadCommand.class,
         com.condense.hooks.InitCommand.class,
         com.condense.config.ConfigCommand.class,
         com.condense.CompletionCommand.class,
@@ -58,6 +59,7 @@ import java.util.List;
         "  condense gain                # Token savings report",
         "  condense doctor              # Why gain is empty",
         "  condense explain pytest      # Which stages dropped which lines",
+        "  condense read Src.java       # Comment-stripped source with original line numbers",
         "  condense init -g             # Install AI tool hooks"
     }
 )

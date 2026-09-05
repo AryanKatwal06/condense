@@ -1,0 +1,32 @@
+schema_version = 1
+name = "rust"
+extensions = [".rs"]
+family = "c_like"
+line_comment = "//"
+block_comment_start = "/*"
+block_comment_end = "*/"
+nest_block_comments = true
+raw_strings = "rust"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[outline]]
+name = "fn"
+regex = '''^\s*(pub(\([^)]*\))?\s+)?(async\s+)?(unsafe\s+)?(const\s+)?fn\b'''
+
+[[outline]]
+name = "type"
+regex = '''^\s*(pub(\([^)]*\))?\s+)?(struct|enum|trait|impl|type|mod)\b'''
+
+[[tests]]
+id = "keeps-star-in-string"
+level = "comments"
+input = """
+let glob = "src/**/*";
+/* gone */
+fn ok() {}
+"""
+expected_contains = ["src/**/*", "fn ok()"]
+expected_absent = ["gone"]

@@ -1,0 +1,27 @@
+schema_version = 1
+name = "toml"
+extensions = [".toml"]
+family = "hash"
+line_comment = "#"
+
+[[strings]]
+delimiter = "\""
+escape = "\\"
+
+[[strings]]
+delimiter = "'"
+
+[[outline]]
+name = "table"
+regex = '''^\s*\['''
+
+[[tests]]
+id = "hash-in-string"
+level = "comments"
+input = """
+glob = "src/**/*"
+# gone
+[ok]
+"""
+expected_contains = ["src/**/*", "[ok]"]
+expected_absent = ["gone"]
