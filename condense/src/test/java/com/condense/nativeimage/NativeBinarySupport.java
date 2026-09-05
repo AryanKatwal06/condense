@@ -81,6 +81,29 @@ public final class NativeBinarySupport {
             Map<String, String> extraEnv,
             String... args
     ) throws Exception {
+        return start(configDir, dataDir, prependPathDir, workDir, extraEnv, args).await();
+    }
+
+    /**
+     * Starts the native binary so a test can peek at stdout before the child exits.
+     */
+    public static StartedRun start(
+            Path configDir,
+            Path dataDir,
+            Path prependPathDir,
+            String... args
+    ) throws Exception {
+        return start(configDir, dataDir, prependPathDir, null, null, args);
+    }
+
+    public static StartedRun start(
+            Path configDir,
+            Path dataDir,
+            Path prependPathDir,
+            Path workDir,
+            Map<String, String> extraEnv,
+            String... args
+    ) throws Exception {
         File binary = requireNativeBinary();
         List<String> command = new ArrayList<>();
         command.add(binary.getAbsolutePath());
@@ -109,16 +132,7 @@ public final class NativeBinarySupport {
         Process process = builder.start();
         StreamCollector stdout = StreamCollector.start(process.getInputStream());
         StreamCollector stderr = StreamCollector.start(process.getErrorStream());
-
-        boolean finished = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        if (!finished) {
-            process.destroyForcibly();
-            fail("Native binary timed out after " + TIMEOUT_SECONDS + "s: " + command);
-        }
-
-        stdout.join();
-        stderr.join();
-        return new CliResult(process.exitValue(), stdout.text(), stderr.text());
+        return new StartedRun(process, stdout, stderr, command);
     }
 
     private static void prependPath(ProcessBuilder builder, Path extraDir) {
@@ -154,6 +168,39 @@ public final class NativeBinarySupport {
 
     public record CliResult(int exitCode, String stdout, String stderr) {}
 
+    public static final class StartedRun {
+        private final Process process;
+        private final StreamCollector stdout;
+        private final StreamCollector stderr;
+        private final List<String> command;
+
+        StartedRun(Process process, StreamCollector stdout, StreamCollector stderr, List<String> command) {
+            this.process = process;
+            this.stdout = stdout;
+            this.stderr = stderr;
+            this.command = command;
+        }
+
+        public boolean isAlive() {
+            return process.isAlive();
+        }
+
+        public String stdoutSoFar() {
+            return stdout.text();
+        }
+
+        public CliResult await() throws Exception {
+            boolean finished = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                fail("Native binary timed out after " + TIMEOUT_SECONDS + "s: " + command);
+            }
+            stdout.join();
+            stderr.join();
+            return new CliResult(process.exitValue(), stdout.text(), stderr.text());
+        }
+    }
+
     private static final class StreamCollector implements Runnable {
         private final InputStream in;
         private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -175,7 +222,13 @@ public final class NativeBinarySupport {
         @Override
         public void run() {
             try {
-                in.transferTo(buffer);
+                byte[] chunk = new byte[4096];
+                int read;
+                while ((read = in.read(chunk)) != -1) {
+                    synchronized (buffer) {
+                        buffer.write(chunk, 0, read);
+                    }
+                }
             } catch (Exception e) {
                 failure = e;
             }
@@ -189,7 +242,9 @@ public final class NativeBinarySupport {
         }
 
         String text() {
-            return buffer.toString(StandardCharsets.UTF_8);
+            synchronized (buffer) {
+                return buffer.toString(StandardCharsets.UTF_8);
+            }
         }
     }
 }

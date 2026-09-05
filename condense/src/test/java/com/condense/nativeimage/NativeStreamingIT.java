@@ -1,5 +1,9 @@
 package com.condense.nativeimage;
 
+import com.condense.core.CondenseConfig;
+import com.condense.core.ExecutionResult;
+import com.condense.core.FilterResult;
+import com.condense.filter.node.NpmInstallFilter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,6 +94,74 @@ class NativeStreamingIT {
         assertThat(result.stdout()).contains("npm warn deprecated foo");
         assertThat(result.stdout()).contains("✓ npm install: 12 packages");
         assertThat(result.stdout()).contains("condense[filtered]");
+    }
+
+    @Test
+    void pathStubbedNpmWarnAppearsBeforeChildExits() throws Exception {
+        Path bin = tempDir.resolve("timed-bin");
+        Files.createDirectories(bin);
+        Path sentinel = tempDir.resolve("STARTED_SLEEP");
+        String stubText = "npm warn deprecated foo@1.0.0: gone\n"
+            + "added 12 packages in 1s\n"
+            + "found 3 vulnerabilities\n";
+        if (NativeBinarySupport.isWindows()) {
+            Files.writeString(bin.resolve("npm.cmd"),
+                "@echo off\r\n"
+                    + "echo npm warn deprecated foo@1.0.0: gone\r\n"
+                    + "echo.> \"" + sentinel.toAbsolutePath() + "\"\r\n"
+                    + "ping -n 3 127.0.0.1 >nul\r\n"
+                    + "echo added 12 packages in 1s\r\n"
+                    + "echo found 3 vulnerabilities\r\n"
+                    + "exit /b 0\r\n");
+        } else {
+            Path stub = bin.resolve("npm");
+            Files.writeString(stub,
+                "#!/bin/sh\n"
+                    + "echo 'npm warn deprecated foo@1.0.0: gone'\n"
+                    + "touch '" + sentinel.toAbsolutePath() + "'\n"
+                    + "sleep 1\n"
+                    + "echo 'added 12 packages in 1s'\n"
+                    + "echo 'found 3 vulnerabilities'\n"
+                    + "exit 0\n");
+            stub.toFile().setExecutable(true);
+        }
+
+        NativeBinarySupport.StartedRun live = NativeBinarySupport.start(
+            configDir(), dataDir(), bin, "npm", "install");
+        waitFor(sentinel);
+        String mid = live.stdoutSoFar();
+        assertThat(mid).contains("npm warn deprecated foo");
+        assertThat(mid).doesNotContain("✓ npm install");
+        NativeBinarySupport.CliResult result = live.await();
+        assertThat(result.exitCode())
+            .as("stdout=%s stderr=%s", result.stdout(), result.stderr())
+            .isZero();
+        assertThat(result.stdout()).contains("npm warn deprecated foo");
+        assertThat(result.stdout()).contains("✓ npm install: 12 packages");
+
+        FilterResult applied = new NpmInstallFilter().apply(
+            "npm install",
+            new ExecutionResult(0, stubText, "", 10L),
+            CondenseConfig.defaults(),
+            0,
+            false);
+        assertThat(normalize(result.stdout())).contains(normalize(applied.output()));
+    }
+
+    private static void waitFor(Path sentinel) throws Exception {
+        long deadline = System.currentTimeMillis() + 8_000;
+        while (System.currentTimeMillis() < deadline) {
+            if (Files.exists(sentinel)) {
+                Thread.sleep(80);
+                return;
+            }
+            Thread.sleep(20);
+        }
+        throw new AssertionError("stub never reached its sleep sentinel: " + sentinel);
+    }
+
+    private static String normalize(String text) {
+        return text == null ? "" : text.replace("\r", "").trim();
     }
 
     private Path configDir() {
