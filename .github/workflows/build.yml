@@ -134,9 +134,12 @@ jobs:
       - name: Native integration tests
         shell: bash
         run: |
+          SOAK="${{ (github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest') && '300' || '20' }}"
+          echo "condense.soak.runs=$SOAK"
           mvn failsafe:integration-test failsafe:verify \
             -DskipITs=false \
             -Dnative.image.path="${PWD}/target/condense-runner" \
+            -Dcondense.soak.runs="$SOAK" \
             --no-transfer-progress -B
 
       - name: Enforce uncompressed binary size ceiling

@@ -138,9 +138,12 @@ jobs:
       - name: Native integration tests
         shell: bash
         run: |
+          SOAK="${{ matrix.target == 'linux-x64' && '300' || '20' }}"
+          echo "condense.soak.runs=$SOAK"
           mvn failsafe:integration-test failsafe:verify \
             -DskipITs=false \
             -Dnative.image.path="${PWD}/target/condense-runner" \
+            -Dcondense.soak.runs="$SOAK" \
             --no-transfer-progress -B
 
       - name: Enforce uncompressed binary size ceiling
@@ -266,10 +269,59 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3
 
+      - name: Generate SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          path: ./
+          format: cyclonedx-json
+          output-file: artifacts/sbom.cyclonedx.json
+
+      - name: Assert SBOM lists runtime Maven coordinates
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+          sbom_path = Path("artifacts/sbom.cyclonedx.json")
+          sbom = json.loads(sbom_path.read_text(encoding="utf-8"))
+          blob = json.dumps(sbom)
+          required = (
+              "sqlite-jdbc",
+              "jackson-databind",
+              "jackson-dataformat-toml",
+              "quarkus-picocli",
+              "quarkus-arc",
+          )
+          missing = [name for name in required if name not in blob]
+          if missing:
+              print("FAIL: CycloneDX SBOM is missing runtime coordinates:", ", ".join(missing))
+              sys.exit(1)
+          print("PASS: SBOM contains", ", ".join(required))
+          PY
+
       - name: Generate Checksums
         run: |
           cd artifacts
-          sha256sum condense-* > checksums.txt
+          shopt -s nullglob
+          files=(
+            condense-linux-x64
+            condense-linux-aarch64
+            condense-macos-aarch64
+            condense-windows-x64.exe
+            condense_*.deb
+            sbom.cyclonedx.json
+          )
+          missing=()
+          for pattern in "${files[@]}"; do
+            if ! ls $pattern >/dev/null 2>&1; then
+              missing+=("$pattern")
+            fi
+          done
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "FAIL: expected release blobs were missing: ${missing[*]}"
+            ls -la
+            exit 1
+          fi
+          sha256sum condense-linux-x64 condense-linux-aarch64 condense-macos-aarch64 condense-windows-x64.exe condense_*.deb sbom.cyclonedx.json > checksums.txt
           cat checksums.txt
 
       - name: Sign artifacts and checksums
@@ -277,18 +329,50 @@ jobs:
           COSIGN_YES: true
         run: |
           cd artifacts
-          for file in condense-linux-x64 condense-linux-aarch64 condense-macos-aarch64 condense-windows-x64.exe *.deb checksums.txt; do
-            if [ -f "$file" ]; then
-              cosign sign-blob --output-signature "${file}.sig" --output-certificate "${file}.cert" "$file"
+          shopt -s nullglob
+          for file in condense-linux-x64 condense-linux-aarch64 condense-macos-aarch64 condense-windows-x64.exe condense_*.deb sbom.cyclonedx.json checksums.txt; do
+            if [ ! -f "$file" ]; then
+              echo "FAIL: cannot sign missing file $file"
+              exit 1
             fi
+            cosign sign-blob --output-signature "${file}.sig" --output-certificate "${file}.cert" "$file"
           done
 
-      - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          path: ./
-          format: cyclonedx-json
-          output-file: artifacts/sbom.cyclonedx.json
+      - name: Require a signature for every published blob
+        run: |
+          cd artifacts
+          shopt -s nullglob
+          expected=(
+            condense-linux-x64
+            condense-linux-aarch64
+            condense-macos-aarch64
+            condense-windows-x64.exe
+            sbom.cyclonedx.json
+            checksums.txt
+          )
+          for file in "${expected[@]}" condense_*.deb; do
+            if [ ! -f "$file" ]; then
+              echo "FAIL: missing published blob $file"
+              exit 1
+            fi
+            if [ ! -f "${file}.sig" ] || [ ! -f "${file}.cert" ]; then
+              echo "FAIL: $file is not signed (need ${file}.sig and ${file}.cert)"
+              exit 1
+            fi
+            echo "PASS: $file has checksum coverage and cosign signature"
+          done
+          if ! grep -q 'condense-linux-x64' checksums.txt; then
+            echo "FAIL: checksums.txt does not list condense-linux-x64"
+            exit 1
+          fi
+          if ! grep -q 'sbom.cyclonedx.json' checksums.txt; then
+            echo "FAIL: checksums.txt does not list the SBOM"
+            exit 1
+          fi
+          if ! grep -q '\.deb' checksums.txt; then
+            echo "FAIL: checksums.txt does not list the .deb"
+            exit 1
+          fi
 
       - name: Upload to Release
         uses: softprops/action-gh-release@2bb465e97f322d3cb2a965294d483e0d26a67aa9 # v3.0.1

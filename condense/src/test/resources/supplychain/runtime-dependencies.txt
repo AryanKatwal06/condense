@@ -1,0 +1,9 @@
+# Runtime Maven coordinates that ship inside the native image.
+# Format: groupId:artifactId or groupId:artifactId:version
+# Test-scoped and provided-scoped pom entries are ignored.
+# Adding a runtime dependency requires updating this file in the same change.
+io.quarkus:quarkus-picocli
+io.quarkus:quarkus-arc
+com.fasterxml.jackson.core:jackson-databind
+org.xerial:sqlite-jdbc:3.45.3.0
+com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.17.1

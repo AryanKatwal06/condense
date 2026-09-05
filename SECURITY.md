@@ -33,13 +33,32 @@ Condense is a local CLI tool. Its security surface is:
 
 ## Binary Verification
 
-Every release binary has a corresponding `.sha256` checksum file. Verify before
-running:
-```bash
-# Download binary and checksum
-curl -LO https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-linux-x64
-curl -LO https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-linux-x64.sha256
+GitHub Releases ship `checksums.txt` (SHA-256 of every published blob) plus
+keyless Sigstore signatures. There are no per-file `.sha256` sidecars.
 
-# Verify
-echo "$(cat condense-linux-x64.sha256)  condense-linux-x64" | sha256sum --check
+Download the binary, `checksums.txt`, and the matching `.sig` / `.cert` files
+from the release, then:
+
+```bash
+# Checksum (Linux amd64 example)
+curl -LO https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-linux-x64
+curl -LO https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/checksums.txt
+sha256sum --check --ignore-missing checksums.txt
+
+# Cosign (keyless, GitHub Actions OIDC)
+cosign verify-blob \
+  --certificate condense-linux-x64.cert \
+  --signature condense-linux-x64.sig \
+  --certificate-identity-regexp "https://github.com/AryanKatwal06/condense/.*" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  condense-linux-x64
 ```
+
+The same `checksums.txt` also covers `condense-linux-aarch64`,
+`condense-macos-aarch64`, `condense-windows-x64.exe`, the `.deb`, and
+`sbom.cyclonedx.json`. Each of those files is signed. The CycloneDX SBOM is
+produced from the source tree; Graal native images are not bit-identical
+across rebuilds, so reproducibility is the runtime-dependency allowlist in
+`mvn test`, the signed SBOM, and the signed checksums — not a second native
+rebuild matching SHA-256.
+

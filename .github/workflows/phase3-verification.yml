@@ -31,7 +31,7 @@ jobs:
       - name: Install musl toolchain and zlib
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y musl-tools sqlite3
+          sudo apt-get install -y musl-tools
           curl -L -o zlib.tar.gz https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
           mkdir zlib && tar -xzf zlib.tar.gz -C zlib --strip-components 1
           cd zlib
@@ -45,168 +45,11 @@ jobs:
         shell: bash
         run: mvn package -Pnative -DskipTests -Dquarkus.native.native-image-xmx=5g --no-transfer-progress -B
 
-      - name: Verify runner user
+      - name: Native integration tests (300-run soak)
         shell: bash
         run: |
-          echo "Current runner user: $(whoami)"
-          echo "User ID: $(id -u)"
-          echo "Groups: $(id -Gn)"
-
-      - name: Item 2.2 — Soak Test (300 runs)
-        shell: bash
-        run: |
-          echo "=========================================="
-          echo "Running Item 2.2: Soak Test (300 runs)"
-          echo "=========================================="
-          BINARY="$(pwd)/target/condense-runner"
-          chmod +x "$BINARY"
-          
-          # Create a dummy git repo for testing
-          mkdir -p /tmp/soak_test_repo
-          cd /tmp/soak_test_repo
-          git init -b main
-          git config user.name "Test User"
-          git config user.email "test@example.com"
-          echo "initial" > test.txt
-          git add test.txt
-          git commit -m "initial commit"
-          
-          TEE_DIR="$HOME/.local/share/condense/tee"
-          mkdir -p "$TEE_DIR"
-          
-          BEFORE_COUNT=$(ls -1 "$TEE_DIR" 2>/dev/null | wc -l)
-          BEFORE_SIZE=$(du -sh "$TEE_DIR" 2>/dev/null | awk '{print $1}')
-          echo "Before soak test — Tee dir count: $BEFORE_COUNT, size: $BEFORE_SIZE"
-          
-          declare -a times
-          for i in $(seq 1 300); do
-            START=$(date +%s%N)
-            "$BINARY" git status > /dev/null
-            END=$(date +%s%N)
-            ELAPSED=$(( (END - START) / 1000000 ))
-            if [ $i -le 10 ] || [ $i -gt 290 ]; then
-              times+=("$ELAPSED")
-            fi
-          done
-          
-          echo "First 10 runs (ms): ${times[@]:0:10}"
-          echo "Last 10 runs (ms): ${times[@]:10:10}"
-          
-          FIRST_SUM=0
-          for t in "${times[@]:0:10}"; do FIRST_SUM=$((FIRST_SUM + t)); done
-          FIRST_AVG=$((FIRST_SUM / 10))
-          
-          LAST_SUM=0
-          for t in "${times[@]:10:10}"; do LAST_SUM=$((LAST_SUM + t)); done
-          LAST_AVG=$((LAST_SUM / 10))
-          
-          AFTER_COUNT=$(ls -1 "$TEE_DIR" 2>/dev/null | wc -l)
-          AFTER_SIZE=$(du -sh "$TEE_DIR" 2>/dev/null | awk '{print $1}')
-          echo "After soak test — Tee dir count: $AFTER_COUNT, size: $AFTER_SIZE"
-          echo "Timing comparison: First 10 average = ${FIRST_AVG}ms | Last 10 average = ${LAST_AVG}ms"
-          echo "Soak test completed successfully."
-
-      - name: Item 2.3 — Permission Denial Test
-        shell: bash
-        run: |
-          echo "=========================================="
-          echo "Running Item 2.3: Permission Denial Test"
-          echo "=========================================="
-          BINARY="$(pwd)/target/condense-runner"
-          
-          DB_DIR="$HOME/.local/share/condense"
-          mkdir -p "$DB_DIR"
-          
-          # 1. Make DB directory read-only to test write-failure fail-open
-          chmod 555 "$DB_DIR"
-          ls -ld "$DB_DIR"
-          
-          cd /tmp/soak_test_repo
-          echo "Testing command execution under read-only analytics directory..."
-          CMD_EXIT=0
-          "$BINARY" git status || CMD_EXIT=$?
-          echo "Core command exit code: $CMD_EXIT"
-          if [ "$CMD_EXIT" -ne 0 ]; then
-            echo "FAIL: Core command failed when analytics was unwritable (expected exit code 0)"
-            chmod 755 "$DB_DIR"
-            exit 1
-          fi
-          echo "PASS: Core command succeeded (fail-open verified)"
-          
-          # Restore directory write permission so we can modify the db file permission
-          chmod 755 "$DB_DIR"
-          
-          # 2. Make condense.db completely inaccessible (chmod 000) to test degraded warning in gain
-          if [ -f "$DB_DIR/condense.db" ]; then
-            chmod 000 "$DB_DIR/condense.db"
-          else
-            touch "$DB_DIR/condense.db"
-            chmod 000 "$DB_DIR/condense.db"
-          fi
-          
-          echo "Testing gain command for degraded-state warning with unreadable database..."
-          GAIN_OUT=$("$BINARY" gain 2>&1 || true)
-          echo "Gain output:"
-          echo "$GAIN_OUT"
-          
-          if echo "$GAIN_OUT" | grep -q "analytics unavailable"; then
-            echo "PASS: Degraded state warning displayed successfully"
-          else
-            echo "FAIL: Degraded state warning not found in output"
-            chmod 644 "$DB_DIR/condense.db" 2>/dev/null || true
-            chmod 755 "$DB_DIR"
-            exit 1
-          fi
-          
-          # Restore permissions
-          chmod 644 "$DB_DIR/condense.db" 2>/dev/null || true
-          chmod 755 "$DB_DIR"
-          echo "Permissions restored."
-
-      - name: Item 2.4 — Concurrency & SQLite Integrity Test
-        shell: bash
-        run: |
-          echo "=========================================="
-          echo "Running Item 2.4: Concurrency & Integrity"
-          echo "=========================================="
-          BINARY="$(pwd)/target/condense-runner"
-          DB_DIR="$HOME/.local/share/condense"
-          
-          # Clean database
-          rm -rf "$DB_DIR"
-          mkdir -p "$DB_DIR"
-          
-          cd /tmp/soak_test_repo
-          echo "Launching 5 concurrent background invocations..."
-          declare -a pids
-          for i in $(seq 1 5); do
-            "$BINARY" git status > /dev/null 2>&1 &
-            pids[$i]=$!
-          done
-          
-          for pid in "${pids[@]}"; do
-            wait "$pid"
-          done
-          echo "All 5 concurrent background processes finished."
-          
-          echo "Running SQLite PRAGMA integrity_check..."
-          INTEGRITY=$(sqlite3 "$DB_DIR/condense.db" "PRAGMA integrity_check;")
-          echo "Integrity check result: $INTEGRITY"
-          if [ "$INTEGRITY" != "ok" ]; then
-            echo "FAIL: Database integrity check returned: $INTEGRITY"
-            exit 1
-          fi
-          echo "PASS: Database integrity check is 'ok'"
-          
-          echo "Checking gain statistics..."
-          GAIN_JSON=$("$BINARY" gain --format json)
-          echo "Gain JSON output:"
-          echo "$GAIN_JSON"
-          
-          TOTAL_CMDS=$(echo "$GAIN_JSON" | grep '"total_commands"' | tr -dc '0-9')
-          echo "Recorded total commands: $TOTAL_CMDS"
-          if [ -z "$TOTAL_CMDS" ] || [ "$TOTAL_CMDS" -lt 1 ]; then
-            echo "FAIL: Expected commands to be recorded, got '$TOTAL_CMDS'"
-            exit 1
-          fi
-          echo "PASS: Gain command successfully read analytics from SQLite database (total_commands=$TOTAL_CMDS)"
+          mvn failsafe:integration-test failsafe:verify \
+            -DskipITs=false \
+            -Dnative.image.path="${PWD}/target/condense-runner" \
+            -Dcondense.soak.runs=300 \
+            --no-transfer-progress -B
