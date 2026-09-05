@@ -67,12 +67,10 @@ public class FilterPipeline {
     }
 
     /**
-     * Incremental replay of the same stages. Until stages grow real sessions this
-     * is {@link DocumentSession} wrapping {@link FilterStage#process}, so output
-     * must match {@link #execute}.
+     * Same engine as {@link #execute}. Kept so tests can name the incremental path.
      */
     public String executeIncremental(String input, FilterContext context) {
-        return walkSessions(input, context).output();
+        return execute(input, context);
     }
 
     /**
@@ -130,9 +128,9 @@ public class FilterPipeline {
             }
 
             String stageInput = current;
-            StageResult stageResult;
+            CollectingSink sink = new CollectingSink();
             try {
-                stageResult = stage.process(current, ctx);
+                stage.openSession().acceptDocument(current, sink, ctx);
             } catch (Exception e) {
                 log.warnf("Stage %s threw an exception during pipeline execution: %s",
                     id, e.getMessage());
@@ -143,15 +141,8 @@ public class FilterPipeline {
                 }
                 continue;
             }
-            if (stageResult == null) {
-                if (traces != null) {
-                    traces.add(StageTrace.of(
-                        id, StageTrace.RAN, stageInput, current, false, "null_result", sampleLimit));
-                }
-                continue;
-            }
-            current = stageResult.output();
-            if (stageResult.shortCircuit()) {
+            current = sink.output();
+            if (sink.isShortCircuited()) {
                 shortCircuited = true;
                 skipping = true;
             }
@@ -161,43 +152,13 @@ public class FilterPipeline {
                     shortCircuited ? StageTrace.SHORT_CIRCUITED : StageTrace.RAN,
                     stageInput,
                     current,
-                    stageResult.shortCircuit(),
+                    sink.isShortCircuited(),
                     null,
                     sampleLimit
                 ));
             }
         }
         return new PipelineTrace(current, traces == null ? List.of() : traces, shortCircuited);
-    }
-
-    private CollectingSink walkSessions(String input, FilterContext context) {
-        String current = input != null ? input : "";
-        FilterContext ctx = context != null ? context : FilterContext.empty();
-        CollectingSink last = new CollectingSink();
-        last.emitDocument(current);
-        boolean skipping = false;
-
-        for (FilterStage stage : stages) {
-            if (skipping) {
-                continue;
-            }
-            CollectingSink sink = new CollectingSink();
-            try {
-                StageSession session = stage.openSession();
-                session.acceptDocument(current, sink, ctx);
-            } catch (Exception e) {
-                log.warnf("Stage %s threw an exception during pipeline execution: %s",
-                    stage.stageId(), e.getMessage());
-                ctx.recordIncident(FilterIncident.stageException(stage.stageId(), e.getMessage()));
-                continue;
-            }
-            current = sink.output();
-            last = sink;
-            if (sink.isShortCircuited()) {
-                skipping = true;
-            }
-        }
-        return last;
     }
 
     public static final class Builder {

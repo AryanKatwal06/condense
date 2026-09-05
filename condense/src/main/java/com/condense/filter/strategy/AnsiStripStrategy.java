@@ -1,8 +1,11 @@
 package com.condense.filter.strategy;
 
+import com.condense.filter.pipeline.EmissionSink;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.StageSession;
+import com.condense.filter.pipeline.Streamability;
 
 import java.util.regex.Pattern;
 
@@ -23,6 +26,33 @@ public final class AnsiStripStrategy implements FilterStage {
     @Override
     public StageResult process(String input, FilterContext context) {
         return StageResult.continueWith(strip(input));
+    }
+
+    @Override
+    public Streamability streamability() {
+        return Streamability.ORDER_LOCAL;
+    }
+
+    @Override
+    public StageSession openSession() {
+        return new Session();
+    }
+
+    private static final class Session implements StageSession {
+        @Override
+        public void acceptDocument(String text, EmissionSink sink, FilterContext context) {
+            sink.emitDocument(strip(text));
+        }
+
+        @Override
+        public void feedLine(String line, EmissionSink sink, FilterContext context) {
+            sink.emit(strip(line == null ? "" : line));
+        }
+
+        @Override
+        public void endOfInput(EmissionSink sink, FilterContext context) {
+            // per-line emissions already flushed
+        }
     }
 
     /**

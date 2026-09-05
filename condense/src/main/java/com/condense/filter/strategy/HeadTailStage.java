@@ -1,10 +1,15 @@
 package com.condense.filter.strategy;
 
+import com.condense.filter.pipeline.EmissionSink;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.StageSession;
+import com.condense.filter.pipeline.Streamability;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -42,6 +47,63 @@ public final class HeadTailStage implements FilterStage {
             sb.append(line).append('\n');
         }
         return StageResult.continueWith(sb.toString().stripTrailing());
+    }
+
+    @Override
+    public Streamability streamability() {
+        return Streamability.WINDOWED;
+    }
+
+    @Override
+    public StageSession openSession() {
+        return new Session();
+    }
+
+    private final class Session implements StageSession {
+        private final List<String> remainder = new ArrayList<>();
+        private final Deque<String> last = new ArrayDeque<>();
+        private int count;
+
+        @Override
+        public void acceptDocument(String text, EmissionSink sink, FilterContext context) {
+            StageResult result = process(text, context);
+            sink.emitDocument(result.output());
+            if (result.shortCircuit()) {
+                sink.shortCircuit();
+            }
+        }
+
+        @Override
+        public void feedLine(String line, EmissionSink sink, FilterContext context) {
+            String value = line != null ? line : "";
+            if (count < head) {
+                sink.emit(value);
+            } else {
+                remainder.add(value);
+                if (tail > 0) {
+                    if (last.size() >= tail) {
+                        last.removeFirst();
+                    }
+                    last.addLast(value);
+                }
+            }
+            count++;
+        }
+
+        @Override
+        public void endOfInput(EmissionSink sink, FilterContext context) {
+            int omit = count - head - tail;
+            if (omit <= 0) {
+                for (String line : remainder) {
+                    sink.emit(line);
+                }
+                return;
+            }
+            sink.emit("... (" + omit + " lines omitted) ...");
+            for (String line : last) {
+                sink.emit(line);
+            }
+        }
     }
 
     /**

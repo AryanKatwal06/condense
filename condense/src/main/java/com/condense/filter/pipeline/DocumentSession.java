@@ -43,7 +43,11 @@ public final class DocumentSession implements StageSession {
         finished = true;
         FilterContext ctx = context != null ? context : FilterContext.empty();
         StageResult result = stage.process(input, ctx);
-        if (result == null || sink == null) {
+        if (sink == null) {
+            return;
+        }
+        if (result == null) {
+            sink.emitDocument(input);
             return;
         }
         sink.emitDocument(result.output());

@@ -1,8 +1,12 @@
 package com.condense.filter.strategy;
 
+import com.condense.filter.pipeline.DocumentSession;
+import com.condense.filter.pipeline.EmissionSink;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.StageSession;
+import com.condense.filter.pipeline.Streamability;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +26,12 @@ public final class StateMachineStrategy implements FilterStage {
 
     private final List<Transition> transitions;
     private final String initialState;
+    private final boolean hasCollect;
 
     private StateMachineStrategy(List<Transition> transitions, String initialState) {
         this.transitions = transitions;
         this.initialState = initialState;
+        this.hasCollect = transitions.stream().anyMatch(t -> t.action() == Action.COLLECT);
     }
 
     @Override
@@ -67,6 +73,60 @@ public final class StateMachineStrategy implements FilterStage {
             }
         }
         return output;
+    }
+
+    @Override
+    public Streamability streamability() {
+        return hasCollect ? Streamability.DOCUMENT : Streamability.ORDER_LOCAL;
+    }
+
+    @Override
+    public StageSession openSession() {
+        if (hasCollect) {
+            return new DocumentSession(this);
+        }
+        return new Session();
+    }
+
+    private final class Session implements StageSession {
+        private String state = initialState;
+
+        @Override
+        public void acceptDocument(String text, EmissionSink sink, FilterContext context) {
+            StageResult result = process(text, context);
+            sink.emitDocument(result.output());
+        }
+
+        @Override
+        public void feedLine(String line, EmissionSink sink, FilterContext context) {
+            String value = line != null ? line : "";
+            boolean transitioned = false;
+            for (Transition t : transitions) {
+                if (t.fromState().equals(state) && t.trigger().test(value)) {
+                    if (t.action() == Action.EMIT) {
+                        sink.emit(value);
+                    }
+                    state = t.nextState();
+                    transitioned = true;
+                    break;
+                }
+            }
+            if (!transitioned) {
+                for (Transition t : transitions) {
+                    if (t.fromState().equals(state + ":default")) {
+                        if (t.action() == Action.EMIT) {
+                            sink.emit(value);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void endOfInput(EmissionSink sink, FilterContext context) {
+            // EMIT lines already flushed
+        }
     }
 
     public static Builder builder(String initialState) {
