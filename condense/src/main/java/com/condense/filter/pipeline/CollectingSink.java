@@ -4,7 +4,7 @@ package com.condense.filter.pipeline;
  * In-memory sink used to chain sessions and to compare incremental replay
  * against batch {@link FilterPipeline#execute}.
  */
-final class CollectingSink implements EmissionSink {
+public final class CollectingSink implements EmissionSink {
 
     private final StringBuilder buf = new StringBuilder();
     private boolean any;
@@ -43,7 +43,7 @@ final class CollectingSink implements EmissionSink {
         return shortCircuited;
     }
 
-    String output() {
+    public String output() {
         return buf.toString();
     }
 }

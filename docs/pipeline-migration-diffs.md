@@ -57,3 +57,6 @@ reason here. Unexplained golden edits fail review.
 | cargo-test/passing | Phase 6 provenance header (`condense[filtered]`) on `FilterResult.of` |
 | cargo-clippy/typical | Phase 6 provenance header (`condense[filtered]`) on `FilterResult.of` |
 | cargo-build/typical | Phase 6 provenance header (`condense[filtered]`) on `FilterResult.of` |
+| npm-install/typical | Phase 9 streams irrevocable `npm warn` lines plus the existing summary |
+| npm-install/with-vulns | Phase 9 streams irrevocable `npm warn` lines plus the existing summary |
+| docker-build/typical | Phase 9 streams `#N DONE` step completions plus the existing summary |

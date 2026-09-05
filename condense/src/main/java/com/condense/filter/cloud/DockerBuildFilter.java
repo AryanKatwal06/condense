@@ -26,9 +26,21 @@ public class DockerBuildFilter extends PipelineBackedFilter {
     protected FilterResult beforePipeline(String command, ExecutionResult result,
                                          CondenseConfig config, int verbose, boolean ultraCompact) {
         if (!result.succeeded()) {
-            return FilterResult.passthrough(result);
+            String selected = selectInput(command, result, config, verbose, ultraCompact);
+            boolean hasSignal = selected.lines().anyMatch(line ->
+                line.startsWith("#") && line.contains("DONE")
+                    || line.matches("(?i).*(ERROR|failed to).*"));
+            if (!hasSignal) {
+                return FilterResult.passthrough(result);
+            }
         }
         return null;
+    }
+
+    @Override
+    protected String selectInput(String command, ExecutionResult result,
+                                 CondenseConfig config, int verbose, boolean ultraCompact) {
+        return stderrThenStdout(result);
     }
 
     @Override

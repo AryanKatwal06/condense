@@ -44,8 +44,8 @@ class StreamabilityDeriveTest {
     @Test
     void builtinSummariesAreCaptureUntilConverted() {
         BuiltinDefinitionCatalog catalog = BuiltinDefinitionCatalog.standalone();
-        assertThat(catalog.requiredPipeline("npm-install").mode()).isEqualTo(PipelineMode.CAPTURE);
-        assertThat(catalog.requiredPipeline("docker-build").mode()).isEqualTo(PipelineMode.CAPTURE);
+        assertThat(catalog.requiredPipeline("npm-install").mode()).isEqualTo(PipelineMode.STREAM);
+        assertThat(catalog.requiredPipeline("docker-build").mode()).isEqualTo(PipelineMode.STREAM);
         assertThat(catalog.requiredPipeline("docker-logs").mode()).isEqualTo(PipelineMode.CAPTURE);
         assertThat(catalog.requiredPipeline("git-status").mode()).isEqualTo(PipelineMode.CAPTURE);
     }

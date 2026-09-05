@@ -1,2 +1,12 @@
 condense[filtered]
+#1 DONE 0.1s
+#2 DONE 0.0s
+#3 DONE 1.2s
+#4 DONE 0.0s
+#5 DONE 0.3s
+#6 DONE 0.1s
+#7 DONE 0.1s
+#8 DONE 12.5s
+#9 DONE 0.2s
+#10 DONE 0.8s
 ✓ docker build: a1b2c3d4e5f6 → myapp:latest

@@ -1,2 +1,3 @@
 condense[filtered]
+npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
 ✓ npm install: 312 packages | found 2 vulnerabilit

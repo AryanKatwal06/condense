@@ -12,3 +12,8 @@ strategy = "docker_build_summary"
 id = "tagged"
 input = "Successfully built abcdef12\nSuccessfully tagged app:latest\n"
 expected = "✓ docker build: abcdef12 → app:latest"
+
+[[tests]]
+id = "steps-then-summary"
+input = "#1 DONE 0.1s\nSuccessfully built abcdef12\nSuccessfully tagged app:latest\n"
+expected = "#1 DONE 0.1s\n✓ docker build: abcdef12 → app:latest"

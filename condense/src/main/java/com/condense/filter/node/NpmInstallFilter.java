@@ -31,9 +31,21 @@ public class NpmInstallFilter extends PipelineBackedFilter {
     protected FilterResult beforePipeline(String command, ExecutionResult result,
                                          CondenseConfig config, int verbose, boolean ultraCompact) {
         if (!result.succeeded()) {
-            return FilterResult.passthrough(result);
+            String selected = selectInput(command, result, config, verbose, ultraCompact);
+            boolean hasSignal = selected.lines().anyMatch(line ->
+                line.regionMatches(true, 0, "npm warn", 0, 8)
+                    || line.regionMatches(true, 0, "npm ERR!", 0, 8));
+            if (!hasSignal) {
+                return FilterResult.passthrough(result);
+            }
         }
         return null;
+    }
+
+    @Override
+    protected String selectInput(String command, ExecutionResult result,
+                                 CondenseConfig config, int verbose, boolean ultraCompact) {
+        return stderrThenStdout(result);
     }
 
     @Override

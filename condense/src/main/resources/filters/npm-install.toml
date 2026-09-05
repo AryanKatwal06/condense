@@ -12,3 +12,8 @@ strategy = "npm_install_summary"
 id = "packages-and-vulns"
 input = "added 12 packages in 3s\nfound 3 vulnerabilities (1 critical)\n"
 expected = "✓ npm install: 12 packages | found 3 vulnerabilit"
+
+[[tests]]
+id = "warns-then-summary"
+input = "npm warn deprecated foo@1.0.0: gone\nadded 12 packages in 3s\nfound 3 vulnerabilities (1 critical)\n"
+expected = "npm warn deprecated foo@1.0.0: gone\n✓ npm install: 12 packages | found 3 vulnerabilit"

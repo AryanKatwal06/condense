@@ -79,7 +79,8 @@
       "command": "npm install",
       "fixture": "fixtures/npm-install/typical.txt",
       "exit_code": 0,
-      "savings_floor": 60,
+      "savings_floor": 16,
+      "meets_contribution_bar": false,
       "critical_signals": ["packages"]
     },
     {
@@ -87,7 +88,8 @@
       "command": "npm install",
       "fixture": "fixtures/npm-install/with-vulns.txt",
       "exit_code": 0,
-      "savings_floor": 60,
+      "savings_floor": 17,
+      "meets_contribution_bar": false,
       "critical_signals": ["vulnerabilit"]
     },
     {

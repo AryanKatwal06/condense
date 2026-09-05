@@ -83,6 +83,19 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
         return stdout.isBlank() ? result.readStderr() : stdout;
     }
 
+    /** Stderr first, then stdout — typical for npm/docker progress plus a result line. */
+    protected static String stderrThenStdout(ExecutionResult result) {
+        String err = result.readStderr();
+        String out = result.readStdout();
+        if (err.isBlank()) {
+            return out;
+        }
+        if (out.isBlank()) {
+            return err;
+        }
+        return err + "\n" + out;
+    }
+
     protected final FilterOverrideLoader overrideLoader() {
         return overrideLoader;
     }
