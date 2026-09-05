@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 9 code landed).
+**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 10 code landed).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 9. Confirm with `git log -1` and origin before starting Phase 10.
+**Branch at handoff:** `main` after Phase 10. Confirm with `git log -1` and origin before starting Phase 11.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -158,7 +158,7 @@ public static int count(String text) { return Utf8WeightedTokenEstimator.INSTANC
 
 ### 4.5 CLI surface
 
-Registered subcommands: `gain`, `doctor`, `explain`, `init`, `config` (with nested `validate` and `trust`), `completion`, `update`, `mcp`, `uninstall`. Default (no subcommand) = proxy mode.
+Registered subcommands: `gain`, `doctor`, `explain`, `read`, `init`, `config` (with nested `validate` and `trust`), `completion`, `update`, `mcp`, `uninstall`. Default (no subcommand) = proxy mode.
 
 Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus standard help/version.
 
@@ -326,7 +326,7 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D21 | ~~`gain --top N` is ignored when `N == 10` because the branch is `if (top != 10)` and the default is `10`~~ **FIXED** | `Integer topFlag` with `arity = 0..1` | Phase 8 |
 | D22 | ~~No explainability — nothing shows which stage dropped which lines~~ **FIXED** | `condense explain` | Phase 8 |
 | D23 | ~~Filtering is capture-only; nothing is emitted until the child exits~~ **FIXED** | Derived STREAM/CAPTURE + `StreamingProxy` live print | Phase 9 |
-| D24 | No token-optimized source-file reading capability at all | no such command | Phase 10 |
+| D24 | ~~No token-optimized source-file reading capability at all~~ **FIXED** | `condense read` + language catalog + `NativeReadIT` | Phase 10 |
 | D25 | No structured output IR; each filter emits ad-hoc text | by inspection | Phase 11 |
 | D26 | `condense mcp` is a stub | `commands/McpCommand.java` | Phase 12 |
 | D27 | No hook integrity/tamper verification, and **no backup before editing third-party configs** | `hooks/HookInstaller.java` | Phase 13 |
@@ -420,7 +420,8 @@ Two turns of planning, then Phase 1 through Phase 5 code.
 | Phase 7 code | **LANDED** | `user_version` 1, WAL, `busy_timeout`, 90-day retention, `filter_outcomes`, `condense doctor`, D20 purge allowlist. Native proof is the next green `NativePersistenceIT`. |
 | Phase 8 code | **LANDED** | `condense explain`, `executeTraced`, tier `resolveDecision`, D21 `--top 10`. Native proof is the next green `NativeExplainIT`. |
 | Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Native proof is `NativeStreamingIT`. |
-| Phases 10–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 10 code | **LANDED** | `condense read`; per-language scanner; original line numbers; builtin `languages/*.toml`; workspace containment; `NativeReadIT`. |
+| Phases 11–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | This handoff | **COMPLETED** | Written, audited, then updated as phases landed |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p9` are marked `completed`, `p10`–`p17` `pending`. **That file is untracked and local-only (see §3).**
@@ -429,7 +430,7 @@ Two turns of planning, then Phase 1 through Phase 5 code.
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 9 code have landed.** Phases 10–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 10 code have landed.** Phases 11–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -747,7 +748,9 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 ### Phase 10 — Source-file reading capability
 
-**Status: PENDING**
+**Status: LANDED** (5 Sep 2026)
+
+**Shipped.** `condense read` as a first-class subcommand (`com.condense.read`). `SourceScanner` tracks string, char, raw-string, and escape state. Levels are verbatim / comments / outline with **original** line numbers. Builtin `languages/index.toml` plus 24 definition files, validated at `process-classes`. JSON is `family = data` (Zap #464 class). Unknown extensions stay verbatim. Workspace root via bounded `.git` walk; `--root` may only narrow. Default 1 MiB / hard 10 MiB cap. Provenance stamp `condense[read]`. `CatFilter` no longer claims `read`. Native proof is `NativeReadIT`. Spec: [docs/read.md](docs/read.md).
 
 **Goal.** Reduce the token cost of an agent **reading a file** — an architecturally separate capability from command-output filtering, which Condense entirely lacks. Levels: verbatim, comment-strip, structural outline. Language rules as declarative data. Line numbers that map to **original** file lines.
 
@@ -980,9 +983,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 9 code landed 5 Sep 2026. Filtered lines can appear while a STREAM pipeline's child is still running. Mode is derived from declared stage streamability. JVM proof is `mvn test` (`StreamingTimingTest`, `IncrementalEquivalenceTest`, explain + corpus). Native proof is the next green `NativeStreamingIT` in `build.yml` — this Windows workspace does not build native images.
+**Where we are.** Phase 10 code landed 5 Sep 2026. `condense read` scans source files with a real per-language scanner and original line numbers. JVM proof is `mvn test` on `com.condense.read.*` plus architecture, provenance, and golden-lock suites. Native proof is the next green `NativeReadIT` in `build.yml` — this Windows workspace does not build native images.
 
-**Do not start Phase 10 code.** Present a complete Phase 10 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 11 code.** Present a complete Phase 11 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -1003,8 +1006,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 9 code has landed. Confirm `NativeStreamingIT` appears in native job logs, `ExplainAccountingTest` still prints a 51-row table, and `GoldenLockTest` is green.
-9. **Do not start Phase 10 code.** Present a complete Phase 10 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 10 code has landed. Confirm `NativeReadIT` appears in native job logs, `GoldenLockTest` is green, and `condense read --help` exists.
+9. **Do not start Phase 11 code.** Present a complete Phase 11 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

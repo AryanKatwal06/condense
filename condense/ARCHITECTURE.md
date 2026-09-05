@@ -37,6 +37,7 @@ condense --version / --help
 | `SchemaMigrator.java` | `com.condense.persist` | Forward-only `PRAGMA user_version` migrations |
 | `DoctorCommand.java` | `com.condense.doctor` | `condense doctor` — empty-gain diagnosis, text and JSON |
 | `ExplainCommand.java` | `com.condense.explain` | `condense explain` — per-stage line and token accounting, plus `pipeline_mode` |
+| `ReadCommand.java` | `com.condense.read` | `condense read` — language-aware source-file reading with original line numbers |
 | `StreamingProxy.java` | `com.condense.core` | Live-print runner for STREAM pipelines and LIVE_RAW passthrough |
 | `Utf8LineDecoder.java` | `com.condense.core` | Incremental UTF-8 line breaks across drain chunks |
 | `TokenCounter.java` | `com.condense.core` | Static facade over `Utf8WeightedTokenEstimator` |

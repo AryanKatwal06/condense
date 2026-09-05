@@ -236,6 +236,17 @@ $ condense explain --format json --input fixture.txt --exit-code 1 pytest
 
 See [docs/explain.md](docs/explain.md). Explain does not write analytics rows. JSON reports `pipeline_mode` (`stream` / `capture` / `live_raw`) and per-stage `streamability`.
 
+## condense read
+
+`condense read FILE` opens a source file and returns a comment-stripped or outlined view with **original** line numbers. It does not run `cat`. `condense cat FILE` still proxies the child. Options must come before the path.
+
+```
+$ condense read --level comments Src.java
+$ condense read --level outline --format json App.ts
+```
+
+Unknown languages stay verbatim. JSON never uses C-style comments. Successful reads write a `gain` row. See [docs/read.md](docs/read.md).
+
 Long commands can print filtered lines before the child exits when every stage in the resolved pipeline is `order_local` or `windowed`. There is no `--stream` flag. Capture-to-disk (10 MB, 8 KiB chunks) still feeds tee, token counts, and fail-open replay. See [docs/streaming.md](docs/streaming.md).
 
 ---

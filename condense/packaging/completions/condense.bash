@@ -9,7 +9,7 @@ _condense_completion() {
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
   # Top-level subcommands
-  local subcommands="gain doctor explain init config"
+  local subcommands="gain doctor explain read init config"
 
   # Commands condense can proxy
   local proxy_commands="git cargo pytest go npm npx docker kubectl aws ls grep rg find cat make mvn gradle vitest jest eslint tsc ruff pip golangci-lint"
@@ -32,6 +32,10 @@ _condense_completion() {
       ;;
     explain)
       COMPREPLY=($(compgen -W "--format --input --stdin --exit-code --dropped-limit --help" -- "$cur"))
+      return 0
+      ;;
+    read)
+      COMPREPLY=($(compgen -W "--level --lang --root --max-bytes --format --stdin --ultra-compact --help" -- "$cur"))
       return 0
       ;;
     init)

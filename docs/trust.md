@@ -9,10 +9,13 @@ Review is only `condense config trust`. Proxied commands never prompt.
 | Source | Trust | Capability ceiling |
 |---|---|---|
 | Builtin `classpath:filters/*.toml` | TCB | none |
+| Builtin `classpath:languages/*.toml` | TCB | none |
 | User-global `{configDir}/filters.toml` | Trusted by location | none |
 | Project `.condense/filters.toml` | Untrusted until TOFU or a valid CI hatch | always, including after trust |
 
 A process that can write the config directory is already the TCB. Global files are not TOFU'd.
+
+`condense read` does not load project language files. Builtin language rules are TCB. The file being read is hostile input (path containment, size/binary gates, scanner KEEP-when-unsure). See [read.md](read.md).
 
 ## Review (`condense config trust`)
 

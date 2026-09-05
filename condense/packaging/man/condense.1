@@ -14,6 +14,9 @@ condense \- high-performance CLI proxy that filters command output to save AI to
 .B condense explain
 [\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR...]
 .br
+.B condense read
+[\fIOPTIONS\fR] \fIFILE\fR
+.br
 .B condense init
 [\fIOPTIONS\fR]
 .br
@@ -56,6 +59,12 @@ Show which filter stages dropped or rewrote output, with line and token
 accounting. Options must come before the command
 (\fBcondense explain \-\-format json pytest\fR).
 Use \fB\-\-input FILE\fR to explain a captured fixture without executing.
+.TP
+.B condense read
+Read a source file with comment-strip or structural outline. Line numbers
+map to the original file. Options must come before the path
+(\fBcondense read \-\-level comments Src.java\fR).
+Unknown languages stay verbatim. JSON is never treated as C.
 .TP
 .B condense init
 Install AI tool hooks. Use \fBcondense init \-g\fR to install for all supported

@@ -13,6 +13,7 @@ complete -c condense -l help               -d 'Show help'
 complete -c condense -n '__fish_use_subcommand' -a gain   -d 'Show token savings analytics'
 complete -c condense -n '__fish_use_subcommand' -a doctor -d 'Diagnose persistence and empty analytics'
 complete -c condense -n '__fish_use_subcommand' -a explain -d 'Show which filter stages dropped which lines'
+complete -c condense -n '__fish_use_subcommand' -a read    -d 'Read a source file with comment-strip or outline'
 complete -c condense -n '__fish_use_subcommand' -a init   -d 'Install AI tool hooks'
 complete -c condense -n '__fish_use_subcommand' -a config -d 'Read and write configuration'
 
@@ -39,6 +40,14 @@ complete -c condense -n '__fish_seen_subcommand_from explain' -l input -d 'Use c
 complete -c condense -n '__fish_seen_subcommand_from explain' -l stdin -d 'Read captured stdout from stdin'
 complete -c condense -n '__fish_seen_subcommand_from explain' -l exit-code -d 'Exit code for --input or --stdin' -r
 complete -c condense -n '__fish_seen_subcommand_from explain' -l dropped-limit -d 'Dropped line sample cap' -r
+
+complete -c condense -n '__fish_seen_subcommand_from read' -l level -d 'verbatim, comments, or outline' -r -a 'verbatim comments outline'
+complete -c condense -n '__fish_seen_subcommand_from read' -l lang -d 'Language name' -r
+complete -c condense -n '__fish_seen_subcommand_from read' -l root -d 'Narrow workspace root' -r
+complete -c condense -n '__fish_seen_subcommand_from read' -l max-bytes -d 'Read cap in bytes' -r
+complete -c condense -n '__fish_seen_subcommand_from read' -l format -d 'Output format' -r -a 'text json'
+complete -c condense -n '__fish_seen_subcommand_from read' -l stdin -d 'Read from standard input'
+complete -c condense -n '__fish_seen_subcommand_from read' -s u -l ultra-compact -d 'Same as --level outline'
 
 # init options
 complete -c condense -n '__fish_seen_subcommand_from init' -s g -l global  -d 'Install all hooks'

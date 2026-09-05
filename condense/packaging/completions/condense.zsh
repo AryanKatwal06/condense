@@ -8,6 +8,7 @@ _condense() {
     'gain:Show token savings analytics'
     'doctor:Diagnose persistence and empty analytics'
     'explain:Show which filter stages dropped which lines'
+    'read:Read a source file with comment-strip or outline'
     'init:Install AI tool hooks'
     'config:Read and write configuration'
   )
@@ -68,6 +69,16 @@ _condense() {
             '--stdin[Read captured stdout from stdin]' \
             '--exit-code=[Exit code for --input or --stdin]:N:' \
             '--dropped-limit=[Dropped line sample cap]:N:'
+          ;;
+        read)
+          _arguments \
+            '--level=[Compression level]:level:(verbatim comments outline)' \
+            '--lang=[Language name]:name:' \
+            '--root=[Narrow workspace root]:dir:_files -/' \
+            '--max-bytes=[Read cap]:N:' \
+            '--format=[Output format]:format:(text json)' \
+            '--stdin[Read from standard input]' \
+            '(-u --ultra-compact)'{-u,--ultra-compact}'[Same as --level outline]'
           ;;
         init)
           _arguments \
