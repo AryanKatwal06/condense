@@ -10,20 +10,40 @@ import java.util.stream.Stream;
 /**
  * The raw result of executing a shell command via {@link CommandExecutor}.
  *
- * @param exitCode   the process exit code; -1 if the process timed out
- * @param stdoutFile temp file containing captured standard output
- * @param stderrFile temp file containing captured standard error
- * @param durationMs wall-clock time from process start to exit, in milliseconds
+ * @param exitCode     the process exit code; -1 if Condense destroyed the child or could not reap a status
+ * @param stdoutFile   temp file containing captured standard output
+ * @param stderrFile   temp file containing captured standard error
+ * @param durationMs   wall-clock time from process start to exit, in milliseconds
+ * @param termination  why wait ended; never inferred from {@code -1} alone
  */
 public record ExecutionResult(
     int exitCode,
     Path stdoutFile,
     Path stderrFile,
-    long durationMs
+    long durationMs,
+    TerminationReason termination
 ) {
 
+    public ExecutionResult {
+        termination = termination == null ? TerminationReason.CHILD_EXIT : termination;
+    }
+
+    public ExecutionResult(int exitCode, Path stdoutFile, Path stderrFile, long durationMs) {
+        this(exitCode, stdoutFile, stderrFile, durationMs, TerminationReason.CHILD_EXIT);
+    }
+
     public ExecutionResult(int exitCode, String stdout, String stderr, long durationMs) {
-        this(exitCode, writeStringSafe(stdout), writeStringSafe(stderr), durationMs);
+        this(exitCode, writeStringSafe(stdout), writeStringSafe(stderr), durationMs, TerminationReason.CHILD_EXIT);
+    }
+
+    public ExecutionResult(
+            int exitCode,
+            String stdout,
+            String stderr,
+            long durationMs,
+            TerminationReason termination
+    ) {
+        this(exitCode, writeStringSafe(stdout), writeStringSafe(stderr), durationMs, termination);
     }
 
     private static Path writeStringSafe(String s) {
@@ -48,12 +68,12 @@ public record ExecutionResult(
         }
     }
 
-    public Stream<String> stdoutLines() throws IOException {
-        return Files.lines(stdoutFile, StandardCharsets.UTF_8);
+    public Stream<String> stdoutLines() {
+        return readStdout().lines();
     }
 
-    public Stream<String> stderrLines() throws IOException {
-        return Files.lines(stderrFile, StandardCharsets.UTF_8);
+    public Stream<String> stderrLines() {
+        return readStderr().lines();
     }
 
     public InputStream stdoutStream() throws IOException {
@@ -65,16 +85,23 @@ public record ExecutionResult(
     }
 
     public String readStdout() {
-        try {
-            return Files.readString(stdoutFile, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            return "";
-        }
+        return readUtf8Replacing(stdoutFile);
     }
 
     public String readStderr() {
+        return readUtf8Replacing(stderrFile);
+    }
+
+    /**
+     * UTF-8 with replacement. Malformed bytes must not vanish into {@code ""}.
+     */
+    static String readUtf8Replacing(Path file) {
+        if (file == null) {
+            return "";
+        }
         try {
-            return Files.readString(stderrFile, StandardCharsets.UTF_8);
+            byte[] bytes = Files.readAllBytes(file);
+            return new String(bytes, StandardCharsets.UTF_8);
         } catch (IOException e) {
             return "";
         }
