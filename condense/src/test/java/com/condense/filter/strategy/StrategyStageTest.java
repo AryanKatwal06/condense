@@ -59,6 +59,16 @@ class StrategyStageTest {
     }
 
     @Test
+    void groupingTimeoutZeroMeansBoundedDefaultNotUnconstrained() {
+        assertThat(GroupingStrategy.forwardedTimeoutMillis(0)).isEqualTo(BoundedRegex.TIMEOUT_MS);
+        assertThat(GroupingStrategy.forwardedTimeoutMillis(75)).isEqualTo(75L);
+        Pattern pattern = Pattern.compile("rule-([a-z]+)");
+        List<String> lines = List.of("rule-alpha error", "rule-beta error");
+        assertThat(GroupingStrategy.group(lines, pattern, false, 75))
+            .isEqualTo(GroupingStrategy.group(lines, pattern, false, 0));
+    }
+
+    @Test
     @DisplayName("JsonStructureStrategy works as standalone method and FilterStage")
     void jsonStructureStrategy_worksAsStage() {
         String json = "{\"name\": \"test\", \"count\": 42, \"items\": [\"a\", \"b\", \"c\"]}";

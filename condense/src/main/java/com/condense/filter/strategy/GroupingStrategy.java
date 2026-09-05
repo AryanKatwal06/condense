@@ -61,12 +61,13 @@ public final class GroupingStrategy implements FilterStage {
 
     /**
      * Groups {@code lines} by the string captured in group 1 of {@code keyPattern},
-     * enforcing a per-match timeout if {@code timeoutMillis > 0}.
+     * enforcing a per-match timeout. {@code timeoutMillis == 0} uses
+     * {@link BoundedRegex#TIMEOUT_MS} (200 ms), not an unconstrained match.
      *
      * @param lines         input lines
      * @param keyPattern    regex with one capture group that extracts the group key
      * @param includeOther  whether non-matching lines count toward "(other)"
-     * @param timeoutMillis maximum execution time per regex match in milliseconds, or 0 for unconstrained
+     * @param timeoutMillis maximum execution time per regex match in milliseconds; {@code 0} means {@link BoundedRegex#TIMEOUT_MS}
      * @return map of key → count, sorted by count descending, then key ascending
      */
     public static Map<String, Integer> group(
@@ -76,7 +77,7 @@ public final class GroupingStrategy implements FilterStage {
         int other = 0;
 
         for (String line : lines) {
-            var m = BoundedRegex.matcher(keyPattern, line);
+            var m = BoundedRegex.matcher(keyPattern, line, forwardedTimeoutMillis(timeoutMillis));
             if (m.find()) {
                 String key = m.group(1).trim();
                 counts.merge(key, 1, Integer::sum);
@@ -96,6 +97,11 @@ public final class GroupingStrategy implements FilterStage {
                 Map.Entry::getValue,
                 (a, b) -> a,
                 LinkedHashMap::new));
+    }
+
+    /** {@code 0} means {@link BoundedRegex#TIMEOUT_MS}, not unconstrained. */
+    static long forwardedTimeoutMillis(long timeoutMillis) {
+        return timeoutMillis > 0 ? timeoutMillis : BoundedRegex.TIMEOUT_MS;
     }
 
     /**
