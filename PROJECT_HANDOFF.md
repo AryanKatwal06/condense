@@ -162,7 +162,7 @@ Registered subcommands: `gain`, `doctor`, `explain`, `read`, `init`, `config` (w
 
 Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus standard help/version.
 
-`mcp` is real. Bare `condense mcp` prints a client snippet and exits 0. `condense mcp --start` speaks newline-delimited JSON-RPC on stdio. Tools are `run`, `explain`, `read`, and `discover`; resources are `condense://gain` and `condense://doctor`. Until **R14** lands, the bare snippet still omits `discover` (a known lie; `tools/list` and [docs/mcp.md](docs/mcp.md) are correct).
+`mcp` is real. Bare `condense mcp` prints a client snippet and exits 0. `condense mcp --start` speaks newline-delimited JSON-RPC on stdio. Tools are `run`, `explain`, `read`, and `discover`; resources are `condense://gain` and `condense://doctor`. Bare `condense mcp` lists the same four tools. Missing JSON-RPC `id` on a non-notification request is `-32600`. `discover.root` uses `ReadPathGate.resolveNarrowRoot` (not `openFile`).
 
 ### 4.6 Filters — exact counts (verified)
 
@@ -347,7 +347,7 @@ The next agent will be misled by these if they trust the docs. They are **docume
 |---|---|---|
 | `condense/ARCHITECTURE.md` file table | Still omits per-filter classes | Phase 14 added `StrategyRegistry`, `PrefixIndex`, and `CatalogBackedFilter` rows; the 32 Java filters are not individually listed |
 | Root `README.md` supported-commands table | ~~30 rows; missing aliases~~ **FIXED in Phase 14** | Table lists Java prefixes (including `docker run` / `exec`, `python -c`, `ruff`, `npx eslint`, `npm ci` / `i`, `pip3`, `./mvnw`, `./gradlew`) and the 19 leftover catalog families. `condense read` remains a subcommand, not a proxied prefix |
-| Bare `condense mcp` snippet (`McpCommand`) | Tools are `run`, `explain`, `read` | `tools/list` and docs include `discover`. **R14** fixes the snippet. |
+| Bare `condense mcp` snippet (`McpCommand`) | ~~Tools are `run`, `explain`, `read`~~ **FIXED in R14** | Snippet lists `run`, `explain`, `read`, `discover`. Missing `id` is `-32600`. |
 | `docs/ir.md` / older handoff §9 Phase 11 | `TextRenderer` is the default CLI | Default CLI prints `FilterResult.output()`. Exemplar stages call `TextRenderer` internally; identity is locked for **7** corpus IDs until **R23**. |
 | Phase 15 closeout / this file before R13 | Caps are fully asserted in JVM + native | Caps exist in Java (`DiscoverLimits` 64/8/64KiB/256KiB). Native does not yet assert `files_read ≤ 8`; content reads use `readAllBytes` then trim. **R15** closes both. |
 | Hook `CONDENSE_COMMANDS` in templates | Implied to cover the supported surface | Hardcoded pre-Phase-14 list. Leftover prefixes are not intercepted until **R19**. |
@@ -422,7 +422,7 @@ Planning plus Phase 1 through Phase 15 code, then an independent audit of Phases
 | Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Docs commit `9b6ffd4` had **red** native CI ([run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965)) because `@CommandFilters` prefixes were invisible in the image; `447eeb6` fixed registration. `IncrementalEquivalenceTest` now compares `StreamingProxy.replay` / stamped `execute` to `apply()`. `NativeStreamingIT` times first-line-before-exit on a PATH-stubbed npm. |
 | Phase 10 code | **LANDED** | `condense read`; per-language scanner; original line numbers; builtin `languages/*.toml`; workspace containment; `NativeReadIT`. |
 | Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT`. Default CLI is pipeline text; `TextRenderer` identity is 7 corpus IDs until **R23**. Semantic savings not implemented (**R25** deferred). |
-| Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read` plus Phase 15 `discover`; resources `gain`/`doctor`; `NativeMcpIT`. Bare snippet still omits `discover` until **R14**. |
+| Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read` plus Phase 15 `discover`; resources `gain`/`doctor`; `NativeMcpIT`. Bare snippet lists four tools. Missing `id` is `-32600`. |
 | Phase 13 code | **LANDED** | Schema 2 hook audit; backup-before-merge (flat `{dataDir}/backups/`); SHA-256 script baselines; Claude deny-not-rewrite (rewrite+allow forbidden; pass-through `allow` remains); Codex/OpenCode/Kilo/Antigravity/Hermes/Pi; `NativeHookIT` (Cursor, not the six new agents, until **R21**). |
 | Phase 14 code | **LANDED** | `CatalogBackedFilter` leftover host; 19 data-only families; original 51 goldens unchanged; `NativeCatalogIT`. Existing 31 Java filters not migrated. |
 | Phase 15 code | **LANDED** | `condense discover` + MCP `discover`; classpath `discover/*.toml`; exact contained probes; explicit family priority; `NativeDiscoverIT`. Does not change dispatch. |
@@ -799,7 +799,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Status: LANDED** (5 Sep 2026)
 
-**Shipped.** Hand-rolled stdio JSON-RPC 2.0 (no MCP Java SDK). Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Tools `run` / `explain` / `read` / `discover` reuse `ProxyService`, `ExplainService`, `ReadService`, `DiscoverService`. Resources `condense://gain` and `condense://doctor`. `run` returns the Phase 11 envelope; child exit ≠ 0 is not `isError`. `read` and `discover --root` go through `ReadPathGate` (narrow-only); discover's file probes use `SafePathValidator.contain`. Missing JSON-RPC `id` on non-notification requests is dropped until **R14**. Bare `condense mcp` snippet still lists three tools until **R14**. `McpCommand` is `@Unremovable`. Logs on stderr. Native proof is `NativeMcpIT`. Spec: [docs/mcp.md](docs/mcp.md).
+**Shipped.** Hand-rolled stdio JSON-RPC 2.0 (no MCP Java SDK). Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Tools `run` / `explain` / `read` / `discover` reuse `ProxyService`, `ExplainService`, `ReadService`, `DiscoverService`. Resources `condense://gain` and `condense://doctor`. `run` returns the Phase 11 envelope; child exit ≠ 0 is not `isError`. `read` goes through `ReadPathGate.openFile`; `discover.root` uses `ReadPathGate.resolveNarrowRoot` (narrow-only, no byte-max). File probes use `SafePathValidator.contain`. Missing JSON-RPC `id` on non-notification requests is `-32600`. Bare `condense mcp` lists four tools. `McpCommand` is `@Unremovable`. Logs on stderr. Native proof is `NativeMcpIT`. Spec: [docs/mcp.md](docs/mcp.md).
 
 **Goal.** Replace the `McpCommand` stub with a real stdio MCP server, so agents consume Condense as tools and resources rather than through brittle shell-hook command rewriting.
 

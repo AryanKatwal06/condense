@@ -53,6 +53,25 @@ class McpServerTest {
     }
 
     @Test
+    void missingIdOnRequestIsJsonRpcMinus32600() throws Exception {
+        String response = server.handleLine("""
+            {"jsonrpc":"2.0","method":"ping"}
+            """.trim());
+        JsonNode root = McpMessages.RPC.readTree(response);
+        assertThat(root.get("error").get("code").asInt()).isEqualTo(-32600);
+        assertThat(root.get("id").isNull()).isTrue();
+    }
+
+    @Test
+    void nullIdOnRequestIsJsonRpcMinus32600() throws Exception {
+        String response = server.handleLine("""
+            {"jsonrpc":"2.0","id":null,"method":"tools/list"}
+            """.trim());
+        JsonNode root = McpMessages.RPC.readTree(response);
+        assertThat(root.get("error").get("code").asInt()).isEqualTo(-32600);
+    }
+
+    @Test
     void pingReturnsEmptyObject() throws Exception {
         String response = server.handleLine("""
             {"jsonrpc":"2.0","id":"ping-1","method":"ping"}

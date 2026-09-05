@@ -56,6 +56,9 @@ class ReadPathSafetyTest {
         Files.writeString(repo.resolve("ok.txt"), "ok");
         Path outside = tempDir.resolve("other");
         Files.createDirectories(outside);
+        ReadPathGate.NarrowRoot narrowed = ReadPathGate.resolveNarrowRoot(repo, outside);
+        assertThat(narrowed.ok()).isFalse();
+        assertThat(narrowed.error()).contains("narrow");
         ReadPathGate.GateResult result = ReadPathGate.openFile(
             repo.resolve("ok.txt"), repo, outside, ReadPathGate.DEFAULT_MAX_BYTES);
         assertThat(result.ok()).isFalse();

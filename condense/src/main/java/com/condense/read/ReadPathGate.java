@@ -25,6 +25,20 @@ public final class ReadPathGate {
         }
     }
 
+    /**
+     * Workspace root plus optional narrow-only override. Does not open files
+     * or apply {@code condense read}'s byte-max / binary checks.
+     */
+    public record NarrowRoot(boolean ok, String error, Path root) {
+        public static NarrowRoot fail(String error) {
+            return new NarrowRoot(false, error, null);
+        }
+
+        public static NarrowRoot ok(Path root) {
+            return new NarrowRoot(true, null, root);
+        }
+    }
+
     private ReadPathGate() {}
 
     public static int clampMaxBytes(Integer requested) {
@@ -44,23 +58,31 @@ public final class ReadPathGate {
         return GateResult.ok(null, null, body);
     }
 
+    public static NarrowRoot resolveNarrowRoot(Path cwd, Path rootOverride) {
+        Path work = cwd == null ? Path.of(System.getProperty("user.dir", ".")) : cwd;
+        Path defaultRoot = SafePathValidator.resolveWorkspaceRoot(work);
+        if (rootOverride == null) {
+            return NarrowRoot.ok(defaultRoot);
+        }
+        Path requested = rootOverride.toAbsolutePath().normalize();
+        if (!Files.isDirectory(requested)) {
+            return NarrowRoot.fail("root is not a directory");
+        }
+        if (!SafePathValidator.isAtOrUnder(requested, defaultRoot)) {
+            return NarrowRoot.fail("root may only narrow the workspace, not widen it");
+        }
+        return NarrowRoot.ok(requested);
+    }
+
     public static GateResult openFile(Path file, Path cwd, Path rootOverride, int maxBytes) {
         if (file == null) {
             return GateResult.fail("missing file path");
         }
-        Path work = cwd == null ? Path.of(System.getProperty("user.dir", ".")) : cwd;
-        Path defaultRoot = SafePathValidator.resolveWorkspaceRoot(work);
-        Path root = defaultRoot;
-        if (rootOverride != null) {
-            Path requested = rootOverride.toAbsolutePath().normalize();
-            if (!Files.isDirectory(requested)) {
-                return GateResult.fail("root is not a directory");
-            }
-            if (!SafePathValidator.isAtOrUnder(requested, defaultRoot)) {
-                return GateResult.fail("root may only narrow the workspace, not widen it");
-            }
-            root = requested;
+        NarrowRoot narrowed = resolveNarrowRoot(cwd, rootOverride);
+        if (!narrowed.ok()) {
+            return GateResult.fail(narrowed.error());
         }
+        Path root = narrowed.root();
         SafePathValidator.ContainmentResult contained = SafePathValidator.containReadable(file, root);
         if (!contained.contained()) {
             return GateResult.fail(contained.reason());

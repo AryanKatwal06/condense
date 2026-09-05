@@ -65,12 +65,12 @@ public final class McpServer {
             return writeError(root.get("id"), McpMessages.INVALID_REQUEST, "Invalid Request");
         }
         JsonNode id = root.get("id");
-        boolean notification = id == null || id.isNull();
-        if ("notifications/initialized".equals(method)) {
+        boolean missingId = id == null || id.isNull();
+        if (method.startsWith("notifications/")) {
             return null;
         }
-        if (notification) {
-            return null;
+        if (missingId) {
+            return writeError(null, McpMessages.INVALID_REQUEST, "Invalid Request");
         }
         try {
             JsonNode result = handlers.dispatch(method, root.get("params"));

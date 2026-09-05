@@ -1,6 +1,7 @@
 package com.condense.discover;
 
 import com.condense.core.SafePathValidator;
+import com.condense.read.ReadPathGate;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,21 +33,14 @@ public final class DiscoverService {
     }
 
     public DiscoverReport discover(Path cwd, Path rootOverride) {
-        Path work = cwd == null ? Path.of(System.getProperty("user.dir", ".")) : cwd;
-        Path defaultRoot = SafePathValidator.resolveWorkspaceRoot(work);
-        Path root = defaultRoot;
-        if (rootOverride != null) {
-            Path requested = rootOverride.toAbsolutePath().normalize();
-            if (!Files.isDirectory(requested)) {
-                return DiscoverReport.failure(
-                    requested.toString(), "root is not a directory");
-            }
-            if (!SafePathValidator.isAtOrUnder(requested, defaultRoot)) {
-                return DiscoverReport.failure(
-                    requested.toString(), "root may only narrow the workspace, not widen it");
-            }
-            root = requested;
+        ReadPathGate.NarrowRoot narrowed = ReadPathGate.resolveNarrowRoot(cwd, rootOverride);
+        if (!narrowed.ok()) {
+            String shown = rootOverride == null
+                ? ""
+                : rootOverride.toAbsolutePath().normalize().toString();
+            return DiscoverReport.failure(shown, narrowed.error());
         }
+        Path root = narrowed.root();
         Path canonicalRoot;
         try {
             canonicalRoot = Files.exists(root) ? root.toRealPath() : root.toAbsolutePath().normalize();
