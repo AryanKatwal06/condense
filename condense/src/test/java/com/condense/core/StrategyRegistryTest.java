@@ -1,5 +1,7 @@
 package com.condense.core;
 
+import com.condense.annotation.CommandFilter;
+import com.condense.filter.node.NpmInstallFilter;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,25 @@ class StrategyRegistryTest {
     @Test
     void gitStatusIsRegistered() {
         assertThat(registry.registeredCommands()).contains("git status");
+    }
+
+    @Test
+    void commandFiltersContainerExposesNpmInstallPrefixes() {
+        assertThat(StrategyRegistry.prefixesOn(NpmInstallFilter.class))
+            .extracting(CommandFilter::value)
+            .contains("npm install", "npm ci", "npm i");
+    }
+
+    @Test
+    void npmInstallPrefixesAreRegistered() {
+        assertThat(registry.registeredCommands()).contains("npm install", "npm ci", "npm i");
+    }
+
+    @Test
+    void lookupNpmInstallReturnsNpmInstallFilter() {
+        FilterStrategy s = registry.lookup(new String[]{"npm", "install"});
+        assertThat(s).isNotInstanceOf(PassthroughStrategy.class);
+        assertThat(s.getClass().getSimpleName()).startsWith("NpmInstallFilter");
     }
 
     @Test

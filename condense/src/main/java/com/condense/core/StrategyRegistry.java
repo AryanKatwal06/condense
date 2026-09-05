@@ -1,6 +1,7 @@
 package com.condense.core;
 
 import com.condense.annotation.CommandFilter;
+import com.condense.annotation.CommandFilters;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
@@ -37,7 +38,7 @@ public class StrategyRegistry {
             // The passthrough is the explicit fallback — never register it
             if (PassthroughStrategy.class.isAssignableFrom(cls)) continue;
 
-            CommandFilter[] annotations = cls.getAnnotationsByType(CommandFilter.class);
+            CommandFilter[] annotations = prefixesOn(cls);
             if (annotations.length == 0) continue;
 
             FilterStrategy instance = handle.get();
@@ -91,5 +92,18 @@ public class StrategyRegistry {
 
     public List<String> registeredCommands() {
         return registry.keySet().stream().sorted().toList();
+    }
+
+    /**
+     * {@link CommandFilter} is {@link java.lang.annotation.Repeatable}; native-image
+     * can still miss the unwrap, so also read the {@link CommandFilters} container.
+     */
+    static CommandFilter[] prefixesOn(Class<?> cls) {
+        CommandFilter[] annotations = cls.getAnnotationsByType(CommandFilter.class);
+        if (annotations.length > 0) {
+            return annotations;
+        }
+        CommandFilters container = cls.getAnnotation(CommandFilters.class);
+        return container == null ? annotations : container.value();
     }
 }

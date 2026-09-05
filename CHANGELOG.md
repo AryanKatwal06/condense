@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Fixed
+- Multi-prefix filters (`npm install`, `eslint`, `pip install`, and the other `@CommandFilters` commands) are registered in `StrategyRegistry`. `CommandFilter` was not `@Repeatable`, so the real CLI treated those commands as passthrough. Native proof is `NativeStreamingIT`.
 - `condense gain --top` and `condense gain --top 10` now render the top-N table. The old `if (top != 10)` branch treated the default value as “flag absent,” so the documented `--top 10` example showed the summary panel instead.
 - `condense doctor` is `@Unremovable` so Quarkus no longer strips the Picocli bean from the native image. Without that, `PicocliBeansFactory` failed with a CDI unused-bean error and `NativePersistenceIT` exited 1 on every platform.
 - `condense doctor --format json` no longer exits 1 in the native binary. The report now uses `LinkedHashMap` / `ArrayList` so Jackson can serialize empty maps and warning lists without GraalVM `ImmutableCollections` reflection. `NativePersistenceIT` failed on every CI platform because of this.
