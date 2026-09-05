@@ -63,6 +63,23 @@ public final class NativeBinarySupport {
     }
 
     /**
+     * Same as {@link #run(Path, Path, String...)} but records wall time around the
+     * whole child process. Used by native budget and soak tests.
+     */
+    public static TimedCliResult timedRun(Path configDir, Path dataDir, String... args) throws Exception {
+        long started = System.nanoTime();
+        CliResult result = run(configDir, dataDir, args);
+        return new TimedCliResult(result, System.nanoTime() - started);
+    }
+
+    public static TimedCliResult timedRun(Path configDir, Path dataDir, Path prependPathDir, String... args)
+            throws Exception {
+        long started = System.nanoTime();
+        CliResult result = run(configDir, dataDir, prependPathDir, args);
+        return new TimedCliResult(result, System.nanoTime() - started);
+    }
+
+    /**
      * Runs the native binary. When {@code prependPathDir} is non-null it is
      * prepended to {@code PATH} so a stub child command can be resolved.
      */
@@ -169,6 +186,12 @@ public final class NativeBinarySupport {
     }
 
     public record CliResult(int exitCode, String stdout, String stderr) {}
+
+    public record TimedCliResult(CliResult result, long elapsedNanos) {
+        public long elapsedMillis() {
+            return TimeUnit.NANOSECONDS.toMillis(elapsedNanos);
+        }
+    }
 
     public static final class StartedRun {
         private final Process process;

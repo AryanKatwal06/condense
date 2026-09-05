@@ -15,6 +15,7 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.11.0</quarkus.platform.version>
         <skipITs>true</skipITs>
+        <condense.soak.runs>20</condense.soak.runs>
         <surefire-plugin.version>3.5.6</surefire-plugin.version>
         <sqlite.native.exclude>none</sqlite.native.exclude>
     </properties>
@@ -219,6 +220,7 @@
                 <configuration>
                     <systemPropertyVariables>
                         <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
+                        <condense.soak.runs>${condense.soak.runs}</condense.soak.runs>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
