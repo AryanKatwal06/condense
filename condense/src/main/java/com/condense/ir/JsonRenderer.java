@@ -52,7 +52,8 @@ public final class JsonRenderer {
                 envelope.provenance() == null
                     ? Documents.provenance(envelope.wasFiltered())
                     : envelope.provenance(),
-                payload
+                payload,
+                envelope.termination()
             );
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -81,6 +82,7 @@ public final class JsonRenderer {
         int childExitCode,
         boolean wasFiltered,
         ExplainReport.ProvenanceInfo provenance,
-        JsonNode document
+        JsonNode document,
+        com.condense.core.TerminationReason termination
     ) {}
 }

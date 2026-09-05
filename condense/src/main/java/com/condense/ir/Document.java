@@ -1,7 +1,9 @@
 package com.condense.ir;
 
+import com.condense.core.TerminationReason;
 import com.condense.explain.ExplainReport;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
@@ -27,7 +29,8 @@ import java.util.Locale;
     Document.DependencyDocument.class,
     Document.ResourceDocument.class,
     Document.ResourceRow.class,
-    Document.OpaqueDocument.class
+    Document.OpaqueDocument.class,
+    TerminationReason.class
 })
 public record Document(
     int schemaVersion,
@@ -37,7 +40,9 @@ public record Document(
     int childExitCode,
     boolean wasFiltered,
     ExplainReport.ProvenanceInfo provenance,
-    Object document
+    Object document,
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    TerminationReason termination
 ) {
     public static final int SCHEMA_VERSION = 1;
 
@@ -50,6 +55,9 @@ public record Document(
             ? new ExplainReport.ProvenanceInfo(false, null)
             : provenance;
         document = document == null ? new OpaqueDocument("") : document;
+        termination = (termination == null || termination == TerminationReason.CHILD_EXIT)
+            ? null
+            : termination;
     }
 
     public static Document of(
@@ -61,8 +69,32 @@ public record Document(
             ExplainReport.ProvenanceInfo provenance,
             Object payload
     ) {
+        return of(kind, command, filter, childExitCode, wasFiltered, provenance, payload, null);
+    }
+
+    public static Document of(
+            DocumentKind kind,
+            String command,
+            String filter,
+            int childExitCode,
+            boolean wasFiltered,
+            ExplainReport.ProvenanceInfo provenance,
+            Object payload,
+            TerminationReason termination
+    ) {
         return new Document(
-            SCHEMA_VERSION, kind, command, filter, childExitCode, wasFiltered, provenance, payload);
+            SCHEMA_VERSION, kind, command, filter, childExitCode, wasFiltered, provenance, payload, termination);
+    }
+
+    public Document withTermination(TerminationReason reason) {
+        TerminationReason normalized = (reason == null || reason == TerminationReason.CHILD_EXIT)
+            ? null
+            : reason;
+        if (termination == normalized) {
+            return this;
+        }
+        return new Document(
+            schemaVersion, kind, command, filter, childExitCode, wasFiltered, provenance, document, normalized);
     }
 
     public static Document opaque(
@@ -80,7 +112,8 @@ public record Document(
             childExitCode,
             wasFiltered,
             provenance,
-            new OpaqueDocument(body == null ? "" : body));
+            new OpaqueDocument(body == null ? "" : body),
+            null);
     }
 
     public enum DocumentKind {

@@ -20,11 +20,17 @@ An override that swaps a streamable summary for `grouping` becomes CAPTURE autom
 
 The proxy waits until the child exits unless `CONDENSE_COMMAND_TIMEOUT_SEC` is a positive integer. Live `condense explain` (no `--input` / `--stdin`) uses the same `resolveProxyTimeout()` as the proxy. `CommandExecutor.execute(args)` without a duration still defaults to 60 seconds for tests.
 
-If either stream exceeds 10 MB, Condense stops capturing, destroys the child, prints `condense: output capped at 10MB` to stderr, and keeps whatever exit code the child produced (or `-1` if it was killed). It does not replace that code with a generic error 1.
+On timeout, Condense destroys the child tree, joins drain threads, and **appends** `condense: command timed out after Ns` to the existing stderr capture. Bytes the child already wrote are kept. Exit is `-1` with termination `TIMEOUT`.
+
+If either stream exceeds 10 MB, Condense stops capturing, destroys the child, prints `condense: output capped at 10MB` to stderr, and keeps whatever exit code the child produced (or `-1` if it was killed). Termination is `OUTPUT_CAP`. It does not replace that code with a generic error 1.
+
+A drain I/O fault after the child has started is fail-open: partial captures are kept, `condense: stdout drain failed` / `stderr drain failed` is appended to the stderr capture, and the child’s exit is preserved when reaped. See [docs/reliability.md](reliability.md).
+
+If the consumer pipe is broken (`PrintStream.checkError()`), live printing stops but the child is still drained and reaped.
 
 ## Charset
 
-`Utf8LineDecoder` holds incomplete UTF-8 sequences across 8 KiB drain chunks. `\r\n` is one line break. A lone `\r` resets the current line (progress bars) instead of emitting it.
+`Utf8LineDecoder` holds incomplete UTF-8 sequences across 8 KiB drain chunks. `\r\n` is one line break. A lone `\r` resets the current line (progress bars) instead of emitting it. The current line is capped at 1 MiB characters; a longer line is emitted truncated and decoding continues. Capture files are decoded as UTF-8 with replacement.
 
 ## Explain
 

@@ -137,6 +137,7 @@ class ReflectConfigDriftTest {
             com.condense.ir.JsonRenderer.class.getName(),
             com.condense.ir.JsonRenderer.EnvelopeWire.class.getName(),
             com.condense.ir.Documents.class.getName(),
+            com.condense.core.TerminationReason.class.getName(),
             com.condense.core.ProxyService.class.getName(),
             com.condense.core.ProxyService.Outcome.class.getName(),
             com.condense.commands.McpCommand.class.getName(),

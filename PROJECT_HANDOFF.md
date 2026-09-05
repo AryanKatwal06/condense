@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 16 adaptive proposals).
+**Written:** 4 September 2026. **Revised:** 6 September 2026 (superiority Phase 1 reliability contract).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -136,9 +136,13 @@ CLI args
 | Proxy timeout | Wait until exit unless `CONDENSE_COMMAND_TIMEOUT_SEC` is a positive integer (`Duration.ZERO` = wait) |
 | `execute(List)` | Still 60 s (`DEFAULT_TIMEOUT`) — used by tests and `condense explain` |
 | Live hook | Optional `StreamListener` (`onStdout` / `onStderr` / `onCapped`) |
-| Self-proxy guard | Refuses to exec `condense` / `condense-runner` as a child |
+| Self-proxy guard | Refuses `condense`, `condense.exe`, `condense-runner`, and `condense-runner.exe` by argv[0] file name (`PATH` / `PATHEXT`) and current process path. Throws before spawn. |
+| Drain faults | Append `condense: stdout drain failed` / `stderr drain failed` to stderr capture. Never throw. Child exit when reaped, else `-1`. `DRAIN_ERROR`. |
+| Timeout stderr | Append timeout line; keep prior stdout/stderr bytes. Exit `-1`, `TIMEOUT`. |
+| Decode | UTF-8 with replacement (`ExecutionResult.readStdout` / `readStderr`). |
+| Termination | Additive `ExecutionResult.termination()`; optional IR field `termination` omitted for `CHILD_EXIT`. |
 
-`Utf8LineDecoder` (used by `StreamingProxy`) holds incomplete UTF-8 across chunks. `\r\n` is one break; a lone `\r` resets the current line.
+`Utf8LineDecoder` (used by `StreamingProxy`) holds incomplete UTF-8 across chunks. `\r\n` is one break; a lone `\r` resets the current line. Current line cap is 1 MiB characters (`Utf8LineDecoder.MAX_LINE_CHARS`).
 
 Mode is derived from `FilterStage.streamability()`: STREAM when every stage is `ORDER_LOCAL` or `WINDOWED`; CAPTURE if any stage is `DOCUMENT` or `FINALIZE_ONLY`; LIVE_RAW for `PassthroughStrategy`. Flagship STREAM builtins are `npm install` / `npm ci` / `npm i` and `docker build`. See `docs/streaming.md`.
 
@@ -333,6 +337,13 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D27 | ~~No hook integrity/tamper verification, and no backup before editing third-party configs~~ **FIXED** | `HookBackup` + `HookIntegrity` + `hook_baselines`. Backup failure leaves the original third-party file. Integrity is `ok` only with a matching baseline. | Phase 13 |
 | D28 | ~~Agent coverage is a strict subset of Zap's, plus a generic-bash fallback~~ **FIXED** | Codex / OpenCode / Kilo / Antigravity / Hermes / Pi installers; Copilot / Windsurf / Cline kept | Phase 13 |
 | D29 | ~~Benchmarks print numbers but assert nothing; no enforced performance budget~~ **FIXED** | Relative 100× gates on `FilterPipelineBenchmarkTest` and `FilterOverrideBenchmarkTest`; `NativeBudgetIT` size + cold-start median; soak/concurrency/fail-open Failsafe | Phase 17 |
+| S1 | ~~Drain I/O threw and became Condense exit 1~~ **FIXED** | Fail-open drain; `condense: stdout drain failed` / `stderr drain failed` appended; `CommandExecutorFailOpenTest` | Superiority Phase 1 |
+| S2 | ~~Timeout replaced stderr with only the timeout line~~ **FIXED** | Timeout message is appended; prior stderr/stdout kept | Superiority Phase 1 |
+| S3 | ~~Invalid UTF-8 vanished via `Files.readString`~~ **FIXED** | UTF-8 replacement decode | Superiority Phase 1 |
+| S4 | ~~Self-proxy guard only matched the token `condense`~~ **FIXED** | File name + PATH/PATHEXT + current process; `SelfProxyGuardTest` | Superiority Phase 1 |
+| S5 | ~~`Utf8LineDecoder` current line unbounded~~ **FIXED** | 1 MiB line cap; `Utf8LineDecoderBoundTest` | Superiority Phase 1 |
+
+The executable contract is `condense/src/test/resources/reliability/failure-contract.json` plus `docs/reliability.md`. Native proof is `NativeReliabilityIT`.
 
 ### Known test-coverage gaps (from the filter-subsystem audit)
 
@@ -1013,9 +1024,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–17 code landed. The numbered roadmap is complete. Round 2 remediation **R13–R24 and R26 have landed**. **R25** (semantic savings) stays deferred and is not a numbered phase. D29 is closed. Native cold start, size, soak, concurrency, and analytics fail-open are Failsafe gates. GitHub Releases checksum and cosign every published blob including the SBOM. `condense propose` still does not write live `filters.toml`. Analytics `user_version` target is 2. This Windows workspace does not build native images. Native proof for this train is the next Actions run after push.
+**Where we are.** Superiority **Phase 1** (permanent reliability contract) has landed on top of the completed 17-phase product roadmap. Drain I/O is fail-open, timeout appends instead of replacing stderr, captures decode with UTF-8 replacement, self-proxy matches the shipped binary names, and `Utf8LineDecoder` caps the current line at 1 MiB. The catalog is `failure-contract.json`. Native proof is `NativeReliabilityIT` (this Windows workspace does not build native images; the next Actions run after push is the native gate). Round 2 **R25** (semantic savings) stays deferred.
 
-**Do not implement R25** unless the user explicitly asks. There is no Phase 18 in this roadmap.
+**Do not plan or implement superiority Phase 2** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
 
 ---
 
@@ -1036,7 +1047,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. The 17-phase roadmap is complete. Confirm `NativeBudgetIT` and `NativeSoakIT` appear in native job logs, `GoldenLockTest` is green, and `condense propose` does not write `filters.toml` or sit on the proxy path.
+8. Superiority Phase 1 has landed. Confirm `mvn test` is green, `FailureContractCatalogTest` maps every `failure-contract.json` id, and `NativeReliabilityIT` is on the Failsafe `*IT.java` path. Do not start superiority Phase 2 from this stop point unless the user explicitly asks.
 9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
 10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 

@@ -35,6 +35,8 @@ class IrJsonRoundTripTest {
             assertThat(tree.get("provenance").isObject()).isTrue();
             assertThat(tree.get("document").isObject()).isTrue();
 
+            assertThat(tree.has("termination")).isFalse();
+
             Document parsed = JsonRenderer.parse(json);
             assertThat(parsed.kind()).isEqualTo(document.kind());
             assertThat(parsed.schemaVersion()).isEqualTo(1);
@@ -86,6 +88,23 @@ class IrJsonRoundTripTest {
         assertThat(json.get("provenance").get("applied").asBoolean()).isTrue();
         assertThat(json.get("provenance").get("stamp").asText()).isEqualTo("condense[filtered]");
         assertThat(json.has("stamp")).isFalse();
+    }
+
+    @Test
+    void timeoutTerminationRoundTripsAndNormalDocumentsOmitIt() throws Exception {
+        Document document = Document.opaque(
+                "sleep",
+                "passthrough",
+                -1,
+                false,
+                Documents.provenance(false),
+                "body")
+            .withTermination(com.condense.core.TerminationReason.TIMEOUT);
+        JsonNode json = com.condense.core.Mappers.JSON.readTree(JsonRenderer.render(document));
+        assertThat(json.get("termination").asText()).isEqualTo("timeout");
+        Document parsed = JsonRenderer.parse(json.toString());
+        assertThat(parsed.termination()).isEqualTo(com.condense.core.TerminationReason.TIMEOUT);
+        assertThat(parsed.childExitCode()).isEqualTo(-1);
     }
 
     private static Document typed(String id, Document.DocumentKind expected) throws Exception {

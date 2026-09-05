@@ -487,6 +487,7 @@
   { "name": "com.condense.ir.JsonRenderer", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.ir.JsonRenderer$EnvelopeWire", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.ir.Documents", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.core.TerminationReason", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.core.ProxyService", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.core.ProxyService$Outcome", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.commands.McpCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },

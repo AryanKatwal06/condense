@@ -21,6 +21,8 @@ The MCP `run` tool returns this envelope. It must not invent a second model. See
 
 `provenance` is the same `{ applied, stamp }` object as `condense explain`. JSON is never stamped as a fake first line.
 
+`termination` is optional. It is omitted for a normal child exit (`CHILD_EXIT`). When Condense timed out, capped, hit a drain fault, or destroyed the process on shutdown, the field is one of `timeout`, `output_cap`, `drain_error`, `destroyed`. `schema_version` stays 1. See [docs/reliability.md](reliability.md).
+
 Unknown keys fail on parse. `kind` is a closed set — renderers switch on it; there is no reflective discovery.
 
 ## Kinds

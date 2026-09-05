@@ -30,15 +30,17 @@ public final class Documents {
             if (builder != null && builder.isPopulated()) {
                 Document built = builder.build(command, filter, exit, wasFiltered, provenance);
                 if (built != null) {
-                    return built;
+                    return withTermination(built, result);
                 }
             }
-            return Document.opaque(command, filter, exit, wasFiltered, provenance, fallbackBody);
+            return withTermination(
+                Document.opaque(command, filter, exit, wasFiltered, provenance, fallbackBody), result);
         } catch (RuntimeException e) {
             if (context != null) {
                 context.recordIncident(FilterIncident.irFallback("document", e.getMessage()));
             }
-            return Document.opaque(command, filter, exit, wasFiltered, provenance, fallbackBody);
+            return withTermination(
+                Document.opaque(command, filter, exit, wasFiltered, provenance, fallbackBody), result);
         }
     }
 
@@ -49,12 +51,20 @@ public final class Documents {
             FilterResult filtered
     ) {
         if (filtered != null && filtered.document() != null) {
-            return filtered.document();
+            return withTermination(filtered.document(), result);
         }
         boolean wasFiltered = filtered != null && filtered.wasFiltered();
         String body = opaqueBody(filtered);
         int exit = result == null ? 0 : result.exitCode();
-        return Document.opaque(command, filter, exit, wasFiltered, provenance(wasFiltered), body);
+        return withTermination(
+            Document.opaque(command, filter, exit, wasFiltered, provenance(wasFiltered), body), result);
+    }
+
+    static Document withTermination(Document document, ExecutionResult result) {
+        if (document == null) {
+            return null;
+        }
+        return document.withTermination(result == null ? null : result.termination());
     }
 
     public static ExplainReport.ProvenanceInfo provenance(boolean wasFiltered) {
