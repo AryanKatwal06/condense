@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-playwright"
+family = "playwright"
+priority = 10
+signals = ["playwright.config.ts", "playwright.config.js"]
+recommend = ["playwright"]

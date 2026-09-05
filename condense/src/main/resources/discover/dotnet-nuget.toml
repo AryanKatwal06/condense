@@ -1,0 +1,6 @@
+schema_version = 1
+name = "dotnet-nuget"
+family = "dotnet"
+priority = 20
+signals = ["nuget.config"]
+recommend = ["dotnet-test", "dotnet-build", "dotnet-restore"]

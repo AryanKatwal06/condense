@@ -1,0 +1,6 @@
+schema_version = 1
+name = "docker"
+family = "docker"
+priority = 10
+signals = ["Dockerfile"]
+recommend = ["docker-build"]

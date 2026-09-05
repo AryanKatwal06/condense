@@ -7,6 +7,7 @@ _condense() {
   commands=(
     'gain:Show token savings analytics'
     'doctor:Diagnose persistence and empty analytics'
+    'discover:Recommend filters from manifests and lockfiles'
     'explain:Show which filter stages dropped which lines'
     'read:Read a source file with comment-strip or outline'
     'init:Install AI tool hooks'
@@ -87,6 +88,11 @@ _condense() {
         doctor)
           _arguments \
             '--format=[Output format]:format:(text json)'
+          ;;
+        discover)
+          _arguments \
+            '--format=[Output format]:format:(text json)' \
+            '--root=[Narrow workspace root]:dir:_files -/'
           ;;
         explain)
           _arguments \

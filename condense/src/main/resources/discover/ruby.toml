@@ -1,0 +1,6 @@
+schema_version = 1
+name = "ruby"
+family = "ruby"
+priority = 10
+signals = ["Gemfile.lock"]
+recommend = ["bundle-install"]

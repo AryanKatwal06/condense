@@ -1,0 +1,6 @@
+schema_version = 1
+name = "dotnet-global"
+family = "dotnet"
+priority = 10
+signals = ["global.json"]
+recommend = ["dotnet-test", "dotnet-build", "dotnet-restore"]

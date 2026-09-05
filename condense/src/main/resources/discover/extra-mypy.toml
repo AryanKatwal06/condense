@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-mypy"
+family = "mypy"
+priority = 10
+signals = ["mypy.ini"]
+recommend = ["mypy"]

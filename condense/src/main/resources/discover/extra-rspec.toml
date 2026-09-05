@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-rspec"
+family = "rspec"
+priority = 10
+signals = [".rspec"]
+recommend = ["rspec"]

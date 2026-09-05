@@ -11,6 +11,9 @@ condense \- high-performance CLI proxy that filters command output to save AI to
 .B condense doctor
 [\fIOPTIONS\fR]
 .br
+.B condense discover
+[\fIOPTIONS\fR]
+.br
 .B condense explain
 [\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR...]
 .br
@@ -63,6 +66,11 @@ for options including \fB\-\-graph\fR, \fB\-\-history\fR, \fB\-\-top N\fR,
 Diagnose persistence, hooks, and empty analytics. Use
 \fBcondense doctor \-\-format json\fR for a machine-readable report.
 .TP
+.B condense discover
+Recommend filter definitions from repository manifests and lockfiles.
+Does not change command dispatch. Use \fB\-\-format json\fR and
+\fB\-\-root DIR\fR (may only narrow the workspace).
+.TP
 .B condense explain
 Show which filter stages dropped or rewrote output, with line and token
 accounting. Options must come before the command
@@ -114,6 +122,9 @@ Show token savings dashboard:
 .TP
 30\-day savings graph:
 .B condense gain \-\-graph
+.TP
+Recommend filters for this repository:
+.B condense discover
 .TP
 Start the MCP server on stdio:
 .B condense mcp \-\-start

@@ -1,0 +1,6 @@
+schema_version = 1
+name = "go"
+family = "go"
+priority = 10
+signals = ["go.mod"]
+recommend = ["go-test", "golangci-lint"]

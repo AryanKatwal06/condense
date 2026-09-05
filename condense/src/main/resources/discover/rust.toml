@@ -1,0 +1,6 @@
+schema_version = 1
+name = "rust"
+family = "rust"
+priority = 10
+signals = ["Cargo.toml"]
+recommend = ["cargo-test", "cargo-clippy"]

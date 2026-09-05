@@ -1,0 +1,6 @@
+schema_version = 1
+name = "infra-terraform"
+family = "terraform"
+priority = 10
+signals = [".terraform.lock.hcl", "main.tf"]
+recommend = ["terraform"]

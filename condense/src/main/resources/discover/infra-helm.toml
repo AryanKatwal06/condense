@@ -1,0 +1,6 @@
+schema_version = 1
+name = "infra-helm"
+family = "helm"
+priority = 10
+signals = ["Chart.yaml"]
+recommend = ["helm"]

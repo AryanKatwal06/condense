@@ -1,0 +1,6 @@
+schema_version = 1
+name = "js-npm-lock"
+family = "js-install"
+priority = 20
+signals = ["package-lock.json"]
+recommend = ["npm-install"]

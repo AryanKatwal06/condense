@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-pytest"
+family = "pytest"
+priority = 10
+signals = ["pytest.ini", "conftest.py"]
+recommend = ["pytest"]

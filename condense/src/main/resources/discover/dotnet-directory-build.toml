@@ -1,0 +1,6 @@
+schema_version = 1
+name = "dotnet-directory-build"
+family = "dotnet"
+priority = 30
+signals = ["Directory.Build.props"]
+recommend = ["dotnet-test", "dotnet-build", "dotnet-restore"]

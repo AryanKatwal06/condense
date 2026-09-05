@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-prettier"
+family = "prettier"
+priority = 10
+signals = [".prettierrc", ".prettierrc.json", "prettier.config.js"]
+recommend = ["prettier"]

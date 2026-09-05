@@ -1,0 +1,6 @@
+schema_version = 1
+name = "java-gradle"
+family = "java-build"
+priority = 20
+signals = ["build.gradle", "build.gradle.kts"]
+recommend = ["gradle"]

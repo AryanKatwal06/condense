@@ -1,0 +1,6 @@
+schema_version = 1
+name = "python-requirements"
+family = "python"
+priority = 20
+signals = ["requirements.txt"]
+recommend = ["pip-install"]

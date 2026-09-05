@@ -1,0 +1,6 @@
+schema_version = 1
+name = "git"
+family = "git"
+priority = 10
+workspace_git = true
+recommend = ["git-status", "git-diff", "git-log"]

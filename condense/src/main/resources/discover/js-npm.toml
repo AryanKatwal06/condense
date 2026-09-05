@@ -1,0 +1,6 @@
+schema_version = 1
+name = "js-npm"
+family = "js-install"
+priority = 30
+signals = ["package.json"]
+recommend = ["npm-install"]

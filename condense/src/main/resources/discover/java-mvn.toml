@@ -1,0 +1,6 @@
+schema_version = 1
+name = "java-mvn"
+family = "java-build"
+priority = 10
+signals = ["pom.xml"]
+recommend = ["mvn"]

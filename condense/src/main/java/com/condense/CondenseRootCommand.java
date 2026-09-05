@@ -18,6 +18,7 @@ import java.util.List;
     subcommands = {
         com.condense.analytics.GainCommand.class,
         com.condense.doctor.DoctorCommand.class,
+        com.condense.discover.DiscoverCommand.class,
         com.condense.explain.ExplainCommand.class,
         com.condense.read.ReadCommand.class,
         com.condense.hooks.InitCommand.class,

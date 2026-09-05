@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-eslint"
+family = "eslint"
+priority = 10
+signals = ["eslint.config.js", ".eslintrc.json"]
+recommend = ["eslint"]

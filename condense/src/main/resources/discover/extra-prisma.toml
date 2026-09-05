@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-prisma"
+family = "prisma"
+priority = 10
+signals = ["prisma/schema.prisma"]
+recommend = ["prisma"]

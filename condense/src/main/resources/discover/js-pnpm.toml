@@ -1,0 +1,6 @@
+schema_version = 1
+name = "js-pnpm"
+family = "js-install"
+priority = 10
+signals = ["pnpm-lock.yaml"]
+recommend = ["pnpm-install"]

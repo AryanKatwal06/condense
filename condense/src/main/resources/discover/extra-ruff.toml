@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-ruff"
+family = "ruff"
+priority = 10
+signals = ["ruff.toml", ".ruff.toml"]
+recommend = ["ruff"]

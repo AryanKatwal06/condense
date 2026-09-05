@@ -1,0 +1,6 @@
+schema_version = 1
+name = "java-make"
+family = "java-build"
+priority = 30
+signals = ["Makefile"]
+recommend = ["make"]

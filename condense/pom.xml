@@ -171,6 +171,17 @@
                             <classpathScope>compile</classpathScope>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>validate-builtin-discover</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.condense.discover.DiscoverDefinitionValidator</mainClass>
+                            <classpathScope>compile</classpathScope>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

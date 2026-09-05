@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-next"
+family = "next"
+priority = 10
+signals = ["next.config.js", "next.config.mjs", "next.config.ts"]
+recommend = ["next-build"]

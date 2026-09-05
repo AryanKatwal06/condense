@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-tsc"
+family = "tsc"
+priority = 10
+signals = ["tsconfig.json"]
+recommend = ["tsc"]

@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-rubocop"
+family = "rubocop"
+priority = 10
+signals = [".rubocop.yml"]
+recommend = ["rubocop"]
