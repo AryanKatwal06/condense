@@ -112,7 +112,26 @@ class ReflectConfigDriftTest {
             com.condense.ir.TextRenderer.class.getName(),
             com.condense.ir.JsonRenderer.class.getName(),
             com.condense.ir.JsonRenderer.EnvelopeWire.class.getName(),
-            com.condense.ir.Documents.class.getName()
+            com.condense.ir.Documents.class.getName(),
+            com.condense.core.ProxyService.class.getName(),
+            com.condense.core.ProxyService.Outcome.class.getName(),
+            com.condense.commands.McpCommand.class.getName(),
+            com.condense.mcp.McpServer.class.getName(),
+            com.condense.mcp.McpHandlers.class.getName(),
+            com.condense.mcp.McpMessages.class.getName(),
+            com.condense.mcp.McpMessages.JsonRpcError.class.getName(),
+            com.condense.mcp.McpMessages.ServerInfo.class.getName(),
+            com.condense.mcp.McpMessages.EmptyCapability.class.getName(),
+            com.condense.mcp.McpMessages.Capabilities.class.getName(),
+            com.condense.mcp.McpMessages.InitializeResult.class.getName(),
+            com.condense.mcp.McpMessages.ToolSpec.class.getName(),
+            com.condense.mcp.McpMessages.ToolsListResult.class.getName(),
+            com.condense.mcp.McpMessages.ResourceSpec.class.getName(),
+            com.condense.mcp.McpMessages.ResourcesListResult.class.getName(),
+            com.condense.mcp.McpMessages.ToolContent.class.getName(),
+            com.condense.mcp.McpMessages.ToolResult.class.getName(),
+            com.condense.mcp.McpMessages.ResourceContents.class.getName(),
+            com.condense.mcp.McpMessages.ResourceReadResult.class.getName()
         );
 
         assertThat(com.condense.doctor.DoctorCommand.class.isAnnotationPresent(
@@ -128,6 +147,11 @@ class ReflectConfigDriftTest {
         assertThat(com.condense.read.ReadCommand.class.isAnnotationPresent(
                 io.quarkus.arc.Unremovable.class))
             .as("ReadCommand is created only via Picocli programmatic lookup; "
+                + "without @Unremovable Quarkus strips it from the native image")
+            .isTrue();
+        assertThat(com.condense.commands.McpCommand.class.isAnnotationPresent(
+                io.quarkus.arc.Unremovable.class))
+            .as("McpCommand is created only via Picocli programmatic lookup; "
                 + "without @Unremovable Quarkus strips it from the native image")
             .isTrue();
     }

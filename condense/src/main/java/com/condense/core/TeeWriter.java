@@ -35,6 +35,13 @@ public class TeeWriter {
     @Inject
     ConfigLoader configLoader;
 
+    public TeeWriter() {}
+
+    public TeeWriter(PlatformDirs platformDirs, ConfigLoader configLoader) {
+        this.platformDirs = platformDirs;
+        this.configLoader = configLoader;
+    }
+
     /**
      * Possibly saves raw output to a tee file, based on config and exit code.
      *

@@ -1,29 +1,69 @@
 package com.condense.commands;
 
+import com.condense.core.TrackingRepository;
+import com.condense.mcp.McpHandlers;
+import com.condense.mcp.McpServer;
+import io.quarkus.arc.Unremovable;
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+
 import java.util.concurrent.Callable;
 
-@Command(name = "mcp", description = "Model Context Protocol (MCP) server mode (Planned)",
-         mixinStandardHelpOptions = true)
+/**
+ * {@code condense mcp} — stdio JSON-RPC MCP server. Bare invocation prints
+ * a client config snippet and exits 0; {@code --start} speaks the protocol.
+ */
+@Command(
+    name = "mcp",
+    description = "Model Context Protocol server over stdio.",
+    mixinStandardHelpOptions = true
+)
+@Dependent
+@Unremovable
 public class McpCommand implements Callable<Integer> {
 
-    @Option(names = {"--start"}, description = "Start the MCP server over stdio")
+    @Option(names = {"--start"}, description = "Start the MCP server on stdin/stdout")
     boolean start;
+
+    @Inject
+    McpHandlers handlers;
+
+    @Inject
+    TrackingRepository tracking;
+
+    public McpCommand() {}
+
+    public McpCommand(McpHandlers handlers, TrackingRepository tracking) {
+        this.handlers = handlers;
+        this.tracking = tracking;
+    }
 
     @Override
     public Integer call() {
-        if (start) {
-            System.err.println("Error: The full MCP Server mode is currently planned for a future release.");
-            System.err.println("For now, use 'condense init' to transparently wrap tools via hook scripts.");
-            return 1;
+        if (!start) {
+            printSnippet();
+            return 0;
         }
+        try {
+            new McpServer(handlers).serve(System.in, System.out);
+            return 0;
+        } catch (Exception e) {
+            System.err.println("condense mcp: " + e.getMessage());
+            return 1;
+        } finally {
+            if (tracking != null) {
+                tracking.close();
+            }
+        }
+    }
 
-        System.out.println("Condense MCP Server (Planned)");
-        System.out.println("=============================");
-        System.out.println("Once implemented, condense will act as an MCP server, exposing tools like:");
-        System.out.println(" - execute_command (with built-in token compaction)");
-        System.out.println(" - analyze_project (automated dependency mapping)");
+    private static void printSnippet() {
+        System.out.println("Condense MCP Server");
+        System.out.println("===================");
+        System.out.println("Tools: run, explain, read");
+        System.out.println("Resources: condense://gain, condense://doctor");
         System.out.println();
         System.out.println("To use in Claude Desktop or other MCP clients, add to your config:");
         System.out.println("{");
@@ -34,7 +74,8 @@ public class McpCommand implements Callable<Integer> {
         System.out.println("    }");
         System.out.println("  }");
         System.out.println("}");
-        
-        return 0;
+        System.out.println();
+        System.out.println("Start the server with: condense mcp --start");
+        System.out.println("See docs/mcp.md for the tool and resource contracts.");
     }
 }

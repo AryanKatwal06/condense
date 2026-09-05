@@ -27,6 +27,12 @@ public class ConfigLoader {
 
     private volatile CondenseConfig cached;
 
+    public ConfigLoader() {}
+
+    public ConfigLoader(PlatformDirs platformDirs) {
+        this.platformDirs = platformDirs;
+    }
+
     /**
      * Loads and returns the config. Cached after first call.
      * Thread-safe via double-checked locking.

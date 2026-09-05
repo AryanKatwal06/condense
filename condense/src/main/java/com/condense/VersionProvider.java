@@ -12,16 +12,20 @@ import java.util.Properties;
  */
 public class VersionProvider implements IVersionProvider {
 
-    @Override
-    public String[] getVersion() {
+    public static String applicationVersion() {
         Properties props = new Properties();
-        try (InputStream in = getClass().getResourceAsStream("/com/condense/version.properties")) {
+        try (InputStream in = VersionProvider.class.getResourceAsStream("/com/condense/version.properties")) {
             if (in != null) {
                 props.load(in);
             }
         } catch (IOException ignored) {
         }
-        String version = props.getProperty("version", "unknown");
+        return props.getProperty("version", "unknown");
+    }
+
+    @Override
+    public String[] getVersion() {
+        String version = applicationVersion();
         String imageCode = System.getProperty("org.graalvm.nativeimage.imagecode");
         if (imageCode != null) {
             return new String[]{

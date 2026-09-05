@@ -2,7 +2,9 @@ package com.condense.nativeimage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -187,6 +189,16 @@ public final class NativeBinarySupport {
 
         public String stdoutSoFar() {
             return stdout.text();
+        }
+
+        public void writeStdin(String text) throws IOException {
+            OutputStream stdin = process.getOutputStream();
+            stdin.write(text.getBytes(StandardCharsets.UTF_8));
+            stdin.flush();
+        }
+
+        public void closeStdin() throws IOException {
+            process.getOutputStream().close();
         }
 
         public CliResult await() throws Exception {
