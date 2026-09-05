@@ -62,6 +62,41 @@ class OutputCapAndTimeoutTest {
 
         assertThat(stderr.toString(StandardCharsets.UTF_8)).contains("condense: output capped at 10MB");
         assertThat(run.result().exitCode()).isIn(-1, 7);
+        assertThat(run.result().termination()).isEqualTo(TerminationReason.OUTPUT_CAP);
+    }
+
+    @Test
+    void stderrAboveTenMegabytesCapsIndependently() throws Exception {
+        Path blob = tempDir.resolve("oversize-err.txt");
+        byte[] meg = new byte[1024 * 1024];
+        Arrays.fill(meg, (byte) 'B');
+        try (OutputStream out = Files.newOutputStream(blob)) {
+            for (int i = 0; i < 12; i++) {
+                out.write(meg);
+                out.write('\n');
+            }
+        }
+        List<String> args = WindowsCommandResolver.isWindows()
+            ? List.of("cmd", "/c", "type \"" + blob.toAbsolutePath() + "\" 1>&2 & exit /b 7")
+            : List.of("sh", "-c", "cat '" + blob.toAbsolutePath() + "' >&2; exit 7");
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+        StreamingProxy.StreamedRun run = StreamingProxy.run(
+            new CommandExecutor(),
+            new PassthroughStrategy(),
+            args,
+            "type-oversize-stderr",
+            CondenseConfig.defaults(),
+            0,
+            false,
+            new PrintStream(stdout, true, StandardCharsets.UTF_8),
+            new PrintStream(stderr, true, StandardCharsets.UTF_8)
+        );
+
+        assertThat(stderr.toString(StandardCharsets.UTF_8)).contains("condense: output capped at 10MB");
+        assertThat(run.result().termination()).isEqualTo(TerminationReason.OUTPUT_CAP);
+        assertThat(run.result().exitCode()).isIn(-1, 1, 7);
     }
 
     @Test
@@ -71,6 +106,7 @@ class OutputCapAndTimeoutTest {
             : List.of("sleep", "20");
         ExecutionResult result = new CommandExecutor().execute(args, Duration.ofMillis(400));
         assertThat(result.exitCode()).isEqualTo(-1);
+        assertThat(result.termination()).isEqualTo(TerminationReason.TIMEOUT);
         assertThat(result.readStderr()).contains("timed out");
         assertThat(result.durationMs()).isLessThan(8_000);
     }
