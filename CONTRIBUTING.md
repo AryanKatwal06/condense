@@ -137,14 +137,14 @@ class HelmFilterTest extends FilterTestSupport {
 
 ### 5. Keep reflect-config.json in sync
 
-`ReflectConfigDriftTest` runs in `mvn test` and fails if a new `FilterStrategy` (or a Jackson-bound config/analytics type) is missing from `src/main/resources/META-INF/native-image/reflect-config.json`, or if a class name is registered twice. Add an entry for the new filter:
+The gate is `ReflectConfigDriftTest`, not a manual ritual. It runs in `mvn test` and fails if a new `FilterStrategy` (or a Jackson-bound config/analytics type) is missing from `src/main/resources/META-INF/native-image/reflect-config.json`, or if a class name is registered twice. The drift test will demand this shape for a new filter:
 
 ```json
 { "name": "com.condense.filter.cloud.HelmFilter",
   "allDeclaredConstructors": true, "allDeclaredMethods": true }
 ```
 
-Do not treat this as an optional checklist item. If the JSON is stale, the JVM test fails before a 10-minute native build would.
+If the JSON is stale, the JVM test fails before a 10-minute native build would.
 
 ### 6. Verify and submit
 
