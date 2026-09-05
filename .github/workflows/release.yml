@@ -135,6 +135,32 @@ jobs:
             -Dquarkus.native.additional-build-args="${{ matrix.native_args }}" \
             --no-transfer-progress -B
 
+      - name: Native integration tests
+        shell: bash
+        run: |
+          mvn failsafe:integration-test failsafe:verify \
+            -DskipITs=false \
+            -Dnative.image.path="${PWD}/target/condense-runner" \
+            --no-transfer-progress -B
+
+      - name: Enforce uncompressed binary size ceiling
+        shell: bash
+        run: |
+          CEILING=83886080
+          BINARY="target/condense-runner${{ matrix.binary_suffix }}"
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            SIZE=$(stat -f%z "$BINARY")
+          elif [[ "${{ runner.os }}" == "Windows" ]]; then
+            SIZE=$(powershell -NoProfile -Command "(Get-Item '$BINARY').Length")
+          else
+            SIZE=$(stat -c%s "$BINARY")
+          fi
+          echo "Uncompressed binary size: $SIZE bytes (ceiling $CEILING = 80 MiB)"
+          if [ "$SIZE" -gt "$CEILING" ]; then
+            echo "FAIL: uncompressed native image is $SIZE bytes, exceeds ceiling of $CEILING (80 MiB)"
+            exit 1
+          fi
+
       - name: Verify binary (Unix)
         if: runner.os != 'Windows'
         shell: bash
