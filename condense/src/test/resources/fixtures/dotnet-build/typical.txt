@@ -1,0 +1,25 @@
+  Determining projects to restore...
+  Restored C:\work\App\App.csproj (in 180 ms).
+  Restored C:\work\App.Tests\App.Tests.csproj (in 40 ms).
+C:\work\App\Program.cs(12,20): warning CS0219: The variable 'unused' is assigned but its value is never used [C:\work\App\App.csproj]
+C:\work\App\Program.cs(14,20): warning CS0219: The variable 'tmp' is assigned but its value is never used [C:\work\App\App.csproj]
+C:\work\App\Services\Cache.cs(8,17): warning CS0168: The variable 'ex' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Cache.cs(22,17): warning CS0168: The variable 'ignored' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(5,17): warning CS0168: The variable 'e' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(9,17): warning CS0168: The variable 'e2' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(13,17): warning CS0168: The variable 'e3' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(17,17): warning CS0168: The variable 'e4' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(21,17): warning CS0168: The variable 'e5' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(25,17): warning CS0168: The variable 'e6' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(29,17): warning CS0168: The variable 'e7' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(33,17): warning CS0168: The variable 'e8' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(37,17): warning CS0168: The variable 'e9' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(41,17): warning CS0168: The variable 'e10' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(45,17): warning CS0168: The variable 'e11' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Services\Mailer.cs(49,17): warning CS0168: The variable 'e12' is declared but never used [C:\work\App\App.csproj]
+C:\work\App\Program.cs(12,20): error CS0029: Cannot implicitly convert type 'string' to 'int' [C:\work\App\App.csproj]
+C:\work\App\Services\Billing.cs(44,13): error CS0117: 'Invoice' does not contain a definition for 'Save' [C:\work\App\App.csproj]
+    18 Warning(s)
+    2 Error(s)
+Time Elapsed 00:00:04.12
+Build FAILED.

@@ -1,0 +1,12 @@
+condense[filtered]
+... (showing last 10 of 32 lines)
+Installing rails-html-sanitizer 1.6.0
+Fetching actionview 7.2.1
+Installing actionview 7.2.1
+Fetching actionpack 7.2.1
+Installing actionpack 7.2.1
+Fetching actioncable 7.2.1
+Installing actioncable 7.2.1
+Fetching nokogiri 1.16.7
+Installing nokogiri 1.16.7
+Bundler::GemNotFound: Could not find gem 'missing-toolbox (~> 2.0)'

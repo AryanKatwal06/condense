@@ -1,0 +1,4 @@
+condense[filtered]
+  Build FAILED.                                                                                                                     : 1
+  C:\work\App\Program.cs(12,20): error CS0029: Cannot implicitly convert type 'string' to 'int' [C:\work\App\App.csproj]            : 1
+  C:\work\App\Services\Billing.cs(44,13): error CS0117: 'Invoice' does not contain a definition for 'Save' [C:\work\App\App.csproj] : 1

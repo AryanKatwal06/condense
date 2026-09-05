@@ -1,0 +1,6 @@
+condense[filtered]
+  1) Invoice totals the line items FAILED                           : 1
+  2) Session login remembers the user FAILED                        : 1
+  Failed examples:                                                  : 1
+  rspec ./spec/invoice_spec.rb:12 # Invoice totals the line items   : 1
+  rspec ./spec/session_spec.rb:8 # Session login remembers the user : 1

@@ -1,0 +1,16 @@
+schema_version = 1
+name = "dotnet-build"
+commands = ["dotnet build"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(?:error CS[0-9]+|Build FAILED|Build succeeded).*)$"
+include_other = false
+
+[[tests]]
+id = "build-failed"
+input = "  Determining projects to restore...\nBuild FAILED.\n"
+expected = "  Build FAILED. : 1"

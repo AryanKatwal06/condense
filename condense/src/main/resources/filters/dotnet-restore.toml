@@ -1,0 +1,29 @@
+schema_version = 1
+name = "dotnet-restore"
+commands = ["dotnet restore"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "tail_lines"
+max_lines = 8
+skip_blank = true
+
+[[tests]]
+id = "keeps-error-tail"
+input = """
+  Determining projects to restore...
+  Restored pkg.a
+  Restored pkg.b
+  Restored pkg.c
+  Restored pkg.d
+  Restored pkg.e
+  Restored pkg.f
+  Restored pkg.g
+  Restored pkg.h
+  Restored pkg.i
+error NU1102: Unable to find package Contoso.Missing
+Restore failed
+"""
+expected = "... (showing last 8 of 12 lines)\n  Restored pkg.d\n  Restored pkg.e\n  Restored pkg.f\n  Restored pkg.g\n  Restored pkg.h\n  Restored pkg.i\nerror NU1102: Unable to find package Contoso.Missing\nRestore failed"

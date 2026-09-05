@@ -1,0 +1,16 @@
+schema_version = 1
+name = "dotnet-test"
+commands = ["dotnet test"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^( {2}Failed .+|Failed!.*)$"
+include_other = false
+
+[[tests]]
+id = "failed-method"
+input = "  Passed TestOk [1 ms]\n  Failed TestInvoiceTotal [12 ms]\n"
+expected = "  Failed TestInvoiceTotal [12 ms] : 1"

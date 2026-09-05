@@ -1,6 +1,7 @@
 schema_version = 1
 definitions = [
   "aws",
+  "bundle-install",
   "cargo-clippy",
   "cargo-install",
   "cargo-test",
@@ -8,6 +9,9 @@ definitions = [
   "docker-build",
   "docker-logs",
   "docker-ps",
+  "dotnet-build",
+  "dotnet-restore",
+  "dotnet-test",
   "eslint",
   "find",
   "git-add",
@@ -29,6 +33,8 @@ definitions = [
   "npm-install",
   "pip-install",
   "pytest",
+  "rspec",
+  "rubocop",
   "ruff",
   "tsc",
   "vitest"

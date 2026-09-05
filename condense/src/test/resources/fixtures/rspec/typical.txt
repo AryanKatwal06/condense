@@ -1,0 +1,60 @@
+........................................
+  Invoice totals a zero cart
+  Invoice totals a single item
+  Invoice applies a percent coupon
+  Invoice applies a fixed coupon
+  Invoice rejects a negative quantity
+  Session login accepts a valid password
+  Session login rejects a blank password
+  Session login rejects a locked user
+  Session logout clears the cookie
+  Session remember-me issues a token
+  Catalog lists published products
+  Catalog hides draft products
+  Catalog paginates 40 results
+  Catalog filters by tag
+  Order checkout requires a cart
+  Order checkout rejects an empty cart
+  Order checkout captures a payment
+  Order checkout records a tax line
+  Order cancel restocks inventory
+  Mailer sends a receipt
+  Mailer retries a bounce
+  Mailer skips a suppressed address
+  Report exports csv
+  Report exports xlsx
+  Report respects a date range
+  Tax computes a VAT line
+  Tax computes a sales-tax line
+  User activate sends mail
+  User deactivate revokes sessions
+  User password reset expires
+  Search indexes a product
+  Search ranks by title
+  Webhook verifies a signature
+  Webhook rejects a replay
+  Job export writes a file
+  Job export deletes a stale file
+  Health returns ok
+  Health returns degraded
+  Metrics increments a counter
+  Metrics observes a histogram
+.
+
+  1) Invoice totals the line items FAILED
+     Failure/Error: expect(invoice.total).to eq(10)
+       expected: 10
+            got: 0
+     # ./spec/invoice_spec.rb:12:in `block (2 levels) in <top (required)>'
+
+  2) Session login remembers the user FAILED
+     Failure/Error: expect(session.user).not_to be_nil
+     # ./spec/session_spec.rb:8:in `block (2 levels) in <top (required)>'
+
+Finished in 0.42 seconds (files took 1.1 seconds to load)
+40 examples, 2 failures
+
+Failed examples:
+
+rspec ./spec/invoice_spec.rb:12 # Invoice totals the line items
+rspec ./spec/session_spec.rb:8 # Session login remembers the user

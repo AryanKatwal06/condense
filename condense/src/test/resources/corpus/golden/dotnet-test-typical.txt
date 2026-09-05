@@ -1,0 +1,4 @@
+condense[filtered]
+  Failed TestAuthSession [8 ms]                                         : 1
+  Failed TestInvoiceTotal [12 ms]                                       : 1
+  Failed! - Failed: 2, Passed: 38, Skipped: 0, Total: 40, Duration: 1 s : 1

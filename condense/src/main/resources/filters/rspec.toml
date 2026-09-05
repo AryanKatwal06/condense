@@ -1,0 +1,16 @@
+schema_version = 1
+name = "rspec"
+commands = ["rspec"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(FAILED|Failed examples|rspec ./).*)$"
+include_other = false
+
+[[tests]]
+id = "failed-examples"
+input = ".\nFailed examples:\n"
+expected = "  Failed examples: : 1"

@@ -430,6 +430,54 @@
       "exit_code": 1,
       "savings_floor": 60,
       "critical_signals": ["src/billing/invoice.py", "src/auth/session.py", "src/api/handlers.py"]
+    },
+    {
+      "id": "dotnet-test/typical",
+      "command": "dotnet test",
+      "fixture": "fixtures/dotnet-test/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["TestInvoiceTotal", "TestAuthSession", "Failed!"]
+    },
+    {
+      "id": "dotnet-build/typical",
+      "command": "dotnet build",
+      "fixture": "fixtures/dotnet-build/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["CS0029", "CS0117", "Build FAILED"]
+    },
+    {
+      "id": "dotnet-restore/typical",
+      "command": "dotnet restore",
+      "fixture": "fixtures/dotnet-restore/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["NU1102", "Restore failed"]
+    },
+    {
+      "id": "bundle-install/typical",
+      "command": "bundle install",
+      "fixture": "fixtures/bundle-install/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Bundler::GemNotFound"]
+    },
+    {
+      "id": "rspec/typical",
+      "command": "rspec",
+      "fixture": "fixtures/rspec/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["invoice_spec.rb", "session_spec.rb", "Failed examples"]
+    },
+    {
+      "id": "rubocop/typical",
+      "command": "rubocop",
+      "fixture": "fixtures/rubocop/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["app/models/invoice.rb", "app/models/user.rb"]
     }
   ]
 }

@@ -1,0 +1,30 @@
+schema_version = 1
+name = "bundle-install"
+commands = ["bundle install"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "tail_lines"
+max_lines = 10
+skip_blank = true
+
+[[tests]]
+id = "error-in-tail"
+input = """
+Fetching gem 1
+Fetching gem 2
+Fetching gem 3
+Fetching gem 4
+Fetching gem 5
+Fetching gem 6
+Fetching gem 7
+Fetching gem 8
+Fetching gem 9
+Fetching gem 10
+Fetching gem 11
+Fetching gem 12
+Bundler::GemNotFound: Could not find gem 'missing'
+"""
+expected = "... (showing last 10 of 13 lines)\nFetching gem 4\nFetching gem 5\nFetching gem 6\nFetching gem 7\nFetching gem 8\nFetching gem 9\nFetching gem 10\nFetching gem 11\nFetching gem 12\nBundler::GemNotFound: Could not find gem 'missing'"

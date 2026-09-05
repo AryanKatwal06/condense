@@ -1,0 +1,18 @@
+schema_version = 1
+name = "rubocop"
+commands = ["rubocop"]
+
+[[stages]]
+strategy = "aggregate_by_key"
+key = "prefix_before_colon"
+header = "{lines} offense(s) in {keys} file(s)"
+top_n = 20
+
+[[tests]]
+id = "by-file"
+input = """
+app/models/invoice.rb:12:5: C: Style/StringLiterals: Prefer single-quoted strings.
+app/models/invoice.rb:18:3: C: Style/HashSyntax: Use the new Ruby 1.9 hash syntax.
+app/models/user.rb:4:1: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+"""
+expected = "3 offense(s) in 2 file(s)\n  app/models/invoice.rb: 2\n  app/models/user.rb: 1"

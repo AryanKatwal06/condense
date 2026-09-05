@@ -1,0 +1,9 @@
+condense[filtered]
+29 offense(s) in 7 file(s)
+  app/models/invoice.rb: 5
+  app/models/user.rb: 5
+  app/controllers/invoices_controller.rb: 5
+  app/services/tax.rb: 5
+  app/jobs/export_job.rb: 5
+  (stdin): 3
+  Offenses: 1

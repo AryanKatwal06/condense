@@ -1,0 +1,32 @@
+Inspecting 40 files
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+Offenses:
+
+app/models/invoice.rb:12:5: C: Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+app/models/invoice.rb:18:3: C: Style/HashSyntax: Use the new Ruby 1.9 hash syntax.
+app/models/invoice.rb:22:1: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+app/models/invoice.rb:30:8: C: Style/RedundantBegin: Redundant begin block detected.
+app/models/invoice.rb:41:3: C: Metrics/MethodLength: Method has too many lines. [12/10]
+app/models/user.rb:4:1: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+app/models/user.rb:9:5: C: Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+app/models/user.rb:14:3: C: Style/HashSyntax: Use the new Ruby 1.9 hash syntax.
+app/models/user.rb:19:1: C: Layout/EmptyLineAfterGuardClause: Add empty line after guard clause.
+app/models/user.rb:25:7: C: Style/SafeNavigation: Use safe navigation (&.) instead of checking if an object exists.
+app/controllers/invoices_controller.rb:8:3: C: Style/GuardClause: Use a guard clause instead of wrapping the code inside a conditional expression.
+app/controllers/invoices_controller.rb:15:5: C: Metrics/AbcSize: Assignment Branch Condition size is too high. [<8, 15, 6> 18.14/17]
+app/controllers/invoices_controller.rb:22:1: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+app/controllers/invoices_controller.rb:28:3: C: Style/IfUnlessModifier: Favor modifier if usage when having a single-line body.
+app/controllers/invoices_controller.rb:33:5: C: Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+app/services/tax.rb:2:3: C: Style/Documentation: Missing top-level documentation comment for class Tax.
+app/services/tax.rb:6:5: C: Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+app/services/tax.rb:11:1: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+app/services/tax.rb:16:3: C: Metrics/MethodLength: Method has too many lines. [11/10]
+app/services/tax.rb:21:5: C: Style/HashSyntax: Use the new Ruby 1.9 hash syntax.
+app/jobs/export_job.rb:3:3: C: Style/Documentation: Missing top-level documentation comment for class ExportJob.
+app/jobs/export_job.rb:8:5: C: Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+app/jobs/export_job.rb:12:1: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+app/jobs/export_job.rb:18:3: C: Style/RescueStandardError: Avoid rescuing StandardError without listing it.
+app/jobs/export_job.rb:24:5: C: Style/HashSyntax: Use the new Ruby 1.9 hash syntax.
+
+40 files inspected, 25 offenses detected

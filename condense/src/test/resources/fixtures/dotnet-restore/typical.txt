@@ -1,0 +1,30 @@
+  Determining projects to restore...
+  Restored package Alpha.1.0.0 (in 12 ms).
+  Restored package Bravo.1.0.0 (in 11 ms).
+  Restored package Charlie.1.0.0 (in 10 ms).
+  Restored package Delta.1.0.0 (in 9 ms).
+  Restored package Echo.1.0.0 (in 14 ms).
+  Restored package Foxtrot.1.0.0 (in 8 ms).
+  Restored package Golf.1.0.0 (in 7 ms).
+  Restored package Hotel.1.0.0 (in 16 ms).
+  Restored package India.1.0.0 (in 6 ms).
+  Restored package Juliet.1.0.0 (in 5 ms).
+  Restored package Kilo.1.0.0 (in 13 ms).
+  Restored package Lima.1.0.0 (in 4 ms).
+  Restored package Mike.1.0.0 (in 15 ms).
+  Restored package November.1.0.0 (in 3 ms).
+  Restored package Oscar.1.0.0 (in 12 ms).
+  Restored package Papa.1.0.0 (in 11 ms).
+  Restored package Quebec.1.0.0 (in 10 ms).
+  Restored package Romeo.1.0.0 (in 9 ms).
+  Restored package Sierra.1.0.0 (in 8 ms).
+  Restored package Tango.1.0.0 (in 7 ms).
+  Restored package Uniform.1.0.0 (in 6 ms).
+  Restored package Victor.1.0.0 (in 5 ms).
+  Restored package Whiskey.1.0.0 (in 4 ms).
+  Restored package Xray.1.0.0 (in 3 ms).
+  Restored package Yankee.1.0.0 (in 2 ms).
+  Restored package Zulu.1.0.0 (in 1 ms).
+C:\work\App\App.csproj : error NU1102: Unable to find package Contoso.Missing with version (>= 2.0.0)
+C:\work\App\App.csproj : error NU1102:   - Found 1 version(s) in nuget.org [ Nearest version: 1.4.0 ]
+Restore failed.
