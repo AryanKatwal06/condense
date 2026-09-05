@@ -1,0 +1,14 @@
+condense[filtered]
+... (showing last 12 of 43 lines)
+status waiting replica 32/40
+status waiting replica 33/40
+status waiting replica 34/40
+status waiting replica 35/40
+status waiting replica 36/40
+status waiting replica 37/40
+status waiting replica 38/40
+status waiting replica 39/40
+status waiting replica 40/40
+NAME: web
+STATUS: deployed
+Error: install failed context deadline exceeded

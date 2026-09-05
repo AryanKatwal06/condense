@@ -1,0 +1,16 @@
+schema_version = 1
+name = "terraform"
+commands = ["terraform plan", "terraform apply"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(Error|Plan:|will be created|will be destroyed|will be updated).*)$"
+include_other = false
+
+[[tests]]
+id = "plan-line"
+input = "Refreshing state...\nPlan: 1 to add, 0 to change, 0 to destroy.\n"
+expected = "  Plan: 1 to add, 0 to change, 0 to destroy. : 1"

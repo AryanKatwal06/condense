@@ -478,6 +478,62 @@
       "exit_code": 1,
       "savings_floor": 60,
       "critical_signals": ["app/models/invoice.rb", "app/models/user.rb"]
+    },
+    {
+      "id": "terraform/typical",
+      "command": "terraform plan",
+      "fixture": "fixtures/terraform/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error", "Plan:", "will be created", "will be destroyed", "will be updated"]
+    },
+    {
+      "id": "helm/typical",
+      "command": "helm install",
+      "fixture": "fixtures/helm/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["NAME: web", "STATUS: deployed", "Error: install failed"]
+    },
+    {
+      "id": "gh/typical",
+      "command": "gh pr list",
+      "fixture": "fixtures/gh/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["Showing 40 pull requests", "failed deploy"]
+    },
+    {
+      "id": "glab/typical",
+      "command": "glab mr list",
+      "fixture": "fixtures/glab/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["Showing 40 merge requests", "pipeline failure"]
+    },
+    {
+      "id": "curl/typical",
+      "command": "curl",
+      "fixture": "fixtures/curl/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["HTTP/2 200"]
+    },
+    {
+      "id": "wget/typical",
+      "command": "wget",
+      "fixture": "fixtures/wget/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["ERROR 404", "saved"]
+    },
+    {
+      "id": "psql/typical",
+      "command": "psql",
+      "fixture": "fixtures/psql/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["ERROR"]
     }
   ]
 }

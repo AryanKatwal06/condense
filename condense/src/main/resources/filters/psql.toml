@@ -1,0 +1,27 @@
+schema_version = 1
+name = "psql"
+commands = ["psql"]
+
+[[stages]]
+strategy = "head_tail"
+head = 4
+tail = 6
+
+[[tests]]
+id = "omits-middle"
+input = """
+ id | name
+----+------
+  1 | a
+  2 | b
+  3 | c
+  4 | d
+  5 | e
+  6 | f
+  7 | g
+  8 | h
+  9 | i
+ 10 | j
+ERROR:  relation "missing" does not exist
+"""
+expected = " id | name\n----+------\n  1 | a\n  2 | b\n... (3 lines omitted) ...\n  6 | f\n  7 | g\n  8 | h\n  9 | i\n 10 | j\nERROR:  relation \"missing\" does not exist"

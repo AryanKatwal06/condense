@@ -1,0 +1,12 @@
+condense[filtered]
+ id | name
+----+----------------
+  1 | row-name-nnnnnnnnnnnnnnnnnnnn
+  2 | row-name-nnnnnnnnnnnnnnnnnnnn
+... (33 lines omitted) ...
+ 36 | row-name-nnnnnnnnnnnnnnnnnnnn
+ 37 | row-name-nnnnnnnnnnnnnnnnnnnn
+ 38 | row-name-nnnnnnnnnnnnnnnnnnnn
+ 39 | row-name-nnnnnnnnnnnnnnnnnnnn
+ 40 | row-name-nnnnnnnnnnnnnnnnnnnn
+ERROR:  relation missing does not exist

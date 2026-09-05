@@ -1,0 +1,30 @@
+schema_version = 1
+name = "helm"
+commands = ["helm install", "helm upgrade", "helm list"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "tail_lines"
+max_lines = 12
+skip_blank = true
+
+[[tests]]
+id = "error-tail"
+input = """
+hang tight while we install
+status waiting
+status waiting
+status waiting
+status waiting
+status waiting
+status waiting
+status waiting
+status waiting
+status waiting
+status waiting
+status waiting
+Error: install failed
+"""
+expected = "... (showing last 12 of 13 lines)\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nError: install failed"

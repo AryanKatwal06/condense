@@ -1,0 +1,29 @@
+schema_version = 1
+name = "wget"
+commands = ["wget"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "tail_lines"
+max_lines = 10
+skip_blank = true
+
+[[tests]]
+id = "error-tail"
+input = """
+-- fetching a
+-- fetching b
+-- fetching c
+-- fetching d
+-- fetching e
+-- fetching f
+-- fetching g
+-- fetching h
+-- fetching i
+-- fetching j
+-- fetching k
+ERROR 404: Not Found.
+"""
+expected = "... (showing last 10 of 12 lines)\n-- fetching c\n-- fetching d\n-- fetching e\n-- fetching f\n-- fetching g\n-- fetching h\n-- fetching i\n-- fetching j\n-- fetching k\nERROR 404: Not Found."

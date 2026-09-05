@@ -1,0 +1,33 @@
+schema_version = 1
+name = "curl"
+commands = ["curl"]
+select_input = "stdout_or_stderr"
+
+[gate]
+passthrough_nonzero_exit = true
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "tail_lines"
+max_lines = 12
+skip_blank = true
+
+[[tests]]
+id = "progress-tail"
+input = """
+  % Total
+  10  100
+  20  100
+  30  100
+  40  100
+  50  100
+  60  100
+  70  100
+  80  100
+  90  100
+ 100  100
+HTTP/2 200
+"""
+expected = "  % Total\n  10  100\n  20  100\n  30  100\n  40  100\n  50  100\n  60  100\n  70  100\n  80  100\n  90  100\n 100  100\nHTTP/2 200"

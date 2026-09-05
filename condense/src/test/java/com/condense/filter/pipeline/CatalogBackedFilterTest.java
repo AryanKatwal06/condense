@@ -42,4 +42,38 @@ class CatalogBackedFilterTest {
         assertThat(result.output()).contains("src/a.py");
         assertThat(result.output()).doesNotContain("ignored");
     }
+
+    @Test
+    void curlNonzeroExitIsPassthroughWithoutStamp() {
+        CatalogBackedFilter filter = new CatalogBackedFilter("curl");
+        String raw = "curl: (6) Could not resolve host: missing.example\n";
+        ExecutionResult execution = new ExecutionResult(6, "", raw, 10L);
+        FilterResult result = filter.apply("curl", execution, CondenseConfig.defaults(), 0, false);
+        assertThat(result.wasFiltered()).isFalse();
+        assertThat(result.output()).isEqualTo(raw);
+        assertThat(result.output()).doesNotContain(Provenance.STAMP);
+    }
+
+    @Test
+    void curlSuccessStillFiltersAndStamps() {
+        CatalogBackedFilter filter = new CatalogBackedFilter("curl");
+        String raw = """
+              10  100
+              20  100
+              30  100
+              40  100
+              50  100
+              60  100
+              70  100
+              80  100
+              90  100
+             100  100
+            HTTP/2 200
+            """;
+        ExecutionResult execution = new ExecutionResult(0, raw, "", 10L);
+        FilterResult result = filter.apply("curl", execution, CondenseConfig.defaults(), 0, false);
+        assertThat(result.wasFiltered()).isTrue();
+        assertThat(result.output()).startsWith(Provenance.STAMP);
+        assertThat(result.output()).contains("HTTP/2 200");
+    }
 }

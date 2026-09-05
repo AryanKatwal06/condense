@@ -1,0 +1,14 @@
+condense[filtered]
+Showing 40 merge requests on acme/app
+!001  chore: noise merge request 1  user1  2d
+!002  chore: noise merge request 2  user2  2d
+!003  chore: noise merge request 3  user3  2d
+!004  chore: noise merge request 4  user4  2d
+!005  chore: noise merge request 5  user5  2d
+... (29 lines omitted) ...
+!035  chore: noise merge request 35  user35  2d
+!036  chore: noise merge request 36  user36  2d
+!037  chore: noise merge request 37  user37  2d
+!038  chore: noise merge request 38  user38  2d
+!039  chore: noise merge request 39  user39  2d
+!040  fix: keep this pipeline failure  agent  1h

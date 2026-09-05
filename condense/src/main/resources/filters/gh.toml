@@ -1,0 +1,27 @@
+schema_version = 1
+name = "gh"
+commands = ["gh pr list", "gh issue list", "gh run list"]
+
+[[stages]]
+strategy = "head_tail"
+head = 6
+tail = 6
+
+[[tests]]
+id = "omits-middle"
+input = """
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+"""
+expected = "1\n2\n3\n4\n5\n6\n... (1 lines omitted) ...\n8\n9\n10\n11\n12\n13"

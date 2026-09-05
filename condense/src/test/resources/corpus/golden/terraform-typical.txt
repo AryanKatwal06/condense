@@ -1,0 +1,6 @@
+condense[filtered]
+  Error: Missing required argument           : 1
+  Plan: 2 to add, 1 to change, 1 to destroy. : 1
+  aws_eip.old: will be destroyed             : 1
+  aws_instance.web: will be created          : 1
+  aws_security_group.web: will be updated    : 1

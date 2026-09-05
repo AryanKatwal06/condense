@@ -1,0 +1,12 @@
+condense[filtered]
+... (showing last 10 of 42 lines)
+--2026-09-05 12:00:00--  https://example.test/file33
+--2026-09-05 12:00:00--  https://example.test/file34
+--2026-09-05 12:00:00--  https://example.test/file35
+--2026-09-05 12:00:00--  https://example.test/file36
+--2026-09-05 12:00:00--  https://example.test/file37
+--2026-09-05 12:00:00--  https://example.test/file38
+--2026-09-05 12:00:00--  https://example.test/file39
+--2026-09-05 12:00:00--  https://example.test/file40
+ERROR 404: Not Found.
+2026-09-05 12:00:01 (0 B/s) - saved [0/0]
