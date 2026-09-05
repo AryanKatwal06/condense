@@ -4,7 +4,7 @@
 **Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 16 adaptive proposals).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 16. R25 and D29 stay deferred. Confirm with `git log -1` and origin before starting Phase 17 code.
+**Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -290,9 +290,9 @@ Surefire explicitly excludes `**/*IT.java` (documented rationale: prevent ITs fr
 |---|---|---|
 | `build.yml` | push to any branch, PR to main | `jvm-test` (ubuntu, GraalVM 21, `mvn verify`) → `native-builds` matrix: ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-15 |
 | `release.yml` | tag `v*` | create-release → build-native (linux-x64, linux-aarch64, macos-aarch64, windows-x64) → build-deb → publish (checksums, cosign, CycloneDX SBOM). After package, **Failsafe and the 80 MiB ceiling match `build.yml`** (remediation R4) |
-| `phase3-verification.yml` | `workflow_dispatch` only | Linux x64 only: 300-run soak, permission-denial fail-open, 5-way concurrency + `PRAGMA integrity_check` |
+| `phase3-verification.yml` | `workflow_dispatch` | Linux x64 native + Failsafe with `-Dcondense.soak.runs=300` (same tests as `build.yml` / `release.yml`, isolated `CONDENSE_*` dirs) |
 
-`native-builds` on `build.yml` builds with `mvn package -Pnative -DskipTests`, then **runs Failsafe** (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativeBuiltinDefinitionIT`, `NativeTrustIT`, `NativePersistenceIT`, `NativeExplainIT`, `NativeStreamingIT`, `NativeReadIT`, `NativeIrIT`, `NativeMcpIT`, `NativeHookIT`, `NativeCatalogIT`, `NativeDiscoverIT`). It then enforces an **80 MiB** uncompressed size ceiling (`83886080`), records binary size and 5× cold-start, keeps the uninstall/purge shell smokes, and pushes metrics to a `ci-metrics` branch.
+`native-builds` on `build.yml` builds with `mvn package -Pnative -DskipTests`, then **runs Failsafe** (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativeBuiltinDefinitionIT`, `NativeTrustIT`, `NativePersistenceIT`, `NativeExplainIT`, `NativeStreamingIT`, `NativeReadIT`, `NativeIrIT`, `NativeMcpIT`, `NativeHookIT`, `NativeCatalogIT`, `NativeDiscoverIT`, `NativeProposeIT`, `NativeBudgetIT`, `NativeSoakIT`, `NativeConcurrencyIT`, `NativeAnalyticsFailOpenIT`). It then enforces an **80 MiB** uncompressed size ceiling (`83886080`) in both Failsafe and bash, records binary size and 5× cold-start annotations, keeps the uninstall/purge shell smokes, and pushes metrics to a `ci-metrics` branch. linux-x64 pushes to `main` (and tag releases) pass `-Dcondense.soak.runs=300`.
 
 Current native proof for `main` at `8ea298b` is [Build & Test run 33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (all five jobs green; ubuntu-latest Failsafe **45 / 0 / 0 / 0**). Run [33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575) on `cdd3d43` is the Phase 10 snapshot, not this tree. This Windows workspace does not build native images.
 
@@ -332,7 +332,7 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D26 | ~~`condense mcp` is a stub~~ **FIXED** | stdio JSON-RPC MCP server; `run` returns schema-1 IR; tools include `discover`; `NativeMcpIT` | Phase 12 / 15 |
 | D27 | ~~No hook integrity/tamper verification, and no backup before editing third-party configs~~ **FIXED** | `HookBackup` + `HookIntegrity` + `hook_baselines`. Backup failure leaves the original third-party file. Integrity is `ok` only with a matching baseline. | Phase 13 |
 | D28 | ~~Agent coverage is a strict subset of Zap's, plus a generic-bash fallback~~ **FIXED** | Codex / OpenCode / Kilo / Antigravity / Hermes / Pi installers; Copilot / Windsurf / Cline kept | Phase 13 |
-| D29 | Benchmarks print numbers but assert nothing; no enforced performance budget | `FilterPipelineBenchmarkTest`, `FilterOverrideBenchmarkTest` | Phase 1 baseline, Phase 17 gate |
+| D29 | ~~Benchmarks print numbers but assert nothing; no enforced performance budget~~ **FIXED** | Relative 100× gates on `FilterPipelineBenchmarkTest` and `FilterOverrideBenchmarkTest`; `NativeBudgetIT` size + cold-start median; soak/concurrency/fail-open Failsafe | Phase 17 |
 
 ### Known test-coverage gaps (from the filter-subsystem audit)
 
@@ -346,7 +346,7 @@ The next agent will be misled by these if they trust the docs. They are **docume
 
 | Location | Claim | Reality |
 |---|---|---|
-| `condense/ARCHITECTURE.md` file table | Still omits per-filter classes | Phase 14 added `StrategyRegistry`, `PrefixIndex`, and `CatalogBackedFilter` rows; the 32 Java filters are not individually listed |
+| `SECURITY.md` Binary Verification | ~~Per-file `.sha256` sidecars~~ **FIXED in Phase 17** | Releases ship `checksums.txt` plus cosign `.sig`/`.cert` for every blob including the SBOM |
 | Root `README.md` supported-commands table | ~~30 rows; missing aliases~~ **FIXED in Phase 14** | Table lists Java prefixes (including `docker run` / `exec`, `python -c`, `ruff`, `npx eslint`, `npm ci` / `i`, `pip3`, `./mvnw`, `./gradlew`) and the 19 leftover catalog families. `condense read` remains a subcommand, not a proxied prefix |
 | Bare `condense mcp` snippet (`McpCommand`) | ~~Tools are `run`, `explain`, `read`~~ **FIXED in R14** | Snippet lists `run`, `explain`, `read`, `discover`. Missing `id` is `-32600`. |
 | `docs/ir.md` / older handoff §9 Phase 11 | `TextRenderer` is the default CLI | Default CLI still prints `FilterResult.output()`. `IrRendererGoldenTest` locks TextRenderer+stamp for every corpus row except `python-c/typical`. |
@@ -398,7 +398,7 @@ Three sequential efforts the 17-phase roadmap builds directly on top of. Commit 
 
 ## 8. This engagement: what was actually done
 
-Planning plus Phase 1 through Phase 16 code, then an independent audit of Phases 11–15 and R0–R12 (5 Sep 2026). Round 2 remediation (R13–R26) is hygiene, not a new numbered roadmap phase. Semantic savings (R25) and D29 stay deferred.
+Planning plus Phase 1 through Phase 17 code, then an independent audit of Phases 11–15 and R0–R12 (5 Sep 2026). Round 2 remediation (R13–R26) is hygiene, not a new numbered roadmap phase. Semantic savings (R25) stay deferred.
 
 | Activity | Status | Notes |
 |---|---|---|
@@ -428,20 +428,20 @@ Planning plus Phase 1 through Phase 16 code, then an independent audit of Phases
 | Phase 14 code | **LANDED** | `CatalogBackedFilter` leftover host; 19 data-only families; original 51 goldens unchanged; `NativeCatalogIT`. Existing 31 Java filters not migrated. |
 | Phase 15 code | **LANDED** | `condense discover` + MCP `discover`; classpath `discover/*.toml`; exact contained probes; explicit family priority; `NativeDiscoverIT`. Does not change dispatch. |
 | Phase 16 code | **LANDED** | `condense propose` + MCP `propose`; coverage/safety/unmatched rules; `.proposed` sidecar only; `NativeProposeIT`. Schema stays 2. |
-| Phase 17 code | **NOT STARTED** | Needs its own plan-then-approve cycle |
+| Phase 17 code | **LANDED** | D29 relative JVM gates; `NativeBudgetIT` 80 MiB + per-OS median cold start; `NativeSoakIT` / `NativeConcurrencyIT` / `NativeAnalyticsFailOpenIT`; 300-run linux-x64 bar on `main` and tags; signed checksums + SBOM; `RuntimeDependencyAllowlistTest`. Native proof is the next Actions run after this push. |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (**510 / 0 / 0 / 9** on this Windows JVM at that date; 9 skips were POSIX `CommandExecutorTest`), and CI 33950449575 on `cdd3d43`. |
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
 | Phase 11–15 audit | **COMPLETED** | Re-read of approved plans, tree, local `mvn test` (**594 / 1 / 0 / 10** on this Windows JVM at that date — the 1 was `TrackingConcurrencyTest` / `SQLITE_READONLY`; **R16** makes loss visible instead of requiring 200 rows), and CI [33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (**594 / 0 / 0 / 1** JVM on Linux). |
-| Audit remediation R13–R26 | **LANDED** | Round 2 hygiene. **R25** semantic savings and D29 stay deferred. |
+| Audit remediation R13–R26 | **LANDED** | Round 2 hygiene. **R25** semantic savings stays deferred. D29 closed in Phase 17. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 (R13) so §4 matches the live tree again. |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p16` are marked `completed`, `p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p17` are marked `completed`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 16 code have landed.** Phase 17 has not been implemented. It still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 17 code have landed.** The numbered roadmap is complete. **R25** (semantic savings) stays deferred and is not a numbered phase.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -895,7 +895,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 ### Phase 17 — Performance budget enforcement and release assurance
 
-**Status: PENDING**
+**Status: CODE LANDED** (5 Sep 2026)
 
 **Goal.** Convert Phase 1's measurement baseline into enforced release gates — cold start, per-invocation overhead, native binary size, the native IT pack, the drift test — plus completion of the supply-chain story.
 
@@ -908,6 +908,10 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 **Introduces.** Asserted budgets measured on **native binaries** in CI on every platform; folding `phase3-verification.yml`'s soak and concurrency runs into a defined release bar rather than a manual `workflow_dispatch`; extending the existing cosign signing and CycloneDX SBOM to all artifacts, with a reproducibility check.
 
 **Deliberately better than Zap.** Zap's release profile is tuned (`lto`, `codegen-units = 1`, `panic = "abort"`, `strip`) but there is **no CI whatsoever**, no signing, and no SBOM. Every quality gate in that project is manual and therefore optional.
+
+**What shipped.** `BenchStats` plus a 100× relative bound on `FilterPipelineBenchmarkTest` and `FilterOverrideBenchmarkTest` (absolute µs stay print-only). `NativeBudgetIT` fails above 80 MiB or when the median of five `--version` runs exceeds Linux 1500 ms / macOS 2500 ms / Windows 4000 ms. `NativeSoakIT` (default 20, linux-x64 `main`/release/`workflow_dispatch` 300) uses a last-10 vs first-10 5× leak gate and `trivialSucceedingCommand()`. `NativeConcurrencyIT` checks JDBC `PRAGMA integrity_check` and `total_commands >= 1`. `NativeAnalyticsFailOpenIT` corrupts `condense.db` between processes so the proxied exit code stays 0 and `gain` prints `analytics unavailable`. `phase3-verification.yml` is Failsafe, not bash against `$HOME`. Releases checksum and cosign four binaries, the `.deb`, `checksums.txt`, and `sbom.cyclonedx.json`. `RuntimeDependencyAllowlistTest` locks the five runtime Maven coordinates. Graal images are **not** claimed bit-identical. Spec: [docs/perf-baseline.md](docs/perf-baseline.md), [SECURITY.md](SECURITY.md).
+
+**Exit criteria shape.** A PR cannot land a 100× JVM pipeline regression or an unsigned GitHub Release blob; native CI on four OS fails if size or cold-start median exceeds the documented ceiling.
 
 ---
 
@@ -1009,9 +1013,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–16 code landed. Round 2 remediation **R13–R24 and R26 have landed**. **R25** (semantic savings) and D29 stay deferred. `condense propose` emits reviewable `.condense/filters.toml` diffs and may write `.condense/filters.toml.proposed`. It does not write live `filters.toml` and is not on the proxy path. `condense discover` still only recommends names. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. Lost analytics writes are counted in `{dataDir}/write-failures.json`. This Windows workspace does not build native images. Native proof for this train is the next Actions run after push.
+**Where we are.** Phase 1–17 code landed. The numbered roadmap is complete. Round 2 remediation **R13–R24 and R26 have landed**. **R25** (semantic savings) stays deferred and is not a numbered phase. D29 is closed. Native cold start, size, soak, concurrency, and analytics fail-open are Failsafe gates. GitHub Releases checksum and cosign every published blob including the SBOM. `condense propose` still does not write live `filters.toml`. Analytics `user_version` target is 2. This Windows workspace does not build native images. Native proof for this train is the next Actions run after push.
 
-**Do not start Phase 17 code.** Present a complete Phase 17 plan (constraint #9) and wait for a fresh "proceed". Do not implement R25 semantic savings or D29 from this stop point except as Phase 17 if that plan includes D29.
+**Do not implement R25** unless the user explicitly asks. There is no Phase 18 in this roadmap.
 
 ---
 
@@ -1021,20 +1025,20 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 1. This entire file. It is the canonical record; the Cursor plan file is a local-only stub that points back here.
 2. `condense/pom.xml`, `condense/ARCHITECTURE.md`, `CONTRIBUTING.md` — noting §6, because these documents contain known false statements.
-3. `.github/workflows/build.yml` — the CI contract Phase 1 changes.
-4. `condense/src/main/java/com/condense/core/{PlatformDirs,TrackingRepository,SafePathValidator,StrategyRegistry,CommandExecutor}.java` and `condense/src/main/java/com/condense/filter/pipeline/**`.
+3. `.github/workflows/build.yml` — the CI contract, including Failsafe soak runs.
+4. `docs/perf-baseline.md` and `SECURITY.md` for the Phase 17 gates.
 
 **Verify before doing anything**
 
 5. `git status --short` and `git log --oneline -5`. Reconcile §13 against `HEAD` and update this file if someone has worked since the last stop point.
 6. Confirm Phase 4 files exist (`PipelineBackedFilter`, `BoundedRegex`, `PrefixIndex`, `corpus/golden/`, `GoldenLockTest`) and that `GoldenLockTest` is green.
-7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12). Confirm `NativeCorpusIT` appears in native job logs.
+7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12). Confirm `NativeBudgetIT`, `NativeSoakIT`, and `NativeProposeIT` appear in native job logs.
 
 **Then, and only then**
 
-8. Phase 16 code has landed. Confirm `NativeProposeIT` and `NativeDiscoverIT` appear in native job logs, `GoldenLockTest` is green, and `condense propose` does not write `filters.toml` or sit on the proxy path.
-9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point. D29 belongs to Phase 17.
-10. **Do not start Phase 17 code.** Present a complete Phase 17 plan containing all six required elements (constraint #9) and wait for a fresh "proceed".
+8. The 17-phase roadmap is complete. Confirm `NativeBudgetIT` and `NativeSoakIT` appear in native job logs, `GoldenLockTest` is green, and `condense propose` does not write `filters.toml` or sit on the proxy path.
+9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
+10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 
 **Standing rules while working**
 

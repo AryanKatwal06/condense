@@ -97,4 +97,4 @@ condense --version / --help
 - **picocli** (via `quarkus-picocli`) — CLI argument parsing
 - **sqlite-jdbc 3.45.3.0** (Xerial) — embedded SQLite
 - **Jackson 2.17.1** — JSON and TOML parsing
-- **GraalVM Native Image** — ahead-of-time compilation for <100ms cold start
+- **GraalVM Native Image** — ahead-of-time compilation. Cold start is gated in CI by `NativeBudgetIT` (see `docs/perf-baseline.md`); it is not an ungated sub-100 ms claim.
