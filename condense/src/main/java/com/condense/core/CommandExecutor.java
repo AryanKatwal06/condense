@@ -28,7 +28,14 @@ public class CommandExecutor {
      * Proxy timeout. Unset or non-positive {@link #TIMEOUT_ENV} means wait until the child exits.
      */
     public static Duration resolveProxyTimeout() {
-        String raw = System.getenv(TIMEOUT_ENV);
+        return resolveProxyTimeout(System.getenv(TIMEOUT_ENV));
+    }
+
+    /**
+     * Parse a {@link #TIMEOUT_ENV} value. Blank, non-numeric, and non-positive
+     * become {@link Duration#ZERO} (wait until exit).
+     */
+    static Duration resolveProxyTimeout(String raw) {
         if (raw == null || raw.isBlank()) {
             return Duration.ZERO;
         }

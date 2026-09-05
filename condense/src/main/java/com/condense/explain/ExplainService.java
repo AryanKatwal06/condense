@@ -62,7 +62,7 @@ public class ExplainService {
         if (executor == null) {
             throw new IllegalStateException("Command execution is not available");
         }
-        ExecutionResult result = executor.execute(args);
+        ExecutionResult result = executor.execute(args, CommandExecutor.resolveProxyTimeout());
         return explainArgs(args, result, verbose, ultraCompact, droppedLimit, cwd());
     }
 

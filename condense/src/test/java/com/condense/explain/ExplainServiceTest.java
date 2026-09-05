@@ -1,8 +1,11 @@
 package com.condense.explain;
 
+import com.condense.core.CommandExecutor;
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.core.PassthroughStrategy;
+import com.condense.core.StreamListener;
+import jakarta.enterprise.inject.Vetoed;
 import com.condense.corpus.CorpusRunner;
 import com.condense.filter.git.GitPushFilter;
 import com.condense.filter.git.GitStatusFilter;
@@ -15,6 +18,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -115,11 +120,36 @@ class ExplainServiceTest {
     }
 
     @Test
+    void liveExplainUsesProxyTimeout() throws Exception {
+        RecordingExecutor executor = new RecordingExecutor();
+        ExplainService live = new ExplainService(null, executor, null);
+        live.explainExecuted(List.of("echo", "hi"), 0, false, 8);
+        assertThat(executor.seen).isEqualTo(CommandExecutor.resolveProxyTimeout());
+    }
+
+    @Test
     void oversizedInputIsRefused() throws Exception {
         Path huge = tempDir.resolve("huge.txt");
         Files.write(huge, new byte[ExplainService.MAX_INPUT_BYTES + 1]);
         assertThatThrownBy(() -> ExplainService.readBounded(huge))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("capture cap");
+    }
+
+    @Vetoed
+    private static final class RecordingExecutor extends CommandExecutor {
+        private Duration seen;
+
+        @Override
+        public ExecutionResult execute(List<String> args, Duration timeout) {
+            seen = timeout;
+            return new ExecutionResult(0, "ok\n", "", 1L);
+        }
+
+        @Override
+        public ExecutionResult execute(List<String> args, Duration timeout, StreamListener listener) {
+            seen = timeout;
+            return new ExecutionResult(0, "ok\n", "", 1L);
+        }
     }
 }

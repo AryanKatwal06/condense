@@ -10,7 +10,7 @@ condense explain --input fixture.txt --exit-code 1 git status
 condense explain --stdin --format json npm install
 ```
 
-Default (no `--input` / `--stdin`) executes the command the same way proxy mode does, then prints the report instead of the filtered body. It does **not** write `commands` or `filter_outcomes`, and it does not tee.
+Default (no `--input` / `--stdin`) executes the command the same way proxy mode does, including `CONDENSE_COMMAND_TIMEOUT_SEC` via `CommandExecutor.resolveProxyTimeout()`, then prints the report instead of the filtered body. It does **not** write `commands` or `filter_outcomes`, and it does not tee. `--input` / `--stdin` never launch a child.
 
 ## Accounting identities
 

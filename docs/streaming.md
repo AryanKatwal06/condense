@@ -16,7 +16,7 @@ An override that swaps a streamable summary for `grouping` becomes CAPTURE autom
 
 ## Timeouts and the 10 MB cap
 
-The proxy waits until the child exits unless `CONDENSE_COMMAND_TIMEOUT_SEC` is a positive integer. `CommandExecutor.execute(args)` used by tests and `condense explain` still defaults to 60 seconds.
+The proxy waits until the child exits unless `CONDENSE_COMMAND_TIMEOUT_SEC` is a positive integer. Live `condense explain` (no `--input` / `--stdin`) uses the same `resolveProxyTimeout()` as the proxy. `CommandExecutor.execute(args)` without a duration still defaults to 60 seconds for tests.
 
 If either stream exceeds 10 MB, Condense stops capturing, destroys the child, prints `condense: output capped at 10MB` to stderr, and keeps whatever exit code the child produced (or `-1` if it was killed). It does not replace that code with a generic error 1.
 
