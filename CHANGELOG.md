@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Fixed
+- Analytics insert retries `SQLITE_BUSY` / `SQLITE_LOCKED` only. Lost writes stay fail-open and are counted in `{dataDir}/write-failures.json`. `condense doctor --format json` reports `persistence_write_failures` and `persistence_write_last_error`. Concurrent writers are not serialized to force a full row count on Windows.
 - `condense discover` reads a bounded prefix of each extra file (`readNBytes` of the remaining byte budget) instead of loading the whole file and trimming. Hitting the 8-file or per-file cap sets `truncated`. Native proof asserts `files_read ≤ 8`.
 - Bare `condense mcp` now lists `discover` with the other tools. A JSON-RPC request that is not `notifications/*` and has a missing or null `id` returns `-32600` instead of silence. `discover.root` shares `ReadPathGate.resolveNarrowRoot` with `condense read` (narrow-only, no byte-max).
 - The published `utf8_weighted_v1` p95 relative-error bound is 0.37 (was 0.35). The measured corpus p95 is 0.3656; the old published figure was not rounded up.

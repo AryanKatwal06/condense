@@ -5,6 +5,7 @@ import com.condense.persist.BackupRetention;
 import com.condense.persist.RetentionPolicy;
 import com.condense.persist.SchemaMigrator;
 import com.condense.persist.TeeRetention;
+import com.condense.persist.WriteFailureLedger;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
@@ -25,6 +26,10 @@ import java.util.Map;
 public class TrackingRepository {
 
     private static final Logger log = Logger.getLogger(TrackingRepository.class);
+
+    static final int SQLITE_BUSY = 5;
+    static final int SQLITE_LOCKED = 6;
+    private static final int INSERT_BUSY_RETRIES = 2;
 
     private static final String INSERT = """
         INSERT INTO commands(ts, command, project, cwd, raw_tokens, out_tokens, exec_ms)
@@ -123,20 +128,59 @@ public class TrackingRepository {
     /** Package-visible so retention tests can plant expired rows. */
     void insertAt(long ts, String command, String project, String cwd,
                   int rawTokens, int outTokens, long execMs) {
-        try {
-            try (PreparedStatement ps = connection().prepareStatement(INSERT)) {
-                ps.setLong(1, ts);
-                ps.setString(2, command);
-                ps.setString(3, project);
-                ps.setString(4, cwd);
-                ps.setInt(5, rawTokens);
-                ps.setInt(6, outTokens);
-                ps.setLong(7, execMs);
-                ps.executeUpdate();
+        SQLException last = null;
+        for (int attempt = 0; attempt <= INSERT_BUSY_RETRIES; attempt++) {
+            try {
+                try (PreparedStatement ps = connection().prepareStatement(INSERT)) {
+                    ps.setLong(1, ts);
+                    ps.setString(2, command);
+                    ps.setString(3, project);
+                    ps.setString(4, cwd);
+                    ps.setInt(5, rawTokens);
+                    ps.setInt(6, outTokens);
+                    ps.setLong(7, execMs);
+                    ps.executeUpdate();
+                }
+                return;
+            } catch (SQLException e) {
+                last = e;
+                if (attempt < INSERT_BUSY_RETRIES && isBusyOrLocked(e)) {
+                    sleepBackoff(attempt);
+                    continue;
+                }
+                this.degraded = true;
+                WriteFailureLedger.record(platformDirs.resolveDataDir(), e.getMessage());
+                log.warnf(e, "Failed to record analytics for '%s': %s", command, e.getMessage());
+                return;
             }
-        } catch (SQLException e) {
+        }
+        if (last != null) {
             this.degraded = true;
-            log.warnf(e, "Failed to record analytics for '%s': %s", command, e.getMessage());
+            WriteFailureLedger.record(platformDirs.resolveDataDir(), last.getMessage());
+        }
+    }
+
+    static boolean isBusyOrLocked(SQLException e) {
+        if (e == null) {
+            return false;
+        }
+        int code = e.getErrorCode();
+        if (code == SQLITE_BUSY || code == SQLITE_LOCKED) {
+            return true;
+        }
+        String message = e.getMessage();
+        if (message == null) {
+            return false;
+        }
+        return (message.contains("SQLITE_BUSY") || message.contains("SQLITE_LOCKED"))
+            && !message.contains("SQLITE_READONLY");
+    }
+
+    private static void sleepBackoff(int attempt) {
+        try {
+            Thread.sleep(25L << attempt);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

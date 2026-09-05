@@ -77,6 +77,8 @@ class NativePersistenceIT {
             .isZero();
         JsonNode diagnosis = JSON.readTree(doctor.stdout());
         assertThat(diagnosis.get("schema_version").asInt()).isEqualTo(SchemaMigrator.TARGET_VERSION);
+        assertThat(diagnosis.has("persistence_write_failures")).isTrue();
+        assertThat(diagnosis.get("persistence_write_failures").asLong()).isGreaterThanOrEqualTo(0);
         assertThat(diagnosis.get("empty_tracking_reason").isNull()).isTrue();
     }
 
@@ -124,6 +126,7 @@ class NativePersistenceIT {
         JsonNode diagnosis = JSON.readTree(doctor.stdout());
         assertThat(diagnosis.get("empty_tracking_reason").asText())
             .isIn("no_database", "hooks_absent", "zero_rows");
+        assertThat(diagnosis.has("persistence_write_failures")).isTrue();
         assertThat(diagnosis.get("next_step").asText()).isNotBlank();
     }
 }

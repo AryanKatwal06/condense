@@ -8,6 +8,7 @@ import com.condense.hooks.HookInstaller;
 import com.condense.hooks.HookIntegrity;
 import com.condense.persist.SchemaMigrator;
 import com.condense.persist.TeeRetention;
+import com.condense.persist.WriteFailureLedger;
 import com.condense.trust.TrustGate;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -82,6 +83,12 @@ public class DoctorService {
         warnOverride(warnings, "project", project);
         warnOverride(warnings, "global", global);
 
+        WriteFailureLedger.Snapshot writeLoss = WriteFailureLedger.read(dataDir);
+        if (writeLoss.count() > 0) {
+            warnings.add("analytics writes failed " + writeLoss.count() + " time(s); last: "
+                + (writeLoss.lastError() == null ? "unknown" : writeLoss.lastError()));
+        }
+
         TeeRetention.SweepResult tee = tracking.lastTeeSweep();
         int teeFiles = countTeeFiles(dataDir);
         if (tee != null && tee.remainingOld() > 0) {
@@ -112,6 +119,8 @@ public class DoctorService {
             statusName(global),
             hooks,
             tracking.countHookEvents(),
+            writeLoss.count(),
+            writeLoss.lastError(),
             teeFiles,
             tee == null ? null : tee.oldestMtimeEpoch(),
             tee == null ? 0 : tee.remainingOld(),

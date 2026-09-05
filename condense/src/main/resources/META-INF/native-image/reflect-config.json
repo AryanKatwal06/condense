@@ -436,6 +436,8 @@
   { "name": "com.condense.discover.DiscoverDefinition$Extra", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.discover.DiscoverDefinition$Index", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.discover.DiscoverLimits", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.persist.WriteFailureLedger", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.persist.WriteFailureLedger$Snapshot", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.doctor.DoctorCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.doctor.DoctorReport", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.doctor.DoctorReport$HookStatus", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },

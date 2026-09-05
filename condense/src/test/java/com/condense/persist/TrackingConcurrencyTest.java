@@ -3,6 +3,13 @@ package com.condense.persist;
 import com.condense.core.IsolatedPlatformDirs;
 import com.condense.core.PlatformDirs;
 import com.condense.core.TrackingRepository;
+import com.condense.doctor.DoctorReport;
+import com.condense.doctor.DoctorService;
+import com.condense.filter.pipeline.config.FilterOverrideLoader;
+import com.condense.hooks.HookInstaller;
+import com.condense.hooks.HookTool;
+import com.condense.trust.TrustGate;
+import jakarta.enterprise.inject.Vetoed;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -57,7 +64,27 @@ class TrackingConcurrencyTest {
 
         TrackingRepository check = new TrackingRepository(dirs);
         try {
-            assertThat(check.countAll()).isEqualTo(repos * insertsEach);
+            long expected = (long) repos * insertsEach;
+            long stored = check.countAll();
+            WriteFailureLedger.Snapshot losses = WriteFailureLedger.read(tempDir.resolve("data"));
+            assertThat(stored + losses.count()).isEqualTo(expected);
+            if (stored < expected) {
+                assertThat(losses.count()).isGreaterThanOrEqualTo(1);
+                assertThat(losses.lastError()).isNotBlank();
+            }
+
+            DoctorService doctor = new DoctorService(
+                dirs,
+                check,
+                new TrustGate(dirs),
+                new FilterOverrideLoader(dirs),
+                new NoHooks());
+            DoctorReport report = doctor.diagnose();
+            assertThat(report.persistenceWriteFailures()).isEqualTo(losses.count());
+            if (stored < expected) {
+                assertThat(report.persistenceWriteFailures()).isGreaterThanOrEqualTo(1);
+                assertThat(report.persistenceWriteLastError()).isNotBlank();
+            }
         } finally {
             check.close();
         }
@@ -69,6 +96,14 @@ class TrackingConcurrencyTest {
              ResultSet rs = st.executeQuery("PRAGMA integrity_check")) {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getString(1)).isEqualTo("ok");
+        }
+    }
+
+    @Vetoed
+    private static final class NoHooks extends HookInstaller {
+        @Override
+        public List<HookInstaller.StatusResult> showAll() {
+            return List.of(new HookInstaller.StatusResult(HookTool.CURSOR, false, Path.of("/tmp/none")));
         }
     }
 }

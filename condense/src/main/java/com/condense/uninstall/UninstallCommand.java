@@ -258,8 +258,9 @@ public class UninstallCommand implements Callable<Integer> {
         Path db = dataDir.resolve("condense.db");
         Path dbWal = dataDir.resolve("condense.db-wal");
         Path dbShm = dataDir.resolve("condense.db-shm");
+        Path writeFailures = dataDir.resolve("write-failures.json");
 
-        for (Path file : List.of(db, dbWal, dbShm)) {
+        for (Path file : List.of(db, dbWal, dbShm, writeFailures)) {
             if (Files.exists(file)) {
                 SafePathValidator.ValidationResult validation = validator.validateFileTarget(file);
                 if (validation.isSafe()) {

@@ -252,7 +252,8 @@ Allowed roots are the resolved config and data dirs. Files are checked for nomin
 
 ```java
 KNOWN_CONDENSE_FILES = Set.of("condense.db", "condense.db-wal", "condense.db-shm",
-    "config.toml", "trust.json", "filters.toml", ".install_dir", ".condense_install_dir");
+    "write-failures.json", "config.toml", "trust.json", "filters.toml",
+    ".install_dir", ".condense_install_dir");
 KNOWN_CONDENSE_DIRECTORIES = Set.of("tee", "backups");
 ```
 
@@ -429,7 +430,7 @@ Planning plus Phase 1 through Phase 15 code, then an independent audit of Phases
 | Phases 16–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (**510 / 0 / 0 / 9** on this Windows JVM at that date; 9 skips were POSIX `CommandExecutorTest`), and CI 33950449575 on `cdd3d43`. |
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
-| Phase 11–15 audit | **COMPLETED** | Re-read of approved plans, tree, local `mvn test` (**594 / 1 / 0 / 10** on this Windows JVM — the 1 is `TrackingConcurrencyTest` / `SQLITE_READONLY`, owned by **R16**; 10 skips = POSIX + Windows-disabled symlink cases), and CI [33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (**594 / 0 / 0 / 1** JVM on Linux). |
+| Phase 11–15 audit | **COMPLETED** | Re-read of approved plans, tree, local `mvn test` (**594 / 1 / 0 / 10** on this Windows JVM at that date — the 1 was `TrackingConcurrencyTest` / `SQLITE_READONLY`; **R16** makes loss visible instead of requiring 200 rows), and CI [33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (**594 / 0 / 0 / 1** JVM on Linux). |
 | Audit remediation R13–R26 | **IN PROGRESS** | Round 2 hygiene. R25 semantic savings and D29 stay deferred. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 (R13) so §4 matches the live tree again. |
 

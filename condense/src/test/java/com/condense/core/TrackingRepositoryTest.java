@@ -10,6 +10,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Driver;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -71,6 +72,18 @@ class TrackingRepositoryTest {
     void insertNeverThrowsEvenWithInvalidData() {
         assertThatCode(() -> repo.insert("", null, null, -1, -1, -1L))
             .doesNotThrowAnyException();
+    }
+
+    @Test
+    void onlyBusyAndLockedAreRetried() {
+        assertThat(TrackingRepository.isBusyOrLocked(new SQLException("busy", "x", 5))).isTrue();
+        assertThat(TrackingRepository.isBusyOrLocked(new SQLException("locked", "x", 6))).isTrue();
+        assertThat(TrackingRepository.isBusyOrLocked(new SQLException("[SQLITE_READONLY] write", "x", 8)))
+            .isFalse();
+        assertThat(TrackingRepository.isBusyOrLocked(new SQLException("[SQLITE_BUSY] timeout")))
+            .isTrue();
+        assertThat(TrackingRepository.isBusyOrLocked(new SQLException("[SQLITE_READONLY] SQLITE_BUSY lookalike")))
+            .isFalse();
     }
 
     @Test

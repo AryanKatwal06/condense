@@ -86,6 +86,8 @@ class ReflectConfigDriftTest {
             com.condense.discover.DiscoverDefinition.Extra.class.getName(),
             com.condense.discover.DiscoverDefinition.Index.class.getName(),
             com.condense.discover.DiscoverLimits.class.getName(),
+            com.condense.persist.WriteFailureLedger.class.getName(),
+            com.condense.persist.WriteFailureLedger.Snapshot.class.getName(),
             com.condense.doctor.DoctorCommand.class.getName(),
             com.condense.doctor.DoctorReport.class.getName(),
             com.condense.doctor.DoctorReport.HookStatus.class.getName(),

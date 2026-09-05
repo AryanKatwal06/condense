@@ -20,7 +20,7 @@ connection = driver.connect(url, new java.util.Properties());
 3. Forward-only schema migration
 4. Retention prune
 
-WAL plus `busy_timeout` is the multi-process contract: two agent sessions can share one database. One `TrackingRepository` instance is still single-threaded.
+WAL plus `busy_timeout` is the multi-process contract: two agent sessions can share one database. One `TrackingRepository` instance is still single-threaded. Analytics `insert` retries `SQLITE_BUSY` / `SQLITE_LOCKED` only. `SQLITE_READONLY` is not retried. Lost writes stay fail-open (they never change a child exit code) and are counted in `{dataDir}/write-failures.json` so `condense doctor` can see them after a restart. Schema target stays 2.
 
 ## Schema version
 
@@ -72,5 +72,7 @@ Exit 0 when the store is usable, including “zero rows, and here is why.” Exi
 | `unreadable` | Connect failed |
 | `migrate_failed` | Schema migration failed |
 | `degraded` | Writes failed after a usable open |
+
+`persistence_write_failures` is the count from `{dataDir}/write-failures.json` (0 when the file is missing). `persistence_write_last_error` is the last recorded SQLite message, or omitted / `null`. Native proof asserts the field is present.
 
 Native proof: `NativePersistenceIT` creates a v0 file at runtime, runs the native binary, and asserts `user_version` equals the target, WAL, surviving seed row, and doctor JSON. A separate case seeds v1 and asserts `hook_events` exists after the binary opens the file. `NativeHookIT` repeats the v1→v2 proof with isolated hook homes.

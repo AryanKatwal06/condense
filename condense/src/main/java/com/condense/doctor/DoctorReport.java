@@ -36,6 +36,8 @@ public record DoctorReport(
     @JsonProperty("global_override") String globalOverride,
     @JsonProperty("hooks") List<HookStatus> hooks,
     @JsonProperty("hook_event_count") long hookEventCount,
+    @JsonProperty("persistence_write_failures") long persistenceWriteFailures,
+    @JsonProperty("persistence_write_last_error") String persistenceWriteLastError,
     @JsonProperty("tee_files") int teeFiles,
     @JsonProperty("tee_oldest_ts") Long teeOldestTs,
     @JsonProperty("tee_old_remaining") int teeOldRemaining,

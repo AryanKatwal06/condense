@@ -27,6 +27,7 @@ public class SafePathValidator {
         "condense.db",
         "condense.db-wal",
         "condense.db-shm",
+        "write-failures.json",
         "config.toml",
         "trust.json",
         "filters.toml",

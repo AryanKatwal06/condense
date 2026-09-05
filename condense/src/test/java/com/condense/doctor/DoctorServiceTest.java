@@ -10,6 +10,7 @@ import com.condense.hooks.HookIntegrity;
 import com.condense.hooks.HookTool;
 import jakarta.enterprise.inject.Vetoed;
 import com.condense.persist.SchemaMigrator;
+import com.condense.persist.WriteFailureLedger;
 import com.condense.trust.TrustGate;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,9 @@ class DoctorServiceTest {
         assertThat(json.has("empty_tracking_reason")).isTrue();
         assertThat(json.has("schema_version")).isTrue();
         assertThat(json.has("next_step")).isTrue();
+        assertThat(json.has("persistence_write_failures")).isTrue();
+        assertThat(json.get("persistence_write_failures").asLong()).isZero();
+        assertThat(json.get("persistence_write_last_error").isNull()).isTrue();
         assertThat(json.get("outcomes_by_kind").isObject()).isTrue();
         assertThat(json.get("warnings").isArray()).isTrue();
         assertThat(report.outcomesByKind()).isInstanceOf(java.util.LinkedHashMap.class);
@@ -61,6 +65,17 @@ class DoctorServiceTest {
         assertThat(report.hooks()).isNotEmpty();
         assertThat(report.hooks().get(0).integrity()).isEqualTo(HookIntegrity.MISSING);
         assertThat(new DoctorCommand(fixture.service).call()).isZero();
+        fixture.tracking.close();
+    }
+
+    @Test
+    void writeLossIsVisibleAfterRestart() throws Exception {
+        Path data = tempDir.resolve("data");
+        WriteFailureLedger.record(data, "[SQLITE_READONLY] attempt to write a readonly database");
+        Fixture fixture = fixture();
+        DoctorReport report = fixture.service.diagnose();
+        assertThat(report.persistenceWriteFailures()).isEqualTo(1);
+        assertThat(report.persistenceWriteLastError()).contains("SQLITE_READONLY");
         fixture.tracking.close();
     }
 
