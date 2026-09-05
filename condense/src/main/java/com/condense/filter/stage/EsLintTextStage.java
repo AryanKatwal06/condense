@@ -3,6 +3,7 @@ package com.condense.filter.stage;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.strategy.BoundedRegex;
 import com.condense.filter.strategy.GroupingStrategy;
 import com.condense.ir.Document;
 import com.condense.ir.TextRenderer;
@@ -10,6 +11,7 @@ import com.condense.ir.TextRenderer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class EsLintTextStage implements FilterStage {
@@ -29,7 +31,7 @@ public final class EsLintTextStage implements FilterStage {
             if (line == null || line.isBlank()) {
                 continue;
             }
-            var issue = ISSUE_PATTERN.matcher(line);
+            Matcher issue = BoundedRegex.matcher(ISSUE_PATTERN, line);
             if (issue.matches()) {
                 findings.add(new Document.Finding(
                     file,
