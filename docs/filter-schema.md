@@ -1,6 +1,6 @@
 # Filter schema v1
 
-Builtin pipelines and user overrides share one schema. Data is interpreted by a hardcoded `StageFactory` switch. A TOML file cannot name a Java class or register a new command.
+Builtin pipelines and user overrides share one schema. Data is interpreted by a hardcoded `StageFactory` switch. A TOML file cannot name a Java class. A leftover builtin definition **can** register commands: if none of its `commands` already belong to a `@CommandFilter` bean, `StrategyRegistry` constructs a `CatalogBackedFilter` for that definition name. Existing Java-backed rows stay on their beans. A `gate` key in a user override is still an unknown-key reject.
 
 ## Two document types
 
@@ -60,13 +60,13 @@ Project overrides that are untrusted, hash-changed, or above the granted capabil
 
 Runtime loads **only** names listed in `filters/index.toml`, each via an exact resource path. It never walks a classpath directory. Graal includes `filters/.*\.toml` for `getResource`, not for directory listing.
 
-The Maven `process-classes` validator (`BuiltinDefinitionValidator`) asserts index ↔ files on disk ↔ every `PipelineBackedFilter.definitionName()` ↔ `@CommandFilter` prefixes (the last two via Surefire architecture tests).
+The Maven `process-classes` validator (`BuiltinDefinitionValidator`) asserts index ↔ files on disk. Surefire architecture tests require every Java `PipelineBackedFilter.definitionName()` and `@CommandFilter` prefix to have a matching builtin row. Leftover index names have no Java class; `CorpusCoverageTest` requires every index name to have a corpus row.
 
 ## Fail-closed vs fail-open
 
 | Surface | Invalid document |
 |---|---|
-| Builtin index + 31 definitions | Fail the build (`process-classes`) and fail catalog load |
+| Builtin index + definition files | Fail the build (`process-classes`) and fail catalog load |
 | User override | Warn and fall through to the next tier. `condense config validate` exits 1 |
 | Inline `[[tests]]` failure | Fail the **build**, not a proxied command |
 
@@ -93,11 +93,21 @@ Named command-specific aliases (no user params; trusted Java):
 
 User overrides may use any alias in v1. Project files still need a matching capability grant (`reduce` / `reshape` / `rewrite`). See [trust.md](trust.md).
 
+## Builtin-only optional keys
+
+These fields are valid on `classpath:filters/<name>.toml` only. They are unknown keys in user `filters.toml`.
+
+| Key | Values / fields |
+|---|---|
+| `select_input` | `stdout_or_stderr` (default), `stderr_then_stdout`, `stdout`, `stderr` |
+| `[gate]` | `passthrough_verbose`, `passthrough_max_lines`, `passthrough_nonzero_exit` (all default off) |
+
 ## Adding a definition
 
-1. Add a thin `PipelineBackedFilter` with `definitionName()` and gates only. Do not override `buildPipeline()`.
-2. Write `src/main/resources/filters/<name>.toml` (`schema_version = 1`, unique `name`, `commands` matching `@CommandFilter`, `[[stages]]`, ≥1 `[[tests]]`).
-3. Append the name to `filters/index.toml`.
-4. Add corpus fixtures, a `catalog.json` row, and a golden lock. See [fidelity-corpus.md](fidelity-corpus.md) and [CONTRIBUTING.md](../CONTRIBUTING.md).
+Prefer a leftover catalog definition (no Java class):
 
-New Java is needed only when `StageFactory` lacks a stage. A TOML file cannot register a command; dispatch stays on `@CommandFilter`.
+1. Write `src/main/resources/filters/<name>.toml` (`schema_version = 1`, unique `name`, `commands` that are not already claimed by a `@CommandFilter`, `[[stages]]` using existing aliases, ≥1 `[[tests]]`).
+2. Append the name to `filters/index.toml`.
+3. Add corpus fixtures, a `catalog.json` row, and a golden lock. See [fidelity-corpus.md](fidelity-corpus.md) and [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+Add a `PipelineBackedFilter` with `@CommandFilter` only when you need a handwritten gate, a new `StageFactory` alias, or a router. Do not override `buildPipeline()`. New Java is otherwise needed only when `StageFactory` lacks a stage.

@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 13 hook integrity closeout).
+**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 14 catalog leftover closeout).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 13. Confirm with `git log -1` and origin before starting Phase 14.
+**Branch at handoff:** `main` after Phase 14. Confirm with `git log -1` and origin before starting Phase 15.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -345,8 +345,8 @@ The next agent will be misled by these if they trust the docs. They are **docume
 
 | Location | Claim | Reality |
 |---|---|---|
-| `condense/ARCHITECTURE.md` file table | Lists only the bootstrap/config/analytics classes | Says nothing about the 32 filters, pipeline, or overrides — materially incomplete |
-| Root `README.md` supported-commands table | 30 rows | Code registers ~47 prefixes; undocumented ones include `docker run`, `docker exec`, `python -c`, `ruff`, `npx eslint`, `npm ci`, `npm i`, `pip3 install`, `./mvnw`, `./gradlew`. `condense read` is a subcommand, not a proxied prefix |
+| `condense/ARCHITECTURE.md` file table | Still omits per-filter classes | Phase 14 added `StrategyRegistry`, `PrefixIndex`, and `CatalogBackedFilter` rows; the 32 Java filters are not individually listed |
+| Root `README.md` supported-commands table | ~~30 rows; missing aliases~~ **FIXED in Phase 14** | Table lists Java prefixes (including `docker run` / `exec`, `python -c`, `ruff`, `npx eslint`, `npm ci` / `i`, `pip3`, `./mvnw`, `./gradlew`) and the 19 leftover catalog families. `condense read` remains a subcommand, not a proxied prefix |
 
 Rows that used to live here and are **no longer true** (removed 5 Sep 2026, audit R0 / R8–R10): ARCHITECTURE vs POM Java 17 (both are 21); README "Java 17+" (now GraalVM JDK 21); CONTRIBUTING sample that did not compile (now `PipelineBackedFilter` + `definitionName()`); "add to reflect-config as a manual ritual" (drift test is the gate); README `[general] ultra_compact` (CLI `-u` only); CHANGELOG rc1 42/12/NDJSON (correction note added); missing PR template (`.github/PULL_REQUEST_TEMPLATE.md` exists). Phase 13 also corrected `docs/HOOKS.md` claiming Windows `.ps1` scripts for Claude/Cursor/Gemini — the installer still writes `.sh` only. This §4 used to describe the pre-Phase-1 tree; that is corrected above.
 
@@ -418,18 +418,19 @@ Planning plus Phase 1 through Phase 10 code, then an independent audit of those 
 | Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT`. |
 | Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read`; resources `gain`/`doctor`; `NativeMcpIT`. |
 | Phase 13 code | **LANDED** | Schema 2 hook audit; backup-before-merge; SHA-256 script baselines; Claude deny-not-rewrite; Codex/OpenCode/Kilo/Antigravity/Hermes/Pi; `NativeHookIT`. |
-| Phases 14–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 14 code | **LANDED** | `CatalogBackedFilter` leftover host; 19 data-only families; original 51 goldens unchanged; `NativeCatalogIT`. Existing 31 Java filters not migrated. |
+| Phases 15–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (510 / 0 / 0 / 9 on this Windows JVM; 9 skips are POSIX `CommandExecutorTest`), and CI 33950449575. |
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 so §4 matches the live tree. |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p13` are marked `completed`, `p14`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p14` are marked `completed`, `p15`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 13 code have landed.** Phases 14–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 14 code have landed.** Phases 15–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -827,7 +828,9 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 ### Phase 14 — Ecosystem coverage as declarative data
 
-**Status: PENDING**
+**Status: CODE LANDED**
+
+**What shipped.** One `CatalogBackedFilter` host (not a CDI bean). `StrategyRegistry` registers leftover `filters/index.toml` prefixes after CDI beans. `PrefixIndex` collision is instance identity. Optional builtin-only `select_input` and `[gate]`. Corpus instantiates leftovers by definition name. Nineteen leftover families: mypy (canary), dotnet-test/build/restore, bundle-install, rspec, rubocop, terraform, helm, gh, glab, curl, wget, psql, pnpm-install, next-build, prisma, playwright, prettier. No new per-command Java class. StageFactory alias set unchanged. IR stays `kind=opaque`. `NativeCatalogIT` PATH-stubs `mypy`. Existing 31 Java filters and the original 51 goldens are unchanged.
 
 **Goal.** Close raw surface-area gap cheaply: .NET, Ruby, infra (terraform/helm class), `gh` / `glab`, `psql` / `curl` / `wget`, and deeper JS/Python (pnpm, next, prisma, playwright, prettier, mypy) — each as a **declarative definition plus inline tests plus a corpus entry**, with no new Java unless a stage genuinely does not exist.
 
@@ -991,9 +994,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–13 code landed. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. This Windows workspace does not build native images.
+**Where we are.** Phase 1–14 code landed. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. This Windows workspace does not build native images.
 
-**Do not start Phase 14 code.** Present a complete Phase 14 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 15 code.** Present a complete Phase 15 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -1014,8 +1017,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 13 code has landed. Confirm `NativeHookIT` appears in native job logs, `GoldenLockTest` is green, and `condense init --help` mentions integrity and the new tool names.
-9. **Do not start Phase 14 code.** Present a complete Phase 14 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 14 code has landed. Confirm `NativeCatalogIT` appears in native job logs, `GoldenLockTest` is green, and `condense mypy` is not passthrough.
+9. **Do not start Phase 15 code.** Present a complete Phase 15 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

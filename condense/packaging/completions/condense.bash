@@ -12,7 +12,7 @@ _condense_completion() {
   local subcommands="gain doctor explain read init config mcp"
 
   # Commands condense can proxy
-  local proxy_commands="git cargo pytest go npm npx docker kubectl aws ls grep rg find cat make mvn gradle vitest jest eslint tsc ruff pip golangci-lint"
+  local proxy_commands="git cargo pytest go npm npx docker kubectl aws ls grep rg find cat make mvn gradle vitest jest eslint tsc ruff pip golangci-lint python python3 mypy dotnet bundle rspec rubocop terraform helm gh glab curl wget psql pnpm next prisma playwright prettier"
 
   # Top-level options
   local global_opts="-v --verbose -u --ultra-compact --format --version --help"

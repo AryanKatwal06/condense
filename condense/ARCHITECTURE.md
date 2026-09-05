@@ -49,6 +49,9 @@ condense --version / --help
 | `Document.java` | `com.condense.ir` | Schema-1 diagnostics envelope and kind-specific payloads |
 | `DocumentBuilder.java` | `com.condense.ir` | Mutable sidecar on `FilterContext` for exemplar stages |
 | `TextRenderer.java` / `JsonRenderer.java` | `com.condense.ir` | Compact-text (default) and schema-1 JSON renderers |
+| `StrategyRegistry.java` | `com.condense.core` | CDI `@CommandFilter` beans, then leftover catalog prefixes on `CatalogBackedFilter` |
+| `PrefixIndex.java` | `com.condense.core` | Longest-prefix map; overwrite only when the instance is the same object |
+| `CatalogBackedFilter.java` | `com.condense.filter.pipeline` | Hosts leftover `filters/*.toml` definitions; not a CDI bean |
 
 ## Key Design Decisions
 
@@ -66,9 +69,9 @@ condense --version / --help
 
 7. **Fidelity corpus**: Every domain filter has a row in the test-only `corpus/catalog.json`. `FidelityCorpusTest` requires 100% critical-signal retention and a baked savings floor. `GoldenLockTest` byte-locks filtered output. See `docs/fidelity-corpus.md`.
 
-8. **Universal pipeline**: Every domain filter except the `PythonFilter` router extends `PipelineBackedFilter`. `apply()` is final: gates, then `FilterOverrideLoader.resolvePipeline`, then `FilterPipeline.execute` (session walk). Duplicate `@CommandFilter` prefixes from two classes fail `@PostConstruct` via `PrefixIndex`. Every regex in the filter package goes through `BoundedRegex` at 200 ms.
+8. **Universal pipeline**: Every domain filter except the `PythonFilter` router extends `PipelineBackedFilter`. `apply()` is final: gates, then `FilterOverrideLoader.resolvePipeline`, then `FilterPipeline.execute` (session walk). Duplicate prefixes fail `@PostConstruct` via `PrefixIndex` unless the existing entry is the same instance (two `CatalogBackedFilter` hosts cannot share a prefix). Every regex in the filter package goes through `BoundedRegex` at 200 ms.
 
-9. **Three-tier filter composition**: Project `.condense/filters.toml` (TOFU + capability ceiling) then user-global `filters.toml` (trusted by location) then builtin `classpath:filters/<name>.toml` via `BuiltinDefinitionCatalog` (fail-closed). Enumeration is `filters/index.toml` — never a classpath directory walk. `StageFactory` is a hardcoded switch. Schema v1 requires `schema_version = 1` and rejects unknown keys. See `docs/filter-schema.md` and `docs/trust.md`.
+9. **Three-tier filter composition**: Project `.condense/filters.toml` (TOFU + capability ceiling) then user-global `filters.toml` (trusted by location) then builtin `classpath:filters/<name>.toml` via `BuiltinDefinitionCatalog` (fail-closed). Enumeration is `filters/index.toml` — never a classpath directory walk. After CDI beans, `StrategyRegistry` registers leftover catalog `commands` on `CatalogBackedFilter`. `StageFactory` is a hardcoded switch. Schema v1 requires `schema_version = 1` and rejects unknown keys. Builtin-only optional keys are `select_input` and `[gate]`. See `docs/filter-schema.md` and `docs/trust.md`.
 
 10. **Trust and provenance**: Project overrides are skipped until `condense config trust` (or a CI hatch that also has a listed CI indicator). `FilterResult.of` stamps `condense[filtered]`; impersonating lines become `condense[quoted]`. See `docs/trust.md`.
 

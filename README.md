@@ -112,7 +112,7 @@ For any unrecognized command, condense passes output through unchanged — it is
 | `golangci-lint run` | Grouped warnings | ~80% |
 | `docker ps` | Verbose container details | ~65% |
 | `docker build` | Step-by-step layer noise | ~80% |
-| `docker logs` | Timestamp noise, repetitive lines | ~50% |
+| `docker logs` / `docker run` / `docker exec` | Timestamp noise, repetitive lines | ~50% |
 | `kubectl` (pods/describe) | Verbose status fields | ~70% |
 | `aws ec2 describe-instances` | JSON structure compression | ~85% |
 | `ls` | Long listing details | ~60% |
@@ -120,9 +120,29 @@ For any unrecognized command, condense passes output through unchanged — it is
 | `grep` / `rg` | Context lines | ~50% |
 | `cat` | Truncates extremely large files | ~40% |
 | `make` | Build lifecycle noise | ~75% |
-| `mvn` / `gradle` | Build lifecycle noise, downloads | ~80% |
-| `npm install` | Dependency resolution noise | ~85% |
-| `pip install` | Download progress bars | ~90% |
+| `mvn` / `./mvnw` / `gradle` / `./gradlew` | Build lifecycle noise, downloads | ~80% |
+| `npm install` / `npm ci` / `npm i` | Dependency resolution noise | ~85% |
+| `npx eslint` | Same as `eslint` | ~80% |
+| `ruff` | Same as `ruff check` | ~82% |
+| `pip install` / `pip3 install` | Download progress bars | ~90% |
+| `python -c` / `python3 -c` | Identity (no compression) | — |
+| `mypy` / `python -m mypy` / `python3 -m mypy` | Errors grouped by file | ~90% |
+| `dotnet test` / `dotnet build` / `dotnet restore` | Failed tests, compiler errors, restore tail | ~60–80% |
+| `bundle install` | Install noise; keeps Bundler errors | ~60% |
+| `rspec` | Passing examples; keeps failures | ~80% |
+| `rubocop` | Offenses grouped by file | ~90% |
+| `terraform plan` / `terraform apply` | Refresh noise; keeps Error / Plan / create-destroy | ~85% |
+| `helm install` / `helm upgrade` / `helm list` | Wait noise; keeps STATUS / Error | ~65% |
+| `gh pr list` / `gh issue list` / `gh run list` | Long list middle | ~65% |
+| `glab mr list` / `glab issue list` / `glab ci list` | Long list middle | ~65% |
+| `curl` | Progress tail (nonzero exit stays verbatim) | ~65% |
+| `wget` | Fetch noise; keeps ERROR / saved path | ~75% |
+| `psql` | Result-table middle; keeps ERROR | ~75% |
+| `pnpm install` / `pnpm i` / `pnpm add` / `pnpm ci` | Progress; keeps Packages / vulns / ERR_ | ~85% |
+| `next build` | Compile noise; keeps Error / Failed | ~90% |
+| `prisma migrate` / `prisma generate` | Apply noise; keeps Error / Generated | ~85% |
+| `playwright test` / `npx playwright` | Passing specs; keeps failed titles | ~85% |
+| `prettier` | Checking noise; keeps `[error]` / SyntaxError | ~90% |
 
 ---
 

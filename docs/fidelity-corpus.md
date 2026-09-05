@@ -25,7 +25,7 @@ Exactly one of `savings_floor` or `savings_exemption` is required.
 | Test | What it fails on |
 |---|---|
 | `CorpusCatalogLoadTest` | Unknown JSON keys, missing `schema_version`, invalid exemption / floor pairing |
-| `CorpusCoverageTest` | A `FilterStrategy` other than `PassthroughStrategy` with no catalog row; a new compressing row with floor &lt; 60; a missing fixture file |
+| `CorpusCoverageTest` | A Java domain `FilterStrategy` other than `PassthroughStrategy` / `CatalogBackedFilter` with no catalog row; an `index.toml` name with no catalog row; a new compressing row with floor &lt; 60; a missing fixture file |
 | `FidelityCorpusTest` | A missing critical signal, or `savingsPct()` below the baked floor |
 | `CorpusFuzzTest` | `apply` throws, or a signal that is still in the mutated input is missing from filtered output |
 | `NativeCorpusIT` | The native binary, with a PATH-stubbed `pytest`, drops `test_mul` / `failed` or fails to pass through exit code 1 |
@@ -33,7 +33,7 @@ Exactly one of `savings_floor` or `savings_exemption` is required.
 
 Filters are constructed with their no-arg constructor (same as existing `*FilterTest` classes), not via CDI. Phase 4 added a byte lock of that constructor path so a pipeline migration cannot change agent-visible output silently. Reviewed diffs are listed in [pipeline-migration-diffs.md](pipeline-migration-diffs.md).
 
-Builtin pipelines are data. Each `PipelineBackedFilter` loads `classpath:filters/<definitionName>.toml` through `BuiltinDefinitionCatalog`. The 51-row golden lock is still the product fidelity contract; inline `[[tests]]` in those TOML files are small wiring checks, not a second corpus. See [filter-schema.md](filter-schema.md).
+Builtin pipelines are data. Each `PipelineBackedFilter` loads `classpath:filters/<definitionName>.toml` through `BuiltinDefinitionCatalog`. Leftover definitions (no `@CommandFilter` class) are hosted by `CatalogBackedFilter` and keyed in the corpus by definition name. The original 51 goldens stay byte-identical; Phase 14 added leftover rows beside them. Inline `[[tests]]` in those TOML files are small wiring checks, not a second corpus. See [filter-schema.md](filter-schema.md).
 
 Phase 9 remasured `npm-install` goldens because irrevocable `npm warn` lines now survive. Those rows stay below the 60% contribution bar (`meets_contribution_bar: false`). `docker-build` still meets its 60 floor. Reviewed diffs are in [pipeline-migration-diffs.md](pipeline-migration-diffs.md). Incremental replay of a STREAM pipeline must match `FilterPipeline.execute` (`IncrementalEquivalenceTest`).
 

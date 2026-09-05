@@ -20,7 +20,7 @@ complete -c condense -n '__fish_use_subcommand' -a config -d 'Read and write con
 complete -c condense -n '__fish_use_subcommand' -a mcp    -d 'MCP server over stdio'
 
 # Proxy commands
-for cmd in git cargo pytest go npm docker kubectl aws ls grep rg find cat make mvn gradle
+for cmd in git cargo pytest go npm npx docker kubectl aws ls grep rg find cat make mvn gradle vitest jest eslint tsc ruff pip python mypy dotnet bundle rspec rubocop terraform helm gh glab curl wget psql pnpm next prisma playwright prettier
   complete -c condense -n '__fish_use_subcommand' -a $cmd -d "Proxy $cmd"
 end
 

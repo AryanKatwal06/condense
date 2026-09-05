@@ -34,111 +34,48 @@ See [docs/perf-baseline.md](docs/perf-baseline.md) for what CI measures (invocat
 
 **Contribution Bar:** A new compressing filter must add a row to `condense/src/test/resources/corpus/catalog.json` with `savings_floor` ≥ 60, measured with `utf8_weighted_v1` (see [docs/token-estimator.md](docs/token-estimator.md) and [docs/fidelity-corpus.md](docs/fidelity-corpus.md)). `FidelityCorpusTest` enforces 100% critical-signal retention. Entries that structurally cannot compress must declare `savings_exemption` (`passthrough`, `too_small`, `verbose_mode`, `failure_verbatim`, `intentional_identity`). Do not set `meets_contribution_bar: false` on new work — that flag is only for grandfathered fixtures that already shipped below 60%.
 
-Adding support for a new command (e.g. `helm`) takes these steps. The default pipeline is data (`filters/helm.toml`); the Java class only owns dispatch, gates, and a definition name. See [docs/filter-schema.md](docs/filter-schema.md).
+Adding support for a new command (e.g. `helm install`) is **catalog-only by default**. Write `filters/helm.toml`, list it in `index.toml`, and add a corpus row. `StrategyRegistry` registers leftover `commands` on a `CatalogBackedFilter` host. Do **not** add a Java `@CommandFilter` class unless you need a handwritten gate, a new `StageFactory` alias, or a router. See [docs/filter-schema.md](docs/filter-schema.md).
 
-### 1. Create the filter class
+### 1. Write the builtin definition and list it in the index
 
-```java
-// src/main/java/com/condense/filter/cloud/HelmFilter.java
-package com.condense.filter.cloud;
+Create `src/main/resources/filters/helm.toml` with `schema_version = 1`, `name = "helm"`, `commands` that are not already claimed by a `@CommandFilter` (use specific prefixes such as `helm install` — not a bare catch-all that would steal `helm version`), a `[[stages]]` list using existing aliases, and at least one `[[tests]]` case. Optional builtin-only keys: `select_input` and `[gate]` (`passthrough_verbose`, `passthrough_max_lines`, `passthrough_nonzero_exit`). Add `"helm"` to `src/main/resources/filters/index.toml`. Enumeration is that index file only — never walk the directory. `BuiltinDefinitionValidator` runs at Maven `process-classes` and fails the build on a missing `schema_version`, unknown key, duplicate name/command, or a failing inline test.
 
-import com.condense.annotation.CommandFilter;
-import com.condense.core.*;
-import com.condense.filter.pipeline.PipelineBackedFilter;
-import com.condense.filter.pipeline.config.FilterOverrideLoader;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+Do **not** override `buildPipeline()` if you later add a Java host. It is final on `PipelineBackedFilter` and loads `classpath:filters/<definitionName>.toml`.
 
-@CommandFilter("helm")
-@ApplicationScoped
-public class HelmFilter extends PipelineBackedFilter {
-
-    public HelmFilter() {}
-
-    @Inject
-    public HelmFilter(FilterOverrideLoader overrideLoader) {
-        super(overrideLoader);
-    }
-
-    @Override
-    protected String definitionName() {
-        return "helm";
-    }
-
-    @Override
-    protected FilterResult beforePipeline(String command, ExecutionResult result,
-                                         CondenseConfig config, int verbose, boolean ultraCompact) {
-        if (!result.succeeded()) return FilterResult.passthrough(result);
-        return null;
-    }
-}
-```
-
-Do **not** override `buildPipeline()`. It is final on `PipelineBackedFilter` and loads `classpath:filters/<definitionName>.toml`.
-
-**Rules for implementations**:
-- Extend `PipelineBackedFilter`. Do not override `apply`. `PythonFilter` is the only router exception.
-- Gates (failure, verbose, size, grep exit 1) belong in `beforePipeline`. Parsing belongs in named `FilterStage`s declared in the TOML.
+**Rules**:
+- Prefer leftover catalog dispatch. A Java `PipelineBackedFilter` is the exception path. Do not override `apply`. `PythonFilter` is the only router exception.
+- Gates that the builtin `[gate]` table can express stay in TOML. Handwritten gates belong in `beforePipeline`. Parsing belongs in named `FilterStage`s declared in the TOML.
 - Every regex goes through `BoundedRegex` (200 ms). Do not call `Pattern.matcher` directly.
 - Always return `FilterResult.passthrough(result)` on non-zero exit unless the filter specifically handles failures
 - Never throw out of a stage in a way that changes the child's exit code — the pipeline fail-opens
-- Keep the class stateless — one instance is reused for all invocations. Per-run state belongs on `StageSession`, not the stage bean.
+- Keep any Java class stateless — one instance is reused for all invocations. Per-run state belongs on `StageSession`, not the stage bean.
 - Streamability is declared in Java (`FilterStage.streamability()`), never in TOML. A pipeline streams only when every stage is `order_local` or `windowed`. See [docs/streaming.md](docs/streaming.md).
 - Add a catalog row and a `corpus/golden/{id}.txt` lock. `GoldenLockTest` fails on a silent output change.
-- New command summaries should populate a `DocumentBuilder` on `FilterContext` and emit `TextRenderer.render(...)` so text and JSON stay one model. See [docs/ir.md](docs/ir.md). Do not add a TOML `output` / `format` / `json` key (`format` is a `regex_capture` template param only).
+- New command summaries that need a typed IR kind should populate a `DocumentBuilder` on `FilterContext` and emit `TextRenderer.render(...)` so text and JSON stay one model. Leftover catalog commands stay `kind=opaque`. See [docs/ir.md](docs/ir.md). Do not add a TOML `output` / `format` / `json` key (`format` is a `regex_capture` template param only).
 
-### 2. Write the builtin definition and list it in the index
-
-Create `src/main/resources/filters/helm.toml` with `schema_version = 1`, `name = "helm"`, `commands` that exactly match `@CommandFilter`, a `[[stages]]` list, and at least one `[[tests]]` case. Add `"helm"` to `src/main/resources/filters/index.toml`. Enumeration is that index file only — never walk the directory. `BuiltinDefinitionValidator` runs at Maven `process-classes` and fails the build on a missing `schema_version`, unknown key, duplicate name/command, or a failing inline test.
-
-### 3. Create fixture files and a catalog row
+### 2. Create fixture files and a catalog row
 
 ```
 src/test/resources/fixtures/helm/typical.txt   — real helm output (copy from terminal)
 src/test/resources/fixtures/helm/failure.txt   — failed command output
 ```
 
-Add an entry to `src/test/resources/corpus/catalog.json` with `critical_signals` (literal substrings that must survive filtering) and either `savings_floor` ≥ 60 or a listed `savings_exemption`. Add the matching golden under `src/test/resources/corpus/golden/`. `CorpusCoverageTest` fails `mvn test` if the new `FilterStrategy` has no row.
+Add an entry to `src/test/resources/corpus/catalog.json` with `critical_signals` (literal substrings that must survive filtering) and either `savings_floor` ≥ 60 or a listed `savings_exemption`. Add the matching golden under `src/test/resources/corpus/golden/`. `CorpusCoverageTest` fails `mvn test` if a Java domain filter or an `index.toml` name has no row.
 
-### 4. Write tests
+### 3. Write tests
+
+Inline `[[tests]]` on the TOML plus the corpus row are enough for a leftover definition. Add a Java `*FilterTest` only when you added a Java class.
 
 ```java
-// src/test/java/com/condense/filter/cloud/HelmFilterTest.java
-package com.condense.filter.cloud;
-
-import com.condense.core.*;
-import com.condense.filter.FilterTestSupport;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.assertThat;
-
-class HelmFilterTest extends FilterTestSupport {
-
-    private HelmFilter filter;
-    private CondenseConfig config;
-
-    @BeforeEach
-    void setUp() { filter = new HelmFilter(); config = CondenseConfig.defaults(); }
-
-    @Test
-    void typicalOutput_isCompressed() throws Exception {
-        FilterResult r = filter.apply("helm",
-            success(fixture("helm", "typical")), config, 0, false);
-        assertCompressed(r);
-    }
-
-    @Test
-    void failureOutput_isPassedThrough() {
-        FilterResult r = filter.apply("helm",
-            failure(1, "Error: no releases found"), config, 0, false);
-        assertPassthrough(r);
-    }
-}
+CatalogBackedFilter filter = new CatalogBackedFilter("helm");
+FilterResult r = filter.apply("helm install",
+    success(fixture("helm", "typical")), CondenseConfig.defaults(), 0, false);
+assertCompressed(r);
 ```
 
-### 5. Keep reflect-config.json in sync
+### 4. Keep reflect-config.json in sync
 
-The gate is `ReflectConfigDriftTest`, not a manual ritual. It runs in `mvn test` and fails if a new `FilterStrategy` (or a Jackson-bound config/analytics type) is missing from `src/main/resources/META-INF/native-image/reflect-config.json`, or if a class name is registered twice. The drift test will demand this shape for a new filter:
+The gate is `ReflectConfigDriftTest`, not a manual ritual. It runs in `mvn test` and fails if a new `FilterStrategy` (or a Jackson-bound config/analytics type) is missing from `src/main/resources/META-INF/native-image/reflect-config.json`, or if a class name is registered twice. Leftover catalog commands reuse `CatalogBackedFilter` (already registered). A new Java filter class will demand this shape:
 
 ```json
 { "name": "com.condense.filter.cloud.HelmFilter",
@@ -147,7 +84,7 @@ The gate is `ReflectConfigDriftTest`, not a manual ritual. It runs in `mvn test`
 
 If the JSON is stale, the JVM test fails before a 10-minute native build would.
 
-### 6. Verify and submit
+### 5. Verify and submit
 
 ```bash
 mvn test                              # includes ReflectConfigDriftTest
@@ -158,14 +95,13 @@ mvn failsafe:integration-test failsafe:verify -DskipITs=false
 
 Then open a pull request. Confirm:
 
-- [ ] Filter class implemented with `@CommandFilter`, `@ApplicationScoped`, and `definitionName()`
-- [ ] Builtin `filters/<name>.toml` plus an `index.toml` entry
+- [ ] Builtin `filters/<name>.toml` plus an `index.toml` entry (no new Java class unless a stage or handwritten gate is missing)
 - [ ] Fixture files created with real command output
 - [ ] Catalog row in `corpus/catalog.json` (60% floor or an enumerated exemption; critical signals retained)
-- [ ] Tests written covering typical + failure cases
+- [ ] Inline `[[tests]]` green via `process-classes`; Java tests only if you added a class
 - [ ] `ReflectConfigDriftTest` and `FidelityCorpusTest` pass (`mvn test`)
 - [ ] Native image builds without fallback
-- [ ] Native Failsafe ITs pass when the binary is present
+- [ ] Native Failsafe ITs pass when the binary is present (`NativeCatalogIT` covers leftover dispatch)
 
 ## Code Style
 
