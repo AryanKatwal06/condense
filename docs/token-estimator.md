@@ -20,20 +20,20 @@ The same function is used for strings and files. `TokenCounter` is a static faca
 |---|---|
 | Estimator name | `utf8_weighted_v1` |
 | Reference tokenizer | `cl100k_base` (jtokkit, **test scope only**) |
-| Measured p95 relative error | 0.366 on 59 corpus files (51 filter fixtures + 6 Unicode samples + empty + long Latin). The Phase 2 46-file sample measured 0.333; the published bound and CI gate did not change. |
-| **Published p95 relative error** | **0.35** (35%) |
-| CI gate | published + 0.05 = 0.40 |
+| Measured p95 relative error | 0.3656 on the audited corpus (59 files). The Phase 2 46-file sample measured 0.333; a later remesure was 0.366. |
+| **Published p95 relative error** | **0.37** (37%) |
+| CI gate | published + 0.05 = 0.42 |
 
-Relative error is `|estimate − reference| / max(reference, 1)`. The published figure is the measured p95 rounded up to a clean percentage. `TokenEstimatorAccuracyTest` fails `mvn test` if a later estimator change exceeds the gate.
+Relative error is `|estimate − reference| / max(reference, 1)`. The published figure is the measured p95 raised to a two-digit bound (0.3656 → 0.37). It is not a clean rounding of 0.35. `TokenEstimatorAccuracyTest` fails `mvn test` if a later estimator change exceeds the gate.
 
-This bound is versus **cl100k_base**, not Claude's tokenizer and not tiktoken at runtime. A 35% p95 is honest about a four-line heuristic; it is not tokenizer-grade precision.
+This bound is versus **cl100k_base**, not Claude's tokenizer and not tiktoken at runtime. A 37% p95 is honest about a four-line heuristic; it is not tokenizer-grade precision.
 
 ## What `gain` shows
 
 Text summary labels input / output / saved as estimates and prints:
 
 ```
-Estimator:            utf8_weighted_v1  p95 ±35% vs cl100k_base
+Estimator:            utf8_weighted_v1  p95 ±37% vs cl100k_base
 ```
 
 JSON keeps the existing fields (`input_tokens`, `output_tokens`, `tokens_saved`, `savings_pct`, …) and adds:
@@ -42,7 +42,7 @@ JSON keeps the existing fields (`input_tokens`, `output_tokens`, `tokens_saved`,
 "estimator": {
   "name": "utf8_weighted_v1",
   "reference": "cl100k_base",
-  "p95_rel_error": 0.35
+  "p95_rel_error": 0.37
 }
 ```
 

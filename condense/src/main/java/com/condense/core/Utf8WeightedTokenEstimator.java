@@ -25,10 +25,10 @@ public final class Utf8WeightedTokenEstimator implements TokenEstimator {
 
     /**
      * Published p95 relative error vs {@link #REFERENCE_TOKENIZER} on the
-     * checked-in corpus. Rounded up from the measured value. Gain reports this
+     * checked-in corpus. Raised to cover the measured 0.3656. Gain reports this
      * number; the accuracy test allows a small extra cushion.
      */
-    public static final double PUBLISHED_P95_REL_ERROR = 0.35;
+    public static final double PUBLISHED_P95_REL_ERROR = 0.37;
 
     /** Extra headroom the CI accuracy gate allows above the published bound. */
     public static final double ACCURACY_GATE_CUSHION = 0.05;

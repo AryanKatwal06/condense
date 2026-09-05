@@ -52,7 +52,7 @@ public final class AsciiGraphRenderer {
      * Tokens saved (est.):  39,160 (81.1%)
      * Total exec time:      612ms (avg 4ms)
      * Efficiency meter: ████████████████████░░░░ 81.1%
-     * Estimator:            utf8_weighted_v1  p95 ±35% vs cl100k_base
+     * Estimator:            utf8_weighted_v1  p95 ±37% vs cl100k_base
      * </pre>
      */
     public static String renderSummary(GainReport report) {
