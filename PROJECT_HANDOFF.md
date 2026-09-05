@@ -153,7 +153,7 @@ public static int count(String text) { return Utf8WeightedTokenEstimator.INSTANC
 
 ### 4.5 CLI surface
 
-Registered subcommands: `gain`, `doctor`, `init`, `config` (with nested `validate` and `trust`), `completion`, `update`, `mcp`, `uninstall`. Default (no subcommand) = proxy mode.
+Registered subcommands: `gain`, `doctor`, `explain`, `init`, `config` (with nested `validate` and `trust`), `completion`, `update`, `mcp`, `uninstall`. Default (no subcommand) = proxy mode.
 
 Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus standard help/version.
 
@@ -318,8 +318,8 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D18 | ~~No retention~~ **FIXED** | 90-day DELETE + bounded tee sweep | Phase 7 |
 | D19 | ~~Filter failures logged only~~ **FIXED** | `filter_outcomes` for stage/apply fallbacks | Phase 7 |
 | D20 | ~~`--purge` aborts on `tee/` and `filters.toml`~~ **FIXED** | allowlist + known-dir recursion | Phase 7 |
-| D21 | `gain --top N` is ignored when `N == 10` because the branch is `if (top != 10)` and the default is `10` | `GainCommand:123` | Phase 8 (or a dedicated fix) |
-| D22 | No explainability — nothing shows which stage dropped which lines | by inspection | Phase 8 |
+| D21 | ~~`gain --top N` is ignored when `N == 10` because the branch is `if (top != 10)` and the default is `10`~~ **FIXED** | `Integer topFlag` with `arity = 0..1` | Phase 8 |
+| D22 | ~~No explainability — nothing shows which stage dropped which lines~~ **FIXED** | `condense explain` | Phase 8 |
 | D23 | Filtering is capture-only; nothing is emitted until the child exits | `CondenseRootCommand.call()` ordering | Phase 9 |
 | D24 | No token-optimized source-file reading capability at all | no such command | Phase 10 |
 | D25 | No structured output IR; each filter emits ad-hoc text | by inspection | Phase 11 |
@@ -413,7 +413,8 @@ Two turns of planning, then Phase 1 through Phase 5 code.
 | Phase 6 code | **LANDED** | `TrustGate` + `{configDir}/trust.json`; capability grants; `condense[filtered]` provenance; `NativeTrustIT`. |
 | Phase 7 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized |
 | Phase 7 code | **LANDED** | `user_version` 1, WAL, `busy_timeout`, 90-day retention, `filter_outcomes`, `condense doctor`, D20 purge allowlist. Native proof is the next green `NativePersistenceIT`. |
-| Phases 8–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 8 code | **LANDED** | `condense explain`, `executeTraced`, tier `resolveDecision`, D21 `--top 10`. Native proof is the next green `NativeExplainIT`. |
+| Phases 9–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | This handoff | **COMPLETED** | Written, audited, then updated as phases landed |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p7` are marked `completed`, `p8`–`p17` `pending`. **That file is untracked and local-only (see §3).**
@@ -422,7 +423,7 @@ Two turns of planning, then Phase 1 through Phase 5 code.
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 7 code have landed.** Phases 8–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 8 code have landed.** Phases 9–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -698,7 +699,9 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 ### Phase 8 — Explainability
 
-**Status: PENDING**
+**Status: LANDED** (5 Sep 2026)
+
+**Shipped.** `condense explain` (text / `--format json`) with `executeTraced`, `LineDiff` identities (`sum(dropped - added) == raw - filtered`), `NamedStage` aliases, `resolveDecision` tier + skip reasons, `--input` / `--stdin`, D21 `gain --top 10`. Native proof is `NativeExplainIT`. Spec: [docs/explain.md](docs/explain.md).
 
 **Goal.** `condense explain <command>` showing stage-by-stage line and token accounting, exactly which lines each stage dropped, and which precedence tier supplied the pipeline.
 
@@ -967,9 +970,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 7 code landed 4 Sep 2026. Analytics DBs migrate to `user_version` 1 with WAL and retention; `condense doctor` explains empty gain. JVM proof is `mvn test` (Surefire excludes `*IT.java`). Native proof is the next green `NativePersistenceIT` in `build.yml` — this Windows workspace does not build native images.
+**Where we are.** Phase 8 code landed 5 Sep 2026. `condense explain` accounts stages and names the winning pipeline tier. JVM proof is `mvn test`. Native proof is the next green `NativeExplainIT` in `build.yml` — this Windows workspace does not build native images.
 
-**Do not start Phase 8 code.** Present a complete Phase 8 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 9 code.** Present a complete Phase 9 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -990,8 +993,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 7 code has landed. Confirm `NativePersistenceIT` appears in native job logs and that `FidelityCorpusTest` still prints a 51-row table.
-9. **Do not start Phase 8 code.** Present a complete Phase 8 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 8 code has landed. Confirm `NativeExplainIT` appears in native job logs and that `ExplainAccountingTest` still prints a 51-row table.
+9. **Do not start Phase 9 code.** Present a complete Phase 9 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

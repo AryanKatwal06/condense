@@ -226,6 +226,16 @@ Other flags include `--daily`, `--weekly`, `--top 10`, `--scope project`, `--sin
 
 If `gain` is empty, run `condense doctor` (or `condense doctor --format json`). It names why tracking is empty without changing any proxied command.
 
+## condense explain
+
+`condense explain` shows which pipeline stages ran, which lines each stage dropped or added, and which precedence tier supplied the pipeline. Token counts are the same `utf8_weighted_v1` estimates as `gain`. Options must come before the command.
+
+```
+$ condense explain --format json --input fixture.txt --exit-code 1 pytest
+```
+
+See [docs/explain.md](docs/explain.md). Explain does not write analytics rows.
+
 ---
 
 ## Configuration

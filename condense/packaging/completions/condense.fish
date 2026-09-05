@@ -12,6 +12,7 @@ complete -c condense -l help               -d 'Show help'
 # Subcommands
 complete -c condense -n '__fish_use_subcommand' -a gain   -d 'Show token savings analytics'
 complete -c condense -n '__fish_use_subcommand' -a doctor -d 'Diagnose persistence and empty analytics'
+complete -c condense -n '__fish_use_subcommand' -a explain -d 'Show which filter stages dropped which lines'
 complete -c condense -n '__fish_use_subcommand' -a init   -d 'Install AI tool hooks'
 complete -c condense -n '__fish_use_subcommand' -a config -d 'Read and write configuration'
 
@@ -32,6 +33,12 @@ complete -c condense -n '__fish_seen_subcommand_from gain' -l all     -d 'All-ti
 complete -c condense -n '__fish_seen_subcommand_from gain' -l format  -d 'Output format' -r -a 'text json'
 
 complete -c condense -n '__fish_seen_subcommand_from doctor' -l format -d 'Output format' -r -a 'text json'
+
+complete -c condense -n '__fish_seen_subcommand_from explain' -l format -d 'Output format' -r -a 'text json'
+complete -c condense -n '__fish_seen_subcommand_from explain' -l input -d 'Use captured stdout file' -r
+complete -c condense -n '__fish_seen_subcommand_from explain' -l stdin -d 'Read captured stdout from stdin'
+complete -c condense -n '__fish_seen_subcommand_from explain' -l exit-code -d 'Exit code for --input or --stdin' -r
+complete -c condense -n '__fish_seen_subcommand_from explain' -l dropped-limit -d 'Dropped line sample cap' -r
 
 # init options
 complete -c condense -n '__fish_seen_subcommand_from init' -s g -l global  -d 'Install all hooks'

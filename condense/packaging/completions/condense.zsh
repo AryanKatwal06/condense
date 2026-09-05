@@ -7,6 +7,7 @@ _condense() {
   commands=(
     'gain:Show token savings analytics'
     'doctor:Diagnose persistence and empty analytics'
+    'explain:Show which filter stages dropped which lines'
     'init:Install AI tool hooks'
     'config:Read and write configuration'
   )
@@ -59,6 +60,14 @@ _condense() {
         doctor)
           _arguments \
             '--format=[Output format]:format:(text json)'
+          ;;
+        explain)
+          _arguments \
+            '--format=[Output format]:format:(text json)' \
+            '--input=[Captured stdout file]:file:_files' \
+            '--stdin[Read captured stdout from stdin]' \
+            '--exit-code=[Exit code for --input or --stdin]:N:' \
+            '--dropped-limit=[Dropped line sample cap]:N:'
           ;;
         init)
           _arguments \

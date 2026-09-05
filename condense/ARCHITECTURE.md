@@ -36,6 +36,7 @@ condense --version / --help
 | `TrackingRepository.java` | `com.condense.core` | Lazy SQLite via direct JDBC; migrates `user_version`, WAL, retention, filter outcomes |
 | `SchemaMigrator.java` | `com.condense.persist` | Forward-only `PRAGMA user_version` migrations |
 | `DoctorCommand.java` | `com.condense.doctor` | `condense doctor` — empty-gain diagnosis, text and JSON |
+| `ExplainCommand.java` | `com.condense.explain` | `condense explain` — per-stage line and token accounting |
 | `TokenCounter.java` | `com.condense.core` | Static facade over `Utf8WeightedTokenEstimator` |
 | `Utf8WeightedTokenEstimator.java` | `com.condense.core` | Code-point token estimate; UTF-8 file path; published p95 vs cl100k_base |
 

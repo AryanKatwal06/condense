@@ -7,12 +7,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Fixed
+- `condense gain --top` and `condense gain --top 10` now render the top-N table. The old `if (top != 10)` branch treated the default value as “flag absent,” so the documented `--top 10` example showed the summary panel instead.
 - `condense doctor` is `@Unremovable` so Quarkus no longer strips the Picocli bean from the native image. Without that, `PicocliBeansFactory` failed with a CDI unused-bean error and `NativePersistenceIT` exited 1 on every platform.
 - `condense doctor --format json` no longer exits 1 in the native binary. The report now uses `LinkedHashMap` / `ArrayList` so Jackson can serialize empty maps and warning lists without GraalVM `ImmutableCollections` reflection. `NativePersistenceIT` failed on every CI platform because of this.
 - `condense uninstall --purge` no longer aborts when `{dataDir}/tee/` or `{configDir}/filters.toml` exist. Those are Condense-owned and are removed with the rest of the allowlisted tree.
 - On Windows, `condense` now resolves PATHEXT shims such as `pytest.cmd` / `npm.cmd` before launching the child process. `ProcessBuilder` does not apply PATHEXT, which made `NativeCorpusIT` (and real `condense pytest`) fail with empty stdout.
 
 ### Added / Improved
+- **Explainability.** `condense explain` prints per-stage line and token accounting, dropped/added samples, and the precedence tier that supplied the pipeline (`project` / `global` / `builtin`). JSON includes the same `estimator` object as `gain`. `--input` / `--stdin` explain a fixture without executing. Explain does not write analytics. Native proof is `NativeExplainIT`. See [docs/explain.md](docs/explain.md).
 - **Persistence reliability.** Existing analytics databases are migrated with `PRAGMA user_version` (target 1). Every open enables WAL and `busy_timeout=5000`, prunes `commands`, `filter_outcomes`, and tee files older than 90 days, and records filter fail-open events. `condense doctor` (text and `--format json`) names why `gain` is empty. Native proof is `NativePersistenceIT` migrating a runtime-created v0 file inside the binary. See [docs/persistence.md](docs/persistence.md).
 - **Trust boundary and capability model.** Project `.condense/filters.toml` is skipped until `condense config trust` pins its SHA-256 (or a CI hatch that also has a listed CI indicator). `CONDENSE_TRUST_PROJECT_FILTERS` alone — for example from `.envrc` — does not apply project overrides. After trust, the file still cannot use stages above the granted class (`reduce` / `reshape` / `rewrite`); a missing grant skips the whole file. See [docs/trust.md](docs/trust.md).
 - **Output provenance.** Every `FilterResult.of` line starts with `condense[filtered]`. Impersonating lines become `condense[quoted]`. Passthrough is unstamped. The 51-row golden lock was updated for that header; inline TOML `[[tests]]` are unchanged.
