@@ -21,6 +21,12 @@ class ESLintFilterTest extends FilterTestSupport {
             config, 0, false);
         assertThat(r.output()).contains("error(s)");
         assertCompressed(r);
+        assertThat(r.document()).isNotNull();
+        assertThat(r.document().kind()).isEqualTo(com.condense.ir.Document.DocumentKind.DIAGNOSTIC);
+        com.condense.ir.Document.DiagnosticDocument payload =
+            (com.condense.ir.Document.DiagnosticDocument) r.document().document();
+        assertThat(payload.findings()).isNotEmpty();
+        assertThat(payload.findings().get(0).code()).isNotBlank();
     }
 
     @Test

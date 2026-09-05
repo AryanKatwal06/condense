@@ -17,7 +17,34 @@ public final class EsLintTextStage implements FilterStage {
     private static final Pattern RULE_PATTERN =
         Pattern.compile("\\s+\\d+:\\d+\\s+(?:error|warning)\\s+.+?\\s+(\\S+)$");
 
+    private static final Pattern ISSUE_PATTERN =
+        Pattern.compile("^\\s*(\\d+):\\d+\\s+(error|warning)\\s+(.+?)\\s+(\\S+)\\s*$");
+
     private EsLintTextStage() {}
+
+    static List<Document.Finding> findingsFrom(List<String> lines) {
+        List<Document.Finding> findings = new ArrayList<>();
+        String file = "";
+        for (String line : lines) {
+            if (line == null || line.isBlank()) {
+                continue;
+            }
+            var issue = ISSUE_PATTERN.matcher(line);
+            if (issue.matches()) {
+                findings.add(new Document.Finding(
+                    file,
+                    Integer.parseInt(issue.group(1)),
+                    issue.group(4),
+                    issue.group(3).strip(),
+                    issue.group(2)
+                ));
+            } else if (!line.contains("  error  ") && !line.contains("  warning  ")
+                && !line.startsWith("✖") && !line.startsWith("✓")) {
+                file = line.strip();
+            }
+        }
+        return findings;
+    }
 
     @Override
     public StageResult process(String raw, FilterContext ctx) {
@@ -32,7 +59,7 @@ public final class EsLintTextStage implements FilterStage {
             groups.add(new Document.GroupCount(entry.getKey(), entry.getValue()));
         }
         Document.DiagnosticDocument payload = new Document.DiagnosticDocument(
-            List.of(),
+            findingsFrom(lines),
             (int) errors,
             (int) warnings,
             groups,

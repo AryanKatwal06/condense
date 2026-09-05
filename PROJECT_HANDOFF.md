@@ -4,7 +4,7 @@
 **Written:** 4 September 2026. **Revised:** 5 September 2026 (Round 2 audit remediation R13 — handoff truth).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 15. Round 2 remediation (R13–R26) is in progress. Confirm with `git log -1` and origin before starting Phase 16 code.
+**Branch at handoff:** `main` after Phase 15 plus Round 2 remediation (R13–R24, R26). R25 and D29 stay deferred. Confirm with `git log -1` and origin before starting Phase 16 code.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -349,7 +349,7 @@ The next agent will be misled by these if they trust the docs. They are **docume
 | `condense/ARCHITECTURE.md` file table | Still omits per-filter classes | Phase 14 added `StrategyRegistry`, `PrefixIndex`, and `CatalogBackedFilter` rows; the 32 Java filters are not individually listed |
 | Root `README.md` supported-commands table | ~~30 rows; missing aliases~~ **FIXED in Phase 14** | Table lists Java prefixes (including `docker run` / `exec`, `python -c`, `ruff`, `npx eslint`, `npm ci` / `i`, `pip3`, `./mvnw`, `./gradlew`) and the 19 leftover catalog families. `condense read` remains a subcommand, not a proxied prefix |
 | Bare `condense mcp` snippet (`McpCommand`) | ~~Tools are `run`, `explain`, `read`~~ **FIXED in R14** | Snippet lists `run`, `explain`, `read`, `discover`. Missing `id` is `-32600`. |
-| `docs/ir.md` / older handoff §9 Phase 11 | `TextRenderer` is the default CLI | Default CLI prints `FilterResult.output()`. Exemplar stages call `TextRenderer` internally; identity is locked for **7** corpus IDs until **R23**. |
+| `docs/ir.md` / older handoff §9 Phase 11 | `TextRenderer` is the default CLI | Default CLI still prints `FilterResult.output()`. `IrRendererGoldenTest` locks TextRenderer+stamp for every corpus row except `python-c/typical`. |
 | Phase 15 closeout / this file before R13 | Caps are fully asserted in JVM + native | ~~`readAllBytes` then trim; native missed `files_read ≤ 8`~~ **FIXED in R15**. Caps stay 64/8/64KiB/256KiB. Content reads are `readNBytes` of the remaining budget. |
 | Hook `CONDENSE_COMMANDS` in templates | ~~Hardcoded pre-Phase-14 list~~ **FIXED in R19** | Install fills `{{CONDENSE_COMMANDS}}` from registered prefixes. Installed Cursor/Hermes scripts contain leftover tokens (`mypy` / `dotnet`). |
 | `HookIntegrity.verify` / doctor | ~~`ok` without a baseline~~ **FIXED in R18** | `ok` only when a baseline row matches. Null tracking or a missing baseline is `unmanaged`. |
@@ -422,16 +422,16 @@ Planning plus Phase 1 through Phase 15 code, then an independent audit of Phases
 | Phase 8 code | **LANDED** | `condense explain`, `executeTraced`, tier `resolveDecision`, D21 `--top 10`. Native proof is `NativeExplainIT` in run 33973423793. |
 | Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Docs commit `9b6ffd4` had **red** native CI ([run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965)) because `@CommandFilters` prefixes were invisible in the image; `447eeb6` fixed registration. `IncrementalEquivalenceTest` now compares `StreamingProxy.replay` / stamped `execute` to `apply()`. `NativeStreamingIT` times first-line-before-exit on a PATH-stubbed npm. |
 | Phase 10 code | **LANDED** | `condense read`; per-language scanner; original line numbers; builtin `languages/*.toml`; workspace containment; `NativeReadIT`. |
-| Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT`. Default CLI is pipeline text; `TextRenderer` identity is 7 corpus IDs until **R23**. Semantic savings not implemented (**R25** deferred). |
+| Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT` (pytest, npm, eslint, docker ps, git status). Default CLI is pipeline text. TextRenderer identity is corpus-wide except `python-c/typical`. Semantic savings not implemented (**R25** deferred). |
 | Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read` plus Phase 15 `discover`; resources `gain`/`doctor`; `NativeMcpIT`. Bare snippet lists four tools. Missing `id` is `-32600`. |
-| Phase 13 code | **LANDED** | Schema 2 hook audit; backup-before-merge (flat `{dataDir}/backups/`); SHA-256 script baselines; Claude deny-not-rewrite (rewrite+allow forbidden; pass-through `allow` remains); Codex/OpenCode/Kilo/Antigravity/Hermes/Pi; `NativeHookIT` (Cursor, not the six new agents, until **R21**). |
+| Phase 13 code | **LANDED** | Schema 2 hook audit; backup-before-merge (flat `{dataDir}/backups/`); SHA-256 script baselines; Claude deny-not-rewrite (rewrite+allow forbidden; pass-through `allow` remains); Codex/OpenCode/Kilo/Antigravity/Hermes/Pi; `NativeHookIT` covers Cursor and Hermes. |
 | Phase 14 code | **LANDED** | `CatalogBackedFilter` leftover host; 19 data-only families; original 51 goldens unchanged; `NativeCatalogIT`. Existing 31 Java filters not migrated. |
 | Phase 15 code | **LANDED** | `condense discover` + MCP `discover`; classpath `discover/*.toml`; exact contained probes; explicit family priority; `NativeDiscoverIT`. Does not change dispatch. |
 | Phases 16–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (**510 / 0 / 0 / 9** on this Windows JVM at that date; 9 skips were POSIX `CommandExecutorTest`), and CI 33950449575 on `cdd3d43`. |
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
 | Phase 11–15 audit | **COMPLETED** | Re-read of approved plans, tree, local `mvn test` (**594 / 1 / 0 / 10** on this Windows JVM at that date — the 1 was `TrackingConcurrencyTest` / `SQLITE_READONLY`; **R16** makes loss visible instead of requiring 200 rows), and CI [33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (**594 / 0 / 0 / 1** JVM on Linux). |
-| Audit remediation R13–R26 | **IN PROGRESS** | Round 2 hygiene. R25 semantic savings and D29 stay deferred. |
+| Audit remediation R13–R26 | **LANDED** | Round 2 hygiene. **R25** semantic savings and D29 stay deferred. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 (R13) so §4 matches the live tree again. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p15` are marked `completed`, `p16`–`p17` `pending`. **That file is untracked and local-only (see §3).**
@@ -784,7 +784,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Goal.** A canonical typed model — diagnostics, test results, dependency changes, resource listings — plus renderers for compact text and JSON. Makes savings a semantic property rather than a line-count accident, and stops 32 filters being 32 snowflakes.
 
-**Shipped.** Schema-1 `Document` envelope (`kind` closed set). Exemplar stages (pytest, eslint, npm install, docker ps) call `TextRenderer` internally; default CLI still prints `FilterResult.output()`, not `TextRenderer.render(document)`. Identity is locked for **7** corpus IDs until **R23**. `JsonRenderer` is `condense --format json` and `explain --format json` `document`. Unmigrated commands, gates, and IR-build failures are `kind=opaque`. STREAM default text is unchanged; JSON waits for exit. ESLint **text** findings are empty until **R22**. Semantic savings are not implemented (**R25** deferred). Native proof is `NativeIrIT` (pytest / npm install / explain-pytest until **R24**). See `docs/ir.md`.
+**Shipped.** Schema-1 `Document` envelope (`kind` closed set). Exemplar stages (pytest, eslint, npm install, docker ps) call `TextRenderer` internally; default CLI still prints `FilterResult.output()`, not `TextRenderer.render(document)`. `IrRendererGoldenTest` locks TextRenderer+stamp for every corpus row except `python-c/typical`. `JsonRenderer` is `condense --format json` and `explain --format json` `document`. Unmigrated commands, gates, and IR-build failures are `kind=opaque`. STREAM default text is unchanged; JSON waits for exit. ESLint text findings are populated on the document. Semantic savings are not implemented (**R25** deferred). Native proof is `NativeIrIT` (pytest, npm install, eslint, docker ps, git status, explain-pytest). See `docs/ir.md`.
 
 **Why here.** Requires the universal pipeline (4) and the data schema (5) so filters produce structure rather than prose, and Phase 8 to expose it. It is the wire format Phase 12 needs.
 
@@ -818,7 +818,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Status: SHIPPED**
 
-**Shipped.** Stepwise schema 2 (`hook_events`, `hook_baselines`). Backup-before-merge of third-party configs into `{dataDir}/backups/` (flat `{tool}-{epoch}{ext}`, not `backups/hooks/`). SHA-256 baselines of Condense-owned scripts; `--show` / `doctor` integrity. Claude deny-not-rewrite: `NoAutoAllowTest` forbids rewrite+allow only — standalone pass-through `allow` stays. `GENERIC_BASH` still `exec condense` (do not change). Hook `CONDENSE_COMMANDS` is filled at install from registered prefixes. Doctor JSON lists the last 20 `hook_events`. Backup failure leaves the original third-party file. Integrity is `ok` only with a matching baseline. Six new `HookTool` values with isolated-home JVM tests; `NativeHookIT` covers Cursor until **R21**. MCP stays the preferred path.
+**Shipped.** Stepwise schema 2 (`hook_events`, `hook_baselines`). Backup-before-merge of third-party configs into `{dataDir}/backups/` (flat `{tool}-{epoch}{ext}`, not `backups/hooks/`). SHA-256 baselines of Condense-owned scripts; `--show` / `doctor` integrity. Claude deny-not-rewrite: `NoAutoAllowTest` forbids rewrite+allow only — standalone pass-through `allow` stays. `GENERIC_BASH` still `exec condense` (do not change). Hook `CONDENSE_COMMANDS` is filled at install from registered prefixes. Doctor JSON lists the last 20 `hook_events`. Backup failure leaves the original third-party file. Integrity is `ok` only with a matching baseline. Six new `HookTool` values with isolated-home JVM tests; `NativeHookIT` covers Cursor and Hermes (plugin.yaml + `__init__.py`). MCP stays the preferred path.
 
 **Goal.** Make hook installation auditable and tamper-evident, stop editing third-party config files without a backup, adopt a conservative permission policy, and close the agent coverage gap.
 
@@ -1006,9 +1006,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–15 code landed. Round 2 audit remediation **R13 is landing**; R14–R26 are not done. `condense discover` recommends existing filter definition names from exact manifests. It does not apply them. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. This Windows workspace does not build native images. Local Surefire at the Phase 11–15 audit: **594 / 1 / 0 / 10** (R16 owns the concurrency failure). CI on `8ea298b` is green (run 33973423793).
+**Where we are.** Phase 1–15 code landed. Round 2 remediation **R13–R24 and R26 have landed**. **R25** (semantic savings) and D29 stay deferred. `condense discover` recommends existing filter definition names from exact manifests. It does not apply them. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. Lost analytics writes are counted in `{dataDir}/write-failures.json`. This Windows workspace does not build native images. Native proof for this train is the next Actions run after push.
 
-**Do not start Phase 16 code.** Phase 16 *planning* may start after R13. Phase 16 *implementation* waits for R15 + R16. Present a complete Phase 16 plan (constraint #9) and wait for a fresh "proceed". Phase 16 may propose a project `filters.toml` diff from a discover report. It must not apply those proposals silently. Do not implement R25 semantic savings or D29.
+**Do not start Phase 16 code.** R15 and R16 have landed, so Phase 16 *implementation* is no longer blocked by those gates — it still needs its own plan-then-approve cycle. Present a complete Phase 16 plan (constraint #9) and wait for a fresh "proceed". Phase 16 may propose a project `filters.toml` diff from a discover report. It must not apply those proposals silently. Do not implement R25 semantic savings or D29.
 
 ---
 
@@ -1030,7 +1030,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 **Then, and only then**
 
 8. Phase 15 code has landed. Confirm `NativeDiscoverIT` and `NativeCatalogIT` appear in native job logs, `GoldenLockTest` is green, and `condense discover` does not change dispatch.
-9. Finish Round 2 remediation (R14–R26) if still open before planning Phase 16. Do not start Phase 16 code, R25, or D29 from this stop point.
+9. Round 2 R13–R24 and R26 have landed. Do not implement R25 or D29 from this stop point.
 10. **Do not start Phase 16 code.** Present a complete Phase 16 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**

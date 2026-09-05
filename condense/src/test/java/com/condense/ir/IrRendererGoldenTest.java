@@ -17,27 +17,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IrRendererGoldenTest {
 
-    private static final Set<String> EXEMPLARS = Set.of(
-        "pytest/typical",
-        "eslint/typical",
-        "eslint/passing",
-        "eslint-json/typical",
-        "npm-install/typical",
-        "npm-install/with-vulns",
-        "docker-ps/typical"
-    );
+    /**
+     * Identity / router rows that never attach a document. Named, not silent.
+     * {@code python -c} is the PythonFilter identity path.
+     */
+    private static final Set<String> RENDER_EXEMPT = Set.of("python-c/typical");
 
     @Test
     void textRendererPlusStampMatchesApplyOutput() throws Exception {
         for (CorpusCatalog.Entry entry : CorpusCatalog.load().entries()) {
-            if (!EXEMPLARS.contains(entry.id())) {
+            FilterResult applied = CorpusRunner.apply(entry);
+            if (RENDER_EXEMPT.contains(entry.id())) {
                 continue;
             }
-            FilterResult applied = CorpusRunner.apply(entry);
             assertThat(applied.document())
                 .as(entry.id() + " must attach a document")
                 .isNotNull();
-            String rendered = Provenance.stamp(TextRenderer.render(applied.document()));
+            String body = TextRenderer.render(applied.document());
+            String rendered = applied.wasFiltered() ? Provenance.stamp(body) : body;
             assertThat(rendered)
                 .as(entry.id() + " TextRenderer must stay golden-identical")
                 .isEqualTo(applied.output());

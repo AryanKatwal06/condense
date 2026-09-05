@@ -89,6 +89,20 @@ class NativeHookIT {
     }
 
     @Test
+    void hermesInstallWritesPluginAndInit() throws Exception {
+        NativeBinarySupport.CliResult init = run("init", "--tool", "hermes");
+        assertThat(init.exitCode())
+            .as("stdout=%s stderr=%s", init.stdout(), init.stderr())
+            .isZero();
+        Path plugin = fakeHome().resolve(".hermes").resolve("plugins").resolve("condense").resolve("plugin.yaml");
+        Path python = fakeHome().resolve(".hermes").resolve("plugins").resolve("condense").resolve("__init__.py");
+        assertThat(plugin).exists();
+        assertThat(python).exists();
+        assertThat(Files.readString(python)).contains("mypy");
+        assertThat(Files.readString(python)).doesNotContain("{{CONDENSE_COMMANDS}}");
+    }
+
+    @Test
     void tamperedScriptIsReported() throws Exception {
         run("init", "--tool", "cursor");
         Path script = fakeHome().resolve(".cursor").resolve("hooks").resolve("condense-hook.sh");
