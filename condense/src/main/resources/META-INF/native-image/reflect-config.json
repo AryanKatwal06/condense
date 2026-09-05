@@ -423,5 +423,13 @@
   { "name": "com.condense.doctor.DoctorCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.doctor.DoctorReport", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.doctor.DoctorReport$HookStatus", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
-  { "name": "com.condense.doctor.DoctorService", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
+  { "name": "com.condense.doctor.DoctorService", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.explain.ExplainCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.explain.ExplainService", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.explain.ExplainReport", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.explain.ExplainReport$SkippedTier", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.explain.ExplainReport$Gate", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.explain.ExplainReport$Stage", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.explain.ExplainReport$ProvenanceInfo", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.explain.ExplainReport$Incident", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
 ]

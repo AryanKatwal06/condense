@@ -6,8 +6,10 @@ import com.condense.core.FilterResult;
 import com.condense.core.FilterStrategy;
 import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
+import com.condense.filter.pipeline.config.PipelineDecision;
 import org.jboss.logging.Logger;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
@@ -119,6 +121,54 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
             log.warnf("%s error: %s — falling back to passthrough",
                 filterName(), e.getMessage());
             return FilterResult.fallbackPassthrough(result, filterName(), e.getMessage());
+        }
+    }
+
+    /**
+     * Same control flow as {@link #apply} with a per-stage trace. Does not persist.
+     */
+    public final FilterExplainTrace explain(
+            String command,
+            ExecutionResult result,
+            CondenseConfig config,
+            int verbose,
+            boolean ultraCompact,
+            int droppedLimit,
+            Path projectDir
+    ) {
+        String name = filterName();
+        String definition = definitionName();
+        String builtinSource = "classpath:filters/" + definition + ".toml";
+        Path dir = projectDir != null ? projectDir : Path.of(System.getProperty("user.dir", "."));
+        try {
+            FilterResult early = beforePipeline(command, result, config, verbose, ultraCompact);
+            if (early != null) {
+                PipelineDecision decision = overrideLoader.resolveDecision(
+                    command, defaultPipeline, dir, builtinSource);
+                return new FilterExplainTrace(
+                    early, true, "passthrough", "beforePipeline", decision,
+                    null, name, definition, selectInput(command, result, config, verbose, ultraCompact),
+                    false
+                );
+            }
+            String raw = selectInput(command, result, config, verbose, ultraCompact);
+            FilterContext context = FilterContext.of(command, result, config, verbose, ultraCompact);
+            PipelineDecision decision = overrideLoader.resolveDecision(
+                command, defaultPipeline, dir, builtinSource);
+            PipelineTrace trace = decision.pipeline().executeTraced(raw, context, droppedLimit);
+            List<FilterIncident> incidents = context.incidents().stream()
+                .map(incident -> incident.withFilterName(name))
+                .toList();
+            FilterResult filtered = FilterResult.of(result, trace.output(), incidents);
+            return new FilterExplainTrace(
+                filtered, false, null, null, decision, trace, name, definition, raw, false);
+        } catch (Exception e) {
+            log.warnf("%s error: %s — falling back to passthrough", name, e.getMessage());
+            FilterResult fallback = FilterResult.fallbackPassthrough(result, name, e.getMessage());
+            PipelineDecision decision = overrideLoader.resolveDecision(
+                command, defaultPipeline, dir, builtinSource);
+            return new FilterExplainTrace(
+                fallback, false, null, e.getMessage(), decision, null, name, definition, "", true);
         }
     }
 }

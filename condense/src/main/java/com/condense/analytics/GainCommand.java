@@ -55,8 +55,8 @@ public class GainCommand implements Runnable {
 
     @Option(names = "--top",
         description = "Show top N commands by tokens saved. Default: 10.",
-        defaultValue = "10", paramLabel = "N")
-    int top;
+        arity = "0..1", fallbackValue = "10", paramLabel = "N")
+    Integer topFlag;
 
     @Option(names = "--since",
         description = "Restrict to last N days. Default: 30.",
@@ -119,10 +119,9 @@ public class GainCommand implements Runnable {
                 return;
             }
 
-            // --top flag
-            if (top != 10) {
+            if (topFlag != null) {
                 System.out.println(AsciiGraphRenderer.renderTopCommands(
-                    gainRepo.topCommands(top, effectiveSince, scope)));
+                    gainRepo.topCommands(topFlag, effectiveSince, scope)));
                 return;
             }
 
@@ -144,8 +143,16 @@ public class GainCommand implements Runnable {
 
 
 
+    boolean topRequested() {
+        return topFlag != null;
+    }
+
+    int topN() {
+        return topFlag == null ? 10 : topFlag;
+    }
+
     private void renderJson(int effectiveSince) throws Exception {
-        GainReport report = gainRepo.buildReport(scope, effectiveSince, top);
+        GainReport report = gainRepo.buildReport(scope, effectiveSince, topN());
         System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(report));
     }
 }

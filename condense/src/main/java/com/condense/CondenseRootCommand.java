@@ -18,6 +18,7 @@ import java.util.List;
     subcommands = {
         com.condense.analytics.GainCommand.class,
         com.condense.doctor.DoctorCommand.class,
+        com.condense.explain.ExplainCommand.class,
         com.condense.hooks.InitCommand.class,
         com.condense.config.ConfigCommand.class,
         com.condense.CompletionCommand.class,
@@ -46,6 +47,7 @@ import java.util.List;
         "  condense pytest              # Failures + summary line",
         "  condense gain                # Token savings report",
         "  condense doctor              # Why gain is empty",
+        "  condense explain pytest      # Which stages dropped which lines",
         "  condense init -g             # Install AI tool hooks"
     }
 )

@@ -78,12 +78,25 @@ class ReflectConfigDriftTest {
             com.condense.doctor.DoctorCommand.class.getName(),
             com.condense.doctor.DoctorReport.class.getName(),
             com.condense.doctor.DoctorReport.HookStatus.class.getName(),
-            com.condense.doctor.DoctorService.class.getName()
+            com.condense.doctor.DoctorService.class.getName(),
+            com.condense.explain.ExplainCommand.class.getName(),
+            com.condense.explain.ExplainService.class.getName(),
+            com.condense.explain.ExplainReport.class.getName(),
+            com.condense.explain.ExplainReport.SkippedTier.class.getName(),
+            com.condense.explain.ExplainReport.Gate.class.getName(),
+            com.condense.explain.ExplainReport.Stage.class.getName(),
+            com.condense.explain.ExplainReport.ProvenanceInfo.class.getName(),
+            com.condense.explain.ExplainReport.Incident.class.getName()
         );
 
         assertThat(com.condense.doctor.DoctorCommand.class.isAnnotationPresent(
                 io.quarkus.arc.Unremovable.class))
             .as("DoctorCommand is created only via Picocli programmatic lookup; "
+                + "without @Unremovable Quarkus strips it from the native image")
+            .isTrue();
+        assertThat(com.condense.explain.ExplainCommand.class.isAnnotationPresent(
+                io.quarkus.arc.Unremovable.class))
+            .as("ExplainCommand is created only via Picocli programmatic lookup; "
                 + "without @Unremovable Quarkus strips it from the native image")
             .isTrue();
     }

@@ -37,4 +37,14 @@ public class PythonFilter implements FilterStrategy {
         }
         return FilterResult.passthrough(result);
     }
+
+    /**
+     * The filter {@link #apply} would delegate to, or {@code null} for identity passthrough.
+     */
+    public FilterStrategy routedStrategy(String command) {
+        if (command != null && command.contains("pytest")) {
+            return pytestFilter;
+        }
+        return null;
+    }
 }
