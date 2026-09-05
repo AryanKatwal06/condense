@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "drain_stdout_io",
+      "mode": "drain_io",
+      "test": "com.condense.core.CommandExecutorFailOpenTest#drainStdoutFaultKeepsPartialBytesAndChildExit",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "condense: stdout drain failed",
+      "native_it": false
+    },
+    {
+      "id": "drain_stderr_io",
+      "mode": "drain_io",
+      "test": "com.condense.core.CommandExecutorFailOpenTest#drainStderrFaultKeepsPartialBytesAndChildExit",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "condense: stderr drain failed",
+      "native_it": false
+    },
+    {
+      "id": "timeout_stderr_prefix",
+      "mode": "timeout",
+      "test": "com.condense.core.CommandExecutorFailOpenTest#timeoutKeepsPriorStderrAndStdout",
+      "exit_policy": "minus_one",
+      "output_retention": "stderr_not_replaced",
+      "diagnostic": "condense: command timed out after",
+      "native_it": false
+    },
+    {
+      "id": "invalid_utf8_passthrough",
+      "mode": "decode",
+      "test": "com.condense.core.CommandExecutorFailOpenTest#invalidUtf8IsReplacedNotDropped",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "output_cap_stdout",
+      "mode": "output_cap",
+      "test": "com.condense.core.OutputCapAndTimeoutTest#streamAboveTenMegabytesPrintsCapAndKeepsChildExit",
+      "exit_policy": "minus_one",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "condense: output capped at 10MB",
+      "native_it": false
+    },
+    {
+      "id": "output_cap_stderr",
+      "mode": "output_cap",
+      "test": "com.condense.core.OutputCapAndTimeoutTest#stderrAboveTenMegabytesCapsIndependently",
+      "exit_policy": "minus_one",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "condense: output capped at 10MB",
+      "native_it": false
+    },
+    {
+      "id": "line_cap",
+      "mode": "line_cap",
+      "test": "com.condense.core.Utf8LineDecoderBoundTest#oversizedLineEmitsTruncatedWithoutThrowing",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "self_proxy_condense",
+      "mode": "self_proxy",
+      "test": "com.condense.core.SelfProxyGuardTest#literalCondenseIsRefused",
+      "exit_policy": "launch_error",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "refusing to execute",
+      "native_it": false
+    },
+    {
+      "id": "self_proxy_exe",
+      "mode": "self_proxy",
+      "test": "com.condense.core.SelfProxyGuardTest#condenseExeIsRefused",
+      "exit_policy": "launch_error",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "refusing to execute",
+      "native_it": false
+    },
+    {
+      "id": "self_proxy_runner_path",
+      "mode": "self_proxy",
+      "test": "com.condense.core.SelfProxyGuardTest#pathEndingCondenseRunnerIsRefused",
+      "exit_policy": "launch_error",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "refusing to execute",
+      "native_it": false
+    },
+    {
+      "id": "self_proxy_unrelated",
+      "mode": "self_proxy",
+      "test": "com.condense.core.SelfProxyGuardTest#unrelatedGitIsNotBlocked",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "broken_pipe",
+      "mode": "broken_pipe",
+      "test": "com.condense.core.StreamingBrokenPipeTest#brokenConsumerPipeStillReapsChild",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "shutdown_destroy",
+      "mode": "shutdown",
+      "test": "com.condense.core.CommandExecutorShutdownTest#onStopDestroysARunningChild",
+      "exit_policy": "minus_one",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "shutdown_grandchild",
+      "mode": "shutdown",
+      "test": "com.condense.core.CommandExecutorShutdownTest#onStopDestroysPosixGrandchild",
+      "exit_policy": "minus_one",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "native_timeout_stderr",
+      "mode": "timeout",
+      "test": "com.condense.nativeimage.NativeReliabilityIT#timeoutKeepsPriorStderr",
+      "exit_policy": "minus_one",
+      "output_retention": "stderr_not_replaced",
+      "diagnostic": "condense: command timed out after",
+      "native_it": true
+    },
+    {
+      "id": "native_cap_banner",
+      "mode": "output_cap",
+      "test": "com.condense.nativeimage.NativeReliabilityIT#outputCapPrintsBanner",
+      "exit_policy": "minus_one",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "condense: output capped at 10MB",
+      "native_it": true
+    },
+    {
+      "id": "native_exit_passthrough",
+      "mode": "exit_passthrough",
+      "test": "com.condense.nativeimage.NativeReliabilityIT#proxiedExitSevenStaysSeven",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": true
+    }
+  ]
+}
