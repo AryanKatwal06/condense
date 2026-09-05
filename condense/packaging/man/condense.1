@@ -37,6 +37,12 @@ Increase verbosity. \fB\-v\fR shows normal summary with more detail,
 .BR \-u ", " \-\-ultra\-compact
 Maximum compression: single\-line ASCII icon output.
 .TP
+.BR \-\-format " " \fIFORMAT\fR
+Output format for a proxied command: \fBtext\fR (default) or \fBjson\fR.
+Must come before the proxied command
+(\fBcondense \-\-format json pytest\fR).
+JSON waits until the child exits and prints one schema\-1 document.
+.TP
 .BR \-\-version
 Print version information and exit.
 .TP

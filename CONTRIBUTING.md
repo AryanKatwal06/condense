@@ -85,6 +85,7 @@ Do **not** override `buildPipeline()`. It is final on `PipelineBackedFilter` and
 - Keep the class stateless — one instance is reused for all invocations. Per-run state belongs on `StageSession`, not the stage bean.
 - Streamability is declared in Java (`FilterStage.streamability()`), never in TOML. A pipeline streams only when every stage is `order_local` or `windowed`. See [docs/streaming.md](docs/streaming.md).
 - Add a catalog row and a `corpus/golden/{id}.txt` lock. `GoldenLockTest` fails on a silent output change.
+- New command summaries should populate a `DocumentBuilder` on `FilterContext` and emit `TextRenderer.render(...)` so text and JSON stay one model. See [docs/ir.md](docs/ir.md). Do not add a TOML `output` / `format` / `json` key (`format` is a `regex_capture` template param only).
 
 ### 2. Write the builtin definition and list it in the index
 

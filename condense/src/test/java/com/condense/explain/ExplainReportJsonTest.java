@@ -37,7 +37,8 @@ class ExplainReportJsonTest {
             new ArrayList<>(),
             0,
             true,
-            "capture"
+            "capture",
+            null
         );
         assertThat(report.skippedTiers()).isInstanceOf(ArrayList.class);
         assertThat(report.stages()).isInstanceOf(ArrayList.class);

@@ -6,6 +6,7 @@ complete -c condense -f
 # Global options
 complete -c condense -s v -l verbose       -d 'Increase verbosity'
 complete -c condense -s u -l ultra-compact -d 'Maximum compression mode'
+complete -c condense -l format             -d 'Output format' -r -a 'text json'
 complete -c condense -l version            -d 'Show version'
 complete -c condense -l help               -d 'Show help'
 

@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 5 September 2026 (audit remediation R0 — handoff truth).
+**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 11 IR closeout).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 10. Confirm with `git log -1` and origin before starting Phase 11.
+**Branch at handoff:** `main` after Phase 11. Confirm with `git log -1` and origin before starting Phase 12.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -327,7 +327,7 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D22 | ~~No explainability — nothing shows which stage dropped which lines~~ **FIXED** | `condense explain` | Phase 8 |
 | D23 | ~~Filtering is capture-only; nothing is emitted until the child exits~~ **FIXED** | Derived STREAM/CAPTURE + `StreamingProxy` live print | Phase 9 |
 | D24 | ~~No token-optimized source-file reading capability at all~~ **FIXED** | `condense read` + language catalog + `NativeReadIT` | Phase 10 |
-| D25 | No structured output IR; each filter emits ad-hoc text | by inspection | Phase 11 |
+| D25 | ~~No structured output IR; each filter emits ad-hoc text~~ **FIXED** | schema-1 `Document` + text/JSON renderers; unmigrated commands are `opaque` | Phase 11 |
 | D26 | `condense mcp` is a stub | `commands/McpCommand.java` | Phase 12 |
 | D27 | No hook integrity/tamper verification, and **no backup before editing third-party configs** | `hooks/HookInstaller.java` | Phase 13 |
 | D28 | Agent coverage is a strict subset of Zap's, plus a generic-bash fallback | `hooks/HookTool.java` | Phase 13 |
@@ -415,18 +415,19 @@ Planning plus Phase 1 through Phase 10 code, then an independent audit of those 
 | Phase 8 code | **LANDED** | `condense explain`, `executeTraced`, tier `resolveDecision`, D21 `--top 10`. Native proof is `NativeExplainIT` in run 33950449575. |
 | Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Docs commit `9b6ffd4` had **red** native CI ([run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965)) because `@CommandFilters` prefixes were invisible in the image; `447eeb6` fixed registration. `IncrementalEquivalenceTest` now compares `StreamingProxy.replay` / stamped `execute` to `apply()`. `NativeStreamingIT` times first-line-before-exit on a PATH-stubbed npm. |
 | Phase 10 code | **LANDED** | `condense read`; per-language scanner; original line numbers; builtin `languages/*.toml`; workspace containment; `NativeReadIT`. |
-| Phases 11–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT`. |
+| Phases 12–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (510 / 0 / 0 / 9 on this Windows JVM; 9 skips are POSIX `CommandExecutorTest`), and CI 33950449575. |
-| Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. Phase 11 *planning* may start. Phase 11 *code* still needs a complete plan and a fresh proceed. |
+| Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 so §4 matches the live tree. |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p10` are marked `completed`, `p11`–`p17` `pending`. Remediation is in progress and is not a new numbered phase. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p11` are marked `completed`, `p12`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 10 code have landed.** Phases 11–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 11 code have landed.** Phases 12–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -766,9 +767,11 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 ### Phase 11 — Structured diagnostics IR and renderers
 
-**Status: PENDING**
+**Status: LANDED**
 
 **Goal.** A canonical typed model — diagnostics, test results, dependency changes, resource listings — plus renderers for compact text and JSON. Makes savings a semantic property rather than a line-count accident, and stops 32 filters being 32 snowflakes.
+
+**Shipped.** Schema-1 `Document` envelope (`kind` closed set). `TextRenderer` is default CLI and golden-identical for pytest, eslint, npm install, and docker ps. `JsonRenderer` is `condense --format json` and `explain --format json` `document`. Unmigrated commands, gates, and IR-build failures are `kind=opaque`. STREAM default text is unchanged; JSON waits for exit. Native proof is `NativeIrIT`. See `docs/ir.md`.
 
 **Why here.** Requires the universal pipeline (4) and the data schema (5) so filters produce structure rather than prose, and Phase 8 to expose it. It is the wire format Phase 12 needs.
 
@@ -776,7 +779,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Deliberately better than Zap.** Zap has `parser/types.rs` with `TestResult`, `TestFailure`, `DependencyState`, and `Dependency` — the right instinct, but essentially unused; its filters emit ad-hoc text. Condense making the IR the actual contract is the leapfrog.
 
-**Native.** Jackson is already present; use records with explicit registration, no reflective discovery.
+**Native.** Jackson is already present; records with explicit registration, no reflective discovery.
 
 ---
 
@@ -981,9 +984,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–10 code landed. Audit remediation R0–R12 landed 5 Sep 2026 (hygiene, not a new numbered phase). `condense read` scans source files with a real per-language scanner and original line numbers. Native proof for the pre-remediation tree is [run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575). This Windows workspace does not build native images.
+**Where we are.** Phase 1–11 code landed. Audit remediation R0–R12 landed 5 Sep 2026 (hygiene, not a new numbered phase). Filtered runs attach a schema-1 `Document`; default CLI stays compact text. This Windows workspace does not build native images.
 
-**Do not start Phase 11 code.** Present a complete Phase 11 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 12 code.** Present a complete Phase 12 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -1004,8 +1007,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 10 code and audit remediation R0–R12 have landed. Confirm `NativeReadIT` and `NativeStreamingIT` appear in native job logs, `GoldenLockTest` is green, and `condense read --help` exists.
-9. **Do not start Phase 11 code.** Present a complete Phase 11 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 11 code has landed. Confirm `NativeIrIT` appears in native job logs, `GoldenLockTest` is green, and `condense --format json --help` exists.
+9. **Do not start Phase 12 code.** Present a complete Phase 12 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

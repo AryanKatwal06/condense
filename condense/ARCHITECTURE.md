@@ -27,7 +27,7 @@ condense --version / --help
 | File | Package | Responsibility |
 |------|---------|---------------|
 | `CondenseMain.java` | `com.condense` | Quarkus entry point; wires picocli `CommandLine` with CDI factory |
-| `CondenseRootCommand.java` | `com.condense` | Root `@Command`; handles `--help`, `--version`, `-v`, `-u` |
+| `CondenseRootCommand.java` | `com.condense` | Root `@Command`; handles `--help`, `--version`, `-v`, `-u`, `--format` |
 | `VersionProvider.java` | `com.condense` | Reads version from `version.properties`; implements `IVersionProvider` |
 | `PlatformDirs.java` | `com.condense.core` | OS-specific path resolution, overridable via `CONDENSE_CONFIG_DIR` / `CONDENSE_DATA_DIR` |
 | `CondenseConfig.java` | `com.condense.core` | Root config record with `HooksConfig` and `TeeConfig` nested records |
@@ -42,6 +42,9 @@ condense --version / --help
 | `Utf8LineDecoder.java` | `com.condense.core` | Incremental UTF-8 line breaks across drain chunks |
 | `TokenCounter.java` | `com.condense.core` | Static facade over `Utf8WeightedTokenEstimator` |
 | `Utf8WeightedTokenEstimator.java` | `com.condense.core` | Code-point token estimate; UTF-8 file path; published p95 vs cl100k_base |
+| `Document.java` | `com.condense.ir` | Schema-1 diagnostics envelope and kind-specific payloads |
+| `DocumentBuilder.java` | `com.condense.ir` | Mutable sidecar on `FilterContext` for exemplar stages |
+| `TextRenderer.java` / `JsonRenderer.java` | `com.condense.ir` | Compact-text (default) and schema-1 JSON renderers |
 
 ## Key Design Decisions
 
@@ -66,6 +69,8 @@ condense --version / --help
 10. **Trust and provenance**: Project overrides are skipped until `condense config trust` (or a CI hatch that also has a listed CI indicator). `FilterResult.of` stamps `condense[filtered]`; impersonating lines become `condense[quoted]`. See `docs/trust.md`.
 
 11. **Derived streaming**: Each `FilterStage` declares `streamability()`. The pipeline is STREAM only when every stage is `order_local` or `windowed`; otherwise CAPTURE. `CondenseRootCommand` live-prints STREAM and unmatched passthrough (`LIVE_RAW`) through `StreamingProxy`. Capture-to-disk remains the tee/token/fail-open backstop. See `docs/streaming.md`.
+
+12. **Structured diagnostics IR**: Exemplar stages populate a `DocumentBuilder` sidecar on `FilterContext`. `TextRenderer` is the default CLI; `JsonRenderer` emits schema 1. Everyone else, gates, and IR-build failures wrap existing text as `kind=opaque`. `--format json` waits for the child to exit. See `docs/ir.md`.
 
 ## Technology Stack
 

@@ -34,6 +34,7 @@ _condense() {
   _arguments \
     '(-v --verbose)'{-v,--verbose}'[Increase verbosity]' \
     '(-u --ultra-compact)'{-u,--ultra-compact}'[Maximum compression mode]' \
+    '--format=[Output format]:format:(text json)' \
     '--version[Show version]' \
     '--help[Show help]' \
     '1: :->cmd' \

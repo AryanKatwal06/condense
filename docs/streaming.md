@@ -14,6 +14,8 @@ An override that swaps a streamable summary for `grouping` becomes CAPTURE autom
 
 `npm install` / `npm ci` / `npm i` and `docker build` are the first STREAM builtins. They emit irrevocable progress (`npm warn` / `#N DONE`) as it arrives, then the existing one-line success summary at exit. Failure with no irrevocable signal still passthroughs.
 
+`condense --format json` does **not** live-print. STREAM pipelines still build the document while the child runs; JSON waits until exit and prints one object. Default text streaming is unchanged. See [docs/ir.md](ir.md).
+
 ## Timeouts and the 10 MB cap
 
 The proxy waits until the child exits unless `CONDENSE_COMMAND_TIMEOUT_SEC` is a positive integer. Live `condense explain` (no `--input` / `--stdin`) uses the same `resolveProxyTimeout()` as the proxy. `CommandExecutor.execute(args)` without a duration still defaults to 60 seconds for tests.

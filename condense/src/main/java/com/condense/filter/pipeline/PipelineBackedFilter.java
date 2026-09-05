@@ -7,6 +7,8 @@ import com.condense.core.FilterStrategy;
 import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import com.condense.filter.pipeline.config.PipelineDecision;
+import com.condense.ir.Document;
+import com.condense.ir.Documents;
 import org.jboss.logging.Logger;
 
 import java.nio.file.Path;
@@ -132,21 +134,26 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
         try {
             FilterResult early = beforePipeline(command, result, config, verbose, ultraCompact);
             if (early != null) {
-                return early;
+                return attachOpaque(early, command, result);
             }
             String raw = selectInput(command, result, config, verbose, ultraCompact);
             FilterContext context = FilterContext.of(command, result, config, verbose, ultraCompact);
             FilterPipeline active = overrideLoader.resolvePipeline(command, defaultPipeline);
             String filtered = active.execute(raw, context);
+            Document document = Documents.fromContext(
+                context, command, filterName(), result, true, filtered);
             String filterName = filterName();
             List<FilterIncident> incidents = context.incidents().stream()
                 .map(incident -> incident.withFilterName(filterName))
                 .toList();
-            return FilterResult.of(result, filtered, incidents);
+            return FilterResult.of(result, filtered, incidents).withDocument(document);
         } catch (Exception e) {
             log.warnf("%s error: %s — falling back to passthrough",
                 filterName(), e.getMessage());
-            return FilterResult.fallbackPassthrough(result, filterName(), e.getMessage());
+            return attachOpaque(
+                FilterResult.fallbackPassthrough(result, filterName(), e.getMessage()),
+                command,
+                result);
         }
     }
 
@@ -172,7 +179,7 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
                 PipelineDecision decision = overrideLoader.resolveDecision(
                     command, defaultPipeline, dir, builtinSource);
                 return new FilterExplainTrace(
-                    early, true, "passthrough", "beforePipeline", decision,
+                    attachOpaque(early, command, result), true, "passthrough", "beforePipeline", decision,
                     null, name, definition, selectInput(command, result, config, verbose, ultraCompact),
                     false
                 );
@@ -182,19 +189,26 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
             PipelineDecision decision = overrideLoader.resolveDecision(
                 command, defaultPipeline, dir, builtinSource);
             PipelineTrace trace = decision.pipeline().executeTraced(raw, context, droppedLimit);
+            Document document = Documents.fromContext(
+                context, command, name, result, true, trace.output());
             List<FilterIncident> incidents = context.incidents().stream()
                 .map(incident -> incident.withFilterName(name))
                 .toList();
-            FilterResult filtered = FilterResult.of(result, trace.output(), incidents);
+            FilterResult filtered = FilterResult.of(result, trace.output(), incidents).withDocument(document);
             return new FilterExplainTrace(
                 filtered, false, null, null, decision, trace, name, definition, raw, false);
         } catch (Exception e) {
             log.warnf("%s error: %s — falling back to passthrough", name, e.getMessage());
-            FilterResult fallback = FilterResult.fallbackPassthrough(result, name, e.getMessage());
+            FilterResult fallback = attachOpaque(
+                FilterResult.fallbackPassthrough(result, name, e.getMessage()), command, result);
             PipelineDecision decision = overrideLoader.resolveDecision(
                 command, defaultPipeline, dir, builtinSource);
             return new FilterExplainTrace(
                 fallback, false, null, e.getMessage(), decision, null, name, definition, "", true);
         }
+    }
+
+    private FilterResult attachOpaque(FilterResult result, String command, ExecutionResult execution) {
+        return result.withDocument(Documents.fromResult(command, filterName(), execution, result));
     }
 }

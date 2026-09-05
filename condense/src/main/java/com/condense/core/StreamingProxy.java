@@ -8,11 +8,14 @@ import com.condense.filter.pipeline.LineDiff;
 import com.condense.filter.pipeline.PipelineBackedFilter;
 import com.condense.filter.pipeline.PipelineMode;
 import com.condense.filter.pipeline.StageSession;
+import com.condense.ir.Document;
+import com.condense.ir.Documents;
 import com.condense.trust.Provenance;
 import org.jboss.logging.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -50,14 +53,33 @@ public final class StreamingProxy {
             PrintStream out,
             PrintStream err
     ) throws IOException, InterruptedException {
+        return run(executor, strategy, args, command, config, verbose, ultraCompact, out, err, false);
+    }
+
+    public static StreamedRun run(
+            CommandExecutor executor,
+            FilterStrategy strategy,
+            List<String> args,
+            String command,
+            CondenseConfig config,
+            int verbose,
+            boolean ultraCompact,
+            PrintStream out,
+            PrintStream err,
+            boolean suppressLivePrint
+    ) throws IOException, InterruptedException {
         if (strategy instanceof PassthroughStrategy) {
-            return runRaw(executor, args, out, err);
+            return runRaw(executor, args, command, out, err, suppressLivePrint);
         }
         if (!(strategy instanceof PipelineBackedFilter pipelineFilter)) {
             throw new IllegalStateException("StreamingProxy received a non-pipeline filter");
         }
+        String filterName = strategy.getClass().getSimpleName();
         FilterPipeline pipeline = pipelineFilter.resolveActivePipeline(command);
-        LiveSession live = new LiveSession(pipeline, command, config, verbose, ultraCompact, out);
+        PrintStream liveOut = suppressLivePrint
+            ? new PrintStream(OutputStream.nullOutputStream(), true, StandardCharsets.UTF_8)
+            : out;
+        LiveSession live = new LiveSession(pipeline, command, config, verbose, ultraCompact, liveOut);
         ExecutionResult result = executor.execute(args, CommandExecutor.resolveProxyTimeout(), live);
         live.finishDecoders();
         if (live.capped) {
@@ -65,24 +87,28 @@ public final class StreamingProxy {
         }
         FilterResult gate = pipelineFilter.evaluateGate(command, result, config, verbose, ultraCompact);
         if (gate != null && !live.emittedAny) {
-            out.print(gate.output());
-            if (!gate.output().endsWith("\n")) {
-                out.println();
+            FilterResult gated = gate.withDocument(Documents.fromResult(command, filterName, result, gate));
+            if (!suppressLivePrint) {
+                out.print(gated.output());
+                if (!gated.output().endsWith("\n")) {
+                    out.println();
+                }
             }
-            return new StreamedRun(gate, result, true);
+            return new StreamedRun(gated, result, !suppressLivePrint);
         }
         FilterContext finalCtx = FilterContext.of(command, result, config, verbose, ultraCompact);
         live.endOfInput(finalCtx);
         String body = live.collected();
+        Document document = Documents.fromContext(finalCtx, command, filterName, result, true, body);
         List<com.condense.filter.pipeline.FilterIncident> incidents = finalCtx.incidents().stream()
-            .map(incident -> incident.withFilterName(strategy.getClass().getSimpleName()))
+            .map(incident -> incident.withFilterName(filterName))
             .toList();
         String stamped = live.stamped
             ? Provenance.STAMP + (body.isEmpty() ? "" : "\n" + body)
             : Provenance.stamp(body);
         FilterResult filtered = new FilterResult(
-            stamped, tokenCount(result), TokenCounter.count(stamped), true, incidents);
-        return new StreamedRun(filtered, result, live.emittedAny || live.stamped);
+            stamped, tokenCount(result), TokenCounter.count(stamped), true, incidents, document);
+        return new StreamedRun(filtered, result, suppressLivePrint ? false : (live.emittedAny || live.stamped));
     }
 
     /**
@@ -115,16 +141,23 @@ public final class StreamingProxy {
     private static StreamedRun runRaw(
             CommandExecutor executor,
             List<String> args,
+            String command,
             PrintStream out,
-            PrintStream err
+            PrintStream err,
+            boolean suppressLivePrint
     ) throws IOException, InterruptedException {
-        RawSession raw = new RawSession(out);
+        PrintStream liveOut = suppressLivePrint
+            ? new PrintStream(OutputStream.nullOutputStream(), true, StandardCharsets.UTF_8)
+            : out;
+        RawSession raw = new RawSession(liveOut);
         ExecutionResult result = executor.execute(args, CommandExecutor.resolveProxyTimeout(), raw);
         raw.finish();
         if (raw.capped) {
             err.println("condense: output capped at 10MB");
         }
-        return new StreamedRun(FilterResult.passthrough(result), result, true);
+        FilterResult passthrough = FilterResult.passthrough(result)
+            .withDocument(Documents.fromResult(command, "passthrough", result, FilterResult.passthrough(result)));
+        return new StreamedRun(passthrough, result, !suppressLivePrint);
     }
 
     private static int tokenCount(ExecutionResult result) {

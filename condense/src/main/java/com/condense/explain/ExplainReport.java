@@ -1,6 +1,7 @@
 package com.condense.explain;
 
 import com.condense.analytics.EstimatorInfo;
+import com.condense.ir.Document;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
@@ -41,7 +42,8 @@ public record ExplainReport(
     @JsonProperty("incidents") List<Incident> incidents,
     @JsonProperty("child_exit_code") int childExitCode,
     @JsonProperty("ok") boolean ok,
-    @JsonProperty("pipeline_mode") String pipelineMode
+    @JsonProperty("pipeline_mode") String pipelineMode,
+    @JsonProperty("document") Document document
 ) {
     public ExplainReport {
         skippedTiers = copy(skippedTiers);
@@ -54,6 +56,10 @@ public record ExplainReport(
         estimator = estimator == null ? EstimatorInfo.current() : estimator;
         provenance = provenance == null ? new ProvenanceInfo(false, null) : provenance;
         pipelineMode = pipelineMode == null || pipelineMode.isBlank() ? "capture" : pipelineMode;
+        document = document == null
+            ? com.condense.ir.Document.opaque(
+                command, filter, childExitCode, wasFiltered, provenance, filteredOutput)
+            : document;
     }
 
     private static <T> List<T> copy(List<T> values) {

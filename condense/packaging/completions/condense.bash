@@ -15,7 +15,7 @@ _condense_completion() {
   local proxy_commands="git cargo pytest go npm npx docker kubectl aws ls grep rg find cat make mvn gradle vitest jest eslint tsc ruff pip golangci-lint"
 
   # Top-level options
-  local global_opts="-v --verbose -u --ultra-compact --version --help"
+  local global_opts="-v --verbose -u --ultra-compact --format --version --help"
 
   case "$prev" in
     condense)

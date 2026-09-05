@@ -155,6 +155,19 @@ AI agents increasingly ship with their own context-saving mechanisms. Condense i
 
 ---
 
+## Structured JSON
+
+Default proxy output is compact text. Pass `--format json` **before** the proxied command to print one schema-1 diagnostics document after the child exits. Unmigrated commands use `kind=opaque` rather than omitting a document. `condense explain --format json` embeds the same records.
+
+```
+condense --format json pytest
+condense --format json npm install
+```
+
+JSON does not live-print fragments, even for STREAM commands such as `npm install`. See [docs/ir.md](docs/ir.md).
+
+---
+
 ## Ultra-Compact Mode
 
 If your AI is struggling with context limits, you can enable ultra-compact mode. This trades human readability for maximum token efficiency.

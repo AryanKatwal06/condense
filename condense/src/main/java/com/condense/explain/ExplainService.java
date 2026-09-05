@@ -18,6 +18,8 @@ import com.condense.filter.pipeline.StageTrace;
 import com.condense.filter.pipeline.Streamability;
 import com.condense.filter.pipeline.config.PipelineDecision;
 import com.condense.filter.python.PythonFilter;
+import com.condense.ir.Document;
+import com.condense.ir.Documents;
 import com.condense.trust.Provenance;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -227,7 +229,8 @@ public class ExplainService {
             incidents,
             result.exitCode(),
             !trace.applyFallback(),
-            pipelineMode(trace)
+            pipelineMode(trace),
+            documentOf(command, trace.filterName(), result, filtered)
         );
     }
 
@@ -267,8 +270,18 @@ public class ExplainService {
             new ArrayList<>(),
             result.exitCode(),
             true,
-            "live_raw"
+            "live_raw",
+            documentOf(command, filterName, result, filtered)
         );
+    }
+
+    private static Document documentOf(
+            String command,
+            String filterName,
+            ExecutionResult result,
+            FilterResult filtered
+    ) {
+        return Documents.fromResult(command, filterName, result, filtered);
     }
 
     private static String pipelineMode(FilterExplainTrace trace) {

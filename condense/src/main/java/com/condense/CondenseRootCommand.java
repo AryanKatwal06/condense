@@ -15,6 +15,8 @@ import com.condense.core.StrategyRegistry;
 import com.condense.core.StreamingProxy;
 import com.condense.core.TeeWriter;
 import com.condense.core.TrackingRepository;
+import com.condense.ir.Documents;
+import com.condense.ir.JsonRenderer;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Parameters;
 import java.nio.file.Path;
@@ -56,6 +58,7 @@ import java.util.List;
         "  condense git status          # Filtered git status",
         "  condense cargo test          # Test failures only",
         "  condense pytest              # Failures + summary line",
+        "  condense --format json pytest  # Schema-1 diagnostics document",
         "  condense gain                # Token savings report",
         "  condense doctor              # Why gain is empty",
         "  condense explain pytest      # Which stages dropped which lines",
@@ -101,6 +104,14 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
     )
     boolean ultraCompact;
 
+    @Option(
+        names = "--format",
+        description = "Output format: 'text' (default) or 'json'. Options must come before the proxied command.",
+        defaultValue = "text",
+        paramLabel = "FORMAT"
+    )
+    String format;
+
     @picocli.CommandLine.Unmatched
     List<String> remainder;
 
@@ -119,13 +130,14 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
 
             FilterStrategy strategy = registry.lookup(argList.toArray(new String[0]));
             CondenseConfig config = configLoader.load();
+            boolean json = "json".equalsIgnoreCase(format);
             ExecutionResult result;
             FilterResult filtered;
             boolean alreadyPrinted = false;
             if (StreamingProxy.shouldStream(strategy, commandStr)) {
                 StreamingProxy.StreamedRun streamed = StreamingProxy.run(
                     executor, strategy, argList, commandStr, config,
-                    verbosityLevel(), ultraCompact, System.out, System.err);
+                    verbosityLevel(), ultraCompact, System.out, System.err, json);
                 result = streamed.result();
                 filtered = streamed.filtered();
                 alreadyPrinted = streamed.alreadyPrinted();
@@ -137,7 +149,19 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
 
             Path teePath = teeWriter.maybeDump(commandStr, result);
 
-            if (!alreadyPrinted) {
+            if (filtered.document() == null) {
+                filtered = filtered.withDocument(Documents.fromResult(
+                    commandStr, strategy.getClass().getSimpleName(), result, filtered));
+            }
+
+            if (json) {
+                String jsonText = JsonRenderer.render(filtered.document());
+                System.out.print(jsonText);
+                if (!jsonText.endsWith("\n")) {
+                    System.out.println();
+                }
+                filtered = filtered.withRenderedOutput(jsonText);
+            } else if (!alreadyPrinted) {
                 System.out.print(filtered.output());
                 if (!filtered.output().endsWith("\n")) System.out.println();
             }

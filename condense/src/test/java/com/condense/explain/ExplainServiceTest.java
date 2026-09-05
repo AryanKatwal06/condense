@@ -10,6 +10,8 @@ import com.condense.corpus.CorpusRunner;
 import com.condense.filter.git.GitPushFilter;
 import com.condense.filter.git.GitStatusFilter;
 import com.condense.filter.node.NpmInstallFilter;
+import com.condense.filter.python.PytestFilter;
+import com.condense.ir.Document;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import com.condense.filter.pipeline.config.PipelineDecision;
 import com.condense.trust.TrustTestSupport;
@@ -86,6 +88,18 @@ class ExplainServiceTest {
             filter, "git status", result, config, 0, false, 32, project);
         assertThat(report.tier()).isEqualTo(PipelineDecision.TIER_PROJECT);
         assertThat(report.source()).contains("filters.toml");
+    }
+
+    @Test
+    void pytestInputIncludesTypedDocument() throws Exception {
+        String fixture = CorpusRunner.loadFixture("fixtures/pytest/typical.txt");
+        ExecutionResult result = new ExecutionResult(1, fixture, "", 8L);
+        ExplainReport report = service.explainStrategy(
+            new PytestFilter(), "pytest", result, config, 0, false, 32, tempDir);
+        assertThat(report.document()).isNotNull();
+        assertThat(report.document().kind()).isEqualTo(Document.DocumentKind.TEST);
+        assertThat(report.document().schemaVersion()).isEqualTo(1);
+        assertThat(report.wasFiltered()).isTrue();
     }
 
     @Test

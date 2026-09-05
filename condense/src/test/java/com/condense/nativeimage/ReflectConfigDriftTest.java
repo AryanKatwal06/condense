@@ -96,7 +96,23 @@ class ReflectConfigDriftTest {
             com.condense.read.LanguageDefinition.StringDef.class.getName(),
             com.condense.read.LanguageDefinition.OutlinePattern.class.getName(),
             com.condense.read.LanguageDefinition.InlineTest.class.getName(),
-            com.condense.read.LanguageDefinition.Index.class.getName()
+            com.condense.read.LanguageDefinition.Index.class.getName(),
+            com.condense.ir.Document.class.getName(),
+            com.condense.ir.Document.DocumentKind.class.getName(),
+            com.condense.ir.Document.TestDocument.class.getName(),
+            com.condense.ir.Document.TestCase.class.getName(),
+            com.condense.ir.Document.DiagnosticDocument.class.getName(),
+            com.condense.ir.Document.Finding.class.getName(),
+            com.condense.ir.Document.GroupCount.class.getName(),
+            com.condense.ir.Document.DependencyDocument.class.getName(),
+            com.condense.ir.Document.ResourceDocument.class.getName(),
+            com.condense.ir.Document.ResourceRow.class.getName(),
+            com.condense.ir.Document.OpaqueDocument.class.getName(),
+            com.condense.ir.DocumentBuilder.class.getName(),
+            com.condense.ir.TextRenderer.class.getName(),
+            com.condense.ir.JsonRenderer.class.getName(),
+            com.condense.ir.JsonRenderer.EnvelopeWire.class.getName(),
+            com.condense.ir.Documents.class.getName()
         );
 
         assertThat(com.condense.doctor.DoctorCommand.class.isAnnotationPresent(

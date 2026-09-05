@@ -3,6 +3,8 @@ package com.condense.filter.strategy;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.ir.Document;
+import com.condense.ir.TextRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,13 +26,12 @@ public final class DockerPsStage implements FilterStage {
         String raw = input != null ? input : "";
         List<String> lines = raw.lines().toList();
         if (lines.size() <= 1) {
-            return StageResult.continueWith("(no containers running)");
+            Document.ResourceDocument payload = new Document.ResourceDocument(List.of(), true);
+            publish(context, payload);
+            return StageResult.continueWith(TextRenderer.renderResource(payload));
         }
 
-        List<String> compact = new ArrayList<>();
-        compact.add("ID       IMAGE                STATUS    NAME");
-        compact.add("─".repeat(55));
-
+        List<Document.ResourceRow> rows = new ArrayList<>();
         for (int i = 1; i < lines.size(); i++) {
             String line = lines.get(i);
             if (line.isBlank()) {
@@ -38,15 +39,23 @@ public final class DockerPsStage implements FilterStage {
             }
             String[] cols = COLUMNS_PATTERN.split(line);
             if (cols.length < 7) {
-                compact.add(line.trim());
+                rows.add(new Document.ResourceRow("", "", "", "", line.trim()));
                 continue;
             }
             String id = cols[0].length() > 8 ? cols[0].substring(0, 8) : cols[0];
             String image = cols[1].length() > 20 ? cols[1].substring(0, 19) + "…" : cols[1];
             String status = cols[4].length() > 10 ? cols[4].substring(0, 10) : cols[4];
             String name = cols[cols.length - 1];
-            compact.add(String.format("%-8s %-20s %-10s %s", id, image, status, name));
+            rows.add(new Document.ResourceRow(id, image, status, name, ""));
         }
-        return StageResult.continueWith(String.join("\n", compact));
+        Document.ResourceDocument payload = new Document.ResourceDocument(rows, false);
+        publish(context, payload);
+        return StageResult.continueWith(TextRenderer.renderResource(payload));
+    }
+
+    private static void publish(FilterContext context, Document.ResourceDocument payload) {
+        if (context != null && context.documentBuilder() != null) {
+            context.documentBuilder().resource(payload);
+        }
     }
 }

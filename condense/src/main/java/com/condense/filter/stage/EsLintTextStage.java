@@ -4,15 +4,18 @@ import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.GroupingStrategy;
+import com.condense.ir.Document;
+import com.condense.ir.TextRenderer;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public final class EsLintTextStage implements FilterStage {
     public static final EsLintTextStage INSTANCE = new EsLintTextStage();
     private static final Pattern RULE_PATTERN =
         Pattern.compile("\\s+\\d+:\\d+\\s+(?:error|warning)\\s+.+?\\s+(\\S+)$");
-    private static final GroupingStrategy GROUPING = new GroupingStrategy(RULE_PATTERN, false);
 
     private EsLintTextStage() {}
 
@@ -22,16 +25,25 @@ public final class EsLintTextStage implements FilterStage {
         long errors = lines.stream().filter(l -> l.contains("  error  ")).count();
         long warnings = lines.stream().filter(l -> l.contains("  warning  ")).count();
 
-        if (errors == 0 && warnings == 0 && (ctx.result() != null && ctx.result().succeeded())) {
-            return StageResult.stopWith("✓ no lint issues");
+        boolean clean = errors == 0 && warnings == 0 && (ctx.result() != null && ctx.result().succeeded());
+        Map<String, Integer> grouped = GroupingStrategy.group(lines, RULE_PATTERN, false);
+        List<Document.GroupCount> groups = new ArrayList<>();
+        for (var entry : grouped.entrySet()) {
+            groups.add(new Document.GroupCount(entry.getKey(), entry.getValue()));
         }
-
-        String formattedGroups = GROUPING.process(raw, ctx).output();
-        StringBuilder sb = new StringBuilder("eslint: ").append(errors)
-            .append(" error(s), ").append(warnings).append(" warning(s)\n");
-        if (!formattedGroups.isBlank()) {
-            sb.append(formattedGroups);
+        Document.DiagnosticDocument payload = new Document.DiagnosticDocument(
+            List.of(),
+            (int) errors,
+            (int) warnings,
+            groups,
+            Document.DiagnosticDocument.GROUP_ALIGNED,
+            clean
+        );
+        if (ctx != null && ctx.documentBuilder() != null) {
+            ctx.documentBuilder().diagnostic(payload);
         }
-        return StageResult.continueWith(sb.toString().stripTrailing());
+        return clean
+            ? StageResult.stopWith(TextRenderer.renderDiagnostic(payload))
+            : StageResult.continueWith(TextRenderer.renderDiagnostic(payload));
     }
 }

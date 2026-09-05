@@ -8,7 +8,10 @@ import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.pipeline.StageSession;
 import com.condense.filter.pipeline.Streamability;
 import com.condense.filter.strategy.BoundedRegex;
+import com.condense.ir.Document;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +44,8 @@ public final class NpmInstallSummaryStage implements FilterStage {
     private static final class Session implements StageSession {
         private String added;
         private String audit;
+        private Integer vulnerabilityCount;
+        private final List<String> irrevocableLines = new ArrayList<>();
         private int irrevocable;
         private boolean emittedAny;
 
@@ -49,6 +54,7 @@ public final class NpmInstallSummaryStage implements FilterStage {
             String value = line != null ? line : "";
             if (BoundedRegex.matcher(IRREVOCABLE, value).find() && irrevocable < MAX_IRREVOCABLE) {
                 sink.emit(value);
+                irrevocableLines.add(value);
                 irrevocable++;
                 emittedAny = true;
             }
@@ -59,16 +65,20 @@ public final class NpmInstallSummaryStage implements FilterStage {
             Matcher auditMatch = BoundedRegex.matcher(AUDIT_PATTERN, value);
             if (auditMatch.find()) {
                 audit = auditMatch.group(0);
+                vulnerabilityCount = Integer.parseInt(auditMatch.group(1));
             }
         }
 
         @Override
         public void endOfInput(EmissionSink sink, FilterContext context) {
             int exit = context != null && context.result() != null ? context.result().exitCode() : 0;
-            if (exit != 0) {
+            Integer addedPackages = added == null ? null : Integer.parseInt(added);
+            boolean failed = exit != 0;
+            if (failed) {
                 if (emittedAny) {
                     sink.emit("npm install failed");
                 }
+                publish(context, addedPackages, failed);
                 return;
             }
             StringBuilder sb = new StringBuilder("✓ npm install");
@@ -79,6 +89,20 @@ public final class NpmInstallSummaryStage implements FilterStage {
                 sb.append(" | ").append(audit);
             }
             sink.emit(sb.toString());
+            publish(context, addedPackages, false);
+        }
+
+        private void publish(FilterContext context, Integer addedPackages, boolean failed) {
+            if (context == null || context.documentBuilder() == null) {
+                return;
+            }
+            context.documentBuilder().dependency(new Document.DependencyDocument(
+                addedPackages,
+                vulnerabilityCount,
+                audit == null ? "" : audit,
+                List.copyOf(irrevocableLines),
+                failed
+            ));
         }
     }
 }
