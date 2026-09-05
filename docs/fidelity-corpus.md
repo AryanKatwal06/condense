@@ -35,6 +35,8 @@ Filters are constructed with their no-arg constructor (same as existing `*Filter
 
 Builtin pipelines are data. Each `PipelineBackedFilter` loads `classpath:filters/<definitionName>.toml` through `BuiltinDefinitionCatalog`. The 51-row golden lock is still the product fidelity contract; inline `[[tests]]` in those TOML files are small wiring checks, not a second corpus. See [filter-schema.md](filter-schema.md).
 
+Phase 9 remasured `npm-install` goldens because irrevocable `npm warn` lines now survive. Those rows stay below the 60% contribution bar (`meets_contribution_bar: false`). `docker-build` still meets its 60 floor. Reviewed diffs are in [pipeline-migration-diffs.md](pipeline-migration-diffs.md). Incremental replay of a STREAM pipeline must match `FilterPipeline.execute` (`IncrementalEquivalenceTest`).
+
 ## Floor policy
 
 Measured with `utf8_weighted_v1` (`FilterResult.savingsPct()`).

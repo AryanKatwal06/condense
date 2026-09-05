@@ -42,6 +42,8 @@ Overrides do not carry `name` or `[[tests]]`. `stages = []` replaces the default
 
 `schema_version = 1` is required. Unknown keys are rejected. Errors include a dotted path, and Jackson line/column when the parser (or a source scan fallback) can locate the key.
 
+Streamability is **not** a schema field. Each Java stage declares `order_local`, `windowed`, `finalize_only`, or `document`. The runner derives STREAM vs CAPTURE from those declarations. A TOML override that swaps in `grouping` or another document stage becomes CAPTURE automatically. See [streaming.md](streaming.md).
+
 `CondenseConfig` still uses a separate mapper that ignores unknown keys. Filter documents use `DefinitionMappers.STRICT_TOML`.
 
 ## Precedence

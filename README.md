@@ -45,7 +45,7 @@ Summary: 1 failed, 411 passed in 12.45s
 
 **The Mechanism:**
 1. The AI agent runs `condense pytest` instead of `pytest`
-2. Condense executes the real command and captures its full output
+2. Condense executes the real command. Streamable pipelines (`npm install`, `docker build`) print filtered lines as they arrive; others wait until the command exits, then apply the same session engine to the captured text
 3. Condense applies pytest-specific filtering and returns only the failures and summary to the AI
 
 ---
@@ -234,7 +234,9 @@ If `gain` is empty, run `condense doctor` (or `condense doctor --format json`). 
 $ condense explain --format json --input fixture.txt --exit-code 1 pytest
 ```
 
-See [docs/explain.md](docs/explain.md). Explain does not write analytics rows.
+See [docs/explain.md](docs/explain.md). Explain does not write analytics rows. JSON reports `pipeline_mode` (`stream` / `capture` / `live_raw`) and per-stage `streamability`.
+
+Long commands can print filtered lines before the child exits when every stage in the resolved pipeline is `order_local` or `windowed`. There is no `--stream` flag. Capture-to-disk (10 MB, 8 KiB chunks) still feeds tee, token counts, and fail-open replay. See [docs/streaming.md](docs/streaming.md).
 
 ---
 

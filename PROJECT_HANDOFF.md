@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 4 September 2026 (Phase 7 code landed).
+**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 9 code landed).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 7. Confirm with `git log -1` and origin before starting Phase 8.
+**Branch at handoff:** `main` after Phase 9. Confirm with `git log -1` and origin before starting Phase 10.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -112,11 +112,12 @@ These patterns will **silently swallow** files a later phase might legitimately 
 CLI args
   → CondenseMain                (Quarkus QuarkusApplication + picocli IFactory)
     → CondenseRootCommand.call()
-      → CommandExecutor.execute()      capture-then-filter — NOT streaming
       → StrategyRegistry.lookup()      CDI beans + @CommandFilter, longest-prefix match
-      → FilterStrategy.apply()         runs only after the child process exits
-      → TeeWriter.maybeDump()          raw output spill per TeeMode
-      → print filtered output
+      → StreamingProxy.shouldStream()  STREAM / LIVE_RAW vs CAPTURE (derived, no flag)
+           STREAM / LIVE_RAW → StreamingProxy.run()  print as lines arrive
+           CAPTURE           → CommandExecutor.execute() then FilterStrategy.apply()
+      → TeeWriter.maybeDump()          raw output spill per TeeMode (unchanged)
+      → print filtered output          skipped when StreamingProxy already printed
       → TrackingRepository.insert()    synchronous, fail-open, after stdout flush
       → return the child's exit code
 ```
@@ -127,15 +128,19 @@ CLI args
 
 | Property | Value |
 |---|---|
-| Model | Two daemon threads drain stdout and stderr concurrently |
-| Sink | Temp files, `condense-stream-*.log` |
+| Model | Two drain threads (not daemon) copy stdout and stderr concurrently |
+| Sink | Temp files, `condense-stream-*.log` — still the tee/token/fail-open backstop |
 | Chunk size | 8192 bytes |
-| Hard cap | 10 MB **per stream**, then `OutputLimitExceededException` |
+| Hard cap | 10 MB **per stream**; do **not** throw. Destroy the child, call `StreamListener.onCapped()`, keep the child's exit (or `-1` if killed) |
 | Streams | Separate (`redirectErrorStream(false)`) |
-| Default timeout | 60 s, then `destroyForcibly()` and exit code `-1` |
+| Proxy timeout | Wait until exit unless `CONDENSE_COMMAND_TIMEOUT_SEC` is a positive integer (`Duration.ZERO` = wait) |
+| `execute(List)` | Still 60 s (`DEFAULT_TIMEOUT`) — used by tests and `condense explain` |
+| Live hook | Optional `StreamListener` (`onStdout` / `onStderr` / `onCapped`) |
 | Self-proxy guard | Refuses to exec `condense` / `condense-runner` as a child |
 
-**This is not a memory-safety problem** — output never accumulates on the JVM heap unbounded. The real gap is that **filtering begins only after the process fully exits**, so a long `npm install` or `docker build` shows the agent nothing until it finishes. That is Phase 9.
+`Utf8LineDecoder` (used by `StreamingProxy`) holds incomplete UTF-8 across chunks. `\r\n` is one break; a lone `\r` resets the current line.
+
+Mode is derived from `FilterStage.streamability()`: STREAM when every stage is `ORDER_LOCAL` or `WINDOWED`; CAPTURE if any stage is `DOCUMENT` or `FINALIZE_ONLY`; LIVE_RAW for `PassthroughStrategy`. Flagship STREAM builtins are `npm install` / `npm ci` / `npm i` and `docker build`. See `docs/streaming.md`.
 
 ### 4.3 Filter dispatch (`core/StrategyRegistry.java`)
 
@@ -320,7 +325,7 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D20 | ~~`--purge` aborts on `tee/` and `filters.toml`~~ **FIXED** | allowlist + known-dir recursion | Phase 7 |
 | D21 | ~~`gain --top N` is ignored when `N == 10` because the branch is `if (top != 10)` and the default is `10`~~ **FIXED** | `Integer topFlag` with `arity = 0..1` | Phase 8 |
 | D22 | ~~No explainability — nothing shows which stage dropped which lines~~ **FIXED** | `condense explain` | Phase 8 |
-| D23 | Filtering is capture-only; nothing is emitted until the child exits | `CondenseRootCommand.call()` ordering | Phase 9 |
+| D23 | ~~Filtering is capture-only; nothing is emitted until the child exits~~ **FIXED** | Derived STREAM/CAPTURE + `StreamingProxy` live print | Phase 9 |
 | D24 | No token-optimized source-file reading capability at all | no such command | Phase 10 |
 | D25 | No structured output IR; each filter emits ad-hoc text | by inspection | Phase 11 |
 | D26 | `condense mcp` is a stub | `commands/McpCommand.java` | Phase 12 |
@@ -414,16 +419,17 @@ Two turns of planning, then Phase 1 through Phase 5 code.
 | Phase 7 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized |
 | Phase 7 code | **LANDED** | `user_version` 1, WAL, `busy_timeout`, 90-day retention, `filter_outcomes`, `condense doctor`, D20 purge allowlist. Native proof is the next green `NativePersistenceIT`. |
 | Phase 8 code | **LANDED** | `condense explain`, `executeTraced`, tier `resolveDecision`, D21 `--top 10`. Native proof is the next green `NativeExplainIT`. |
-| Phases 9–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Native proof is `NativeStreamingIT`. |
+| Phases 10–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | This handoff | **COMPLETED** | Written, audited, then updated as phases landed |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p7` are marked `completed`, `p8`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p9` are marked `completed`, `p10`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 8 code have landed.** Phases 9–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 9 code have landed.** Phases 10–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -717,9 +723,13 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 ### Phase 9 — Incremental streaming filtering
 
-**Status: PENDING**
+**Status: LANDED** (5 Sep 2026)
 
 **Goal.** Filtered output appears **while** long commands run. An incremental stage contract (feed / flush / finalize) where each stage declares whether it is order-local (streamable) or needs the whole output. The runner chooses stream vs capture from the pipeline's declared capability **automatically**.
+
+**Shipped.** `Streamability` + `StageSession` / `EmissionSink` (default `DOCUMENT` / `DocumentSession`). `FilterPipeline.execute` walks sessions. Shared stages: `ansi_strip` and `state_machine` (no `COLLECT`) are `ORDER_LOCAL`; `head_tail` is `WINDOWED`; `regex_capture` and `json_lines` stay `DOCUMENT`. Flagship `NpmInstallSummaryStage` / `DockerBuildSummaryStage` emit irrevocable progress live, then the existing success summary at `endOfInput`. No TOML `streamable` flag. Proxy waits until the child exits unless `CONDENSE_COMMAND_TIMEOUT_SEC` is set. 10 MB cap fail-opens. JVM proof: `StreamingTimingTest`, `IncrementalEquivalenceTest`, `StreamabilityDeriveTest`. Native proof: `NativeStreamingIT`. Docs: `docs/streaming.md`.
+
+**Diverged from a naïve Zap port.** Mode is derived from declared stage streamability, not a per-command table. Drain threads were left non-daemon (they were never daemon). `RegexCaptureStage` was not converted to per-line `find()` because that would break goldens.
 
 **Why here.** Streaming bugs are close to undiagnosable without Phase 8's explainability and Phase 3's fidelity corpus.
 
@@ -727,7 +737,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 **Retains.** The existing 10 MB-capped, chunked, stream-to-disk capture as the fidelity and tee backstop. That is an existing strength, not something to replace.
 
-**Zap reference (study, do not copy).** `src/core/stream.rs`: a `StreamFilter` trait (`feed_line` / `flush` / `on_exit`), `BlockStreamFilter` and `LineStreamFilter`, `FilterMode::{Streaming, CaptureOnly, Passthrough}`, `RAW_CAP` of 10 MiB, and a `ChildGuard` RAII wrapper preventing zombie processes. **Improve on it:** Zap hand-wires the mode per command in each `cmds` module; Condense should derive it from declared stage capability, which cannot drift out of sync.
+**Zap reference (study, do not copy).** `src/core/stream.rs`: a `StreamFilter` trait (`feed_line` / `flush` / `on_exit`), `BlockStreamFilter` and `LineStreamFilter`, `FilterMode::{Streaming, CaptureOnly, Passthrough}`, `RAW_CAP` of 10 MiB, and a `ChildGuard` RAII wrapper preventing zombie processes. **Improve on it:** Zap hand-wires the mode per command in each `cmds` module; Condense derives it from declared stage capability, which cannot drift out of sync.
 
 **Native.** Reuses the existing drain-thread model. No new JNI. Watch temp-file lifecycle and charset decoding at chunk boundaries.
 
@@ -970,9 +980,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 8 code landed 5 Sep 2026. `condense explain` accounts stages and names the winning pipeline tier. JVM proof is `mvn test`. Native proof is the next green `NativeExplainIT` in `build.yml` — this Windows workspace does not build native images.
+**Where we are.** Phase 9 code landed 5 Sep 2026. Filtered lines can appear while a STREAM pipeline's child is still running. Mode is derived from declared stage streamability. JVM proof is `mvn test` (`StreamingTimingTest`, `IncrementalEquivalenceTest`, explain + corpus). Native proof is the next green `NativeStreamingIT` in `build.yml` — this Windows workspace does not build native images.
 
-**Do not start Phase 9 code.** Present a complete Phase 9 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 10 code.** Present a complete Phase 10 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -993,8 +1003,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 8 code has landed. Confirm `NativeExplainIT` appears in native job logs and that `ExplainAccountingTest` still prints a 51-row table.
-9. **Do not start Phase 9 code.** Present a complete Phase 9 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 9 code has landed. Confirm `NativeStreamingIT` appears in native job logs, `ExplainAccountingTest` still prints a 51-row table, and `GoldenLockTest` is green.
+9. **Do not start Phase 10 code.** Present a complete Phase 10 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

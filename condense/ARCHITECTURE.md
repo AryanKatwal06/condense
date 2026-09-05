@@ -36,7 +36,9 @@ condense --version / --help
 | `TrackingRepository.java` | `com.condense.core` | Lazy SQLite via direct JDBC; migrates `user_version`, WAL, retention, filter outcomes |
 | `SchemaMigrator.java` | `com.condense.persist` | Forward-only `PRAGMA user_version` migrations |
 | `DoctorCommand.java` | `com.condense.doctor` | `condense doctor` — empty-gain diagnosis, text and JSON |
-| `ExplainCommand.java` | `com.condense.explain` | `condense explain` — per-stage line and token accounting |
+| `ExplainCommand.java` | `com.condense.explain` | `condense explain` — per-stage line and token accounting, plus `pipeline_mode` |
+| `StreamingProxy.java` | `com.condense.core` | Live-print runner for STREAM pipelines and LIVE_RAW passthrough |
+| `Utf8LineDecoder.java` | `com.condense.core` | Incremental UTF-8 line breaks across drain chunks |
 | `TokenCounter.java` | `com.condense.core` | Static facade over `Utf8WeightedTokenEstimator` |
 | `Utf8WeightedTokenEstimator.java` | `com.condense.core` | Code-point token estimate; UTF-8 file path; published p95 vs cl100k_base |
 
@@ -56,11 +58,13 @@ condense --version / --help
 
 7. **Fidelity corpus**: Every domain filter has a row in the test-only `corpus/catalog.json`. `FidelityCorpusTest` requires 100% critical-signal retention and a baked savings floor. `GoldenLockTest` byte-locks filtered output. See `docs/fidelity-corpus.md`.
 
-8. **Universal pipeline**: Every domain filter except the `PythonFilter` router extends `PipelineBackedFilter`. `apply()` is final: gates, then `FilterOverrideLoader.resolvePipeline`, then `FilterPipeline.execute`. Duplicate `@CommandFilter` prefixes from two classes fail `@PostConstruct` via `PrefixIndex`. Every regex in the filter package goes through `BoundedRegex` at 200 ms.
+8. **Universal pipeline**: Every domain filter except the `PythonFilter` router extends `PipelineBackedFilter`. `apply()` is final: gates, then `FilterOverrideLoader.resolvePipeline`, then `FilterPipeline.execute` (session walk). Duplicate `@CommandFilter` prefixes from two classes fail `@PostConstruct` via `PrefixIndex`. Every regex in the filter package goes through `BoundedRegex` at 200 ms.
 
 9. **Three-tier filter composition**: Project `.condense/filters.toml` (TOFU + capability ceiling) then user-global `filters.toml` (trusted by location) then builtin `classpath:filters/<name>.toml` via `BuiltinDefinitionCatalog` (fail-closed). Enumeration is `filters/index.toml` — never a classpath directory walk. `StageFactory` is a hardcoded switch. Schema v1 requires `schema_version = 1` and rejects unknown keys. See `docs/filter-schema.md` and `docs/trust.md`.
 
 10. **Trust and provenance**: Project overrides are skipped until `condense config trust` (or a CI hatch that also has a listed CI indicator). `FilterResult.of` stamps `condense[filtered]`; impersonating lines become `condense[quoted]`. See `docs/trust.md`.
+
+11. **Derived streaming**: Each `FilterStage` declares `streamability()`. The pipeline is STREAM only when every stage is `order_local` or `windowed`; otherwise CAPTURE. `CondenseRootCommand` live-prints STREAM and unmatched passthrough (`LIVE_RAW`) through `StreamingProxy`. Capture-to-disk remains the tee/token/fail-open backstop. See `docs/streaming.md`.
 
 ## Technology Stack
 
