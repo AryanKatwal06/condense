@@ -1,0 +1,16 @@
+schema_version = 1
+name = "playwright"
+commands = ["playwright test", "npx playwright"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(✘|[0-9]+ failed|  [0-9]+\\) ).*)$"
+include_other = false
+
+[[tests]]
+id = "failed-title"
+input = "  ✓ login\n  1) invoice.spec.ts:12:5 › invoice total\n"
+expected = "  1) invoice.spec.ts:12:5 › invoice total : 1"

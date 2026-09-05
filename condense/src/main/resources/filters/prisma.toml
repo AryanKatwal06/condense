@@ -1,0 +1,16 @@
+schema_version = 1
+name = "prisma"
+commands = ["prisma migrate", "prisma generate"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(Error|Generated Prisma|Applied).*)$"
+include_other = false
+
+[[tests]]
+id = "migrate-error"
+input = "Applying migration...\nError: P3006 Migration failed\n"
+expected = "  Error: P3006 Migration failed : 1"

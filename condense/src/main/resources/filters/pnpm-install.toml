@@ -1,0 +1,16 @@
+schema_version = 1
+name = "pnpm-install"
+commands = ["pnpm install", "pnpm i", "pnpm add", "pnpm ci"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(Packages:|ERR_|ERROR|vulnerabilit).*)$"
+include_other = false
+
+[[tests]]
+id = "packages-line"
+input = "Progress: resolved 1\nPackages: +12\n"
+expected = "  Packages: +12 : 1"

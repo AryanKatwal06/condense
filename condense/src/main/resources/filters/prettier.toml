@@ -1,0 +1,16 @@
+schema_version = 1
+name = "prettier"
+commands = ["prettier"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(\\[error\\]|\\[warn\\]|SyntaxError).*)$"
+include_other = false
+
+[[tests]]
+id = "parse-error"
+input = "Checking formatting...\n[error] src/app.js: SyntaxError: Unexpected token\n"
+expected = "  [error] src/app.js: SyntaxError: Unexpected token : 1"

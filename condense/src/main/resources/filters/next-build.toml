@@ -1,0 +1,16 @@
+schema_version = 1
+name = "next-build"
+commands = ["next build"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(Error|Failed).*)$"
+include_other = false
+
+[[tests]]
+id = "failed-compile"
+input = "info  - Creating an optimized production build\nError: Failed to compile.\n"
+expected = "  Error: Failed to compile. : 1"

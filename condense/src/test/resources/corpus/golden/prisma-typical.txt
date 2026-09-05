@@ -1,0 +1,4 @@
+condense[filtered]
+  Applied migration 20260901_init                                       : 1
+  Error: P3006 Migration failed to apply cleanly to the shadow database : 1
+  Generated Prisma Client                                               : 1

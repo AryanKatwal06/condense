@@ -534,6 +534,46 @@
       "exit_code": 1,
       "savings_floor": 60,
       "critical_signals": ["ERROR"]
+    },
+    {
+      "id": "pnpm-install/typical",
+      "command": "pnpm install",
+      "fixture": "fixtures/pnpm-install/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Packages:", "vulnerabilities", "ERR_PNPM"]
+    },
+    {
+      "id": "next-build/typical",
+      "command": "next build",
+      "fixture": "fixtures/next-build/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error: Failed to compile", "Failed to compile"]
+    },
+    {
+      "id": "prisma/typical",
+      "command": "prisma migrate",
+      "fixture": "fixtures/prisma/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error: P3006", "Generated Prisma Client"]
+    },
+    {
+      "id": "playwright/typical",
+      "command": "playwright test",
+      "fixture": "fixtures/playwright/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["invoice.spec.ts", "session.spec.ts", "2 failed"]
+    },
+    {
+      "id": "prettier/typical",
+      "command": "prettier",
+      "fixture": "fixtures/prettier/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["src/app.js", "SyntaxError"]
     }
   ]
 }

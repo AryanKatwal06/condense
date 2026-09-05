@@ -1,0 +1,4 @@
+condense[filtered]
+  3 vulnerabilities                                                                : 1
+  ERR_PNPM_NO_MATCHING_VERSION No matching version found for missing-toolbox@2.0.0 : 1
+  Packages: +182 -3                                                                : 1
