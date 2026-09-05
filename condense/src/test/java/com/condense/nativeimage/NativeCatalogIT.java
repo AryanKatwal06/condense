@@ -47,6 +47,12 @@ class NativeCatalogIT {
             }
         }
 
+        NativeBinarySupport.CliResult json = NativeBinarySupport.run(
+            configDir, dataDir, stubDir, "--format", "json", "mypy"
+        );
+        assertThat(json.exitCode()).isEqualTo(1);
+        assertThat(json.stdout()).contains("\"kind\":\"opaque\"");
+
         NativeBinarySupport.CliResult result = NativeBinarySupport.run(
             configDir, dataDir, stubDir, "mypy"
         );

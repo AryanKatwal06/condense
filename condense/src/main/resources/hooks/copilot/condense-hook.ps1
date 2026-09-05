@@ -6,7 +6,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$condenseCommandsStr = "git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle"
+$condenseCommandsStr = "{{CONDENSE_COMMANDS}}"
 $condenseCommands = $condenseCommandsStr -split '\s+'
 
 try {

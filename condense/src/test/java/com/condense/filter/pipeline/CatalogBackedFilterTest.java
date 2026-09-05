@@ -32,6 +32,8 @@ class CatalogBackedFilterTest {
         assertThat(result.output()).startsWith(Provenance.STAMP);
         assertThat(result.output()).contains("src/billing/invoice.py", "src/auth/session.py");
         assertThat(result.output()).doesNotContain("[assignment]");
+        assertThat(result.document()).isNotNull();
+        assertThat(result.document().kind()).isEqualTo(com.condense.ir.Document.DocumentKind.OPAQUE);
     }
 
     @Test

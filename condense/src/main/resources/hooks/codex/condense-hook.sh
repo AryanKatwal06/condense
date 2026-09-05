@@ -6,7 +6,7 @@
 # Codex PreToolUse (matcher Bash). Deny matching shell commands; never rewrite+allow.
 # Trust this hook in Codex /hooks yourself — Condense does not write vendor trust hashes.
 
-CONDENSE_COMMANDS="git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle"
+CONDENSE_COMMANDS="{{CONDENSE_COMMANDS}}"
 
 python3 -c '
 import sys, json

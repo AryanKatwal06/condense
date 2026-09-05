@@ -91,6 +91,7 @@ class ReflectConfigDriftTest {
             com.condense.doctor.DoctorCommand.class.getName(),
             com.condense.doctor.DoctorReport.class.getName(),
             com.condense.doctor.DoctorReport.HookStatus.class.getName(),
+            com.condense.doctor.DoctorReport.HookEvent.class.getName(),
             com.condense.doctor.DoctorService.class.getName(),
             com.condense.explain.ExplainCommand.class.getName(),
             com.condense.explain.ExplainService.class.getName(),

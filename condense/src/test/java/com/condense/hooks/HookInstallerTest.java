@@ -95,6 +95,8 @@ class HookInstallerTest {
     void templateApply_excludesCommandFromList() throws IOException {
         String template = HookTemplate.load(HookTool.CLAUDE_CODE);
         String applied = HookTemplate.apply(HookTool.CLAUDE_CODE, template, List.of("curl", "playwright"));
+        assertThat(applied).contains("mypy");
+        assertThat(applied).doesNotContain("{{CONDENSE_COMMANDS}}");
         assertThat(applied).doesNotContain(" curl ");
     }
 

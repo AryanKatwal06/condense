@@ -275,6 +275,30 @@ public class TrackingRepository {
         }
     }
 
+    public List<com.condense.doctor.DoctorReport.HookEvent> recentHookEvents(int limit) {
+        int cap = limit <= 0 ? 20 : Math.min(limit, 20);
+        List<com.condense.doctor.DoctorReport.HookEvent> events = new ArrayList<>();
+        try (PreparedStatement ps = connection().prepareStatement(
+            "SELECT ts, tool, action, path, success, detail FROM hook_events ORDER BY ts DESC, id DESC LIMIT ?"
+        )) {
+            ps.setInt(1, cap);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    events.add(new com.condense.doctor.DoctorReport.HookEvent(
+                        rs.getLong("ts"),
+                        rs.getString("tool"),
+                        rs.getString("action"),
+                        rs.getString("path"),
+                        rs.getInt("success") != 0,
+                        rs.getString("detail")));
+                }
+            }
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to list hook events: %s", e.getMessage());
+        }
+        return events;
+    }
+
     public void insertOutcome(String command, String project, FilterIncident incident) {
         if (incident == null) {
             return;

@@ -6,7 +6,7 @@
 # This hook intercepts shell commands before GitHub Copilot CLI executes them.
 # Commands matching CONDENSE_COMMANDS are routed through `condense` for output compression.
 
-CONDENSE_COMMANDS="git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle"
+CONDENSE_COMMANDS="{{CONDENSE_COMMANDS}}"
 
 python3 -c '
 import sys, json

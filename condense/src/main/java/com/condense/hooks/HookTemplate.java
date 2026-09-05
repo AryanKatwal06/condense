@@ -1,5 +1,7 @@
 package com.condense.hooks;
 
+import com.condense.core.StrategyRegistry;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -13,7 +15,7 @@ import java.util.List;
  *
  * <p>Substitution tokens:
  * <ul>
- *   <li>{@code {{CONDENSE_COMMANDS}}} — space-separated list of filtered commands</li>
+     *   <li>{@code {{CONDENSE_COMMANDS}}} — space-separated first tokens from the registry</li>
  *   <li>{@code {{EXCLUDE_COMMANDS}}} — comma-separated user exclusion list</li>
  * </ul>
  */
@@ -49,13 +51,24 @@ public final class HookTemplate {
      * @return final hook content ready to write to disk
      */
     public static String apply(HookTool tool, String template, List<String> excludeCommands) {
+        return apply(tool, template, excludeCommands, null);
+    }
+
+    public static String apply(
+            HookTool tool,
+            String template,
+            List<String> excludeCommands,
+            StrategyRegistry registry
+    ) {
+        String commands = HookCommands.spaceSeparated(registry);
+        String filled = template == null ? "" : template.replace(HookCommands.PLACEHOLDER, commands);
         if (excludeCommands == null || excludeCommands.isEmpty()) {
-            return template;
+            return filled;
         }
 
         if (tool.isJson) {
             try {
-                com.fasterxml.jackson.databind.JsonNode root = com.condense.core.Mappers.JSON.readTree(template);
+                com.fasterxml.jackson.databind.JsonNode root = com.condense.core.Mappers.JSON.readTree(filled);
                 com.fasterxml.jackson.databind.node.ObjectNode condenseNode = (com.fasterxml.jackson.databind.node.ObjectNode) root.path("condense");
                 if (!condenseNode.isMissingNode()) {
                     com.fasterxml.jackson.databind.JsonNode excludeArray = com.condense.core.Mappers.JSON.valueToTree(excludeCommands);
@@ -63,19 +76,17 @@ public final class HookTemplate {
                 }
                 return com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root);
             } catch (Exception e) {
-                return template;
+                return filled;
             }
-        } else {
-            // Simple sed-like replacement: strip excluded commands from the CONDENSE_COMMANDS line
-            String result = template;
-            for (String cmd : excludeCommands) {
-                result = result
-                    .replace(" " + cmd.trim() + " ", " ")  // middle of list
-                    .replace(" " + cmd.trim() + "\"", "\"") // end of list
-                    .replace("\"" + cmd.trim() + " ", "\""); // start of list
-            }
-            return result;
         }
+        String result = filled;
+        for (String cmd : excludeCommands) {
+            result = result
+                .replace(" " + cmd.trim() + " ", " ")
+                .replace(" " + cmd.trim() + "\"", "\"")
+                .replace("\"" + cmd.trim() + " ", "\"");
+        }
+        return result;
     }
 
     /**

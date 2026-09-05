@@ -5,7 +5,7 @@
 #
 # PreToolUse matcher run_command. Responses are deny/ask only — never rewrite+allow.
 
-CONDENSE_COMMANDS="git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle"
+CONDENSE_COMMANDS="{{CONDENSE_COMMANDS}}"
 
 python3 -c '
 import sys, json

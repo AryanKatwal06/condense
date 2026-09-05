@@ -56,17 +56,21 @@ class NewAgentHookTest {
             assertThat(status.installed()).isTrue();
             assertThat(status.integrity()).isEqualTo(HookIntegrity.OK);
             assertThat(tracking.findHookBaseline(tool.name())).isNotNull();
+            if (tool == HookTool.HERMES) {
+                assertThat(Files.readString(tool.ownedScript(home))).contains("dotnet");
+            }
         }
         assertThat(tracking.countHookEvents()).isGreaterThanOrEqualTo(6);
         assertThat(tracking.schemaVersion()).isEqualTo(2);
     }
 
     @Test
-    void existingAgentsStillInstall() {
+    void existingAgentsStillInstall() throws Exception {
         for (HookTool tool : List.of(HookTool.COPILOT, HookTool.WINDSURF, HookTool.CURSOR)) {
             HookInstaller.InstallResult result = installer.install(tool);
             assertThat(result.success()).as(result.message()).isTrue();
         }
+        assertThat(Files.readString(HookTool.CURSOR.ownedScript(home))).contains("mypy");
     }
 
     @Test

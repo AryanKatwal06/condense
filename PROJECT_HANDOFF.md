@@ -351,7 +351,7 @@ The next agent will be misled by these if they trust the docs. They are **docume
 | Bare `condense mcp` snippet (`McpCommand`) | ~~Tools are `run`, `explain`, `read`~~ **FIXED in R14** | Snippet lists `run`, `explain`, `read`, `discover`. Missing `id` is `-32600`. |
 | `docs/ir.md` / older handoff §9 Phase 11 | `TextRenderer` is the default CLI | Default CLI prints `FilterResult.output()`. Exemplar stages call `TextRenderer` internally; identity is locked for **7** corpus IDs until **R23**. |
 | Phase 15 closeout / this file before R13 | Caps are fully asserted in JVM + native | ~~`readAllBytes` then trim; native missed `files_read ≤ 8`~~ **FIXED in R15**. Caps stay 64/8/64KiB/256KiB. Content reads are `readNBytes` of the remaining budget. |
-| Hook `CONDENSE_COMMANDS` in templates | Implied to cover the supported surface | Hardcoded pre-Phase-14 list. Leftover prefixes are not intercepted until **R19**. |
+| Hook `CONDENSE_COMMANDS` in templates | ~~Hardcoded pre-Phase-14 list~~ **FIXED in R19** | Install fills `{{CONDENSE_COMMANDS}}` from registered prefixes. Installed Cursor/Hermes scripts contain leftover tokens (`mypy` / `dotnet`). |
 | `HookIntegrity.verify` / doctor | ~~`ok` without a baseline~~ **FIXED in R18** | `ok` only when a baseline row matches. Null tracking or a missing baseline is `unmanaged`. |
 | Backup fail-closed | ~~untested~~ **FIXED in R17** | Installer test: backup dest is a file; Cursor install fails; existing `hooks.json` bytes are unchanged. Runs on Windows. |
 
@@ -818,7 +818,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Status: SHIPPED**
 
-**Shipped.** Stepwise schema 2 (`hook_events`, `hook_baselines`). Backup-before-merge of third-party configs into `{dataDir}/backups/` (flat `{tool}-{epoch}{ext}`, not `backups/hooks/`). SHA-256 baselines of Condense-owned scripts; `--show` / `doctor` integrity. Claude deny-not-rewrite: `NoAutoAllowTest` forbids rewrite+allow only — standalone pass-through `allow` stays. `GENERIC_BASH` still `exec condense` (do not change). Hook `CONDENSE_COMMANDS` is a hardcoded pre-Phase-14 list until **R19**. Doctor hook trail is count-only until **R26**. Backup failure leaves the original third-party file. Integrity is `ok` only with a matching baseline. Six new `HookTool` values with isolated-home JVM tests; `NativeHookIT` covers Cursor until **R21**. MCP stays the preferred path.
+**Shipped.** Stepwise schema 2 (`hook_events`, `hook_baselines`). Backup-before-merge of third-party configs into `{dataDir}/backups/` (flat `{tool}-{epoch}{ext}`, not `backups/hooks/`). SHA-256 baselines of Condense-owned scripts; `--show` / `doctor` integrity. Claude deny-not-rewrite: `NoAutoAllowTest` forbids rewrite+allow only — standalone pass-through `allow` stays. `GENERIC_BASH` still `exec condense` (do not change). Hook `CONDENSE_COMMANDS` is filled at install from registered prefixes. Doctor JSON lists the last 20 `hook_events`. Backup failure leaves the original third-party file. Integrity is `ok` only with a matching baseline. Six new `HookTool` values with isolated-home JVM tests; `NativeHookIT` covers Cursor until **R21**. MCP stays the preferred path.
 
 **Goal.** Make hook installation auditable and tamper-evident, stop editing third-party config files without a backup, adopt a conservative permission policy, and close the agent coverage gap.
 

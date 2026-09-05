@@ -63,6 +63,8 @@ class NativeHookIT {
             .isZero();
         Path script = fakeHome().resolve(".cursor").resolve("hooks").resolve("condense-hook.sh");
         assertThat(script).exists();
+        assertThat(Files.readString(script)).contains("mypy");
+        assertThat(Files.readString(script)).doesNotContain("{{CONDENSE_COMMANDS}}");
         try (var stream = Files.list(dataDir().resolve("backups"))) {
             assertThat(stream.anyMatch(p -> p.getFileName().toString().startsWith("cursor-"))).isTrue();
         }
@@ -82,6 +84,8 @@ class NativeHookIT {
             }
         }
         assertThat(sawOk).as(doctor.stdout()).isTrue();
+        assertThat(diagnosis.get("hook_events").isArray()).isTrue();
+        assertThat(diagnosis.get("hook_events").size()).isGreaterThan(0);
     }
 
     @Test

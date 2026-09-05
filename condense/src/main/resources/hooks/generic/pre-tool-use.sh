@@ -6,7 +6,7 @@
 # This hook intercepts shell commands before Claude Code executes them.
 # Commands matching CONDENSE_COMMANDS are routed through `condense` for output compression.
 
-CONDENSE_COMMANDS="git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle"
+CONDENSE_COMMANDS="{{CONDENSE_COMMANDS}}"
 
 cmd_name="${1%% *}"
 bare_cmd="$(basename "$cmd_name")"

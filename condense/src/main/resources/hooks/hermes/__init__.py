@@ -5,7 +5,7 @@
 import json
 import sys
 
-CONDENSE_COMMANDS = "git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle".split()
+CONDENSE_COMMANDS = "{{CONDENSE_COMMANDS}}".split()
 
 def main() -> None:
     try:

@@ -4,7 +4,7 @@
 // Do not edit manually — run `condense init` to reinstall or `condense init --remove` to uninstall
 // Deny matching shell/terminal tools. Never rewrite+allow.
 
-const CONDENSE_COMMANDS = "git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle".split(" ");
+const CONDENSE_COMMANDS = "{{CONDENSE_COMMANDS}}".split(" ");
 
 const chunks = [];
 process.stdin.setEncoding("utf8");

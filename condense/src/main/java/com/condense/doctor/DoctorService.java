@@ -119,6 +119,7 @@ public class DoctorService {
             statusName(global),
             hooks,
             tracking.countHookEvents(),
+            new ArrayList<>(tracking.recentHookEvents(20)),
             writeLoss.count(),
             writeLoss.lastError(),
             teeFiles,

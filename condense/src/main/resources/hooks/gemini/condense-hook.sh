@@ -3,7 +3,7 @@
 # Tool: Gemini CLI
 # Do not edit manually — run `condense init -g` to reinstall
 
-CONDENSE_COMMANDS="git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle"
+CONDENSE_COMMANDS="{{CONDENSE_COMMANDS}}"
 
 # The Gemini CLI captures stderr, but not stdout for debug logging.
 # Any stdout breaks parsing entirely. Silence is Mandatory.

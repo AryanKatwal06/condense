@@ -32,6 +32,9 @@ public class HookInstaller {
     @Inject
     TrackingRepository tracking;
 
+    @Inject
+    com.condense.core.StrategyRegistry strategyRegistry;
+
 
 
     /**
@@ -110,6 +113,10 @@ public class HookInstaller {
     }
     public record RemoveResult(HookTool tool, boolean removed, String message) {}
 
+    private String rendered(HookTool tool, String template, List<String> excluded) {
+        return HookTemplate.apply(tool, template, excluded, strategyRegistry);
+    }
+
 
 
     private InstallResult install(HookTool tool, Path home, List<String> excluded) {
@@ -162,7 +169,7 @@ public class HookInstaller {
         Path hookFile = tool.hookFile(home);
         try {
             String template = HookTemplate.load(tool);
-            String content  = HookTemplate.apply(tool, template, excluded);
+            String content  = rendered(tool, template, excluded);
 
             Files.createDirectories(hookFile.getParent());
 
@@ -288,7 +295,7 @@ public class HookInstaller {
         try {
             // 1. Write the script
             String template = HookTemplate.load(tool);
-            String content = HookTemplate.apply(tool, template, excluded);
+            String content = rendered(tool, template, excluded);
             Files.createDirectories(scriptFile.getParent());
             writeOwnedScript(tool, scriptFile, content);
             try {
@@ -466,7 +473,7 @@ public class HookInstaller {
         try {
             // 1. Write the script
             String template = HookTemplate.load(tool);
-            String content = HookTemplate.apply(tool, template, excluded);
+            String content = rendered(tool, template, excluded);
             Files.createDirectories(scriptFile.getParent());
             writeOwnedScript(tool, scriptFile, content);
             try {
@@ -619,7 +626,7 @@ public class HookInstaller {
         try {
             // 1. Write the script
             String template = HookTemplate.load(tool);
-            String content = HookTemplate.apply(tool, template, excluded);
+            String content = rendered(tool, template, excluded);
             Files.createDirectories(scriptFile.getParent());
             writeOwnedScript(tool, scriptFile, content);
             try {
@@ -815,7 +822,9 @@ public class HookInstaller {
                         "    data = json.load(sys.stdin)\n" +
                         "    if data.get(\"preToolUse\", {}).get(\"toolName\") == \"execute_command\":\n" +
                         "        cmd = data.get(\"preToolUse\", {}).get(\"parameters\", {}).get(\"command\", \"\")\n" +
-                        "        if cmd.strip().split()[0].split(\"/\")[-1] in \"git cargo pytest go test npm npx docker kubectl aws ls grep rg find cat make mvn gradle\".split():\n" +
+                        "        if cmd.strip().split()[0].split(\"/\")[-1] in \""
+                            + HookCommands.spaceSeparated(strategyRegistry)
+                            + "\".split():\n" +
                         "            print(json.dumps({\"cancel\": True, \"errorMessage\": \"Use \\\"condense <command>\\\" instead to get filtered, token-efficient output.\"}))\n" +
                         "            sys.exit(0)\n" +
                         "except Exception:\n" +
@@ -831,7 +840,7 @@ public class HookInstaller {
             }
 
             String template = HookTemplate.load(tool);
-            String content  = HookTemplate.apply(tool, template, excluded);
+            String content  = rendered(tool, template, excluded);
 
             Files.createDirectories(hookFile.getParent());
 
@@ -884,7 +893,7 @@ public class HookInstaller {
 
         try {
             String bashTemplate = HookTemplate.load(tool);
-            String bashContent = HookTemplate.apply(tool, bashTemplate, excluded);
+            String bashContent = rendered(tool, bashTemplate, excluded);
             Files.createDirectories(hooksDir);
             writeOwnedScript(tool, bashScript, bashContent);
             try {
@@ -901,7 +910,7 @@ public class HookInstaller {
             try (java.io.InputStream in = getClass().getResourceAsStream("/hooks/copilot/condense-hook.ps1")) {
                 if (in != null) {
                     String psTemplate = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-                    String psContent = HookTemplate.apply(tool, psTemplate, excluded);
+                    String psContent = rendered(tool, psTemplate, excluded);
                     Files.writeString(psScript, psContent);
                 }
             }
@@ -1053,7 +1062,7 @@ public class HookInstaller {
 
         try {
             String bashTemplate = HookTemplate.load(tool);
-            String bashContent = HookTemplate.apply(tool, bashTemplate, excluded);
+            String bashContent = rendered(tool, bashTemplate, excluded);
             Files.createDirectories(bashScript.getParent());
             writeOwnedScript(tool, bashScript, bashContent);
             try {
@@ -1070,7 +1079,7 @@ public class HookInstaller {
             try (java.io.InputStream in = getClass().getResourceAsStream("/hooks/windsurf/condense-hook.ps1")) {
                 if (in != null) {
                     String psTemplate = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-                    String psContent = HookTemplate.apply(tool, psTemplate, excluded);
+                    String psContent = rendered(tool, psTemplate, excluded);
                     Files.writeString(psScript, psContent);
                 }
             }
@@ -1325,7 +1334,7 @@ public class HookInstaller {
     ) {
         try {
             String template = HookTemplate.load(tool);
-            String content = HookTemplate.apply(tool, template, excluded);
+            String content = rendered(tool, template, excluded);
             writeOwnedScript(tool, scriptFile, content);
             try {
                 Set<PosixFilePermission> perms = EnumSet.of(
@@ -1422,7 +1431,7 @@ public class HookInstaller {
     private InstallResult installOwnedPlugin(HookTool tool, Path home, List<String> excluded) {
         try {
             Path dest = tool.ownedScript(home);
-            String content = HookTemplate.apply(tool, HookTemplate.load(tool), excluded);
+            String content = rendered(tool, HookTemplate.load(tool), excluded);
             writeOwnedScript(tool, dest, content);
             return new InstallResult(tool, true, "✓ Installed hook for " + tool.displayName + " → " + dest);
         } catch (Exception e) {
@@ -1433,7 +1442,7 @@ public class HookInstaller {
     private InstallResult installOpenCode(HookTool tool, Path home, List<String> excluded) {
         try {
             Path plugin = tool.ownedScript(home);
-            String content = HookTemplate.apply(tool, HookTemplate.load(tool), excluded);
+            String content = rendered(tool, HookTemplate.load(tool), excluded);
             writeOwnedScript(tool, plugin, content);
             Path config = tool.hookFile(home);
             com.fasterxml.jackson.databind.node.ObjectNode root;
@@ -1479,7 +1488,7 @@ public class HookInstaller {
                 }
                 pyTemplate = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
             }
-            writeOwnedScript(tool, py, HookTemplate.apply(tool, pyTemplate, excluded));
+            writeOwnedScript(tool, py, rendered(tool, pyTemplate, excluded));
             Path config = home.resolve(".hermes/config.yaml");
             String existing = Files.exists(config) ? Files.readString(config) : "";
             if (!existing.contains("condense")) {

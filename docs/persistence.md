@@ -75,4 +75,6 @@ Exit 0 when the store is usable, including “zero rows, and here is why.” Exi
 
 `persistence_write_failures` is the count from `{dataDir}/write-failures.json` (0 when the file is missing). `persistence_write_last_error` is the last recorded SQLite message, or omitted / `null`. Native proof asserts the field is present.
 
+`hook_events` is the last 20 rows from the existing `hook_events` table (newest first). `hook_event_count` remains the full count. After `condense init --tool cursor`, native doctor JSON has a non-empty `hook_events` array.
+
 Native proof: `NativePersistenceIT` creates a v0 file at runtime, runs the native binary, and asserts `user_version` equals the target, WAL, surviving seed row, and doctor JSON. A separate case seeds v1 and asserts `hook_events` exists after the binary opens the file. `NativeHookIT` repeats the v1→v2 proof with isolated hook homes.

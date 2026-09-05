@@ -40,6 +40,8 @@ class DoctorServiceTest {
         assertThat(json.has("empty_tracking_reason")).isTrue();
         assertThat(json.has("schema_version")).isTrue();
         assertThat(json.has("next_step")).isTrue();
+        assertThat(json.has("hook_events")).isTrue();
+        assertThat(json.get("hook_events").isArray()).isTrue();
         assertThat(json.has("persistence_write_failures")).isTrue();
         assertThat(json.get("persistence_write_failures").asLong()).isZero();
         assertThat(json.get("persistence_write_last_error").isNull()).isTrue();
