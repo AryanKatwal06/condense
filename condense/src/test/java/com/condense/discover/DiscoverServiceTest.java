@@ -113,6 +113,45 @@ class DiscoverServiceTest {
     }
 
     @Test
+    void contentReadStopsAtMaxBytesPerFile() throws Exception {
+        Path root = project();
+        String needle = "NEEDLE-AT-START";
+        Files.writeString(
+            root.resolve("big.txt"),
+            needle + "\n" + "x".repeat(DiscoverLimits.DEFAULT.maxBytesPerFile()));
+        Map<String, DiscoverDefinition> rules = new LinkedHashMap<>();
+        rules.put("big", new DiscoverDefinition(
+            1, "big", "big", 10, List.of(),
+            List.of(new DiscoverDefinition.Extra("big.txt", List.of(needle))),
+            List.of("pytest"), false));
+        DiscoverReport report = new DiscoverService(
+            new DiscoverRuleCatalog(rules), DiscoverLimits.DEFAULT).discover(root, null);
+        assertThat(report.recommend()).contains("pytest");
+        assertThat(report.filesRead()).isEqualTo(1);
+        assertThat(report.bytesRead()).isLessThanOrEqualTo(DiscoverLimits.DEFAULT.maxBytesPerFile());
+        assertThat(report.truncated()).isTrue();
+    }
+
+    @Test
+    void ninthContentReadIsNotOpened() throws Exception {
+        Path root = project();
+        Map<String, DiscoverDefinition> rules = new LinkedHashMap<>();
+        for (int i = 1; i <= 9; i++) {
+            String path = "extra" + i + ".txt";
+            Files.writeString(root.resolve(path), "needle-" + i + "\n");
+            rules.put("r" + i, new DiscoverDefinition(
+                1, "r" + i, "fam" + i, i, List.of(),
+                List.of(new DiscoverDefinition.Extra(path, List.of("needle-" + i))),
+                List.of("rec" + i), false));
+        }
+        DiscoverReport report = new DiscoverService(
+            new DiscoverRuleCatalog(rules), DiscoverLimits.DEFAULT).discover(root, null);
+        assertThat(report.filesRead()).isEqualTo(8);
+        assertThat(report.truncated()).isTrue();
+        assertThat(report.recommend()).contains("rec1", "rec8").doesNotContain("rec9");
+    }
+
+    @Test
     @DisabledOnOs(OS.WINDOWS)
     void symlinkEscapeIsSkipped() throws Exception {
         Path root = project();

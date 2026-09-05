@@ -4,6 +4,7 @@ import com.condense.core.SafePathValidator;
 import com.condense.read.ReadPathGate;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -188,22 +189,21 @@ public final class DiscoverService {
             return false;
         }
         try {
-            long size = Files.size(contained.realFile());
             int cap = (int) Math.min(limits.maxBytesPerFile(), limits.maxTotalBytes() - budget.bytes);
             if (cap <= 0) {
                 budget.truncated = true;
                 return false;
             }
-            byte[] body = Files.readAllBytes(contained.realFile());
-            if (body.length > limits.maxBytesPerFile()) {
-                body = java.util.Arrays.copyOf(body, limits.maxBytesPerFile());
-            }
-            if (size > limits.maxBytesPerFile()) {
-                warnings.add("truncated read of " + extra.path());
+            byte[] body;
+            boolean more;
+            try (InputStream in = Files.newInputStream(contained.realFile())) {
+                body = in.readNBytes(cap);
+                more = body.length == cap && in.read() != -1;
             }
             budget.reads++;
             budget.bytes += body.length;
-            if (body.length > cap) {
+            if (more) {
+                warnings.add("truncated read of " + extra.path());
                 budget.truncated = true;
             }
             String prefix = new String(body, StandardCharsets.UTF_8);

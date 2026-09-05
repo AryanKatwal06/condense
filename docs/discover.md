@@ -39,7 +39,7 @@ Hard caps (Java, not TOML). The approved Phase 15 plan said 32 path probes; **64
 | Bytes per file | 64 KiB |
 | Total bytes read | 256 KiB |
 
-Hitting a cap stops further probes, sets `truncated: true`, and still returns what was found. Content reads still load the whole file then trim until R15; native `NativeDiscoverIT` does not yet assert `files_read ≤ 8`.
+Hitting a cap stops further probes, sets `truncated: true`, and still returns what was found. Content reads take a bounded prefix (`readNBytes` of `min(maxBytesPerFile, remainingTotal)`), never the whole file. `NativeDiscoverIT` asserts `files_read ≤ 8`.
 
 ## What it does not do
 

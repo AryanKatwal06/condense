@@ -46,6 +46,7 @@ class NativeDiscoverIT {
         assertThat(recommend).contains("pnpm-install");
         assertThat(recommend).contains("prisma");
         assertThat(report.get("files_probed").asInt()).isLessThanOrEqualTo(64);
+        assertThat(report.get("files_read").asInt()).isLessThanOrEqualTo(8);
         assertThat(report.get("bytes_read").asLong()).isLessThanOrEqualTo(256L * 1024);
         assertThat(report.get("truncated").asBoolean()).isFalse();
     }
