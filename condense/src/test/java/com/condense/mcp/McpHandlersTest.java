@@ -186,6 +186,40 @@ class McpHandlersTest {
     }
 
     @Test
+    void toolsListIncludesDiscover() throws Exception {
+        String response = server.handleLine("""
+            {"jsonrpc":"2.0","id":7,"method":"tools/list"}
+            """.trim());
+        JsonNode root = McpMessages.RPC.readTree(response);
+        String names = root.get("result").toString();
+        assertThat(names).contains("\"name\":\"discover\"");
+        assertThat(names).contains("\"name\":\"run\"");
+    }
+
+    @Test
+    void discoverReturnsSchemaOneRecommendations() throws Exception {
+        JsonNode result = callTool("discover", "{}");
+        assertThat(result.path("isError").asBoolean(false)).isFalse();
+        com.fasterxml.jackson.databind.JsonNode report =
+            com.condense.core.Mappers.JSON.readTree(result.get("content").get(0).get("text").asText());
+        assertThat(report.get("schema_version").asInt()).isEqualTo(1);
+        assertThat(report.has("recommend")).isTrue();
+        assertThat(report.has("files_probed")).isTrue();
+    }
+
+    @Test
+    void discoverWidenRootIsError() throws Exception {
+        Path cwd = Path.of(System.getProperty("user.dir", "."));
+        Path workspace = com.condense.core.SafePathValidator.resolveWorkspaceRoot(cwd);
+        Path above = workspace.getParent();
+        assertThat(above).as("workspace must have a parent to widen against").isNotNull();
+        String rootJson = com.condense.core.Mappers.JSON.writeValueAsString(above.toString());
+        JsonNode result = callTool("discover", "{\"root\":" + rootJson + "}");
+        assertThat(result.path("isError").asBoolean(false)).isTrue();
+        assertThat(result.get("content").get(0).get("text").asText()).contains("narrow");
+    }
+
+    @Test
     void unknownToolIsError() throws Exception {
         JsonNode result = callTool("analyze_project", "{}");
         assertThat(result.get("isError").asBoolean()).isTrue();

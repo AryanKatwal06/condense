@@ -110,6 +110,20 @@ class NativeMcpIT {
     }
 
     @Test
+    void toolsListIncludesDiscover() throws Exception {
+        NativeBinarySupport.StartedRun session = NativeBinarySupport.start(
+            configDir(), dataDir(), null, tempDir, null, "mcp", "--start");
+        session.writeStdin("""
+            {"jsonrpc":"2.0","id":1,"method":"tools/list"}
+            """);
+        session.closeStdin();
+        NativeBinarySupport.CliResult result = session.await();
+        List<JsonNode> messages = jsonRpcLines(result.stdout());
+        assertThat(messages).isNotEmpty();
+        assertThat(messages.get(0).get("result").toString()).contains("\"name\":\"discover\"");
+    }
+
+    @Test
     void gainResourceHasTotalCommands() throws Exception {
         NativeBinarySupport.StartedRun session = NativeBinarySupport.start(
             configDir(), dataDir(), null, tempDir, null, "mcp", "--start");

@@ -10,6 +10,8 @@ import com.condense.doctor.DoctorService;
 import com.condense.explain.ExplainService;
 import com.condense.ir.Document;
 import com.condense.ir.JsonRenderer;
+import com.condense.discover.DiscoverReport;
+import com.condense.discover.DiscoverService;
 import com.condense.read.ReadLevel;
 import com.condense.read.ReadPathGate;
 import com.condense.read.ReadService;
@@ -35,6 +37,7 @@ public class McpHandlers {
     private final GainRepository gain;
     private final DoctorService doctor;
     private final TrackingRepository tracking;
+    private final DiscoverService discover;
 
     public McpHandlers() {
         this(null, null, null, null, null, null);
@@ -55,6 +58,7 @@ public class McpHandlers {
         this.gain = gain;
         this.doctor = doctor;
         this.tracking = tracking;
+        this.discover = new DiscoverService();
     }
 
     public JsonNode dispatch(String method, JsonNode params) {
@@ -93,7 +97,11 @@ public class McpHandlers {
             new McpMessages.ToolSpec(
                 "read",
                 "Read a workspace file with comment-strip or outline.",
-                readSchema())
+                readSchema()),
+            new McpMessages.ToolSpec(
+                "discover",
+                "Recommend filter definitions from repository manifests and lockfiles.",
+                discoverSchema())
         );
         return McpMessages.RPC.valueToTree(new McpMessages.ToolsListResult(tools));
     }
@@ -127,6 +135,7 @@ public class McpHandlers {
             case "run" -> callRun(args);
             case "explain" -> callExplain(args);
             case "read" -> callRead(args);
+            case "discover" -> callDiscover(args);
             default -> value(McpMessages.ToolResult.error("Unknown tool: " + name));
         };
     }
@@ -245,6 +254,16 @@ public class McpHandlers {
         return value(McpMessages.ToolResult.ok(compact(outcome.report())));
     }
 
+    private JsonNode callDiscover(JsonNode args) {
+        String rootText = text(args, "root");
+        Path root = rootText == null ? null : Path.of(rootText);
+        DiscoverReport report = discover.discover(cwd(), root);
+        if (report.failed()) {
+            return value(McpMessages.ToolResult.error(report.error()));
+        }
+        return value(McpMessages.ToolResult.ok(compact(report)));
+    }
+
     private void recordRead(String path, ReadLevel level, ReadService.Outcome outcome, long startedNanos) {
         if (tracking == null || outcome == null || !outcome.ok()) {
             return;
@@ -346,6 +365,16 @@ public class McpHandlers {
         props.putObject("exit_code").put("type", "integer");
         props.putObject("ultra_compact").put("type", "boolean");
         required(schema, "command");
+        schema.put("additionalProperties", false);
+        return schema;
+    }
+
+    private static JsonNode discoverSchema() {
+        ObjectNode schema = McpMessages.RPC.createObjectNode();
+        schema.put("type", "object");
+        ObjectNode props = schema.putObject("properties");
+        props.putObject("root").put("type", "string")
+            .put("description", "Optional workspace root. May only narrow, not widen.");
         schema.put("additionalProperties", false);
         return schema;
     }
