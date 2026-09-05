@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Fixed
+- The published `utf8_weighted_v1` p95 relative-error bound is 0.37 (was 0.35). The measured corpus p95 is 0.3656; the old published figure was not rounded up.
+- The 1.0.0-rc1 changelog listed 42 filters, 12 strategies, and NDJSON streaming. That contemporaneous copy was inflated — see the correction under `[1.0.0-rc1]`.
 - Multi-prefix filters (`npm install`, `eslint`, `pip install`, and the other `@CommandFilters` commands) are registered in `StrategyRegistry`. `CommandFilter` was not `@Repeatable`, so the real CLI treated those commands as passthrough. Native proof is `NativeStreamingIT`.
 - `condense gain --top` and `condense gain --top 10` now render the top-N table. The old `if (top != 10)` branch treated the default value as “flag absent,” so the documented `--top 10` example showed the summary panel instead.
 - `condense doctor` is `@Unremovable` so Quarkus no longer strips the Picocli bean from the native image. Without that, `PicocliBeansFactory` failed with a CDI unused-bean error and `NativePersistenceIT` exited 1 on every platform.
@@ -24,7 +26,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Declarative filter schema v1.** Every compressing filter's default pipeline loads from `classpath:filters/<name>.toml` (31 files plus `index.toml`; `PythonFilter` stays a Java router). Documents require `schema_version = 1` and reject unknown keys. `StageFactory` is a hardcoded switch covering generic stages and named command summaries. Builtin definitions fail-closed; user overrides still fail-open. `BuiltinDefinitionValidator` runs at Maven `process-classes` so `mvn package -Pnative -DskipTests` still checks the resources. Override files without `schema_version` fail-open at runtime; `condense config validate` reports the error. See [docs/filter-schema.md](docs/filter-schema.md).
 - Every domain filter now runs through `FilterPipeline`. Duplicate command prefixes fail at startup, built-in regexes share the 200 ms bound already used by overrides, and migrated filters share one `FilterOverrideLoader` instead of constructing a private cache each. Filtered corpus output is byte-locked in `corpus/golden/`.
 - CI now fails `mvn test` if a domain filter drops a declared critical signal or falls below its baked savings floor. The catalog is `condense/src/test/resources/corpus/catalog.json`. See [docs/fidelity-corpus.md](docs/fidelity-corpus.md).
-- Replaced the mixed byte/UTF-16 `/4` token heuristic with `utf8_weighted_v1`, a UTF-8 code-point estimator used for both files and strings. `condense gain` now labels counts as estimates and reports a p95 relative-error bound of 35% vs cl100k_base. See [docs/token-estimator.md](docs/token-estimator.md).
+- Replaced the mixed byte/UTF-16 `/4` token heuristic with `utf8_weighted_v1`, a UTF-8 code-point estimator used for both files and strings. `condense gain` now labels counts as estimates and reports a p95 relative-error bound of 37% vs cl100k_base. See [docs/token-estimator.md](docs/token-estimator.md).
 - Set the compiler language level to Java 21 so bytecode matches GraalVM 21 CI and the documented toolchain.
 - Added `CONDENSE_CONFIG_DIR` and `CONDENSE_DATA_DIR` overrides in `PlatformDirs` so tests and power users can redirect config and analytics state on every OS, including macOS.
 - Native integration tests now run via Failsafe in CI (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativePersistenceIT`) on linux-x64, linux-aarch64, macos-aarch64, and windows-x64, using isolated directories instead of the real user database.
@@ -57,6 +59,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Full provenance verification via Sigstore/cosign and CycloneDX SBOM integration.
 
 ## [1.0.0-rc1] — 2026-06-30
+
+### Correction (5 Sep 2026)
+
+The contemporaneous copy below inflated counts. The tree at rc1 did not have 42 command filters, 12 strategies, or an NDJSON streaming strategy. Later inventory is 32 domain filters and 6 strategy classes. This note does not rewrite the original bullets.
 
 ### Added
 

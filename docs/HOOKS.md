@@ -112,11 +112,10 @@ The hook scripts read this configuration on every invocation, so changes take ef
 
 ### Ultra-Compact Mode
 
-If your AI is struggling with context limits, you can enable ultra-compact mode in the configuration file:
+If your AI is struggling with context limits, pass `-u` / `--ultra-compact` on the CLI. There is no `[general]` config key.
 
-```toml
-[general]
-ultra_compact = true
+```
+condense -u pytest
 ```
 
 When enabled, condense trades human readability for maximum token efficiency by stripping indentation, decorative characters, and flattening structures.

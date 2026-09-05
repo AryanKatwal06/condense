@@ -154,7 +154,7 @@ Mode is derived from `FilterStage.streamability()`: STREAM when every stage is `
 public static int count(String text) { return Utf8WeightedTokenEstimator.INSTANCE.count(text); }
 ```
 
-`utf8_weighted_v1` walks Unicode code points. CJK / Hangul / kana / emoji are dense (1 token each); Latin runs use ceiling division by 4. `count(Path)` decodes the file as UTF-8 with replacement and uses the same function — never `Files.size()`. Published p95 relative error vs cl100k_base is **0.35**. `gain` JSON includes an `estimator` object; text output labels counts as estimates. See `docs/token-estimator.md`.
+`utf8_weighted_v1` walks Unicode code points. CJK / Hangul / kana / emoji are dense (1 token each); Latin runs use ceiling division by 4. `count(Path)` decodes the file as UTF-8 with replacement and uses the same function — never `Files.size()`. Published p95 relative error vs cl100k_base is **0.37**. `gain` JSON includes an `estimator` object; text output labels counts as estimates. See `docs/token-estimator.md`.
 
 ### 4.5 CLI surface
 
@@ -288,7 +288,7 @@ Surefire explicitly excludes `**/*IT.java` (documented rationale: prevent ITs fr
 | Workflow | Trigger | Jobs |
 |---|---|---|
 | `build.yml` | push to any branch, PR to main | `jvm-test` (ubuntu, GraalVM 21, `mvn verify`) → `native-builds` matrix: ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-15 |
-| `release.yml` | tag `v*` | create-release → build-native (linux-x64, linux-aarch64, macos-aarch64, windows-x64) → build-deb → publish (checksums, cosign, CycloneDX SBOM). **Weaker than `build.yml` until remediation R4** — no Failsafe, no 80 MiB size gate |
+| `release.yml` | tag `v*` | create-release → build-native (linux-x64, linux-aarch64, macos-aarch64, windows-x64) → build-deb → publish (checksums, cosign, CycloneDX SBOM). After package, **Failsafe and the 80 MiB ceiling match `build.yml`** (remediation R4) |
 | `phase3-verification.yml` | `workflow_dispatch` only | Linux x64 only: 300-run soak, permission-denial fail-open, 5-way concurrency + `PRAGMA integrity_check` |
 
 `native-builds` on `build.yml` builds with `mvn package -Pnative -DskipTests`, then **runs Failsafe** (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativeBuiltinDefinitionIT`, `NativeTrustIT`, `NativePersistenceIT`, `NativeExplainIT`, `NativeStreamingIT`, `NativeReadIT`). It then enforces an **80 MiB** uncompressed size ceiling (`83886080`), records binary size and 5× cold-start, keeps the uninstall/purge shell smokes, and pushes metrics to a `ci-metrics` branch.
@@ -309,7 +309,7 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D4 | ~~Duplicate reflect-config entries; no drift test~~ **FIXED** | `ReflectConfigDriftTest` | Phase 1 |
 | D5 | ~~No linux-aarch64 CI or release job~~ **FIXED** | `ubuntu-24.04-arm` in build.yml and release.yml | Phase 1 |
 | D6 | ~~`install.sh` header advertises Intel macOS prebuilts~~ **FIXED** | Header matches shipped platforms | Phase 1 |
-| D7 | ~~Token counting is a `/4` heuristic mixing bytes and chars~~ **FIXED** | `utf8_weighted_v1`; file and string share one UTF-8 code-point function; published p95 0.35 vs cl100k_base | Phase 2 |
+| D7 | ~~Token counting is a `/4` heuristic mixing bytes and chars~~ **FIXED** | `utf8_weighted_v1`; file and string share one UTF-8 code-point function; published p95 0.37 vs cl100k_base | Phase 2 |
 | D8 | ~~No machine-enforced savings or fidelity gate; the "≥60% savings" bar is prose only~~ **FIXED** | `corpus/catalog.json` + `FidelityCorpusTest`; 100% critical-signal retention; baked floors | Phase 3 |
 | D9 | ~~29 domain filters are not on `FilterPipeline`~~ **FIXED** | 31 extend `PipelineBackedFilter`; `PythonFilter` routes | Phase 4 |
 | D10 | ~~`StrategyRegistry` silently last-wins on duplicate command prefixes~~ **FIXED** | `PrefixIndex` throws at `@PostConstruct` | Phase 4 |
@@ -345,13 +345,10 @@ The next agent will be misled by these if they trust the docs. They are **docume
 
 | Location | Claim | Reality |
 |---|---|---|
-| `README.md` Ultra-Compact section | Config example shows `[general] ultra_compact = true` | `CondenseConfig` has **no `[general]` section**; ultra-compact is CLI-only via `-u`. **Remediation R8** |
-| `CHANGELOG.md` 1.0.0-rc1 | "**42 command filters**" / "**12 filter strategies**" including "NDJSON streaming" | 32 domain filter classes exist; there is no NDJSON streaming strategy. Historical copy was inflated. **Remediation R9** |
-| `CONTRIBUTING.md` | "The PR template will ask you to confirm…" | No `.github/PULL_REQUEST_TEMPLATE` exists yet. **Remediation R10** |
 | `condense/ARCHITECTURE.md` file table | Lists only the bootstrap/config/analytics classes | Says nothing about the 32 filters, pipeline, or overrides — materially incomplete |
 | Root `README.md` supported-commands table | 30 rows | Code registers ~47 prefixes; undocumented ones include `docker run`, `docker exec`, `python -c`, `ruff`, `npx eslint`, `npm ci`, `npm i`, `pip3 install`, `./mvnw`, `./gradlew`. `condense read` is a subcommand, not a proxied prefix |
 
-Rows that used to live here and are **no longer true** (removed 5 Sep 2026, audit R0): ARCHITECTURE vs POM Java 17 (both are 21); README "Java 17+" (now GraalVM JDK 21); CONTRIBUTING sample that did not compile (now `PipelineBackedFilter` + `definitionName()`); "add to reflect-config as a manual ritual" (drift test is the gate). This §4 used to describe the pre-Phase-1 tree; that is corrected above.
+Rows that used to live here and are **no longer true** (removed 5 Sep 2026, audit R0 / R8–R10): ARCHITECTURE vs POM Java 17 (both are 21); README "Java 17+" (now GraalVM JDK 21); CONTRIBUTING sample that did not compile (now `PipelineBackedFilter` + `definitionName()`); "add to reflect-config as a manual ritual" (drift test is the gate); README `[general] ultra_compact` (CLI `-u` only); CHANGELOG rc1 42/12/NDJSON (correction note added); missing PR template (`.github/PULL_REQUEST_TEMPLATE.md` exists). This §4 used to describe the pre-Phase-1 tree; that is corrected above.
 
 ---
 
@@ -394,7 +391,7 @@ Three sequential efforts the 17-phase roadmap builds directly on top of. Commit 
 
 ## 8. This engagement: what was actually done
 
-Planning plus Phase 1 through Phase 10 code, then an independent audit of those ten phases (5 Sep 2026). Audit remediation (R0–R12) is in progress; it is hygiene, not a new numbered roadmap phase.
+Planning plus Phase 1 through Phase 10 code, then an independent audit of those ten phases (5 Sep 2026). Audit remediation (R0–R12) landed the same day; it is hygiene, not a new numbered roadmap phase.
 
 | Activity | Status | Notes |
 |---|---|---|
@@ -405,7 +402,7 @@ Planning plus Phase 1 through Phase 10 code, then an independent audit of those 
 | Phase 1 implementation plan | **COMPLETED** | Revised 4 Sep 2026, then authorized with "proceed" |
 | Phase 1 code | **LANDED** | Java 21, env overrides, drift test, Failsafe native ITs, linux-aarch64 matrix, 80 MiB size ceiling. Native proof for the current tree is [run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575) on `cdd3d43` (older run 33860368090 was not re-opened in the audit). |
 | Phase 2 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "start executing" |
-| Phase 2 code | **LANDED** | `utf8_weighted_v1`, UTF-8 file/string agreement, published p95 0.35 vs cl100k_base (audit measured 0.3656; **R5** raises the published bound), `gain` estimator metadata. Native proof is `NativeAnalyticsIT` in run 33950449575. |
+| Phase 2 code | **LANDED** | `utf8_weighted_v1`, UTF-8 file/string agreement, published p95 **0.37** vs cl100k_base (measured 0.3656; R5), `gain` estimator metadata. Native proof is `NativeAnalyticsIT` in run 33950449575. |
 | Phase 3 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "start executing" |
 | Phase 3 code | **LANDED** | Versioned catalog (51 entries, 32/32 domain filters), 100% critical-signal retention, baked savings floors (later remesured after Phase 6/9 — see §9 Phase 3), seeded fuzz, `NativeCorpusIT`. Native proof is `NativeCorpusIT` in run 33950449575. |
 | Phase 4 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "EXECUTE" / "start executing" |
@@ -416,11 +413,11 @@ Planning plus Phase 1 through Phase 10 code, then an independent audit of those 
 | Phase 7 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized |
 | Phase 7 code | **LANDED** | `user_version` 1, WAL, `busy_timeout`, 90-day retention, `filter_outcomes`, `condense doctor`, D20 purge allowlist. Native proof is `NativePersistenceIT` in run 33950449575. |
 | Phase 8 code | **LANDED** | `condense explain`, `executeTraced`, tier `resolveDecision`, D21 `--top 10`. Native proof is `NativeExplainIT` in run 33950449575. |
-| Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Docs commit `9b6ffd4` had **red** native CI ([run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965)) because `@CommandFilters` prefixes were invisible in the image; `447eeb6` fixed registration. Current native proof is `NativeStreamingIT` in run 33950449575 (content, not timing — **R3**). `IncrementalEquivalenceTest` is tautological until **R1**. |
+| Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Docs commit `9b6ffd4` had **red** native CI ([run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965)) because `@CommandFilters` prefixes were invisible in the image; `447eeb6` fixed registration. `IncrementalEquivalenceTest` now compares `StreamingProxy.replay` / stamped `execute` to `apply()`. `NativeStreamingIT` times first-line-before-exit on a PATH-stubbed npm. |
 | Phase 10 code | **LANDED** | `condense read`; per-language scanner; original line numbers; builtin `languages/*.toml`; workspace containment; `NativeReadIT`. |
 | Phases 11–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (510 / 0 / 0 / 9 on this Windows JVM; 9 skips are POSIX `CommandExecutorTest`), and CI 33950449575. |
-| Audit remediation R0–R12 | **IN PROGRESS** | Hygiene train. R0 is this handoff correction. Phase 11 *planning* may start after R0. Phase 11 *code* waits for R1 and R3 plus a fresh plan-then-approve. |
+| Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. Phase 11 *planning* may start. Phase 11 *code* still needs a complete plan and a fresh proceed. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 so §4 matches the live tree. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p10` are marked `completed`, `p11`–`p17` `pending`. Remediation is in progress and is not a new numbered phase. **That file is untracked and local-only (see §3).**
@@ -597,7 +594,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 - Seeded fuzz seed **`20260904`**, 25 iterations per compressing entry. Mutations keep every critical substring already in the raw fixture: prefix noise (skipped for JSON and git porcelain) and extra blank lines. Non-blank suffix and ANSI wrapping were dropped because last-line and header-classified parsers would then drop a signal that is still in the input — not a fair retention probe, and not a license to change filters.
 - `NativeCorpusIT` PATH-stubs `pytest` / `pytest.cmd` to print `fixtures/pytest/typical.txt` and exit 1, then runs the native binary as `condense pytest`. `NativeBinarySupport.run` gained an optional PATH prepend. No new CLI, no jqwik, no new GitHub workflow.
 - `KubectlFilterTest` no-op `≥ -100` savings assert removed; the catalog records the `too_small` fact.
-- Docs: `docs/fidelity-corpus.md`; README / CONTRIBUTING / ARCHITECTURE honesty. `docs/token-estimator.md` notes the accuracy sample grew to n=59 (p95 0.366, still under the 0.40 gate); published bound 0.35 is unchanged.
+- Docs: `docs/fidelity-corpus.md`; README / CONTRIBUTING / ARCHITECTURE honesty. `docs/token-estimator.md` notes the accuracy sample grew to n=59 (measured p95 0.3656). Remediation R5 raised the published bound to 0.37 and the CI gate to 0.42.
 - Local JVM proof at Phase 3 closeout: `mvn test` **337 run, 0 failures, 6 skipped** (contemporaneous snapshot). Native proof is CI.
 
 **What later phases need from this one.** A before/after check Phase 4 can migrate against; a fidelity contract Phase 9 streaming must not break; a contribution bar Phase 14 can attach to every new command.
@@ -727,7 +724,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 **Goal.** Filtered output appears **while** long commands run. An incremental stage contract (feed / flush / finalize) where each stage declares whether it is order-local (streamable) or needs the whole output. The runner chooses stream vs capture from the pipeline's declared capability **automatically**.
 
-**Shipped.** `Streamability` + `StageSession` / `EmissionSink` (default `DOCUMENT` / `DocumentSession`). `FilterPipeline.execute` walks sessions. Shared stages: `ansi_strip` and `state_machine` (no `COLLECT`) are `ORDER_LOCAL`; `head_tail` is `WINDOWED`; `regex_capture` and `json_lines` stay `DOCUMENT`. Flagship `NpmInstallSummaryStage` / `DockerBuildSummaryStage` emit irrevocable progress live, then the existing success summary at `endOfInput`. No TOML `streamable` flag. Proxy waits until the child exits unless `CONDENSE_COMMAND_TIMEOUT_SEC` is set. 10 MB cap fail-opens. JVM proof: `StreamingTimingTest` (timing is real), `StreamabilityDeriveTest`. `IncrementalEquivalenceTest` is tautological until remediation **R1** (`executeIncremental` is `return execute(...)`). Native proof: `NativeStreamingIT` in run 33950449575 asserts content, not first-line-before-exit. Docs: `docs/streaming.md`.
+**Shipped.** `Streamability` + `StageSession` / `EmissionSink` (default `DOCUMENT` / `DocumentSession`). `FilterPipeline.execute` walks sessions. Shared stages: `ansi_strip` and `state_machine` (no `COLLECT`) are `ORDER_LOCAL`; `head_tail` is `WINDOWED`; `regex_capture` and `json_lines` stay `DOCUMENT`. Flagship `NpmInstallSummaryStage` / `DockerBuildSummaryStage` emit irrevocable progress live, then the existing success summary at `endOfInput`. No TOML `streamable` flag. Proxy waits until the child exits unless `CONDENSE_COMMAND_TIMEOUT_SEC` is set. 10 MB cap fail-opens. JVM proof: `StreamingTimingTest` (timing is real), `StreamabilityDeriveTest`, `IncrementalEquivalenceTest` (`StreamingProxy.replay` vs `apply()`, stamped `execute` vs `apply()`). Native proof: `NativeStreamingIT` times first-line-before-exit on PATH-stubbed npm and checks live stdout against `apply()`. Docs: `docs/streaming.md`.
 
 **CI honesty.** The docs commit `9b6ffd4` did **not** have green native CI. [Build & Test run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965) failed all four native jobs: `@CommandFilters` prefixes (`npm install` and siblings) were invisible in the image, so those commands passed through. `447eeb6` registered the container annotation. Current proof is run 33950449575. Remediation **R12** is the architecture safeguard so that regression cannot return silently.
 
@@ -984,9 +981,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–10 code landed. An independent audit of those phases ran 5 Sep 2026. This file was corrected (R0) so §4, §6, §8, and §9 match the live tree and CI. Remaining remediation slices R1–R12 are hygiene, not a new numbered phase. `condense read` scans source files with a real per-language scanner and original line numbers. Current Surefire on this Windows JVM: **510 / 0 / 0 / 9**. Native proof is [run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575), including `NativeReadIT`. This Windows workspace does not build native images.
+**Where we are.** Phase 1–10 code landed. Audit remediation R0–R12 landed 5 Sep 2026 (hygiene, not a new numbered phase). `condense read` scans source files with a real per-language scanner and original line numbers. Native proof for the pre-remediation tree is [run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575). This Windows workspace does not build native images.
 
-**Do not start Phase 11 code.** Phase 11 *planning* may start after R0. Phase 11 *implementation* waits for R1 and R3 plus a complete Phase 11 plan (constraint #9) and a fresh "proceed".
+**Do not start Phase 11 code.** Present a complete Phase 11 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -1007,8 +1004,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 10 code has landed. Confirm `NativeReadIT` appears in native job logs (run 33950449575 on `cdd3d43` is the current proof), `GoldenLockTest` is green, and `condense read --help` exists. Finish audit remediation R1–R12 before treating streaming or release CI as fully proven.
-9. **Do not start Phase 11 code** until R1 and R3 have landed. After R0, a Phase 11 *plan* is allowed. Present a complete Phase 11 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 10 code and audit remediation R0–R12 have landed. Confirm `NativeReadIT` and `NativeStreamingIT` appear in native job logs, `GoldenLockTest` is green, and `condense read --help` exists.
+9. **Do not start Phase 11 code.** Present a complete Phase 11 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

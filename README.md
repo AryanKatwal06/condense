@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Build](https://github.com/AryanKatwal06/condense/actions/workflows/build.yml/badge.svg)](https://github.com/AryanKatwal06/condense/actions/workflows/build.yml)
 
-**Condense** sits between your AI coding assistant and the shell. It filters command output so the AI sees a compact summary instead of thousands of raw lines — typically cutting estimated context-window tokens by 60–92%. Those percentages are estimates (`utf8_weighted_v1`, p95 ±35% vs cl100k_base); see [docs/token-estimator.md](docs/token-estimator.md).
+**Condense** sits between your AI coding assistant and the shell. It filters command output so the AI sees a compact summary instead of thousands of raw lines — typically cutting estimated context-window tokens by 60–92%. Those percentages are estimates (`utf8_weighted_v1`, p95 ±37% vs cl100k_base); see [docs/token-estimator.md](docs/token-estimator.md).
 
 ---
 
@@ -159,10 +159,11 @@ AI agents increasingly ship with their own context-saving mechanisms. Condense i
 
 If your AI is struggling with context limits, you can enable ultra-compact mode. This trades human readability for maximum token efficiency.
 
-```toml
-# ~/.config/condense/config.toml
-[general]
-ultra_compact = true
+Ultra-compact is CLI-only. There is no `[general]` config key.
+
+```
+condense -u pytest
+condense --ultra-compact npm install
 ```
 
 When enabled, condense will strip indentation, remove all decorative characters (like `-`, `=`, `*`), and flatten nested structures. A 20-line error report might become 3 lines of dense, comma-separated facts. AI models parse this perfectly, but humans will find it hard to read.
@@ -196,7 +197,7 @@ condense makes no network calls during normal operation. The only exception is t
 
 ## condense gain (Analytics)
 
-`condense gain` gives you a detailed breakdown of estimated token savings. Counts are produced by `utf8_weighted_v1` (p95 relative error 35% vs cl100k_base). The JSON form includes an `estimator` object; existing fields are unchanged.
+`condense gain` gives you a detailed breakdown of estimated token savings. Counts are produced by `utf8_weighted_v1` (p95 relative error 37% vs cl100k_base). The JSON form includes an `estimator` object; existing fields are unchanged.
 
 ```bash
 $ condense gain --graph
