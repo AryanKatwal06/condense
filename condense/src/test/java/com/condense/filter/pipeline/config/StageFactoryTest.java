@@ -1,6 +1,7 @@
 package com.condense.filter.pipeline.config;
 
 import com.condense.filter.pipeline.FilterPipeline;
+import com.condense.filter.pipeline.NamedStage;
 import com.condense.filter.strategy.DockerPsStage;
 import com.condense.filter.strategy.GitStatusStage;
 import com.condense.filter.strategy.HeadTailStage;
@@ -49,13 +50,15 @@ class StageFactoryTest {
 
     @Test
     void promotedStagesAreConstructible() {
-        assertThat(StageFactory.instantiate(withMaxLines(stage("tail_lines"), 30)))
+        assertThat(NamedStage.unwrap(StageFactory.instantiate(withMaxLines(stage("tail_lines"), 30))))
             .isInstanceOf(TailLinesStage.class);
-        assertThat(StageFactory.instantiate(withHeadTail(stage("head_tail"), 5, 5)))
+        assertThat(NamedStage.unwrap(StageFactory.instantiate(withHeadTail(stage("head_tail"), 5, 5))))
             .isInstanceOf(HeadTailStage.class);
-        assertThat(StageFactory.instantiate(stage("git_status"))).isSameAs(GitStatusStage.INSTANCE);
-        assertThat(StageFactory.instantiate(stage("json_lines"))).isSameAs(JsonLinesStage.INSTANCE);
-        assertThat(StageFactory.instantiate(stage("docker_ps"))).isSameAs(DockerPsStage.INSTANCE);
+        assertThat(NamedStage.unwrap(StageFactory.instantiate(stage("git_status")))).isSameAs(GitStatusStage.INSTANCE);
+        assertThat(NamedStage.unwrap(StageFactory.instantiate(stage("json_lines")))).isSameAs(JsonLinesStage.INSTANCE);
+        assertThat(NamedStage.unwrap(StageFactory.instantiate(stage("docker_ps")))).isSameAs(DockerPsStage.INSTANCE);
+        assertThat(StageFactory.instantiate(stage("git_status")).stageId()).isEqualTo("git_status");
+        assertThat(StageFactory.instantiate(stage("ansi-strip")).stageId()).isEqualTo("ansi_strip");
     }
 
     @Test

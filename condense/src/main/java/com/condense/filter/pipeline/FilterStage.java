@@ -27,4 +27,13 @@ public interface FilterStage {
     default StageResult process(String input) {
         return process(input, FilterContext.empty());
     }
+
+    /**
+     * Stable id for logs and {@code condense explain}. Lambdas keep the class
+     * simple name; declarative stages override this via {@link NamedStage}.
+     */
+    default String stageId() {
+        String simple = getClass().getSimpleName();
+        return simple == null || simple.isBlank() ? getClass().getName() : simple;
+    }
 }

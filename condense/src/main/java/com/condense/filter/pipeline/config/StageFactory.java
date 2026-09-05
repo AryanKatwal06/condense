@@ -2,6 +2,7 @@ package com.condense.filter.pipeline.config;
 
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.FilterStage;
+import com.condense.filter.pipeline.NamedStage;
 import com.condense.filter.stage.*;
 import com.condense.filter.strategy.*;
 import com.condense.trust.Capability;
@@ -76,6 +77,28 @@ public final class StageFactory {
         return strategy == null ? "" : strategy.trim().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Maps hyphenated and short aliases to the underscore form used by explain.
+     */
+    public static String canonicalAlias(String strategy) {
+        return switch (normalize(strategy)) {
+            case "ansi_strip", "ansi-strip", "ansi" -> "ansi_strip";
+            case "tree_compression", "tree-compression", "tree" -> "tree_compression";
+            case "json_structure", "json-structure", "json" -> "json_structure";
+            case "deduplication", "dedup" -> "deduplication";
+            case "grouping", "group" -> "grouping";
+            case "state_machine", "state-machine" -> "state_machine";
+            case "tail_lines", "tail-lines" -> "tail_lines";
+            case "head_tail", "head-tail" -> "head_tail";
+            case "aggregate_by_key", "aggregate-by-key" -> "aggregate_by_key";
+            case "regex_capture", "regex-capture" -> "regex_capture";
+            case "git_status", "git-status" -> "git_status";
+            case "json_lines", "json-lines" -> "json_lines";
+            case "docker_ps", "docker-ps" -> "docker_ps";
+            default -> normalize(strategy);
+        };
+    }
+
     public static boolean isAllowed(String strategy) {
         return ALLOWED_ALIASES.contains(normalize(strategy));
     }
@@ -128,6 +151,14 @@ public final class StageFactory {
         if (stageDef == null) {
             return null;
         }
+        FilterStage stage = instantiateRaw(stageDef);
+        if (stage == null) {
+            return null;
+        }
+        return NamedStage.wrap(canonicalAlias(stageDef.strategy()), stage);
+    }
+
+    private static FilterStage instantiateRaw(FilterOverrideConfig.StageDef stageDef) {
         return switch (normalize(stageDef.strategy())) {
             case "ansi_strip", "ansi-strip", "ansi" -> AnsiStripStrategy.INSTANCE;
             case "tree_compression", "tree-compression", "tree" -> TreeCompressionStrategy.INSTANCE;

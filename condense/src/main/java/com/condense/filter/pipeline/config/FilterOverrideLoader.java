@@ -105,13 +105,25 @@ public class FilterOverrideLoader {
      * @return the resolved pipeline, or defaultPipeline if no valid override exists
      */
     public FilterPipeline resolvePipeline(String command, FilterPipeline defaultPipeline, Path projectDir) {
+        return resolveDecision(command, defaultPipeline, projectDir, null).pipeline();
+    }
+
+    /**
+     * Same resolution as {@link #resolvePipeline} plus the winning tier and skip reasons.
+     */
+    public PipelineDecision resolveDecision(
+            String command,
+            FilterPipeline defaultPipeline,
+            Path projectDir,
+            String builtinSource
+    ) {
+        List<PipelineDecision.SkippedTier> skipped = new ArrayList<>();
         if (command == null || command.isBlank()) {
-            return defaultPipeline;
+            return new PipelineDecision(defaultPipeline, PipelineDecision.TIER_BUILTIN, builtinSource, skipped);
         }
 
         String normalizedCmd = command.trim().toLowerCase(Locale.ROOT);
 
-        // Tier 1: Project-local override (.condense/filters.toml)
         if (projectDir != null) {
             Path normalizedProjectDir = projectDir.toAbsolutePath().normalize();
             CachedOverride projectCached = projectConfigCache.computeIfAbsent(
@@ -119,33 +131,73 @@ public class FilterOverrideLoader {
                 this::loadProjectOverride
             );
             FilterPipeline projectPipeline = projectCached.getOrCreatePipeline(normalizedCmd, this);
+            String projectSource = pathString(normalizedProjectDir.resolve(PROJECT_OVERRIDE_REL_PATH));
             if (projectPipeline != null) {
-                log.debugf("Applied project-local override for '%s' from %s", command, normalizedProjectDir.resolve(PROJECT_OVERRIDE_REL_PATH));
-                return projectPipeline;
+                log.debugf("Applied project-local override for '%s' from %s", command, projectSource);
+                return new PipelineDecision(
+                    projectPipeline, PipelineDecision.TIER_PROJECT, projectSource, skipped);
             }
+            skipped.add(new PipelineDecision.SkippedTier(
+                PipelineDecision.TIER_PROJECT,
+                projectCached.reasonFor(normalizedCmd, this),
+                projectCached.sourcePath != null ? pathString(projectCached.sourcePath) : projectSource
+            ));
+        } else {
+            skipped.add(new PipelineDecision.SkippedTier(
+                PipelineDecision.TIER_PROJECT, "absent", null));
         }
 
-        // Tier 2: User-global override ($CONFIG_DIR/filters.toml)
-        if (platformDirs != null) {
-            CachedOverride globalCached = globalConfigCache;
-            if (globalCached == null) {
-                synchronized (globalCacheLock) {
-                    globalCached = globalConfigCache;
-                    if (globalCached == null) {
-                        globalCached = loadGlobalOverride();
-                        globalConfigCache = globalCached;
-                    }
-                }
-            }
+        CachedOverride globalCached = cachedGlobalOverride();
+        String globalSource = globalCached != null && globalCached.sourcePath != null
+            ? pathString(globalCached.sourcePath)
+            : pathString(globalOverridePath());
+        if (globalCached != null) {
             FilterPipeline globalPipeline = globalCached.getOrCreatePipeline(normalizedCmd, this);
             if (globalPipeline != null) {
                 log.debugf("Applied user-global override for '%s'", command);
-                return globalPipeline;
+                return new PipelineDecision(
+                    globalPipeline, PipelineDecision.TIER_GLOBAL, globalSource, skipped);
             }
+            skipped.add(new PipelineDecision.SkippedTier(
+                PipelineDecision.TIER_GLOBAL,
+                globalCached.reasonFor(normalizedCmd, this),
+                globalSource
+            ));
+        } else {
+            skipped.add(new PipelineDecision.SkippedTier(
+                PipelineDecision.TIER_GLOBAL, "absent", globalSource));
         }
 
-        // Tier 3: Builtin classpath definition (already compiled into defaultPipeline)
-        return defaultPipeline;
+        return new PipelineDecision(defaultPipeline, PipelineDecision.TIER_BUILTIN, builtinSource, skipped);
+    }
+
+    private CachedOverride cachedGlobalOverride() {
+        if (platformDirs == null) {
+            return null;
+        }
+        CachedOverride globalCached = globalConfigCache;
+        if (globalCached == null) {
+            synchronized (globalCacheLock) {
+                globalCached = globalConfigCache;
+                if (globalCached == null) {
+                    globalCached = loadGlobalOverride();
+                    globalConfigCache = globalCached;
+                }
+            }
+        }
+        return globalCached;
+    }
+
+    private Path globalOverridePath() {
+        if (platformDirs == null) {
+            return null;
+        }
+        Path configDir = platformDirs.resolveConfigDir();
+        return configDir == null ? null : configDir.resolve(GLOBAL_OVERRIDE_FILE_NAME);
+    }
+
+    private static String pathString(Path path) {
+        return path == null ? null : path.toString();
     }
 
     /**
@@ -315,7 +367,7 @@ public class FilterOverrideLoader {
         Path projectOverrideFile = normalizedProjectDir.resolve(PROJECT_OVERRIDE_REL_PATH);
         try {
             if (!Files.exists(projectOverrideFile)) {
-                return CachedOverride.EMPTY;
+                return CachedOverride.skipped("absent", projectOverrideFile);
             }
 
             ParsedFileResult parsed = parseAndValidateFile(projectOverrideFile, normalizedProjectDir);
@@ -323,11 +375,11 @@ public class FilterOverrideLoader {
                 log.warnf("Filter override file at %s failed validation (%s): %s",
                     projectOverrideFile, parsed.validationResult().status(),
                     String.join("; ", parsed.validationResult().errors()));
-                return CachedOverride.EMPTY;
+                return CachedOverride.skipped("invalid", projectOverrideFile);
             }
 
             if (parsed.fileConfig() == null || parsed.fileConfig().filters() == null) {
-                return CachedOverride.EMPTY;
+                return CachedOverride.skipped("absent", projectOverrideFile);
             }
 
             Path canonical = projectOverrideFile.toRealPath();
@@ -337,25 +389,25 @@ public class FilterOverrideLoader {
             if (!decision.apply()) {
                 log.debugf("Skipping project filter override at %s (%s)", projectOverrideFile, decision.reason());
                 System.err.println(TrustGate.SKIP_HINT);
-                return CachedOverride.EMPTY;
+                return CachedOverride.skipped(explainTrustReason(decision.reason()), projectOverrideFile);
             }
 
-            return new CachedOverride(true, parsed.fileConfig());
+            return CachedOverride.loaded(parsed.fileConfig(), projectOverrideFile);
         } catch (Exception e) {
             log.warnf("Unexpected error reading filter override from %s: %s", projectOverrideFile, e.getMessage());
-            return CachedOverride.EMPTY;
+            return CachedOverride.skipped("error", projectOverrideFile);
         }
     }
 
     private CachedOverride loadGlobalOverride() {
         Path configDir = platformDirs != null ? platformDirs.resolveConfigDir() : null;
         if (configDir == null) {
-            return CachedOverride.EMPTY;
+            return CachedOverride.skipped("absent", null);
         }
         Path globalOverrideFile = configDir.resolve(GLOBAL_OVERRIDE_FILE_NAME);
         try {
             if (!Files.exists(globalOverrideFile)) {
-                return CachedOverride.EMPTY;
+                return CachedOverride.skipped("absent", globalOverrideFile);
             }
 
             ParsedFileResult parsed = parseAndValidateFile(globalOverrideFile, configDir);
@@ -363,35 +415,68 @@ public class FilterOverrideLoader {
                 log.warnf("Filter override file at %s failed validation (%s): %s",
                     globalOverrideFile, parsed.validationResult().status(),
                     String.join("; ", parsed.validationResult().errors()));
-                return CachedOverride.EMPTY;
+                return CachedOverride.skipped("invalid", globalOverrideFile);
             }
 
             if (parsed.fileConfig() == null || parsed.fileConfig().filters() == null) {
-                return CachedOverride.EMPTY;
+                return CachedOverride.skipped("absent", globalOverrideFile);
             }
 
-            return new CachedOverride(true, parsed.fileConfig());
+            return CachedOverride.loaded(parsed.fileConfig(), globalOverrideFile);
         } catch (Exception e) {
             log.warnf("Unexpected error reading filter override from %s: %s", globalOverrideFile, e.getMessage());
-            return CachedOverride.EMPTY;
+            return CachedOverride.skipped("error", globalOverrideFile);
         }
     }
 
+    static String explainTrustReason(String trustReason) {
+        if (trustReason != null && trustReason.contains("capability")) {
+            return "capability";
+        }
+        return "untrusted";
+    }
+
     static final class CachedOverride {
-        static final CachedOverride EMPTY = new CachedOverride(false, null);
+        static final CachedOverride EMPTY = skipped("absent", null);
 
         final boolean exists;
         final FilterOverrideConfig.FileConfig config;
+        final String skipReason;
+        final Path sourcePath;
         final java.util.concurrent.ConcurrentHashMap<String, FilterPipeline> pipelineCache;
 
-        CachedOverride(boolean exists, FilterOverrideConfig.FileConfig config) {
+        CachedOverride(boolean exists, FilterOverrideConfig.FileConfig config, String skipReason, Path sourcePath) {
             this.exists = exists;
             this.config = config;
+            this.skipReason = skipReason;
+            this.sourcePath = sourcePath;
             this.pipelineCache = new java.util.concurrent.ConcurrentHashMap<>();
         }
 
+        static CachedOverride skipped(String reason, Path sourcePath) {
+            return new CachedOverride(false, null, reason == null ? "absent" : reason, sourcePath);
+        }
+
+        static CachedOverride loaded(FilterOverrideConfig.FileConfig config, Path sourcePath) {
+            return new CachedOverride(true, config, null, sourcePath);
+        }
+
         boolean hasPipelines() {
-            return exists && config != null && config.filters() != null && !config.filters().isEmpty();
+            return exists && skipReason == null && config != null
+                && config.filters() != null && !config.filters().isEmpty();
+        }
+
+        String reasonFor(String command, FilterOverrideLoader loader) {
+            if (skipReason != null) {
+                return skipReason;
+            }
+            if (!hasPipelines()) {
+                return "absent";
+            }
+            if (loader.findMatchingFilterDef(config.filters(), command) == null) {
+                return "no_match";
+            }
+            return "no_match";
         }
 
         FilterPipeline getOrCreatePipeline(String command, FilterOverrideLoader loader) {

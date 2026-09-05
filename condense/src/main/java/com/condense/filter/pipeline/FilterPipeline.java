@@ -59,29 +59,21 @@ public class FilterPipeline {
      * @return the transformed output string
      */
     public String execute(String input, FilterContext context) {
-        String current = input != null ? input : "";
-        FilterContext ctx = context != null ? context : FilterContext.empty();
+        return walk(input, context, false, 0).output();
+    }
 
-        for (FilterStage stage : stages) {
-            StageResult stageResult;
-            try {
-                stageResult = stage.process(current, ctx);
-            } catch (Exception e) {
-                log.warnf("Stage %s threw an exception during pipeline execution: %s",
-                    stage.getClass().getName(), e.getMessage());
-                ctx.recordIncident(FilterIncident.stageException(
-                    stage.getClass().getSimpleName(), e.getMessage()));
-                continue;
-            }
-            if (stageResult == null) {
-                continue;
-            }
-            current = stageResult.output();
-            if (stageResult.shortCircuit()) {
-                break;
-            }
-        }
-        return current;
+    /**
+     * Same walk as {@link #execute} plus per-stage line and token accounting.
+     */
+    public PipelineTrace executeTraced(String input, FilterContext context) {
+        return executeTraced(input, context, Integer.MAX_VALUE);
+    }
+
+    /**
+     * @param sampleLimit maximum dropped/added lines stored per stage; {@code 0} keeps counts only
+     */
+    public PipelineTrace executeTraced(String input, FilterContext context, int sampleLimit) {
+        return walk(input, context, true, Math.max(0, sampleLimit));
     }
 
     /**
@@ -92,6 +84,63 @@ public class FilterPipeline {
      */
     public String execute(String input) {
         return execute(input, FilterContext.empty());
+    }
+
+    private PipelineTrace walk(String input, FilterContext context, boolean trace, int sampleLimit) {
+        String current = input != null ? input : "";
+        FilterContext ctx = context != null ? context : FilterContext.empty();
+        List<StageTrace> traces = trace ? new ArrayList<>() : null;
+        boolean skipping = false;
+        boolean shortCircuited = false;
+
+        for (FilterStage stage : stages) {
+            String id = stage.stageId();
+            if (skipping) {
+                if (traces != null) {
+                    traces.add(StageTrace.skipped(id));
+                }
+                continue;
+            }
+
+            String stageInput = current;
+            StageResult stageResult;
+            try {
+                stageResult = stage.process(current, ctx);
+            } catch (Exception e) {
+                log.warnf("Stage %s threw an exception during pipeline execution: %s",
+                    id, e.getMessage());
+                ctx.recordIncident(FilterIncident.stageException(id, e.getMessage()));
+                if (traces != null) {
+                    traces.add(StageTrace.of(
+                        id, StageTrace.EXCEPTION, stageInput, current, false, e.getMessage(), sampleLimit));
+                }
+                continue;
+            }
+            if (stageResult == null) {
+                if (traces != null) {
+                    traces.add(StageTrace.of(
+                        id, StageTrace.RAN, stageInput, current, false, "null_result", sampleLimit));
+                }
+                continue;
+            }
+            current = stageResult.output();
+            if (stageResult.shortCircuit()) {
+                shortCircuited = true;
+                skipping = true;
+            }
+            if (traces != null) {
+                traces.add(StageTrace.of(
+                    id,
+                    shortCircuited ? StageTrace.SHORT_CIRCUITED : StageTrace.RAN,
+                    stageInput,
+                    current,
+                    stageResult.shortCircuit(),
+                    null,
+                    sampleLimit
+                ));
+            }
+        }
+        return new PipelineTrace(current, traces == null ? List.of() : traces, shortCircuited);
     }
 
     public static final class Builder {
