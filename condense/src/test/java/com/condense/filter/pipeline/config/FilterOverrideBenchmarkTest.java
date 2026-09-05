@@ -1,5 +1,6 @@
 package com.condense.filter.pipeline.config;
 
+import com.condense.bench.BenchStats;
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.strategy.AnsiStripStrategy;
 import com.condense.trust.TrustTestSupport;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FilterOverrideBenchmarkTest {
 
@@ -144,19 +147,25 @@ class FilterOverrideBenchmarkTest {
             }
         }
 
-        double meanUncachedUs = mean(uncachedNanos) / 1_000.0;
-        double stdUncachedUs = stdDev(uncachedNanos, mean(uncachedNanos)) / 1_000.0;
-        double meanCachedUs = mean(cachedNanos) / 1_000.0;
-        double stdCachedUs = stdDev(cachedNanos, mean(cachedNanos)) / 1_000.0;
+        double meanUncachedUs = BenchStats.mean(uncachedNanos) / 1_000.0;
+        double stdUncachedUs = BenchStats.stdDev(uncachedNanos, BenchStats.mean(uncachedNanos)) / 1_000.0;
+        double meanCachedUs = BenchStats.mean(cachedNanos) / 1_000.0;
+        double stdCachedUs = BenchStats.stdDev(cachedNanos, BenchStats.mean(cachedNanos)) / 1_000.0;
 
         double diffUs = meanCachedUs - meanUncachedUs;
         double speedup = meanCachedUs > 0 ? (meanUncachedUs / meanCachedUs) : 1.0;
+        double slowerRatio = BenchStats.ratio(meanCachedUs, meanUncachedUs);
 
         String uncachedStr = String.format("%.2f +/- %.1f", meanUncachedUs, stdUncachedUs);
         String cachedStr = String.format("%.2f +/- %.1f", meanCachedUs, stdCachedUs);
 
         System.out.printf("%-40s | %20s | %20s | %+10.2f us | %8.1fx%n",
             label, uncachedStr, cachedStr, diffUs, speedup);
+
+        assertThat(slowerRatio)
+            .as("%s cached resolve must not be %.0fx slower than uncached",
+                label, BenchStats.MAX_RELATIVE_OVERHEAD)
+            .isLessThan(BenchStats.MAX_RELATIVE_OVERHEAD);
     }
 
     private void runThroughputBenchmark(String label, Runnable baselineTask, Runnable targetTask) {
@@ -198,33 +207,23 @@ class FilterOverrideBenchmarkTest {
             }
         }
 
-        double meanBaseUs = mean(baselineNanos) / 1_000.0;
-        double stdBaseUs = stdDev(baselineNanos, mean(baselineNanos)) / 1_000.0;
-        double meanTargetUs = mean(targetNanos) / 1_000.0;
-        double stdTargetUs = stdDev(targetNanos, mean(targetNanos)) / 1_000.0;
+        double meanBaseUs = BenchStats.mean(baselineNanos) / 1_000.0;
+        double stdBaseUs = BenchStats.stdDev(baselineNanos, BenchStats.mean(baselineNanos)) / 1_000.0;
+        double meanTargetUs = BenchStats.mean(targetNanos) / 1_000.0;
+        double stdTargetUs = BenchStats.stdDev(targetNanos, BenchStats.mean(targetNanos)) / 1_000.0;
 
         double diffUs = meanTargetUs - meanBaseUs;
-        double ratio = meanBaseUs > 0 ? (meanTargetUs / meanBaseUs) : 1.0;
+        double ratio = BenchStats.ratio(meanTargetUs, meanBaseUs);
 
         String baseStr = String.format("%.2f +/- %.1f", meanBaseUs, stdBaseUs);
         String targetStr = String.format("%.2f +/- %.1f", meanTargetUs, stdTargetUs);
 
         System.out.printf("%-40s | %20s | %20s | %+10.2f us | %8.2fx%n",
             label, baseStr, targetStr, diffUs, ratio);
-    }
 
-    private static double mean(double[] values) {
-        double sum = 0.0;
-        for (double v : values) sum += v;
-        return sum / values.length;
-    }
-
-    private static double stdDev(double[] values, double mean) {
-        double sumSq = 0.0;
-        for (double v : values) {
-            double diff = v - mean;
-            sumSq += diff * diff;
-        }
-        return Math.sqrt(sumSq / values.length);
+        assertThat(ratio)
+            .as("%s override pipeline must stay within %.0fx of the default pipeline",
+                label, BenchStats.MAX_RELATIVE_OVERHEAD)
+            .isLessThan(BenchStats.MAX_RELATIVE_OVERHEAD);
     }
 }

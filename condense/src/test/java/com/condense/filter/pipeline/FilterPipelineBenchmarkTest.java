@@ -1,5 +1,6 @@
 package com.condense.filter.pipeline;
 
+import com.condense.bench.BenchStats;
 import com.condense.filter.strategy.AnsiStripStrategy;
 import com.condense.filter.strategy.GroupingStrategy;
 import com.condense.filter.strategy.TreeCompressionStrategy;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FilterPipelineBenchmarkTest {
 
@@ -157,34 +160,25 @@ class FilterPipelineBenchmarkTest {
             }
         }
 
-        double meanDirectUs = mean(directNanos) / 1_000.0;
-        double stdDirectUs = stdDev(directNanos, mean(directNanos)) / 1_000.0;
-        double meanPipeUs = mean(pipeNanos) / 1_000.0;
-        double stdPipeUs = stdDev(pipeNanos, mean(pipeNanos)) / 1_000.0;
+        double meanDirectUs = BenchStats.mean(directNanos) / 1_000.0;
+        double stdDirectUs = BenchStats.stdDev(directNanos, BenchStats.mean(directNanos)) / 1_000.0;
+        double meanPipeUs = BenchStats.mean(pipeNanos) / 1_000.0;
+        double stdPipeUs = BenchStats.stdDev(pipeNanos, BenchStats.mean(pipeNanos)) / 1_000.0;
 
         double diffUs = meanPipeUs - meanDirectUs;
         double overheadPct = meanDirectUs > 0 ? (diffUs / meanDirectUs) * 100.0 : 0.0;
+        double ratio = BenchStats.ratio(meanPipeUs, meanDirectUs);
 
         String directStr = String.format("%.2f ± %.1f", meanDirectUs, stdDirectUs);
         String pipeStr = String.format("%.2f ± %.1f", meanPipeUs, stdPipeUs);
 
         System.out.printf("%-32s | %18s | %18s | %+10.2f µs | %+6.1f%%%n",
             label, directStr, pipeStr, diffUs, overheadPct);
-    }
 
-    private static double mean(double[] values) {
-        double sum = 0.0;
-        for (double v : values) sum += v;
-        return sum / values.length;
-    }
-
-    private static double stdDev(double[] values, double mean) {
-        double sumSq = 0.0;
-        for (double v : values) {
-            double diff = v - mean;
-            sumSq += diff * diff;
-        }
-        return Math.sqrt(sumSq / values.length);
+        assertThat(ratio)
+            .as("%s pipeline mean should stay within %.0fx of the direct strategy",
+                label, BenchStats.MAX_RELATIVE_OVERHEAD)
+            .isLessThan(BenchStats.MAX_RELATIVE_OVERHEAD);
     }
 
     private String directNpm(String raw) {
