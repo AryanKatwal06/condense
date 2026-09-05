@@ -3,6 +3,7 @@ package com.condense.filter.pipeline;
 import com.condense.annotation.CommandFilter;
 import com.condense.annotation.CommandFilters;
 import com.condense.core.FilterStrategy;
+import com.condense.core.StrategyRegistry;
 import com.condense.corpus.CorpusCatalog;
 import com.condense.filter.pipeline.config.BuiltinDefinition;
 import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
@@ -65,6 +66,42 @@ class PipelineBackedFilterArchitectureTest {
             .isEmpty();
     }
 
+    /**
+     * Safeguard for {@code 447eeb6}. A filter with no visible prefixes is
+     * silently skipped in {@code StrategyRegistry.build()}, which is how
+     * {@code npm install} became passthrough in the native image.
+     */
+    @Test
+    void everyDomainFilterExposesPrefixesThroughPrefixesOn() throws Exception {
+        List<String> missing = new ArrayList<>();
+        List<String> mismatched = new ArrayList<>();
+        for (Class<?> type : CorpusCatalog.discoverDomainFilters()) {
+            CommandFilter[] visible = StrategyRegistry.prefixesOn(type);
+            if (visible.length == 0) {
+                missing.add(type.getName());
+                continue;
+            }
+            List<String> fromRegistry = Arrays.stream(visible)
+                .map(CommandFilter::value)
+                .map(v -> v.trim().toLowerCase(Locale.ROOT))
+                .toList();
+            List<String> fromAnnotations = declaredAnnotationPrefixes(type);
+            if (fromRegistry.size() != fromAnnotations.size()
+                || !fromAnnotations.containsAll(fromRegistry)
+                || !fromRegistry.containsAll(fromAnnotations)) {
+                mismatched.add(type.getSimpleName()
+                    + " prefixesOn=" + fromRegistry
+                    + " annotations=" + fromAnnotations);
+            }
+        }
+        assertThat(missing)
+            .as("every FilterStrategy except PassthroughStrategy must have @CommandFilter/@CommandFilters visible via prefixesOn")
+            .isEmpty();
+        assertThat(mismatched)
+            .as("prefixesOn must match the declared @CommandFilter/@CommandFilters values")
+            .isEmpty();
+    }
+
     @Test
     void catalogCommandsMatchCommandFilterAnnotations() throws Exception {
         BuiltinDefinitionCatalog catalog = BuiltinDefinitionCatalog.standalone();
@@ -99,16 +136,27 @@ class PipelineBackedFilterArchitectureTest {
     }
 
     private static List<String> annotatedPrefixes(Class<?> type) {
+        return Arrays.stream(StrategyRegistry.prefixesOn(type))
+            .map(CommandFilter::value)
+            .map(v -> v.trim().toLowerCase(Locale.ROOT))
+            .toList();
+    }
+
+    /** Independent of {@link StrategyRegistry#prefixesOn} so a broken unwrap cannot hide. */
+    private static List<String> declaredAnnotationPrefixes(Class<?> type) {
         List<String> prefixes = new ArrayList<>();
-        CommandFilters many = type.getAnnotation(CommandFilters.class);
-        if (many != null) {
-            Arrays.stream(many.value()).map(CommandFilter::value).forEach(prefixes::add);
-        }
         CommandFilter one = type.getAnnotation(CommandFilter.class);
         if (one != null) {
-            prefixes.add(one.value());
+            prefixes.add(one.value().trim().toLowerCase(Locale.ROOT));
         }
-        return prefixes.stream().map(v -> v.trim().toLowerCase(Locale.ROOT)).toList();
+        CommandFilters many = type.getAnnotation(CommandFilters.class);
+        if (many != null) {
+            for (CommandFilter filter : many.value()) {
+                prefixes.add(filter.value().trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        prefixes.removeIf(String::isBlank);
+        return prefixes;
     }
 
     private static boolean declaresApply(Class<?> type) {

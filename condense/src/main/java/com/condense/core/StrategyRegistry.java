@@ -95,10 +95,12 @@ public class StrategyRegistry {
     }
 
     /**
-     * {@link CommandFilter} is {@link java.lang.annotation.Repeatable}; native-image
-     * can still miss the unwrap, so also read the {@link CommandFilters} container.
+     * Visible prefixes for a filter class. {@link CommandFilter} is
+     * {@link java.lang.annotation.Repeatable}; native-image can still miss the
+     * unwrap (the {@code 447eeb6} regression — {@code npm install} passed through
+     * because {@link CommandFilters} was invisible), so also read the container.
      */
-    static CommandFilter[] prefixesOn(Class<?> cls) {
+    public static CommandFilter[] prefixesOn(Class<?> cls) {
         CommandFilter[] annotations = cls.getAnnotationsByType(CommandFilter.class);
         if (annotations.length > 0) {
             return annotations;
