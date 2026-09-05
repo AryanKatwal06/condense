@@ -75,3 +75,5 @@ Every `FilterResult.of` output starts with `condense[filtered]`. A whole line eq
 ## Path containment
 
 Loader and trust-store writes call `SafePathValidator.contain(file, expectedParent)`. Project files live outside condense-owned directories, so `validateFileTarget` is not reused. `trust.json`, user `filters.toml`, and `tee/` are on the uninstall `--purge` allowlist.
+
+`condense propose --write` creates `.condense/filters.toml.proposed`. That sidecar is not a trust target and is not loaded as an override. Only `.condense/filters.toml` goes through `TrustGate`.

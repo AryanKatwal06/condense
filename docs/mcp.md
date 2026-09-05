@@ -26,7 +26,7 @@ JSON-RPC 2.0, one object per newline, no embedded newlines (MCP spec 2025-03-26 
 
 Accepted protocol versions: `2024-11-05`, `2025-03-26`, `2025-06-18`. The server echoes the client's version when it is in that set; otherwise it replies `2024-11-05`. It advertises `tools` and `resources` only.
 
-Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Anything else is JSON-RPC `-32601`. A request that is not `notifications/*` and has a missing or null `id` is JSON-RPC `-32600`. `notifications/initialized` (and other `notifications/*` methods) stay no-response. Bare `condense mcp` lists `run`, `explain`, `read`, and `discover`.
+Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Anything else is JSON-RPC `-32601`. A request that is not `notifications/*` and has a missing or null `id` is JSON-RPC `-32600`. `notifications/initialized` (and other `notifications/*` methods) stay no-response. Bare `condense mcp` lists `run`, `explain`, `read`, `discover`, and `propose`.
 
 There is no official MCP Java SDK on the classpath. The handshake is a handful of Jackson records plus a hardcoded switch.
 
@@ -42,6 +42,7 @@ Every tool result is `content: [{ "type": "text", "text": "<compact JSON>" }]`. 
 | `explain` | `{ "command": ["pytest"], "input"?: path, "exit_code"?: number, "ultra_compact"?: boolean }` | Existing `ExplainReport` (includes `document`). |
 | `read` | `{ "path": "Src.java", "level"?: "verbatim\|comments\|outline", "ultra_compact"?: boolean }` | Existing `ReadReport` plus stamped body. |
 | `discover` | `{ "root"?: path }` | Existing `DiscoverReport` (schema 1). Recommends definition names; does not filter. |
+| `propose` | `{ "root"?: path }` | Existing `ProposeReport` (schema 1). Reviewable override diffs; does not write `filters.toml`. |
 
 `command` is an **argv array**. A single shell string is refused. There is no `cwd` override and no MCP `--stdin` (stdio is the protocol).
 
@@ -64,4 +65,4 @@ CLI `condense explain --input` is unchanged.
 
 ## Native proof
 
-`NativeMcpIT` (never skip) drives `condense mcp --start` on the GraalVM binary: initialize + `run` on PATH-stubbed pytest, contained vs escaped `read`, `tools/list` including `discover`, and `condense://gain`. `NativeDiscoverIT` runs `condense discover` on a fixture tree. `NativeHookIT` also sends initialize + `tools/list` so hook work cannot regress the preferred path.
+`NativeMcpIT` (never skip) drives `condense mcp --start` on the GraalVM binary: initialize + `run` on PATH-stubbed pytest, contained vs escaped `read`, `tools/list` including `discover` and `propose`, and `condense://gain`. `NativeDiscoverIT` runs `condense discover` on a fixture tree. `NativeProposeIT` runs `condense propose` on the same style of fixture. `NativeHookIT` also sends initialize + `tools/list` so hook work cannot regress the preferred path.

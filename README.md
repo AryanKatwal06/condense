@@ -304,6 +304,18 @@ $ condense discover --format json --root apps/web
 
 `--root` may only narrow the workspace. Empty repositories still exit 0. See [docs/discover.md](docs/discover.md).
 
+## condense propose
+
+`condense propose` turns discovery and local analytics into a reviewable project override diff. It does not change filtering.
+
+```
+$ condense propose
+$ condense propose --format json
+$ condense propose --write
+```
+
+`--write` creates `.condense/filters.toml.proposed` only. Copy it to `.condense/filters.toml` and run `condense config trust` before it can apply. See [docs/propose.md](docs/propose.md).
+
 Long commands can print filtered lines before the child exits when every stage in the resolved pipeline is `order_local` or `windowed`. There is no `--stream` flag. Capture-to-disk (10 MB, 8 KiB chunks) still feeds tee, token counts, and fail-open replay. See [docs/streaming.md](docs/streaming.md).
 
 ---

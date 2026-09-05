@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 5 September 2026 (Round 2 audit remediation R13 — handoff truth).
+**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 16 adaptive proposals).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 15 plus Round 2 remediation (R13–R24, R26). R25 and D29 stay deferred. Confirm with `git log -1` and origin before starting Phase 16 code.
+**Branch at handoff:** `main` after Phase 16. R25 and D29 stay deferred. Confirm with `git log -1` and origin before starting Phase 17 code.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -162,7 +162,7 @@ Registered subcommands: `gain`, `doctor`, `explain`, `read`, `init`, `config` (w
 
 Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus standard help/version.
 
-`mcp` is real. Bare `condense mcp` prints a client snippet and exits 0. `condense mcp --start` speaks newline-delimited JSON-RPC on stdio. Tools are `run`, `explain`, `read`, and `discover`; resources are `condense://gain` and `condense://doctor`. Bare `condense mcp` lists the same four tools. Missing JSON-RPC `id` on a non-notification request is `-32600`. `discover.root` uses `ReadPathGate.resolveNarrowRoot` (not `openFile`).
+`mcp` is real. Bare `condense mcp` prints a client snippet and exits 0. `condense mcp --start` speaks newline-delimited JSON-RPC on stdio. Tools are `run`, `explain`, `read`, `discover`, and `propose`; resources are `condense://gain` and `condense://doctor`. Bare `condense mcp` lists the same five tools. Missing JSON-RPC `id` on a non-notification request is `-32600`. `discover.root` and `propose.root` use `ReadPathGate.resolveNarrowRoot` (not `openFile`).
 
 ### 4.6 Filters — exact counts (verified)
 
@@ -398,7 +398,7 @@ Three sequential efforts the 17-phase roadmap builds directly on top of. Commit 
 
 ## 8. This engagement: what was actually done
 
-Planning plus Phase 1 through Phase 15 code, then an independent audit of Phases 11–15 and R0–R12 (5 Sep 2026). Round 2 remediation (R13–R26) is hygiene, not a new numbered roadmap phase. Semantic savings (R25) and D29 stay deferred.
+Planning plus Phase 1 through Phase 16 code, then an independent audit of Phases 11–15 and R0–R12 (5 Sep 2026). Round 2 remediation (R13–R26) is hygiene, not a new numbered roadmap phase. Semantic savings (R25) and D29 stay deferred.
 
 | Activity | Status | Notes |
 |---|---|---|
@@ -423,24 +423,25 @@ Planning plus Phase 1 through Phase 15 code, then an independent audit of Phases
 | Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Docs commit `9b6ffd4` had **red** native CI ([run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965)) because `@CommandFilters` prefixes were invisible in the image; `447eeb6` fixed registration. `IncrementalEquivalenceTest` now compares `StreamingProxy.replay` / stamped `execute` to `apply()`. `NativeStreamingIT` times first-line-before-exit on a PATH-stubbed npm. |
 | Phase 10 code | **LANDED** | `condense read`; per-language scanner; original line numbers; builtin `languages/*.toml`; workspace containment; `NativeReadIT`. |
 | Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT` (pytest, npm, eslint, docker ps, git status). Default CLI is pipeline text. TextRenderer identity is corpus-wide except `python-c/typical`. Semantic savings not implemented (**R25** deferred). |
-| Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read` plus Phase 15 `discover`; resources `gain`/`doctor`; `NativeMcpIT`. Bare snippet lists four tools. Missing `id` is `-32600`. |
+| Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read` plus Phase 15 `discover` and Phase 16 `propose`; resources `gain`/`doctor`; `NativeMcpIT`. Bare snippet lists five tools. Missing `id` is `-32600`. |
 | Phase 13 code | **LANDED** | Schema 2 hook audit; backup-before-merge (flat `{dataDir}/backups/`); SHA-256 script baselines; Claude deny-not-rewrite (rewrite+allow forbidden; pass-through `allow` remains); Codex/OpenCode/Kilo/Antigravity/Hermes/Pi; `NativeHookIT` covers Cursor and Hermes. |
 | Phase 14 code | **LANDED** | `CatalogBackedFilter` leftover host; 19 data-only families; original 51 goldens unchanged; `NativeCatalogIT`. Existing 31 Java filters not migrated. |
 | Phase 15 code | **LANDED** | `condense discover` + MCP `discover`; classpath `discover/*.toml`; exact contained probes; explicit family priority; `NativeDiscoverIT`. Does not change dispatch. |
-| Phases 16–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 16 code | **LANDED** | `condense propose` + MCP `propose`; coverage/safety/unmatched rules; `.proposed` sidecar only; `NativeProposeIT`. Schema stays 2. |
+| Phase 17 code | **NOT STARTED** | Needs its own plan-then-approve cycle |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (**510 / 0 / 0 / 9** on this Windows JVM at that date; 9 skips were POSIX `CommandExecutorTest`), and CI 33950449575 on `cdd3d43`. |
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
 | Phase 11–15 audit | **COMPLETED** | Re-read of approved plans, tree, local `mvn test` (**594 / 1 / 0 / 10** on this Windows JVM at that date — the 1 was `TrackingConcurrencyTest` / `SQLITE_READONLY`; **R16** makes loss visible instead of requiring 200 rows), and CI [33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (**594 / 0 / 0 / 1** JVM on Linux). |
 | Audit remediation R13–R26 | **LANDED** | Round 2 hygiene. **R25** semantic savings and D29 stay deferred. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 (R13) so §4 matches the live tree again. |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p15` are marked `completed`, `p16`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p16` are marked `completed`, `p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 15 code have landed.** Phases 16–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 16 code have landed.** Phase 17 has not been implemented. It still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -800,7 +801,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Status: LANDED** (5 Sep 2026)
 
-**Shipped.** Hand-rolled stdio JSON-RPC 2.0 (no MCP Java SDK). Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Tools `run` / `explain` / `read` / `discover` reuse `ProxyService`, `ExplainService`, `ReadService`, `DiscoverService`. Resources `condense://gain` and `condense://doctor`. `run` returns the Phase 11 envelope; child exit ≠ 0 is not `isError`. `read` goes through `ReadPathGate.openFile`; `discover.root` uses `ReadPathGate.resolveNarrowRoot` (narrow-only, no byte-max). File probes use `SafePathValidator.contain`. Missing JSON-RPC `id` on non-notification requests is `-32600`. Bare `condense mcp` lists four tools. `McpCommand` is `@Unremovable`. Logs on stderr. Native proof is `NativeMcpIT`. Spec: [docs/mcp.md](docs/mcp.md).
+**Shipped.** Hand-rolled stdio JSON-RPC 2.0 (no MCP Java SDK). Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Tools `run` / `explain` / `read` / `discover` / `propose` reuse `ProxyService`, `ExplainService`, `ReadService`, `DiscoverService`, `ProposeService`. Resources `condense://gain` and `condense://doctor`. `run` returns the Phase 11 envelope; child exit ≠ 0 is not `isError`. `read` goes through `ReadPathGate.openFile`; `discover.root` and `propose.root` use `ReadPathGate.resolveNarrowRoot` (narrow-only, no byte-max). File probes use `SafePathValidator.contain`. Missing JSON-RPC `id` on non-notification requests is `-32600`. Bare `condense mcp` lists five tools. `McpCommand` is `@Unremovable`. Logs on stderr. Native proof is `NativeMcpIT`. Spec: [docs/mcp.md](docs/mcp.md).
 
 **Goal.** Replace the `McpCommand` stub with a real stdio MCP server, so agents consume Condense as tools and resources rather than through brittle shell-hook command rewriting.
 
@@ -876,7 +877,9 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 ### Phase 16 — Adaptive optimization as reviewable proposals
 
-**Status: PENDING**
+**Status: CODE LANDED**
+
+**What shipped.** `condense propose` and MCP `propose` emit schema-1 reports from in-process discover plus bounded `commands` / `filter_outcomes` reads (500 rows each, 90-day lookback). Closed rules: `coverage` (copy builtin stages; replay `[[tests]]`), `safety` (identity after ≥3 incidents), `unmatched` (reduce-only `ansi_strip` + `tail_lines` for a first token with no catalog family). `--write` creates `.condense/filters.toml.proposed` only; there is no `--apply`. `ProposeIsolationTest` proves proxy-path sources do not import `com.condense.propose`. `FilterOverrideLoader` still opens only `.condense/filters.toml`. Schema target stays **2**. Native proof is `NativeProposeIT`. Spec: [docs/propose.md](docs/propose.md).
 
 **Goal.** Use recorded outcomes to **propose** filter improvements. Never silently change filtering behavior.
 
@@ -884,7 +887,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Depends on.** Phases 7, 8, 15.
 
-**Deliberately different from Zap.** Zap's `learn/` mines failed-then-corrected command pairs from session transcripts and writes advisory Markdown; it has **zero** feedback path into filtering — a sound instinct, but the loop is open and the artifact is prose. Condense should close the loop **reviewably**: emit a concrete declarative definition diff that the user reviews and commits, gated on the full inline-test and fidelity suite before acceptance.
+**Deliberately different from Zap.** Zap's `learn/` mines failed-then-corrected command pairs from session transcripts and writes advisory Markdown; it has **zero** feedback path into filtering — a sound instinct, but the loop is open and the artifact is prose. Condense closes the loop **reviewably**: a concrete declarative definition diff that the user reviews and commits, gated on builtin inline tests (and JVM corpus critical-signal retention for coverage copies) before a proposal is `ready`. TrustGate still applies after the user copies the sidecar.
 
 **Exit criteria shape.** Proposals reproducible from the database, and a test asserting that no adaptive code path can alter runtime filtering without a user-committed definition change.
 
@@ -1006,9 +1009,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–15 code landed. Round 2 remediation **R13–R24 and R26 have landed**. **R25** (semantic savings) and D29 stay deferred. `condense discover` recommends existing filter definition names from exact manifests. It does not apply them. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. Lost analytics writes are counted in `{dataDir}/write-failures.json`. This Windows workspace does not build native images. Native proof for this train is the next Actions run after push.
+**Where we are.** Phase 1–16 code landed. Round 2 remediation **R13–R24 and R26 have landed**. **R25** (semantic savings) and D29 stay deferred. `condense propose` emits reviewable `.condense/filters.toml` diffs and may write `.condense/filters.toml.proposed`. It does not write live `filters.toml` and is not on the proxy path. `condense discover` still only recommends names. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. Lost analytics writes are counted in `{dataDir}/write-failures.json`. This Windows workspace does not build native images. Native proof for this train is the next Actions run after push.
 
-**Do not start Phase 16 code.** R15 and R16 have landed, so Phase 16 *implementation* is no longer blocked by those gates — it still needs its own plan-then-approve cycle. Present a complete Phase 16 plan (constraint #9) and wait for a fresh "proceed". Phase 16 may propose a project `filters.toml` diff from a discover report. It must not apply those proposals silently. Do not implement R25 semantic savings or D29.
+**Do not start Phase 17 code.** Present a complete Phase 17 plan (constraint #9) and wait for a fresh "proceed". Do not implement R25 semantic savings or D29 from this stop point except as Phase 17 if that plan includes D29.
 
 ---
 
@@ -1029,9 +1032,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 15 code has landed. Confirm `NativeDiscoverIT` and `NativeCatalogIT` appear in native job logs, `GoldenLockTest` is green, and `condense discover` does not change dispatch.
-9. Round 2 R13–R24 and R26 have landed. Do not implement R25 or D29 from this stop point.
-10. **Do not start Phase 16 code.** Present a complete Phase 16 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 16 code has landed. Confirm `NativeProposeIT` and `NativeDiscoverIT` appear in native job logs, `GoldenLockTest` is green, and `condense propose` does not write `filters.toml` or sit on the proxy path.
+9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point. D29 belongs to Phase 17.
+10. **Do not start Phase 17 code.** Present a complete Phase 17 plan containing all six required elements (constraint #9) and wait for a fresh "proceed".
 
 **Standing rules while working**
 

@@ -45,7 +45,7 @@ Hitting a cap stops further probes, sets `truncated: true`, and still returns wh
 
 It does not change `StrategyRegistry` lookup. It does not apply recommendations. It does not mine agent transcripts. It does not walk the tree for `*.csproj` or other globs. User-global discover overrides are not loaded.
 
-Phase 16 may take this report and **propose** a project `filters.toml` diff. That is not this command.
+Phase 16 may take this report and **propose** a project `filters.toml` diff. That is `condense propose`. Discover still does not write or apply anything.
 
 ## MCP
 
