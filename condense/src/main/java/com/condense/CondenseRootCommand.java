@@ -4,7 +4,17 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
-import com.condense.core.*;
+import com.condense.core.CommandExecutor;
+import com.condense.core.CondenseConfig;
+import com.condense.core.ConfigLoader;
+import com.condense.core.ExecutionResult;
+import com.condense.core.FilterResult;
+import com.condense.core.FilterStrategy;
+import com.condense.core.ProjectFingerprint;
+import com.condense.core.StrategyRegistry;
+import com.condense.core.StreamingProxy;
+import com.condense.core.TeeWriter;
+import com.condense.core.TrackingRepository;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Parameters;
 import java.nio.file.Path;
@@ -105,17 +115,30 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
             if (remainder != null) argList.addAll(remainder);
             String commandStr = String.join(" ", argList);
 
-            ExecutionResult result = executor.execute(argList);
-
             FilterStrategy strategy = registry.lookup(argList.toArray(new String[0]));
             CondenseConfig config = configLoader.load();
-            FilterResult filtered = strategy.apply(
-                commandStr, result, config, verbosityLevel(), ultraCompact);
+            ExecutionResult result;
+            FilterResult filtered;
+            boolean alreadyPrinted = false;
+            if (StreamingProxy.shouldStream(strategy, commandStr)) {
+                StreamingProxy.StreamedRun streamed = StreamingProxy.run(
+                    executor, strategy, argList, commandStr, config,
+                    verbosityLevel(), ultraCompact, System.out, System.err);
+                result = streamed.result();
+                filtered = streamed.filtered();
+                alreadyPrinted = streamed.alreadyPrinted();
+            } else {
+                result = executor.execute(argList, CommandExecutor.resolveProxyTimeout());
+                filtered = strategy.apply(
+                    commandStr, result, config, verbosityLevel(), ultraCompact);
+            }
 
             Path teePath = teeWriter.maybeDump(commandStr, result);
 
-            System.out.print(filtered.output());
-            if (!filtered.output().endsWith("\n")) System.out.println();
+            if (!alreadyPrinted) {
+                System.out.print(filtered.output());
+                if (!filtered.output().endsWith("\n")) System.out.println();
+            }
 
             if (teePath != null) {
                 System.out.println("[raw output saved to: " + teePath + "]");

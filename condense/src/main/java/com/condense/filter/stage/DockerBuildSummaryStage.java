@@ -50,11 +50,11 @@ public final class DockerBuildSummaryStage implements FilterStage {
         @Override
         public void feedLine(String line, EmissionSink sink, FilterContext context) {
             String value = line != null ? line : "";
-            if (STEP_DONE.matcher(value).find() && doneCount < MAX_DONE) {
+            if (BoundedRegex.matcher(STEP_DONE, value).find() && doneCount < MAX_DONE) {
                 sink.emit(value);
                 doneCount++;
                 emittedAny = true;
-            } else if (ERROR.matcher(value).find()) {
+            } else if (BoundedRegex.matcher(ERROR, value).find()) {
                 sink.emit(value);
                 emittedAny = true;
             }

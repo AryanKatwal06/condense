@@ -55,13 +55,24 @@ class MigratedFiltersRegressionTest extends FilterTestSupport {
     }
 
     @Test
-    @DisplayName("NpmInstallFilter passes through on command failure")
-    void npmInstall_failurePassthrough() {
+    @DisplayName("NpmInstallFilter keeps irrevocable error lines on failure")
+    void npmInstall_failureKeepsErr() {
         ExecutionResult failed = failure(1, "npm ERR! 404 Not Found");
         FilterResult result = npmFilter.apply("npm install", failed, config, 0, false);
 
+        assertThat(result.wasFiltered()).isTrue();
+        assertThat(result.output()).contains("npm ERR! 404 Not Found");
+        assertThat(result.output()).contains("npm install failed");
+    }
+
+    @Test
+    @DisplayName("NpmInstallFilter passes through failure with no irrevocable signal")
+    void npmInstall_failurePassthrough() {
+        ExecutionResult failed = failure(1, "some installer noise");
+        FilterResult result = npmFilter.apply("npm install", failed, config, 0, false);
+
         assertThat(result.wasFiltered()).isFalse();
-        assertThat(result.output()).contains("404 Not Found");
+        assertThat(result.output()).contains("some installer noise");
     }
 
     // --- LsFilter Regression Tests ---

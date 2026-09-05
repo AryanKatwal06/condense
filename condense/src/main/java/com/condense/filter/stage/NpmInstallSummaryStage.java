@@ -47,7 +47,7 @@ public final class NpmInstallSummaryStage implements FilterStage {
         @Override
         public void feedLine(String line, EmissionSink sink, FilterContext context) {
             String value = line != null ? line : "";
-            if (IRREVOCABLE.matcher(value).find() && irrevocable < MAX_IRREVOCABLE) {
+            if (BoundedRegex.matcher(IRREVOCABLE, value).find() && irrevocable < MAX_IRREVOCABLE) {
                 sink.emit(value);
                 irrevocable++;
                 emittedAny = true;

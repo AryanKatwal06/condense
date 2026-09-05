@@ -20,20 +20,32 @@ public class CommandExecutor {
     private final java.util.Set<Process> activeProcesses = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
+    public static final String TIMEOUT_ENV = "CONDENSE_COMMAND_TIMEOUT_SEC";
 
-    private static final int MAX_STREAM_BYTES = 10 * 1024 * 1024; // 10 MB is generous for CLI output
+    public static final int MAX_STREAM_BYTES = 10 * 1024 * 1024;
 
     /**
-     * Executes {@code args} as a child process and returns its captured output.
-     *
-     * @param args    the command and its arguments (e.g., ["git", "status", "--short"])
-     * @param timeout maximum time to wait; use {@link #DEFAULT_TIMEOUT} if unsure
-     * @return the execution result; never null
-     * @throws IOException          if the process cannot be started (binary not found, etc.)
-     * @throws InterruptedException if the calling thread is interrupted while waiting
-     * @throws IllegalStateException if the command would create an infinite condense→condense loop
+     * Proxy timeout. Unset or non-positive {@link #TIMEOUT_ENV} means wait until the child exits.
      */
+    public static Duration resolveProxyTimeout() {
+        String raw = System.getenv(TIMEOUT_ENV);
+        if (raw == null || raw.isBlank()) {
+            return Duration.ZERO;
+        }
+        try {
+            long seconds = Long.parseLong(raw.trim());
+            return seconds <= 0 ? Duration.ZERO : Duration.ofSeconds(seconds);
+        } catch (NumberFormatException ignored) {
+            return Duration.ZERO;
+        }
+    }
+
     public ExecutionResult execute(List<String> args, Duration timeout)
+            throws IOException, InterruptedException {
+        return execute(args, timeout, null);
+    }
+
+    public ExecutionResult execute(List<String> args, Duration timeout, StreamListener listener)
             throws IOException, InterruptedException {
 
         if (args == null || args.isEmpty()) {
@@ -54,59 +66,56 @@ public class CommandExecutor {
         activeProcesses.add(process);
 
         try {
-            // Start two threads to drain both streams concurrently.
-            // This prevents the deadlock that occurs when one pipe's OS buffer fills
-            // while we're blocked reading the other.
-            var stdoutCapture = new StreamCapture();
-            var stderrCapture = new StreamCapture();
+            var stdoutCapture = new StreamCapture(listener, true);
+            var stderrCapture = new StreamCapture(listener, false);
 
-        Thread stdoutThread = new Thread(() -> stdoutCapture.drain(process.getInputStream()), "condense-stdout");
-        stdoutThread.start();
-        Thread stderrThread = new Thread(() -> stderrCapture.drain(process.getErrorStream()), "condense-stderr");
-        stderrThread.start();
+            Thread stdoutThread = new Thread(() -> stdoutCapture.drain(process.getInputStream()), "condense-stdout");
+            stdoutThread.start();
+            Thread stderrThread = new Thread(() -> stderrCapture.drain(process.getErrorStream()), "condense-stderr");
+            stderrThread.start();
 
-        boolean finished = process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            boolean finished = waitFor(process, timeout);
 
-        if (!finished) {
-            process.destroyForcibly();
-            stdoutThread.interrupt();
-            stderrThread.interrupt();
-            long elapsed = System.currentTimeMillis() - startMs;
-            log.warnf("Command '%s' timed out after %dms", String.join(" ", args), elapsed);
-            try {
-                java.nio.file.Files.writeString(stderrCapture.tempFile, String.format("condense: command timed out after %ds", timeout.toSeconds()), java.nio.charset.StandardCharsets.UTF_8);
-            } catch (java.io.IOException ignored) {}
-            return new ExecutionResult(
-                -1,
-                stdoutCapture.tempFile,
-                stderrCapture.tempFile,
-                elapsed
-            );
-        }
-
-        // Wait for stream threads to finish draining (they will, since the process exited)
-        stdoutThread.join(5_000);
-        stderrThread.join(5_000);
-
-        if (stdoutCapture.error != null) {
-            if (stdoutCapture.error instanceof OutputLimitExceededException) {
-                throw (OutputLimitExceededException) stdoutCapture.error;
+            if (!finished) {
+                process.destroyForcibly();
+                stdoutThread.interrupt();
+                stderrThread.interrupt();
+                long elapsed = System.currentTimeMillis() - startMs;
+                log.warnf("Command '%s' timed out after %dms", String.join(" ", args), elapsed);
+                try {
+                    java.nio.file.Files.writeString(stderrCapture.tempFile, String.format("condense: command timed out after %ds", timeout.toSeconds()), java.nio.charset.StandardCharsets.UTF_8);
+                } catch (java.io.IOException ignored) {}
+                return new ExecutionResult(
+                    -1,
+                    stdoutCapture.tempFile,
+                    stderrCapture.tempFile,
+                    elapsed
+                );
             }
-            throw new IllegalStateException(stdoutCapture.error.getMessage(), stdoutCapture.error);
-        }
-        if (stderrCapture.error != null) {
-            if (stderrCapture.error instanceof OutputLimitExceededException) {
-                throw (OutputLimitExceededException) stderrCapture.error;
+
+            if (stdoutCapture.capped || stderrCapture.capped) {
+                process.destroyForcibly();
+                if (listener != null) {
+                    listener.onCapped();
+                }
             }
-            throw new IllegalStateException(stderrCapture.error.getMessage(), stderrCapture.error);
-        }
 
-        long durationMs = System.currentTimeMillis() - startMs;
-        int exitCode = process.exitValue();
+            stdoutThread.join(5_000);
+            stderrThread.join(5_000);
 
-        log.debugf("Completed in %dms, exit=%d, stdout=%d bytes, stderr=%d bytes",
-            durationMs, exitCode,
-            stdoutCapture.size(), stderrCapture.size());
+            if (stdoutCapture.error != null && !(stdoutCapture.error instanceof OutputLimitExceededException)) {
+                throw new IllegalStateException(stdoutCapture.error.getMessage(), stdoutCapture.error);
+            }
+            if (stderrCapture.error != null && !(stderrCapture.error instanceof OutputLimitExceededException)) {
+                throw new IllegalStateException(stderrCapture.error.getMessage(), stderrCapture.error);
+            }
+
+            long durationMs = System.currentTimeMillis() - startMs;
+            int exitCode = process.isAlive() ? -1 : process.exitValue();
+
+            log.debugf("Completed in %dms, exit=%d, stdout=%d bytes, stderr=%d bytes",
+                durationMs, exitCode,
+                stdoutCapture.size(), stderrCapture.size());
 
             return new ExecutionResult(
                 exitCode,
@@ -117,6 +126,14 @@ public class CommandExecutor {
         } finally {
             activeProcesses.remove(process);
         }
+    }
+
+    private static boolean waitFor(Process process, Duration timeout) throws InterruptedException {
+        if (timeout == null || timeout.isZero() || timeout.isNegative()) {
+            process.waitFor();
+            return true;
+        }
+        return process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     void onStop(@jakarta.enterprise.event.Observes io.quarkus.runtime.ShutdownEvent ev) {
@@ -188,12 +205,17 @@ public class CommandExecutor {
 
     private static final class StreamCapture {
         private final Path tempFile;
+        private final StreamListener listener;
+        private final boolean stdout;
         private int bytesWritten = 0;
         private volatile Exception error = null;
+        private volatile boolean capped = false;
 
-        StreamCapture() throws IOException {
+        StreamCapture(StreamListener listener, boolean stdout) throws IOException {
             tempFile = java.nio.file.Files.createTempFile("condense-stream-", ".log");
             tempFile.toFile().deleteOnExit();
+            this.listener = listener;
+            this.stdout = stdout;
         }
 
         void drain(InputStream in) {
@@ -203,10 +225,18 @@ public class CommandExecutor {
                 while ((read = in.read(chunk)) != -1) {
                     if (bytesWritten + read > MAX_STREAM_BYTES) {
                         error = new OutputLimitExceededException("condense: command output exceeded 10MB limit and was aborted");
+                        capped = true;
                         break;
                     }
                     out.write(chunk, 0, read);
                     bytesWritten += read;
+                    if (listener != null) {
+                        if (stdout) {
+                            listener.onStdout(chunk, read);
+                        } else {
+                            listener.onStderr(chunk, read);
+                        }
+                    }
                 }
             } catch (Exception e) {
                 error = e;

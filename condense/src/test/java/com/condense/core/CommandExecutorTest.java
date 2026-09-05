@@ -74,6 +74,14 @@ class CommandExecutorTest {
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS)
+    void zeroTimeoutWaitsUntilTheChildExits() throws Exception {
+        ExecutionResult r = executor.execute(List.of("sleep", "1"), Duration.ZERO);
+        assertThat(r.exitCode()).isZero();
+        assertThat(r.durationMs()).isGreaterThanOrEqualTo(800);
+    }
+
+    @Test
     void emptyArgsThrowsIllegalArgument() {
         assertThatThrownBy(() -> executor.execute(List.of()))
             .isInstanceOf(IllegalArgumentException.class);

@@ -104,6 +104,19 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
         return defaultPipeline;
     }
 
+    public final FilterPipeline resolveActivePipeline(String command) {
+        return overrideLoader.resolvePipeline(command, defaultPipeline);
+    }
+
+    public final FilterResult evaluateGate(
+            String command,
+            ExecutionResult result,
+            CondenseConfig config,
+            int verbose,
+            boolean ultraCompact) {
+        return beforePipeline(command, result, config, verbose, ultraCompact);
+    }
+
     private String filterName() {
         String simple = getClass().getSimpleName();
         return simple == null || simple.isBlank() ? getClass().getName() : simple;
