@@ -35,6 +35,17 @@ class PrefixIndexTest {
             .hasMessageContaining(BetaFilter.class.getName());
     }
 
+    @Test
+    void twoInstancesOfTheSameClassClaimingOnePrefixFailFast() {
+        Map<String, FilterStrategy> registry = new LinkedHashMap<>();
+        PrefixIndex.put(registry, "mypy", new AlphaFilter());
+
+        assertThatThrownBy(() -> PrefixIndex.put(registry, "mypy", new AlphaFilter()))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("mypy")
+            .hasMessageContaining(AlphaFilter.class.getName());
+    }
+
     private static final class AlphaFilter implements FilterStrategy {
         @Override
         public FilterResult apply(String command, ExecutionResult result,

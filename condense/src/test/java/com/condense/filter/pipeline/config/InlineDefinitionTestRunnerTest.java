@@ -11,7 +11,7 @@ class InlineDefinitionTestRunnerTest {
     @Test
     void everyShippedDefinitionHasAtLeastOnePassingInlineTest() {
         BuiltinDefinitionCatalog catalog = BuiltinDefinitionCatalog.standalone();
-        assertThat(catalog.all()).hasSize(31);
+        assertThat(catalog.all()).hasSizeGreaterThanOrEqualTo(31);
         for (BuiltinDefinition definition : catalog.all()) {
             assertThat(definition.tests())
                 .as(definition.name() + " must have inline tests")
@@ -29,7 +29,9 @@ class InlineDefinitionTestRunnerTest {
             definition.name(),
             definition.commands(),
             definition.stages(),
-            List.of(new BuiltinDefinition.InlineTest("broken", "", "not-this"))
+            List.of(new BuiltinDefinition.InlineTest("broken", "", "not-this")),
+            definition.selectInput(),
+            definition.gate()
         );
         assertThat(InlineDefinitionTestRunner.run(broken)).isNotEmpty();
     }

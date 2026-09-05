@@ -419,6 +419,8 @@
   { "name": "com.condense.filter.pipeline.config.BuiltinDefinition", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.filter.pipeline.config.BuiltinDefinition$InlineTest", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.filter.pipeline.config.BuiltinDefinition$Index", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.config.BuiltinDefinition$Gate", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.filter.pipeline.CatalogBackedFilter", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.filter.pipeline.config.FilterOverrideLoader", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.config.ConfigValidateCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.config.ConfigTrustCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },

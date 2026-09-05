@@ -4,6 +4,9 @@ import com.condense.annotation.CommandFilter;
 import com.condense.annotation.CommandFilters;
 import com.condense.core.FilterStrategy;
 import com.condense.core.PassthroughStrategy;
+import com.condense.filter.pipeline.CatalogBackedFilter;
+import com.condense.filter.pipeline.config.BuiltinDefinition;
+import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -151,7 +154,28 @@ public final class CorpusCatalog {
         if (PassthroughStrategy.class.isAssignableFrom(type)) {
             return;
         }
+        if (CatalogBackedFilter.class.isAssignableFrom(type)) {
+            return;
+        }
         types.add(type);
+    }
+
+    /**
+     * Java {@code @CommandFilter} match, else a leftover catalog host.
+     */
+    public static FilterStrategy instantiateForCommand(String command) {
+        try {
+            Class<?> type = resolveFilterClass(command);
+            return instantiate(type);
+        } catch (IllegalArgumentException ignored) {
+            BuiltinDefinition definition = BuiltinDefinitionCatalog.standalone().findByCommand(command);
+            if (definition != null) {
+                return new CatalogBackedFilter(definition.name());
+            }
+            throw new IllegalArgumentException("No FilterStrategy or catalog definition for command '" + command + "'");
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot construct filter for command '" + command + "'", e);
+        }
     }
 
     public enum SavingsExemption {

@@ -5,10 +5,11 @@ import java.util.Objects;
 
 /**
  * Registers command-prefix → filter bindings and refuses a silent last-write-wins
- * collision between two different filter classes.
+ * collision between two different filter instances.
  *
- * <p>The same class may claim many prefixes ({@code npm install} / {@code npm ci}).
- * Two classes claiming one prefix fail fast.
+ * <p>The same instance may claim many prefixes ({@code npm install} / {@code npm ci}).
+ * Two instances claiming one prefix fail fast, even when they share a class —
+ * catalog hosts are many instances of one type.
  */
 public final class PrefixIndex {
 
@@ -19,14 +20,10 @@ public final class PrefixIndex {
         Objects.requireNonNull(key, "key");
         Objects.requireNonNull(instance, "instance");
         FilterStrategy existing = registry.get(key);
-        if (existing != null) {
-            Class<?> existingClass = existing.getClass();
-            Class<?> incomingClass = instance.getClass();
-            if (!existingClass.equals(incomingClass)) {
-                throw new IllegalStateException(
-                    "Duplicate @CommandFilter prefix '" + key + "' claimed by "
-                        + existingClass.getName() + " and " + incomingClass.getName());
-            }
+        if (existing != null && existing != instance) {
+            throw new IllegalStateException(
+                "Duplicate command prefix '" + key + "' claimed by "
+                    + existing.getClass().getName() + " and " + instance.getClass().getName());
         }
         registry.put(key, instance);
     }

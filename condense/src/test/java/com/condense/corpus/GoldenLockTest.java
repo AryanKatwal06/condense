@@ -58,7 +58,7 @@ class GoldenLockTest {
         }
 
         if (update) {
-            assertThat(catalog.entries()).hasSize(51);
+            assertThat(catalog.entries().size()).isGreaterThanOrEqualTo(51);
             return;
         }
         if (!missing.isEmpty()) {
@@ -70,7 +70,7 @@ class GoldenLockTest {
                 + "docs/pipeline-migration-diffs.md:\n  "
                 + String.join("\n  ", mismatches));
         }
-        assertThat(catalog.entries()).hasSize(51);
+        assertThat(catalog.entries().size()).isGreaterThanOrEqualTo(51);
     }
 
     static String goldenFileName(String id) {

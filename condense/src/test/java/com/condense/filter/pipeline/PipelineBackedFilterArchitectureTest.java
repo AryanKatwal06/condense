@@ -8,6 +8,9 @@ import com.condense.corpus.CorpusCatalog;
 import com.condense.filter.pipeline.config.BuiltinDefinition;
 import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
 import com.condense.filter.python.PythonFilter;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
@@ -120,6 +123,37 @@ class PipelineBackedFilterArchitectureTest {
                 .as(type.getSimpleName() + " commands must match @CommandFilter")
                 .containsExactlyInAnyOrderElementsOf(annotated);
         }
+    }
+
+    @Test
+    void catalogOnlyCommandsAreNotAnnotatedOnJavaFilters() throws Exception {
+        BuiltinDefinitionCatalog catalog = BuiltinDefinitionCatalog.standalone();
+        Set<String> annotated = new LinkedHashSet<>();
+        for (Class<?> type : CorpusCatalog.discoverDomainFilters()) {
+            annotated.addAll(annotatedPrefixes(type));
+        }
+        List<String> leaked = new ArrayList<>();
+        for (BuiltinDefinition definition : catalog.all()) {
+            boolean anyJava = false;
+            for (String command : definition.commands()) {
+                if (annotated.contains(command.trim().toLowerCase(Locale.ROOT))) {
+                    anyJava = true;
+                    break;
+                }
+            }
+            if (anyJava) {
+                continue;
+            }
+            for (String command : definition.commands()) {
+                String key = command.trim().toLowerCase(Locale.ROOT);
+                if (annotated.contains(key)) {
+                    leaked.add(definition.name() + " " + key);
+                }
+            }
+        }
+        assertThat(leaked)
+            .as("catalog-only commands must not appear on @CommandFilter")
+            .isEmpty();
     }
 
     @Test

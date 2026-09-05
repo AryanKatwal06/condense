@@ -25,6 +25,7 @@ definitions = [
   "ls",
   "make",
   "mvn",
+  "mypy",
   "npm-install",
   "pip-install",
   "pytest",

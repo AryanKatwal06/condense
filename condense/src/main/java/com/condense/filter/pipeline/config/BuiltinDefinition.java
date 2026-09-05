@@ -8,6 +8,9 @@ import java.util.List;
 
 /**
  * Schema v1 builtin filter definition loaded from {@code classpath:filters/<name>.toml}.
+ *
+ * <p>{@code select_input} and {@code gate} are optional builtin-only fields.
+ * They are unknown keys in user override files.
  */
 @RegisterForReflection
 public record BuiltinDefinition(
@@ -24,8 +27,19 @@ public record BuiltinDefinition(
     List<FilterOverrideConfig.StageDef> stages,
 
     @JsonProperty("tests")
-    List<InlineTest> tests
+    List<InlineTest> tests,
+
+    @JsonProperty("select_input")
+    String selectInput,
+
+    @JsonProperty("gate")
+    Gate gate
 ) {
+    public static final String SELECT_STDOUT_OR_STDERR = "stdout_or_stderr";
+    public static final String SELECT_STDERR_THEN_STDOUT = "stderr_then_stdout";
+    public static final String SELECT_STDOUT = "stdout";
+    public static final String SELECT_STDERR = "stderr";
+
     public BuiltinDefinition {
         if (commands == null) {
             commands = Collections.emptyList();
@@ -39,7 +53,28 @@ public record BuiltinDefinition(
     }
 
     public BuiltinDefinition() {
-        this(null, null, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        this(null, null, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
+            null, null);
+    }
+
+    @RegisterForReflection
+    public record Gate(
+        @JsonProperty("passthrough_verbose")
+        Integer passthroughVerbose,
+
+        @JsonProperty("passthrough_max_lines")
+        Integer passthroughMaxLines,
+
+        @JsonProperty("passthrough_nonzero_exit")
+        Boolean passthroughNonzeroExit
+    ) {
+        public Gate() {
+            this(null, null, null);
+        }
+
+        public boolean passthroughOnNonzeroExit() {
+            return Boolean.TRUE.equals(passthroughNonzeroExit);
+        }
     }
 
     @RegisterForReflection

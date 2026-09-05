@@ -61,6 +61,20 @@ class StrategyRegistryTest {
     }
 
     @Test
+    void leftoverMypyPrefixIsRegisteredOnCatalogHost() {
+        assertThat(registry.registeredCommands()).contains("mypy", "python -m mypy", "python3 -m mypy");
+        FilterStrategy s = registry.lookup(new String[]{"mypy"});
+        assertThat(s).isNotInstanceOf(PassthroughStrategy.class);
+        assertThat(s.getClass().getName()).contains("CatalogBackedFilter");
+    }
+
+    @Test
+    void javaBackedPrefixIsNotStolenByCatalogHost() {
+        FilterStrategy s = registry.lookup(new String[]{"npm", "install"});
+        assertThat(s.getClass().getSimpleName()).startsWith("NpmInstallFilter");
+    }
+
+    @Test
     void lookupUnknownCommandReturnsPassthrough() {
         FilterStrategy s = registry.lookup(new String[]{"unknowncmd", "--flag"});
         assertThat(s).isInstanceOf(PassthroughStrategy.class);

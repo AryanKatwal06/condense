@@ -1,5 +1,7 @@
 package com.condense.corpus;
 
+import com.condense.filter.pipeline.config.BuiltinDefinition;
+import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashSet;
@@ -16,7 +18,11 @@ class CorpusCoverageTest {
         Map<String, Class<?>> prefixes = CorpusCatalog.prefixIndex();
         Set<Class<?>> covered = new LinkedHashSet<>();
         for (CorpusCatalog.Entry entry : catalog.entries()) {
-            covered.add(CorpusCatalog.resolveFilterClass(entry.command(), prefixes));
+            try {
+                covered.add(CorpusCatalog.resolveFilterClass(entry.command(), prefixes));
+            } catch (IllegalArgumentException ignored) {
+                // leftover catalog definition — covered by everyIndexDefinitionHasACatalogEntry
+            }
         }
 
         Set<Class<?>> expected = CorpusCatalog.discoverDomainFilters();
@@ -24,6 +30,22 @@ class CorpusCoverageTest {
         assertThat(covered)
             .as("every FilterStrategy except PassthroughStrategy must have ≥1 catalog row")
             .containsAll(expected);
+    }
+
+    @Test
+    void everyIndexDefinitionHasACatalogEntry() throws Exception {
+        CorpusCatalog.Catalog catalog = CorpusCatalog.load();
+        BuiltinDefinitionCatalog definitions = BuiltinDefinitionCatalog.standalone();
+        Set<String> covered = new LinkedHashSet<>();
+        for (CorpusCatalog.Entry entry : catalog.entries()) {
+            BuiltinDefinition definition = definitions.findByCommand(entry.command());
+            if (definition != null) {
+                covered.add(definition.name());
+            }
+        }
+        assertThat(covered)
+            .as("every filters/index.toml definition must have ≥1 corpus row")
+            .containsAll(definitions.names());
     }
 
     @Test

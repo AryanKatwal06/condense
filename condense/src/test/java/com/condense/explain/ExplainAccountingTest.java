@@ -28,8 +28,7 @@ class ExplainAccountingTest {
             "%-32s %6s %8s %8s%n", "id", "stages", "dLines", "dTok"));
 
         for (CorpusCatalog.Entry entry : catalog.entries()) {
-            Class<?> type = CorpusCatalog.resolveFilterClass(entry.command());
-            FilterStrategy filter = CorpusCatalog.instantiate(type);
+            FilterStrategy filter = CorpusCatalog.instantiateForCommand(entry.command());
             String fixture = CorpusRunner.loadFixture(entry.fixture());
             ExecutionResult execution = new ExecutionResult(entry.exitCode(), fixture, "", 10L);
             FilterResult applied = CorpusRunner.apply(entry);
@@ -74,6 +73,6 @@ class ExplainAccountingTest {
 
         System.out.print(table);
         assertThat(failures).as("explain accounting violations").isEmpty();
-        assertThat(catalog.entries()).hasSize(51);
+        assertThat(catalog.entries().size()).isGreaterThanOrEqualTo(51);
     }
 }

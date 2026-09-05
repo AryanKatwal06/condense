@@ -1,0 +1,11 @@
+condense[filtered]
+41 issue(s) in 9 file(s)
+  src/billing/invoice.py: 5
+  src/auth/session.py: 5
+  src/catalog/product.py: 5
+  src/orders/checkout.py: 5
+  src/search/query.py: 5
+  src/notify/mailer.py: 5
+  src/reports/export.py: 5
+  src/api/handlers.py: 5
+  (stdin): 1

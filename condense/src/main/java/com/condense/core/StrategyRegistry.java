@@ -2,6 +2,10 @@ package com.condense.core;
 
 import com.condense.annotation.CommandFilter;
 import com.condense.annotation.CommandFilters;
+import com.condense.filter.pipeline.CatalogBackedFilter;
+import com.condense.filter.pipeline.config.BuiltinDefinition;
+import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
+import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
@@ -12,6 +16,7 @@ import org.jboss.logging.Logger;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -30,6 +35,9 @@ public class StrategyRegistry {
     @Inject
     PassthroughStrategy passthrough;
 
+    @Inject
+    FilterOverrideLoader overrideLoader;
+
     @PostConstruct
     void build() {
         for (var handle : strategies.handles()) {
@@ -37,6 +45,7 @@ public class StrategyRegistry {
 
             // The passthrough is the explicit fallback — never register it
             if (PassthroughStrategy.class.isAssignableFrom(cls)) continue;
+            if (CatalogBackedFilter.class.isAssignableFrom(cls)) continue;
 
             CommandFilter[] annotations = prefixesOn(cls);
             if (annotations.length == 0) continue;
@@ -53,7 +62,42 @@ public class StrategyRegistry {
                 log.debugf("Registered '%s' → %s", key, cls.getSimpleName());
             }
         }
+        registerCatalogLeftovers();
         log.infof("StrategyRegistry: %d filter(s) registered", registry.size());
+    }
+
+    /**
+     * Definitions whose commands are not already claimed by a Java
+     * {@code @CommandFilter} become catalog hosts. A definition is skipped
+     * entirely when any of its prefixes is already in the map.
+     */
+    private void registerCatalogLeftovers() {
+        BuiltinDefinitionCatalog catalog = BuiltinDefinitionCatalog.standalone();
+        FilterOverrideLoader loader = overrideLoader != null
+            ? overrideLoader
+            : FilterOverrideLoader.standalone();
+        for (BuiltinDefinition definition : catalog.all()) {
+            boolean claimed = false;
+            for (String command : definition.commands()) {
+                String key = command == null ? "" : command.trim().toLowerCase(Locale.ROOT);
+                if (!key.isBlank() && registry.containsKey(key)) {
+                    claimed = true;
+                    break;
+                }
+            }
+            if (claimed) {
+                continue;
+            }
+            CatalogBackedFilter host = new CatalogBackedFilter(definition.name(), loader);
+            for (String command : definition.commands()) {
+                String key = command == null ? "" : command.trim().toLowerCase(Locale.ROOT);
+                if (key.isBlank()) {
+                    continue;
+                }
+                PrefixIndex.put(registry, key, host);
+                log.debugf("Registered leftover '%s' → %s", key, definition.name());
+            }
+        }
     }
 
     /**

@@ -32,13 +32,23 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
 
     private final FilterOverrideLoader overrideLoader;
     private final FilterPipeline defaultPipeline;
+    private final String catalogDefinitionName;
 
     protected PipelineBackedFilter() {
         this(FilterOverrideLoader.standalone());
     }
 
     protected PipelineBackedFilter(FilterOverrideLoader overrideLoader) {
+        this(overrideLoader, null);
+    }
+
+    /**
+     * Catalog-hosted filters pass {@code catalogDefinitionName} so
+     * {@link #definitionName()} is available during {@link #buildPipeline()}.
+     */
+    protected PipelineBackedFilter(FilterOverrideLoader overrideLoader, String catalogDefinitionName) {
         this.overrideLoader = overrideLoader != null ? overrideLoader : FilterOverrideLoader.standalone();
+        this.catalogDefinitionName = catalogDefinitionName;
         this.defaultPipeline = Objects.requireNonNull(buildPipeline(), "buildPipeline must not return null");
     }
 
@@ -46,7 +56,12 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
      * Builtin definition name under {@code classpath:filters/<name>.toml}.
      * Called once from the constructor.
      */
-    protected abstract String definitionName();
+    protected String definitionName() {
+        if (catalogDefinitionName != null && !catalogDefinitionName.isBlank()) {
+            return catalogDefinitionName;
+        }
+        throw new IllegalStateException(getClass().getName() + " must override definitionName()");
+    }
 
     /**
      * Loads the compiled default pipeline from {@link BuiltinDefinitionCatalog}.
@@ -119,7 +134,10 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
         return beforePipeline(command, result, config, verbose, ultraCompact);
     }
 
-    private String filterName() {
+    protected String filterName() {
+        if (catalogDefinitionName != null && !catalogDefinitionName.isBlank()) {
+            return catalogDefinitionName;
+        }
         String simple = getClass().getSimpleName();
         return simple == null || simple.isBlank() ? getClass().getName() : simple;
     }

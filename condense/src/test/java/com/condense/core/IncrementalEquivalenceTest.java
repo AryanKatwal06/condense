@@ -71,8 +71,7 @@ class IncrementalEquivalenceTest {
         int compared = 0;
 
         for (CorpusCatalog.Entry entry : catalog.entries()) {
-            Class<?> type = CorpusCatalog.resolveFilterClass(entry.command());
-            FilterStrategy filter = CorpusCatalog.instantiate(type);
+            FilterStrategy filter = CorpusCatalog.instantiateForCommand(entry.command());
             if (!(filter instanceof PipelineBackedFilter pipelineFilter)) {
                 continue;
             }

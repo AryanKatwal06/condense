@@ -63,6 +63,8 @@ class ReflectConfigDriftTest {
             com.condense.filter.pipeline.config.BuiltinDefinition.class.getName(),
             com.condense.filter.pipeline.config.BuiltinDefinition.InlineTest.class.getName(),
             com.condense.filter.pipeline.config.BuiltinDefinition.Index.class.getName(),
+            com.condense.filter.pipeline.config.BuiltinDefinition.Gate.class.getName(),
+            com.condense.filter.pipeline.CatalogBackedFilter.class.getName(),
             com.condense.analytics.GainReport.class.getName(),
             com.condense.analytics.EstimatorInfo.class.getName(),
             TrackingRepository.AggregateStats.class.getName(),

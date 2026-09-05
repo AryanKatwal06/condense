@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Fail-closed catalog of builtin filter definitions.
@@ -21,8 +23,16 @@ public final class BuiltinDefinitionCatalog {
     public static final String INDEX_RESOURCE = "/filters/index.toml";
     public static final String DEFINITION_DIR = "/filters/";
 
+    private static final Set<String> SELECT_INPUTS = Set.of(
+        BuiltinDefinition.SELECT_STDOUT_OR_STDERR,
+        BuiltinDefinition.SELECT_STDERR_THEN_STDOUT,
+        BuiltinDefinition.SELECT_STDOUT,
+        BuiltinDefinition.SELECT_STDERR
+    );
+
     private final Map<String, BuiltinDefinition> byName;
     private final Map<String, FilterPipeline> pipelines;
+    private final Map<String, String> commandOwners;
 
     private static final class Holder {
         private static final BuiltinDefinitionCatalog INSTANCE = loadOrDie();
@@ -32,9 +42,13 @@ public final class BuiltinDefinitionCatalog {
         return Holder.INSTANCE;
     }
 
-    BuiltinDefinitionCatalog(Map<String, BuiltinDefinition> byName, Map<String, FilterPipeline> pipelines) {
+    BuiltinDefinitionCatalog(
+            Map<String, BuiltinDefinition> byName,
+            Map<String, FilterPipeline> pipelines,
+            Map<String, String> commandOwners) {
         this.byName = Collections.unmodifiableMap(byName);
         this.pipelines = Collections.unmodifiableMap(pipelines);
+        this.commandOwners = Collections.unmodifiableMap(commandOwners);
     }
 
     public FilterPipeline requiredPipeline(String name) {
@@ -59,6 +73,24 @@ public final class BuiltinDefinitionCatalog {
 
     public List<String> names() {
         return List.copyOf(byName.keySet());
+    }
+
+    /**
+     * Longest-prefix match over builtin {@code commands}. Null when unmatched.
+     */
+    public BuiltinDefinition findByCommand(String command) {
+        if (command == null || command.isBlank()) {
+            return null;
+        }
+        String[] tokens = command.trim().toLowerCase(Locale.ROOT).split("\\s+");
+        for (int len = tokens.length; len >= 1; len--) {
+            String prefix = String.join(" ", Arrays.copyOfRange(tokens, 0, len));
+            String name = commandOwners.get(prefix);
+            if (name != null) {
+                return byName.get(name);
+            }
+        }
+        return null;
     }
 
     static BuiltinDefinitionCatalog loadOrDie() {
@@ -117,7 +149,30 @@ public final class BuiltinDefinitionCatalog {
         if (!errors.isEmpty()) {
             return null;
         }
-        return new BuiltinDefinitionCatalog(byName, pipelines);
+        return new BuiltinDefinitionCatalog(byName, pipelines, commandOwners);
+    }
+
+    private static void validateSelectInput(String resource, String selectInput, List<String> errors) {
+        if (selectInput == null || selectInput.isBlank()) {
+            return;
+        }
+        String key = selectInput.trim().toLowerCase(Locale.ROOT);
+        if (!SELECT_INPUTS.contains(key)) {
+            errors.add(resource + ": select_input '" + selectInput + "' must be one of "
+                + SELECT_INPUTS);
+        }
+    }
+
+    private static void validateGate(String resource, BuiltinDefinition.Gate gate, List<String> errors) {
+        if (gate == null) {
+            return;
+        }
+        if (gate.passthroughVerbose() != null && gate.passthroughVerbose() < 0) {
+            errors.add(resource + ": gate.passthrough_verbose must be >= 0");
+        }
+        if (gate.passthroughMaxLines() != null && gate.passthroughMaxLines() < 0) {
+            errors.add(resource + ": gate.passthrough_max_lines must be >= 0");
+        }
     }
 
     static BuiltinDefinition.Index readIndex(List<String> errors) {
@@ -189,6 +244,8 @@ public final class BuiltinDefinitionCatalog {
                     }
                 }
             }
+            validateSelectInput(resource, definition.selectInput(), local);
+            validateGate(resource, definition.gate(), local);
             errors.addAll(local);
             return local.isEmpty() ? definition : null;
         } catch (UnrecognizedPropertyException e) {

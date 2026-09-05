@@ -422,6 +422,14 @@
       "savings_floor": 15,
       "meets_contribution_bar": false,
       "critical_signals": ["Finished"]
+    },
+    {
+      "id": "mypy/typical",
+      "command": "mypy",
+      "fixture": "fixtures/mypy/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["src/billing/invoice.py", "src/auth/session.py", "src/api/handlers.py"]
     }
   ]
 }

@@ -1,0 +1,18 @@
+schema_version = 1
+name = "mypy"
+commands = ["mypy", "python -m mypy", "python3 -m mypy"]
+
+[[stages]]
+strategy = "aggregate_by_key"
+key = "prefix_before_colon"
+header = "{lines} issue(s) in {keys} file(s)"
+top_n = 20
+
+[[tests]]
+id = "by-file"
+input = """
+src/a.py:1: error: Incompatible types in assignment  [assignment]
+src/a.py:2: error: Argument 1 has incompatible type  [arg-type]
+src/b.py:1: error: Name "foo" is not defined  [name-defined]
+"""
+expected = "3 issue(s) in 2 file(s)\n  src/a.py: 2\n  src/b.py: 1"
