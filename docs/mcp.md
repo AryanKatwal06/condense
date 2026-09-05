@@ -41,6 +41,7 @@ Every tool result is `content: [{ "type": "text", "text": "<compact JSON>" }]`. 
 | `run` | `{ "command": ["pytest"], "ultra_compact"?: boolean }` | Schema-1 IR envelope (`docs/ir.md`). Same records as `condense --format json`. |
 | `explain` | `{ "command": ["pytest"], "input"?: path, "exit_code"?: number, "ultra_compact"?: boolean }` | Existing `ExplainReport` (includes `document`). |
 | `read` | `{ "path": "Src.java", "level"?: "verbatim\|comments\|outline", "ultra_compact"?: boolean }` | Existing `ReadReport` plus stamped body. |
+| `discover` | `{ "root"?: path }` | Existing `DiscoverReport` (schema 1). Recommends definition names; does not filter. |
 
 `command` is an **argv array**. A single shell string is refused. There is no `cwd` override and no MCP `--stdin` (stdio is the protocol).
 
@@ -57,10 +58,10 @@ Every tool result is `content: [{ "type": "text", "text": "<compact JSON>" }]`. 
 
 ## Path safety
 
-MCP-supplied filesystem paths (`read.path`, `explain.input`) go through `ReadPathGate` / `SafePathValidator.containReadable` against the workspace root. Escape is a tool error and does not leak file bytes.
+MCP-supplied filesystem paths (`read.path`, `explain.input`, `discover.root`) go through the same workspace containment as the CLI. `discover.root` may only narrow. Escape is a tool error and does not leak file bytes.
 
 CLI `condense explain --input` is unchanged.
 
 ## Native proof
 
-`NativeMcpIT` (never skip) drives `condense mcp --start` on the GraalVM binary: initialize + `run` on PATH-stubbed pytest, contained vs escaped `read`, and `condense://gain`. `NativeHookIT` also sends initialize + `tools/list` so hook work cannot regress the preferred path.
+`NativeMcpIT` (never skip) drives `condense mcp --start` on the GraalVM binary: initialize + `run` on PATH-stubbed pytest, contained vs escaped `read`, `tools/list` including `discover`, and `condense://gain`. `NativeDiscoverIT` runs `condense discover` on a fixture tree. `NativeHookIT` also sends initialize + `tools/list` so hook work cannot regress the preferred path.

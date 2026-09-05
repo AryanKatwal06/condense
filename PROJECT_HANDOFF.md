@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 14 catalog leftover closeout).
+**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 15 discovery closeout).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 14. Confirm with `git log -1` and origin before starting Phase 15.
+**Branch at handoff:** `main` after Phase 15. Confirm with `git log -1` and origin before starting Phase 16.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -419,18 +419,19 @@ Planning plus Phase 1 through Phase 10 code, then an independent audit of those 
 | Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read`; resources `gain`/`doctor`; `NativeMcpIT`. |
 | Phase 13 code | **LANDED** | Schema 2 hook audit; backup-before-merge; SHA-256 script baselines; Claude deny-not-rewrite; Codex/OpenCode/Kilo/Antigravity/Hermes/Pi; `NativeHookIT`. |
 | Phase 14 code | **LANDED** | `CatalogBackedFilter` leftover host; 19 data-only families; original 51 goldens unchanged; `NativeCatalogIT`. Existing 31 Java filters not migrated. |
-| Phases 15–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 15 code | **LANDED** | `condense discover` + MCP `discover`; classpath `discover/*.toml`; exact contained probes; explicit family priority; `NativeDiscoverIT`. Does not change dispatch. |
+| Phases 16–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (510 / 0 / 0 / 9 on this Windows JVM; 9 skips are POSIX `CommandExecutorTest`), and CI 33950449575. |
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 so §4 matches the live tree. |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p14` are marked `completed`, `p15`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p15` are marked `completed`, `p16`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 14 code have landed.** Phases 15–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 15 code have landed.** Phases 16–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -846,7 +847,9 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 ### Phase 15 — Project and environment discovery
 
-**Status: PENDING**
+**Status: CODE LANDED**
+
+**What shipped.** `DiscoverRuleCatalog` loads `classpath:discover/*.toml` from `discover/index.toml` only (`STRICT_TOML`). Each rule has an explicit `priority` (unique per family; lower wins). `DiscoverService` probes exact relative paths under `SafePathValidator.contain` / `resolveWorkspaceRoot`. Caps are 64 probes, 8 content reads, 64 KiB/file, 256 KiB total. `condense discover` prints text or schema-1 JSON; `--root` may only narrow. MCP tool `discover` returns the same record (`isError` only on bad args / widen). `DiscoverDefinitionValidator` runs at Maven `process-classes`. `NativeDiscoverIT` copies a pnpm+prisma fixture through the native binary. Recommendations are existing `filters/index.toml` names. `StrategyRegistry`, leftover catalog dispatch, hooks, and `filters.toml` are unchanged. No agent-transcript mining. No `Files.walk`.
 
 **Goal.** Detect project type, language, framework, and build system so the right definitions apply without manual configuration. Detection rules as data, with **bounded** file reads and no unbounded directory walks.
 
@@ -994,9 +997,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–14 code landed. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. This Windows workspace does not build native images.
+**Where we are.** Phase 1–15 code landed. `condense discover` recommends existing filter definition names from exact manifests. It does not apply them. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. This Windows workspace does not build native images.
 
-**Do not start Phase 15 code.** Present a complete Phase 15 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 16 code.** Present a complete Phase 16 plan (constraint #9) and wait for a fresh "proceed". Phase 16 may propose a project `filters.toml` diff from a discover report. It must not apply those proposals silently.
 
 ---
 
@@ -1017,8 +1020,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 14 code has landed. Confirm `NativeCatalogIT` appears in native job logs, `GoldenLockTest` is green, and `condense mypy` is not passthrough.
-9. **Do not start Phase 15 code.** Present a complete Phase 15 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 15 code has landed. Confirm `NativeDiscoverIT` and `NativeCatalogIT` appear in native job logs, `GoldenLockTest` is green, and `condense discover` does not change dispatch.
+9. **Do not start Phase 16 code.** Present a complete Phase 16 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

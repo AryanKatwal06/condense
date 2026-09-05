@@ -175,7 +175,7 @@ To verify hooks are working, run a few commands via your AI and then run `conden
 
 AI agents increasingly ship with their own context-saving mechanisms. Condense is designed to compose cleanly with them:
 
-*   **Claude Desktop (MCP)**: `condense mcp --start` speaks MCP on stdio. Tools are `run`, `explain`, and `read`. Resources are `condense://gain` and `condense://doctor`. `run` returns the schema-1 IR envelope. See [docs/mcp.md](docs/mcp.md). Hooks remain the fallback path.
+*   **Claude Desktop (MCP)**: `condense mcp --start` speaks MCP on stdio. Tools are `run`, `explain`, `read`, and `discover`. Resources are `condense://gain` and `condense://doctor`. `run` returns the schema-1 IR envelope. See [docs/mcp.md](docs/mcp.md). Hooks remain the fallback path.
 *   **Claude Code (Compact Mode)**: Claude Code strips some whitespace automatically. Condense runs *first*, stripping entire irrelevant blocks (like passing tests), and then Claude compacts what's left. They stack multiplicatively.
 *   **Aider (Repo Map)**: Aider uses ctags to map codebases. Condense doesn't interfere with this; it focuses purely on transient shell output, which Aider's map doesn't cover.
 
@@ -196,7 +196,7 @@ JSON does not live-print fragments, even for STREAM commands such as `npm instal
 
 ## MCP
 
-`condense mcp --start` is a stdio JSON-RPC server. Tools `run`, `explain`, and `read` reuse the CLI engines. `run` returns the same schema-1 document as `condense --format json`. Resources `condense://gain` and `condense://doctor` return the existing JSON reports. See [docs/mcp.md](docs/mcp.md).
+`condense mcp --start` is a stdio JSON-RPC server. Tools `run`, `explain`, `read`, and `discover` reuse the CLI engines. `run` returns the same schema-1 document as `condense --format json`. `discover` recommends filter definition names from manifests; it does not filter. Resources `condense://gain` and `condense://doctor` return the existing JSON reports. See [docs/mcp.md](docs/mcp.md).
 
 ---
 
@@ -292,6 +292,17 @@ $ condense read --level outline --format json App.ts
 ```
 
 Unknown languages stay verbatim. JSON never uses C-style comments. Successful reads write a `gain` row. See [docs/read.md](docs/read.md).
+
+## condense discover
+
+`condense discover` recommends existing filter definition names from exact repository manifests and lockfiles. It does not change `condense pytest` dispatch, write `filters.toml`, or filter output.
+
+```
+$ condense discover
+$ condense discover --format json --root apps/web
+```
+
+`--root` may only narrow the workspace. Empty repositories still exit 0. See [docs/discover.md](docs/discover.md).
 
 Long commands can print filtered lines before the child exits when every stage in the resolved pipeline is `order_local` or `windowed`. There is no `--stream` flag. Capture-to-disk (10 MB, 8 KiB chunks) still feeds tee, token counts, and fail-open replay. See [docs/streaming.md](docs/streaming.md).
 

@@ -20,7 +20,7 @@ condense --version / --help
         │     └── CondenseConfig (record) + TeeMode (enum)
         ├── PlatformDirs → resolves config/data dirs per OS
         ├── TrackingRepository → SQLite at {dataDir}/condense.db (user_version, WAL, retention)
-        └── McpCommand --start → hand-rolled stdio JSON-RPC (tools run/explain/read, resources gain/doctor)
+        └── McpCommand --start → hand-rolled stdio JSON-RPC (tools run/explain/read/discover, resources gain/doctor)
 ```
 
 ## File Responsibilities
@@ -42,6 +42,8 @@ condense --version / --help
 | `DoctorCommand.java` | `com.condense.doctor` | `condense doctor` — empty-gain diagnosis, text and JSON |
 | `ExplainCommand.java` | `com.condense.explain` | `condense explain` — per-stage line and token accounting, plus `pipeline_mode` |
 | `ReadCommand.java` | `com.condense.read` | `condense read` — language-aware source-file reading with original line numbers |
+| `DiscoverCommand.java` | `com.condense.discover` | `condense discover` — recommend filter definition names from exact manifests |
+| `DiscoverService.java` / `DiscoverRuleCatalog.java` | `com.condense.discover` | Bounded exact-path probes; classpath `discover/index.toml` only |
 | `StreamingProxy.java` | `com.condense.core` | Live-print runner for STREAM pipelines and LIVE_RAW passthrough |
 | `Utf8LineDecoder.java` | `com.condense.core` | Incremental UTF-8 line breaks across drain chunks |
 | `TokenCounter.java` | `com.condense.core` | Static facade over `Utf8WeightedTokenEstimator` |
@@ -79,9 +81,11 @@ condense --version / --help
 
 12. **Structured diagnostics IR**: Exemplar stages populate a `DocumentBuilder` sidecar on `FilterContext`. `TextRenderer` is the default CLI; `JsonRenderer` emits schema 1. Everyone else, gates, and IR-build failures wrap existing text as `kind=opaque`. `--format json` waits for the child to exit. See `docs/ir.md`.
 
-13. **MCP over stdio**: `condense mcp --start` is a hand-rolled JSON-RPC server (no extra Maven dependency). `run` returns the Phase 11 envelope; `explain` / `read` / `gain` / `doctor` reuse existing records. MCP paths go through `ReadPathGate`. Logs go to stderr so stdout stays JSON-RPC-only. MCP is the preferred agent path; hooks are the fallback. See `docs/mcp.md`.
+13. **MCP over stdio**: `condense mcp --start` is a hand-rolled JSON-RPC server (no extra Maven dependency). `run` returns the Phase 11 envelope; `explain` / `read` / `discover` / `gain` / `doctor` reuse existing records. MCP paths go through `ReadPathGate` / the same narrow-only root as `condense read`. Logs go to stderr so stdout stays JSON-RPC-only. MCP is the preferred agent path; hooks are the fallback. See `docs/mcp.md`.
 
 14. **Hook integrity**: `HookBackup` copies an existing third-party config before merge (fail-closed). `HookIntegrity` SHA-256s Condense-owned scripts into `hook_baselines`. Analytics schema target is 2. Matched hook commands deny with a retry string containing `condense `; they never rewrite-and-allow. See `docs/HOOKS.md`.
+
+15. **Recommend-only discovery**: `condense discover` loads `classpath:discover/*.toml` via `discover/index.toml`. Precedence is an explicit integer per family (lower wins). Probes are exact contained paths with hard Java caps. Output is a recommendation list of existing filter definition names. `StrategyRegistry` is unchanged. See `docs/discover.md`.
 
 ## Technology Stack
 
