@@ -1,6 +1,6 @@
 # Structured diagnostics IR
 
-Filtered output is a **typed document** plus renderers, not 32 ad-hoc formatters. Default CLI output stays compact **text**. `condense --format json <command>` prints one schema-1 JSON object after the child exits. `condense explain --format json` embeds the same records on `document`.
+Filtered output is a **typed document** plus renderers, not 32 ad-hoc formatters. Default CLI output stays compact **text** from `FilterResult.output()` (the pipeline text). Exemplar stages call `TextRenderer` internally; `TextRenderer.render(document)` is not the default CLI path. Identity against `apply().output()` is locked for **7** corpus IDs until remediation R23. `condense --format json <command>` prints one schema-1 JSON object after the child exits. `condense explain --format json` embeds the same records on `document`. Token savings stay on the text path (semantic savings, R25, is deferred).
 
 The MCP `run` tool returns this envelope. It must not invent a second model. See [docs/mcp.md](mcp.md).
 
@@ -28,7 +28,7 @@ Unknown keys fail on parse. `kind` is a closed set — renderers switch on it; t
 | `kind` | Producers | Payload |
 |---|---|---|
 | `test` | `pytest` | cases (`name`, `status`, `detail`) + counts |
-| `diagnostic` | `eslint` / `npx eslint` | findings + grouped counts |
+| `diagnostic` | `eslint` / `npx eslint` | findings + grouped counts (text-path findings are empty until R22; JSON still groups) |
 | `dependency` | `npm install` / `npm ci` / `npm i` | added packages, vulnerability text, irrevocable warn/err lines (capped at 20) |
 | `resource` | `docker ps` | column-stable rows |
 | `opaque` | everyone else, gates, IR-build failure | `body` = the filtered or passthrough text **without** inventing structure |
@@ -59,4 +59,4 @@ If IR construction throws, Condense records a `ir_fallback` incident and emits `
 
 ## Native proof
 
-`NativeIrIT` (never skip) runs a PATH-stubbed `pytest` and `npm install` through the shipped binary with `--format json`, and checks `condense explain --format json --input <pytest fixture> pytest` for `document.kind=test`.
+`NativeIrIT` (never skip) runs a PATH-stubbed `pytest` and `npm install` through the shipped binary with `--format json`, and checks `condense explain --format json --input <pytest fixture> pytest` for `document.kind=test`. ESLint, `docker ps`, and leftover `kind=opaque` (for example `git status`) join that pack in R24.

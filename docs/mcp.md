@@ -26,7 +26,7 @@ JSON-RPC 2.0, one object per newline, no embedded newlines (MCP spec 2025-03-26 
 
 Accepted protocol versions: `2024-11-05`, `2025-03-26`, `2025-06-18`. The server echoes the client's version when it is in that set; otherwise it replies `2024-11-05`. It advertises `tools` and `resources` only.
 
-Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Anything else is JSON-RPC `-32601`.
+Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Anything else is JSON-RPC `-32601`. A request that is not `notifications/*` and has a missing or null `id` is dropped until R14 (then `-32600`). `notifications/initialized` stays no-response. Bare `condense mcp` still prints three tools until R14; `tools/list` already includes `discover`.
 
 There is no official MCP Java SDK on the classpath. The handshake is a handful of Jackson records plus a hardcoded switch.
 
@@ -58,7 +58,7 @@ Every tool result is `content: [{ "type": "text", "text": "<compact JSON>" }]`. 
 
 ## Path safety
 
-MCP-supplied filesystem paths (`read.path`, `explain.input`, `discover.root`) go through the same workspace containment as the CLI. `discover.root` may only narrow. Escape is a tool error and does not leak file bytes.
+MCP-supplied filesystem paths (`read.path`, `explain.input`) go through `ReadPathGate`. `discover.root` uses the same narrow-only contract via `SafePathValidator` (R14 decides whether to route it through `ReadPathGate` without coupling to read's byte-max file API). `discover.root` may only narrow. Escape is a tool error and does not leak file bytes.
 
 CLI `condense explain --input` is unchanged.
 

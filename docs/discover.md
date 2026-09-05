@@ -30,7 +30,7 @@ The workspace root is the nearest `.git` ancestor (the existing bounded walk, no
 
 Every candidate is `root.resolve(relative)` then `SafePathValidator.contain`. A symlink escape or a path outside the root is skipped (counted, not fatal). Missing files are normal.
 
-Hard caps (Java, not TOML):
+Hard caps (Java, not TOML). The approved Phase 15 plan said 32 path probes; **64 is the shipped contract**.
 
 | Cap | Default |
 |---|---|
@@ -39,7 +39,7 @@ Hard caps (Java, not TOML):
 | Bytes per file | 64 KiB |
 | Total bytes read | 256 KiB |
 
-Hitting a cap stops further probes, sets `truncated: true`, and still returns what was found.
+Hitting a cap stops further probes, sets `truncated: true`, and still returns what was found. Content reads still load the whole file then trim until R15; native `NativeDiscoverIT` does not yet assert `files_read ≤ 8`.
 
 ## What it does not do
 

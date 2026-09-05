@@ -2,9 +2,11 @@
 
 **MCP is the preferred agent path** (`condense mcp --start`). Hooks are the fallback for tools that still spawn a shell.
 
-Condense can install hooks that intercept matching shell commands and tell the agent to retry as `condense <command>`. Matched commands are **denied with a retry message**. They are never rewritten and auto-allowed. Unmatched commands and parse failures pass through.
+Condense can install hooks that intercept matching shell commands and tell the agent to retry as `condense <command>`. Matched commands are **denied with a retry message**. They are never rewritten and then auto-allowed (`permissionDecision: allow` after a rewrite is forbidden). Standalone pass-through `allow` for unmatched commands stays. `GENERIC_BASH` still `exec condense` and is not a deny-redirect hook.
 
-After a successful install, Condense stores a SHA-256 baseline of each **Condense-owned script** (not the third-party JSON, which users may edit). `condense init --show` and `condense doctor` report `ok` / `missing` / `tampered` / `unmanaged`. Before merging into an existing third-party config, Condense copies it to `{dataDir}/backups/{tool}-{epoch}{ext}`. If that backup cannot be written, the original file is left untouched.
+After a successful install, Condense stores a SHA-256 baseline of each **Condense-owned script** (not the third-party JSON, which users may edit). `condense init --show` and `condense doctor` report `ok` / `missing` / `tampered` / `unmanaged`. Until R18, `ok` is also returned when tracking is null or no baseline row exists. Before merging into an existing third-party config, Condense copies it to `{dataDir}/backups/{tool}-{epoch}{ext}` (flat, not `backups/hooks/`). If that backup cannot be written, the original file is left untouched (R17 adds the fail-closed test). Doctor's hook trail is a count until R26.
+
+Installed scripts match a `CONDENSE_COMMANDS` list. That list is still a hardcoded pre-Phase-14 prefix set until R19 fills it from `StrategyRegistry` at install time. Leftover catalog prefixes (for example `mypy`) are not intercepted until then.
 
 This document explains exactly how each hook works mechanically, where files are placed, and how to troubleshoot.
 

@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 15 discovery closeout).
+**Written:** 4 September 2026. **Revised:** 5 September 2026 (Round 2 audit remediation R13 — handoff truth).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 15. Confirm with `git log -1` and origin before starting Phase 16.
+**Branch at handoff:** `main` after Phase 15. Round 2 remediation (R13–R26) is in progress. Confirm with `git log -1` and origin before starting Phase 16 code.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -162,13 +162,13 @@ Registered subcommands: `gain`, `doctor`, `explain`, `read`, `init`, `config` (w
 
 Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus standard help/version.
 
-`mcp` is real. Bare `condense mcp` prints a client snippet and exits 0. `condense mcp --start` speaks newline-delimited JSON-RPC on stdio. Tools are `run`, `explain`, `read`; resources are `condense://gain` and `condense://doctor`. See [docs/mcp.md](docs/mcp.md).
+`mcp` is real. Bare `condense mcp` prints a client snippet and exits 0. `condense mcp --start` speaks newline-delimited JSON-RPC on stdio. Tools are `run`, `explain`, `read`, and `discover`; resources are `condense://gain` and `condense://doctor`. Until **R14** lands, the bare snippet still omits `discover` (a known lie; `tools/list` and [docs/mcp.md](docs/mcp.md) are correct).
 
 ### 4.6 Filters — exact counts (verified)
 
-- **32 domain filter classes**, plus `PassthroughStrategy` = **33 classes implementing `FilterStrategy`**.
+- **32 domain filter classes**, plus `PassthroughStrategy` = **33 classes implementing `FilterStrategy`**. Leftover catalog prefixes share one non-CDI `CatalogBackedFilter` host (not a 34th domain class).
 - Package breakdown: `git` 6, `node` 5, `cloud` 5, `python` 4, `fs` 4, `cargo` 3, `build` 3, `golang` 2. (6+5+5+4+4+3+3+2 = 32.)
-- **~47 registered command prefixes** across those 32 classes (several filters claim multiple prefixes, e.g. `CargoInstallFilter` → `cargo install` + `cargo build`; `GrepFilter` → `grep` + `rg`; `CatFilter` → `cat` + `read`).
+- **50 builtin definitions** in `filters/index.toml` (31 Java-backed + 19 leftover). **~75 registered command prefixes** across Java `@CommandFilter` annotations and leftover `commands =` rows (several definitions claim multiple prefixes, e.g. `CargoInstallFilter` → `cargo install` + `cargo build`; `GrepFilter` → `grep` + `rg`; `pnpm-install` → `pnpm install` / `i` / `add` / `ci`). **`CatFilter` is `cat` only** — `read` is the Phase 10 subcommand, not a proxied prefix.
 - **All 31 compressing domain filters extend `PipelineBackedFilter`.** `PythonFilter` is the documented router (`python -m pytest` → `PytestFilter`; `python -c` stays identity). `PassthroughStrategy` remains the unmatched-command fallback and does not extend the adapter.
 - **`apply()` is final on the adapter.** Gates live in `beforePipeline`; parsing lives in named `FilterStage`s. No-arg constructors used by the corpus share `FilterOverrideLoader.standalone()`.
 - **Shared stages:** the original six (`AnsiStrip`, `Deduplication`, `Grouping`, `JsonStructure`, `StateMachine`, `TreeCompression`) plus `TailLinesStage`, `HeadTailStage`, `AggregateByKeyStage`, `RegexCaptureStage`, `GitStatusStage`, `JsonLinesStage`, `DockerPsStage`. Supporting: `BoundedRegex`, `TimeoutCharSequence`, `RegexTimeoutException`.
@@ -291,9 +291,9 @@ Surefire explicitly excludes `**/*IT.java` (documented rationale: prevent ITs fr
 | `release.yml` | tag `v*` | create-release → build-native (linux-x64, linux-aarch64, macos-aarch64, windows-x64) → build-deb → publish (checksums, cosign, CycloneDX SBOM). After package, **Failsafe and the 80 MiB ceiling match `build.yml`** (remediation R4) |
 | `phase3-verification.yml` | `workflow_dispatch` only | Linux x64 only: 300-run soak, permission-denial fail-open, 5-way concurrency + `PRAGMA integrity_check` |
 
-`native-builds` on `build.yml` builds with `mvn package -Pnative -DskipTests`, then **runs Failsafe** (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativeBuiltinDefinitionIT`, `NativeTrustIT`, `NativePersistenceIT`, `NativeExplainIT`, `NativeStreamingIT`, `NativeReadIT`, `NativeIrIT`, `NativeMcpIT`, `NativeHookIT`). It then enforces an **80 MiB** uncompressed size ceiling (`83886080`), records binary size and 5× cold-start, keeps the uninstall/purge shell smokes, and pushes metrics to a `ci-metrics` branch.
+`native-builds` on `build.yml` builds with `mvn package -Pnative -DskipTests`, then **runs Failsafe** (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativeBuiltinDefinitionIT`, `NativeTrustIT`, `NativePersistenceIT`, `NativeExplainIT`, `NativeStreamingIT`, `NativeReadIT`, `NativeIrIT`, `NativeMcpIT`, `NativeHookIT`, `NativeCatalogIT`, `NativeDiscoverIT`). It then enforces an **80 MiB** uncompressed size ceiling (`83886080`), records binary size and 5× cold-start, keeps the uninstall/purge shell smokes, and pushes metrics to a `ci-metrics` branch.
 
-Current native proof for `main` at `cdd3d43` is [Build & Test run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575) (all five jobs green). This Windows workspace does not build native images.
+Current native proof for `main` at `8ea298b` is [Build & Test run 33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (all five jobs green; ubuntu-latest Failsafe **45 / 0 / 0 / 0**). Run [33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575) on `cdd3d43` is the Phase 10 snapshot, not this tree. This Windows workspace does not build native images.
 
 ---
 
@@ -327,9 +327,9 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D22 | ~~No explainability — nothing shows which stage dropped which lines~~ **FIXED** | `condense explain` | Phase 8 |
 | D23 | ~~Filtering is capture-only; nothing is emitted until the child exits~~ **FIXED** | Derived STREAM/CAPTURE + `StreamingProxy` live print | Phase 9 |
 | D24 | ~~No token-optimized source-file reading capability at all~~ **FIXED** | `condense read` + language catalog + `NativeReadIT` | Phase 10 |
-| D25 | ~~No structured output IR; each filter emits ad-hoc text~~ **FIXED** | schema-1 `Document` + text/JSON renderers; unmigrated commands are `opaque` | Phase 11 |
-| D26 | ~~`condense mcp` is a stub~~ **FIXED** | stdio JSON-RPC MCP server; `run` returns schema-1 IR; `NativeMcpIT` | Phase 12 |
-| D27 | ~~No hook integrity/tamper verification, and no backup before editing third-party configs~~ **FIXED** | `HookBackup` + `HookIntegrity` + `hook_baselines` | Phase 13 |
+| D25 | ~~No structured output IR; each filter emits ad-hoc text~~ **FIXED** (with honesty notes) | schema-1 `Document` + text/JSON renderers; unmigrated commands are `opaque`. Default CLI still prints pipeline `output()`, not `TextRenderer.render(document)`. Token savings are still text-based (R25 deferred). | Phase 11 |
+| D26 | ~~`condense mcp` is a stub~~ **FIXED** | stdio JSON-RPC MCP server; `run` returns schema-1 IR; tools include `discover`; `NativeMcpIT` | Phase 12 / 15 |
+| D27 | ~~No hook integrity/tamper verification, and no backup before editing third-party configs~~ **FIXED** (with honesty notes) | `HookBackup` + `HookIntegrity` + `hook_baselines`. Backup fail-closed is code-only until **R17**. Integrity reports `ok` with no baseline until **R18**. | Phase 13 |
 | D28 | ~~Agent coverage is a strict subset of Zap's, plus a generic-bash fallback~~ **FIXED** | Codex / OpenCode / Kilo / Antigravity / Hermes / Pi installers; Copilot / Windsurf / Cline kept | Phase 13 |
 | D29 | Benchmarks print numbers but assert nothing; no enforced performance budget | `FilterPipelineBenchmarkTest`, `FilterOverrideBenchmarkTest` | Phase 1 baseline, Phase 17 gate |
 
@@ -347,8 +347,14 @@ The next agent will be misled by these if they trust the docs. They are **docume
 |---|---|---|
 | `condense/ARCHITECTURE.md` file table | Still omits per-filter classes | Phase 14 added `StrategyRegistry`, `PrefixIndex`, and `CatalogBackedFilter` rows; the 32 Java filters are not individually listed |
 | Root `README.md` supported-commands table | ~~30 rows; missing aliases~~ **FIXED in Phase 14** | Table lists Java prefixes (including `docker run` / `exec`, `python -c`, `ruff`, `npx eslint`, `npm ci` / `i`, `pip3`, `./mvnw`, `./gradlew`) and the 19 leftover catalog families. `condense read` remains a subcommand, not a proxied prefix |
+| Bare `condense mcp` snippet (`McpCommand`) | Tools are `run`, `explain`, `read` | `tools/list` and docs include `discover`. **R14** fixes the snippet. |
+| `docs/ir.md` / older handoff §9 Phase 11 | `TextRenderer` is the default CLI | Default CLI prints `FilterResult.output()`. Exemplar stages call `TextRenderer` internally; identity is locked for **7** corpus IDs until **R23**. |
+| Phase 15 closeout / this file before R13 | Caps are fully asserted in JVM + native | Caps exist in Java (`DiscoverLimits` 64/8/64KiB/256KiB). Native does not yet assert `files_read ≤ 8`; content reads use `readAllBytes` then trim. **R15** closes both. |
+| Hook `CONDENSE_COMMANDS` in templates | Implied to cover the supported surface | Hardcoded pre-Phase-14 list. Leftover prefixes are not intercepted until **R19**. |
+| `HookIntegrity.verify` / doctor | `ok` means the baseline matched | `ok` is also returned when tracking is null or no baseline row exists. **R18**. |
+| Backup fail-closed | Implied proven | Structural (write after `copyExisting`). No installer test that backup failure leaves the original file. **R17**. |
 
-Rows that used to live here and are **no longer true** (removed 5 Sep 2026, audit R0 / R8–R10): ARCHITECTURE vs POM Java 17 (both are 21); README "Java 17+" (now GraalVM JDK 21); CONTRIBUTING sample that did not compile (now `PipelineBackedFilter` + `definitionName()`); "add to reflect-config as a manual ritual" (drift test is the gate); README `[general] ultra_compact` (CLI `-u` only); CHANGELOG rc1 42/12/NDJSON (correction note added); missing PR template (`.github/PULL_REQUEST_TEMPLATE.md` exists). Phase 13 also corrected `docs/HOOKS.md` claiming Windows `.ps1` scripts for Claude/Cursor/Gemini — the installer still writes `.sh` only. This §4 used to describe the pre-Phase-1 tree; that is corrected above.
+Rows that used to live here and are **no longer true** (removed 5 Sep 2026, audit R0 / R8–R10): ARCHITECTURE vs POM Java 17 (both are 21); README "Java 17+" (now GraalVM JDK 21); CONTRIBUTING sample that did not compile (now `PipelineBackedFilter` + `definitionName()`); "add to reflect-config as a manual ritual" (drift test is the gate); README `[general] ultra_compact` (CLI `-u` only); CHANGELOG rc1 42/12/NDJSON (correction note added); missing PR template (`.github/PULL_REQUEST_TEMPLATE.md` exists). Phase 13 also corrected `docs/HOOKS.md` claiming Windows `.ps1` scripts for Claude/Cursor/Gemini — the installer still writes `.sh` only. This §4 used to describe the pre-Phase-1 tree; that is corrected above. Round 2 (R13) corrected §4.5–§4.6, §4.14 CI URL, and the Phase 11/15 overclaims.
 
 ---
 
@@ -391,7 +397,7 @@ Three sequential efforts the 17-phase roadmap builds directly on top of. Commit 
 
 ## 8. This engagement: what was actually done
 
-Planning plus Phase 1 through Phase 10 code, then an independent audit of those ten phases (5 Sep 2026). Audit remediation (R0–R12) landed the same day; it is hygiene, not a new numbered roadmap phase.
+Planning plus Phase 1 through Phase 15 code, then an independent audit of Phases 11–15 and R0–R12 (5 Sep 2026). Round 2 remediation (R13–R26) is hygiene, not a new numbered roadmap phase. Semantic savings (R25) and D29 stay deferred.
 
 | Activity | Status | Notes |
 |---|---|---|
@@ -400,30 +406,32 @@ Planning plus Phase 1 through Phase 10 code, then an independent audit of those 
 | Correction of the commissioning brief | **COMPLETED** | Seven material corrections; see §11.3 |
 | 17-phase roadmap | **COMPLETED as titles + intent** | Written into the Cursor plan file. That file's YAML holds all 17 titles; its body was a placeholder and now points here |
 | Phase 1 implementation plan | **COMPLETED** | Revised 4 Sep 2026, then authorized with "proceed" |
-| Phase 1 code | **LANDED** | Java 21, env overrides, drift test, Failsafe native ITs, linux-aarch64 matrix, 80 MiB size ceiling. Native proof for the current tree is [run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575) on `cdd3d43` (older run 33860368090 was not re-opened in the audit). |
+| Phase 1 code | **LANDED** | Java 21, env overrides, drift test, Failsafe native ITs, linux-aarch64 matrix, 80 MiB size ceiling. Native proof for the current tree is [run 33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) on `8ea298b`. Run 33950449575 on `cdd3d43` is the Phase 10 snapshot. |
 | Phase 2 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "start executing" |
-| Phase 2 code | **LANDED** | `utf8_weighted_v1`, UTF-8 file/string agreement, published p95 **0.37** vs cl100k_base (measured 0.3656; R5), `gain` estimator metadata. Native proof is `NativeAnalyticsIT` in run 33950449575. |
+| Phase 2 code | **LANDED** | `utf8_weighted_v1`, UTF-8 file/string agreement, published p95 **0.37** vs cl100k_base (measured 0.3656; R5), `gain` estimator metadata. Native proof is `NativeAnalyticsIT` in run 33973423793. |
 | Phase 3 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "start executing" |
-| Phase 3 code | **LANDED** | Versioned catalog (51 entries, 32/32 domain filters), 100% critical-signal retention, baked savings floors (later remesured after Phase 6/9 — see §9 Phase 3), seeded fuzz, `NativeCorpusIT`. Native proof is `NativeCorpusIT` in run 33950449575. |
+| Phase 3 code | **LANDED** | Versioned catalog (now 70 entries after Phase 14; originally 51 covering 32/32 domain filters), 100% critical-signal retention, baked savings floors (later remesured after Phase 6/9 — see §9 Phase 3), seeded fuzz, `NativeCorpusIT`. Native proof is `NativeCorpusIT` in run 33973423793. |
 | Phase 4 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "EXECUTE" / "start executing" |
 | Phase 4 code | **LANDED** | Universal `PipelineBackedFilter`; 51-row golden lock; `PrefixIndex`; `BoundedRegex` 200 ms (5 s document budget for ANSI/dedup); CDI + `standalone()` loader. Native proof is `NativeCorpusIT` through pipeline-backed `pytest`. |
 | Phase 5 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized with "Implement the plan" |
 | Phase 5 code | **LANDED** | Schema v1 TOML builtins; `StageFactory`; `definitionName()`; `process-classes` validator; `NativeBuiltinDefinitionIT`. Native proof is CI `NativeBuiltinDefinitionIT` + `NativeCorpusIT`. |
 | Phase 6 code | **LANDED** | `TrustGate` + `{configDir}/trust.json`; capability grants; `condense[filtered]` provenance; `NativeTrustIT`. |
 | Phase 7 implementation plan | **COMPLETED** | Presented 4 Sep 2026, then authorized |
-| Phase 7 code | **LANDED** | `user_version` 1, WAL, `busy_timeout`, 90-day retention, `filter_outcomes`, `condense doctor`, D20 purge allowlist. Native proof is `NativePersistenceIT` in run 33950449575. |
-| Phase 8 code | **LANDED** | `condense explain`, `executeTraced`, tier `resolveDecision`, D21 `--top 10`. Native proof is `NativeExplainIT` in run 33950449575. |
+| Phase 7 code | **LANDED** | `user_version` target **2** (Phase 13 added `hook_events` / `hook_baselines`), WAL, `busy_timeout`, 90-day retention, `filter_outcomes`, `condense doctor`, D20 purge allowlist. Native proof is `NativePersistenceIT` in run 33973423793. |
+| Phase 8 code | **LANDED** | `condense explain`, `executeTraced`, tier `resolveDecision`, D21 `--top 10`. Native proof is `NativeExplainIT` in run 33973423793. |
 | Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Docs commit `9b6ffd4` had **red** native CI ([run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965)) because `@CommandFilters` prefixes were invisible in the image; `447eeb6` fixed registration. `IncrementalEquivalenceTest` now compares `StreamingProxy.replay` / stamped `execute` to `apply()`. `NativeStreamingIT` times first-line-before-exit on a PATH-stubbed npm. |
 | Phase 10 code | **LANDED** | `condense read`; per-language scanner; original line numbers; builtin `languages/*.toml`; workspace containment; `NativeReadIT`. |
-| Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT`. |
-| Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read`; resources `gain`/`doctor`; `NativeMcpIT`. |
-| Phase 13 code | **LANDED** | Schema 2 hook audit; backup-before-merge; SHA-256 script baselines; Claude deny-not-rewrite; Codex/OpenCode/Kilo/Antigravity/Hermes/Pi; `NativeHookIT`. |
+| Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT`. Default CLI is pipeline text; `TextRenderer` identity is 7 corpus IDs until **R23**. Semantic savings not implemented (**R25** deferred). |
+| Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read` plus Phase 15 `discover`; resources `gain`/`doctor`; `NativeMcpIT`. Bare snippet still omits `discover` until **R14**. |
+| Phase 13 code | **LANDED** | Schema 2 hook audit; backup-before-merge (flat `{dataDir}/backups/`); SHA-256 script baselines; Claude deny-not-rewrite (rewrite+allow forbidden; pass-through `allow` remains); Codex/OpenCode/Kilo/Antigravity/Hermes/Pi; `NativeHookIT` (Cursor, not the six new agents, until **R21**). |
 | Phase 14 code | **LANDED** | `CatalogBackedFilter` leftover host; 19 data-only families; original 51 goldens unchanged; `NativeCatalogIT`. Existing 31 Java filters not migrated. |
 | Phase 15 code | **LANDED** | `condense discover` + MCP `discover`; classpath `discover/*.toml`; exact contained probes; explicit family priority; `NativeDiscoverIT`. Does not change dispatch. |
 | Phases 16–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
-| Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (510 / 0 / 0 / 9 on this Windows JVM; 9 skips are POSIX `CommandExecutorTest`), and CI 33950449575. |
+| Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (**510 / 0 / 0 / 9** on this Windows JVM at that date; 9 skips were POSIX `CommandExecutorTest`), and CI 33950449575 on `cdd3d43`. |
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
-| This handoff | **CURRENT** | Corrected 5 Sep 2026 so §4 matches the live tree. |
+| Phase 11–15 audit | **COMPLETED** | Re-read of approved plans, tree, local `mvn test` (**594 / 1 / 0 / 10** on this Windows JVM — the 1 is `TrackingConcurrencyTest` / `SQLITE_READONLY`, owned by **R16**; 10 skips = POSIX + Windows-disabled symlink cases), and CI [33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (**594 / 0 / 0 / 1** JVM on Linux). |
+| Audit remediation R13–R26 | **IN PROGRESS** | Round 2 hygiene. R25 semantic savings and D29 stay deferred. |
+| This handoff | **CURRENT** | Corrected 5 Sep 2026 (R13) so §4 matches the live tree again. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p15` are marked `completed`, `p16`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
@@ -566,7 +574,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 - `GainReport.estimator` (`name`, `reference`, `p95_rel_error`). Text summary labels counts as estimates. No SQLite schema change.
 - `NativeAnalyticsIT` asserts the estimator object. `EstimatorInfo` is in `reflect-config.json` and the drift test.
 - Docs: `docs/token-estimator.md`; README / CONTRIBUTING / ARCHITECTURE honesty.
-- Local JVM proof at Phase 2 closeout: `mvn test` **326 run, 0 failures, 6 skipped** (contemporaneous snapshot, not the current suite). Current audited Surefire (5 Sep 2026, this Windows JVM): **510 / 0 / 0 / 9**. Native proof is CI.
+- Local JVM proof at Phase 2 closeout: `mvn test` **326 run, 0 failures, 6 skipped** (contemporaneous snapshot, not the current suite). Phase 1–10 audit Surefire (5 Sep 2026, this Windows JVM): **510 / 0 / 0 / 9**. Phase 11–15 audit Surefire on the same box: **594 / 1 / 0 / 10** (the 1 is `TrackingConcurrencyTest` / `SQLITE_READONLY`, owned by **R16**). Native proof is CI.
 
 **What later phases need from this one.** Honest token numbers for Phase 3 savings gates; a published bound Phase 8 can reuse in `explain`; no tokenizer in the native image.
 
@@ -689,7 +697,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 **Status: LANDED** (4 Sep 2026)
 
-**Shipped.** `SchemaMigrator` (`PRAGMA user_version` target 1) on every open; WAL + `busy_timeout=5000`; 90-day retention for `commands`, `filter_outcomes`, and a bounded tee sweep; incidents-only outcome table (`stage_exception`, `apply_fallback`); `condense doctor` text/`--format json`; D20 `tee/` + `filters.toml` purge allowlist. Native proof is `NativePersistenceIT` in [run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575). Spec: [docs/persistence.md](docs/persistence.md).
+**Shipped.** `SchemaMigrator` (`PRAGMA user_version` target **2** after Phase 13 `hook_events` / `hook_baselines`) on every open; WAL + `busy_timeout=5000`; 90-day retention for `commands`, `filter_outcomes`, and a bounded tee sweep; incidents-only outcome table (`stage_exception`, `apply_fallback`); `condense doctor` text/`--format json`; D20 `tee/` + `filters.toml` purge allowlist. Native proof is `NativePersistenceIT` in [run 33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793). Spec: [docs/persistence.md](docs/persistence.md). Phase 7 originally shipped target 1; that is historical.
 
 **Goal.** Analytics that are correct, bounded, and self-diagnosing. `PRAGMA user_version` with a forward-only migration runner; WAL plus `busy_timeout`; retention for both DB rows and tee files; a filter-outcome / parse-failure table recording whether fallback succeeded; and `condense doctor`, which actively verifies DB writability, driver initialization, schema version, and hook health, and explains **why** tracking is empty.
 
@@ -731,7 +739,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 
 **Shipped.** `Streamability` + `StageSession` / `EmissionSink` (default `DOCUMENT` / `DocumentSession`). `FilterPipeline.execute` walks sessions. Shared stages: `ansi_strip` and `state_machine` (no `COLLECT`) are `ORDER_LOCAL`; `head_tail` is `WINDOWED`; `regex_capture` and `json_lines` stay `DOCUMENT`. Flagship `NpmInstallSummaryStage` / `DockerBuildSummaryStage` emit irrevocable progress live, then the existing success summary at `endOfInput`. No TOML `streamable` flag. Proxy waits until the child exits unless `CONDENSE_COMMAND_TIMEOUT_SEC` is set. 10 MB cap fail-opens. JVM proof: `StreamingTimingTest` (timing is real), `StreamabilityDeriveTest`, `IncrementalEquivalenceTest` (`StreamingProxy.replay` vs `apply()`, stamped `execute` vs `apply()`). Native proof: `NativeStreamingIT` times first-line-before-exit on PATH-stubbed npm and checks live stdout against `apply()`. Docs: `docs/streaming.md`.
 
-**CI honesty.** The docs commit `9b6ffd4` did **not** have green native CI. [Build & Test run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965) failed all four native jobs: `@CommandFilters` prefixes (`npm install` and siblings) were invisible in the image, so those commands passed through. `447eeb6` registered the container annotation. Current proof is run 33950449575. Remediation **R12** is the architecture safeguard so that regression cannot return silently.
+**CI honesty.** The docs commit `9b6ffd4` did **not** have green native CI. [Build & Test run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965) failed all four native jobs: `@CommandFilters` prefixes (`npm install` and siblings) were invisible in the image, so those commands passed through. `447eeb6` registered the container annotation. Current proof is run 33973423793 on `8ea298b`. Run 33950449575 on `cdd3d43` is the Phase 10 snapshot. Remediation **R12** is the architecture safeguard so that regression cannot return silently.
 
 **Diverged from a naïve Zap port.** Mode is derived from declared stage streamability, not a per-command table. Drain threads were left non-daemon (they were never daemon). `RegexCaptureStage` was not converted to per-line `find()` because that would break goldens.
 
@@ -775,7 +783,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Goal.** A canonical typed model — diagnostics, test results, dependency changes, resource listings — plus renderers for compact text and JSON. Makes savings a semantic property rather than a line-count accident, and stops 32 filters being 32 snowflakes.
 
-**Shipped.** Schema-1 `Document` envelope (`kind` closed set). `TextRenderer` is default CLI and golden-identical for pytest, eslint, npm install, and docker ps. `JsonRenderer` is `condense --format json` and `explain --format json` `document`. Unmigrated commands, gates, and IR-build failures are `kind=opaque`. STREAM default text is unchanged; JSON waits for exit. Native proof is `NativeIrIT`. See `docs/ir.md`.
+**Shipped.** Schema-1 `Document` envelope (`kind` closed set). Exemplar stages (pytest, eslint, npm install, docker ps) call `TextRenderer` internally; default CLI still prints `FilterResult.output()`, not `TextRenderer.render(document)`. Identity is locked for **7** corpus IDs until **R23**. `JsonRenderer` is `condense --format json` and `explain --format json` `document`. Unmigrated commands, gates, and IR-build failures are `kind=opaque`. STREAM default text is unchanged; JSON waits for exit. ESLint **text** findings are empty until **R22**. Semantic savings are not implemented (**R25** deferred). Native proof is `NativeIrIT` (pytest / npm install / explain-pytest until **R24**). See `docs/ir.md`.
 
 **Why here.** Requires the universal pipeline (4) and the data schema (5) so filters produce structure rather than prose, and Phase 8 to expose it. It is the wire format Phase 12 needs.
 
@@ -791,7 +799,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Status: LANDED** (5 Sep 2026)
 
-**Shipped.** Hand-rolled stdio JSON-RPC 2.0 (no MCP Java SDK). Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Tools `run` / `explain` / `read` reuse `ProxyService`, `ExplainService`, `ReadService`. Resources `condense://gain` and `condense://doctor`. `run` returns the Phase 11 envelope; child exit ≠ 0 is not `isError`. MCP paths go through `ReadPathGate`. `McpCommand` is `@Unremovable`. Logs on stderr. Native proof is `NativeMcpIT`. Spec: [docs/mcp.md](docs/mcp.md).
+**Shipped.** Hand-rolled stdio JSON-RPC 2.0 (no MCP Java SDK). Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Tools `run` / `explain` / `read` / `discover` reuse `ProxyService`, `ExplainService`, `ReadService`, `DiscoverService`. Resources `condense://gain` and `condense://doctor`. `run` returns the Phase 11 envelope; child exit ≠ 0 is not `isError`. `read` and `discover --root` go through `ReadPathGate` (narrow-only); discover's file probes use `SafePathValidator.contain`. Missing JSON-RPC `id` on non-notification requests is dropped until **R14**. Bare `condense mcp` snippet still lists three tools until **R14**. `McpCommand` is `@Unremovable`. Logs on stderr. Native proof is `NativeMcpIT`. Spec: [docs/mcp.md](docs/mcp.md).
 
 **Goal.** Replace the `McpCommand` stub with a real stdio MCP server, so agents consume Condense as tools and resources rather than through brittle shell-hook command rewriting.
 
@@ -809,7 +817,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Status: SHIPPED**
 
-**Shipped.** Stepwise schema 2 (`hook_events`, `hook_baselines`). Backup-before-merge of third-party configs into `{dataDir}/backups/` (flat, purge-safe). SHA-256 baselines of Condense-owned scripts; `--show` / `doctor` integrity. Claude deny-not-rewrite; `NoAutoAllowTest` over every template. Six new `HookTool` values with isolated-home tests. `NativeHookIT` never skips. MCP stays the preferred path.
+**Shipped.** Stepwise schema 2 (`hook_events`, `hook_baselines`). Backup-before-merge of third-party configs into `{dataDir}/backups/` (flat `{tool}-{epoch}{ext}`, not `backups/hooks/`). SHA-256 baselines of Condense-owned scripts; `--show` / `doctor` integrity. Claude deny-not-rewrite: `NoAutoAllowTest` forbids rewrite+allow only — standalone pass-through `allow` stays. `GENERIC_BASH` still `exec condense` (do not change). Hook `CONDENSE_COMMANDS` is a hardcoded pre-Phase-14 list until **R19**. Doctor hook trail is count-only until **R26**. Backup fail-closed is untested until **R17**. Integrity reports `ok` when tracking is null or no baseline exists until **R18**. Six new `HookTool` values with isolated-home JVM tests; `NativeHookIT` covers Cursor until **R21**. MCP stays the preferred path.
 
 **Goal.** Make hook installation auditable and tamper-evident, stop editing third-party config files without a backup, adopt a conservative permission policy, and close the agent coverage gap.
 
@@ -849,7 +857,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Status: CODE LANDED**
 
-**What shipped.** `DiscoverRuleCatalog` loads `classpath:discover/*.toml` from `discover/index.toml` only (`STRICT_TOML`). Each rule has an explicit `priority` (unique per family; lower wins). `DiscoverService` probes exact relative paths under `SafePathValidator.contain` / `resolveWorkspaceRoot`. Caps are 64 probes, 8 content reads, 64 KiB/file, 256 KiB total. `condense discover` prints text or schema-1 JSON; `--root` may only narrow. MCP tool `discover` returns the same record (`isError` only on bad args / widen). `DiscoverDefinitionValidator` runs at Maven `process-classes`. `NativeDiscoverIT` copies a pnpm+prisma fixture through the native binary. Recommendations are existing `filters/index.toml` names. `StrategyRegistry`, leftover catalog dispatch, hooks, and `filters.toml` are unchanged. No agent-transcript mining. No `Files.walk`.
+**What shipped.** `DiscoverRuleCatalog` loads `classpath:discover/*.toml` from `discover/index.toml` only (`STRICT_TOML`). Each rule has an explicit `priority` (unique per family; lower wins). `DiscoverService` probes exact relative paths under `SafePathValidator.contain` / `resolveWorkspaceRoot`. Caps are **64** probes (the approved plan said 32; 64 is the shipped contract), 8 content reads, 64 KiB/file, 256 KiB total. Content reads still use `readAllBytes` then trim until **R15**. `condense discover` prints text or schema-1 JSON; `--root` may only narrow. MCP tool `discover` returns the same record (`isError` only on bad args / widen). `DiscoverDefinitionValidator` runs at Maven `process-classes`. `NativeDiscoverIT` copies a pnpm+prisma fixture through the native binary; it does not yet assert `files_read ≤ 8` (**R15**). Recommendations are existing `filters/index.toml` names. `StrategyRegistry`, leftover catalog dispatch, hooks, and `filters.toml` are unchanged. No agent-transcript mining. No `Files.walk`.
 
 **Goal.** Detect project type, language, framework, and build system so the right definitions apply without manual configuration. Detection rules as data, with **bounded** file reads and no unbounded directory walks.
 
@@ -991,15 +999,15 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 | Phase 3 fuzz does not change filters | `git diff` on `src/main/java/com/condense/filter` is empty for this phase |
 | Phase 12 MCP is stdio JSON-RPC, not a stub | `McpServerTest` / `McpHandlersTest` green on this Windows JVM; `NativeMcpIT` is Failsafe `*IT.java` |
 
-**Not verified in this workspace (and why):** no native binary was built here (this is a Windows dev box without the GraalVM native toolchain). Native-image claims for the current tree come from [Build & Test run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575) plus the workflow/POM/Graal files. Check the latest Actions run before starting new work.
+**Not verified in this workspace (and why):** no native binary was built here (this is a Windows dev box without the GraalVM native toolchain). Native-image claims for the current tree come from [Build & Test run 33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) on `8ea298b` plus the workflow/POM/Graal files. Check the latest Actions run before starting new work.
 
 ---
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–15 code landed. `condense discover` recommends existing filter definition names from exact manifests. It does not apply them. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. This Windows workspace does not build native images.
+**Where we are.** Phase 1–15 code landed. Round 2 audit remediation **R13 is landing**; R14–R26 are not done. `condense discover` recommends existing filter definition names from exact manifests. It does not apply them. Leftover builtin commands register from TOML via `CatalogBackedFilter`. `condense mcp --start` is the preferred agent path; hooks are the fallback with integrity, backups, and deny-not-rewrite. Analytics `user_version` target is 2. This Windows workspace does not build native images. Local Surefire at the Phase 11–15 audit: **594 / 1 / 0 / 10** (R16 owns the concurrency failure). CI on `8ea298b` is green (run 33973423793).
 
-**Do not start Phase 16 code.** Present a complete Phase 16 plan (constraint #9) and wait for a fresh "proceed". Phase 16 may propose a project `filters.toml` diff from a discover report. It must not apply those proposals silently.
+**Do not start Phase 16 code.** Phase 16 *planning* may start after R13. Phase 16 *implementation* waits for R15 + R16. Present a complete Phase 16 plan (constraint #9) and wait for a fresh "proceed". Phase 16 may propose a project `filters.toml` diff from a discover report. It must not apply those proposals silently. Do not implement R25 semantic savings or D29.
 
 ---
 
@@ -1021,7 +1029,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 **Then, and only then**
 
 8. Phase 15 code has landed. Confirm `NativeDiscoverIT` and `NativeCatalogIT` appear in native job logs, `GoldenLockTest` is green, and `condense discover` does not change dispatch.
-9. **Do not start Phase 16 code.** Present a complete Phase 16 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+9. Finish Round 2 remediation (R14–R26) if still open before planning Phase 16. Do not start Phase 16 code, R25, or D29 from this stop point.
+10. **Do not start Phase 16 code.** Present a complete Phase 16 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 
