@@ -2,7 +2,9 @@ package com.condense.hooks;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -17,6 +19,23 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 @QuarkusTest
 class HookInstallerTest {
+
+    private static Path suiteData;
+    private static Path suiteConfig;
+
+    @BeforeAll
+    static void isolateSuiteDirs() throws IOException {
+        suiteData = Files.createTempDirectory("condense-hook-suite-data");
+        suiteConfig = Files.createTempDirectory("condense-hook-suite-config");
+        System.setProperty("CONDENSE_DATA_DIR", suiteData.toAbsolutePath().toString());
+        System.setProperty("CONDENSE_CONFIG_DIR", suiteConfig.toAbsolutePath().toString());
+    }
+
+    @AfterAll
+    static void clearSuiteDirs() {
+        System.clearProperty("CONDENSE_DATA_DIR");
+        System.clearProperty("CONDENSE_CONFIG_DIR");
+    }
 
     @BeforeEach
     void setUp(@TempDir Path tempHome) {
@@ -38,7 +57,10 @@ class HookInstallerTest {
         assertThat(content).isNotBlank();
         assertThat(content).contains(HookTemplate.SENTINEL);
         assertThat(content).contains("CONDENSE_COMMANDS");
-        assertThat(content).contains("\"condense \" + command");
+        assertThat(content).contains("permissionDecision");
+        assertThat(content).contains("deny");
+        assertThat(content).contains("condense ");
+        assertThat(content).doesNotContain("updatedInput");
     }
 
     @Test
@@ -207,5 +229,54 @@ class HookInstallerTest {
             .toList();
 
         assertThat(installed).containsExactlyInAnyOrderElementsOf(expectedSuccessfulTools);
+    }
+
+    @Test
+    void geminiInstall_backsUpExistingSettings(@TempDir Path tempHome) throws IOException {
+        System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
+        Path settingsFile = HookTool.GEMINI.hookFile(tempHome);
+        Files.createDirectories(settingsFile.getParent());
+        Files.writeString(settingsFile, "{ \"theme\": \"dark\" }\n");
+
+        assertThat(installer.install(HookTool.GEMINI).success()).isTrue();
+        try (var stream = Files.list(suiteData.resolve("backups"))) {
+            assertThat(stream.anyMatch(p -> p.getFileName().toString().startsWith("gemini-"))).isTrue();
+        }
+    }
+
+    @Test
+    void cursorInstall_baselineThenTamper(@TempDir Path tempHome) throws IOException {
+        System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
+
+        assertThat(installer.install(HookTool.CURSOR).success()).isTrue();
+        HookInstaller.StatusResult ok = installer.showAll().stream()
+            .filter(r -> r.tool() == HookTool.CURSOR).findFirst().orElseThrow();
+        assertThat(ok.installed()).isTrue();
+        assertThat(ok.integrity()).isEqualTo(HookIntegrity.OK);
+
+        Path script = HookTool.CURSOR.ownedScript(tempHome);
+        Files.writeString(script, Files.readString(script) + "\n# tampered\n");
+        HookInstaller.StatusResult tampered = installer.showAll().stream()
+            .filter(r -> r.tool() == HookTool.CURSOR).findFirst().orElseThrow();
+        assertThat(tampered.integrity()).isEqualTo(HookIntegrity.TAMPERED);
+    }
+
+    @Test
+    void newAgents_installIntoIsolatedHome(@TempDir Path tempHome) {
+        System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
+        for (HookTool tool : List.of(
+            HookTool.CODEX, HookTool.OPENCODE, HookTool.KILO,
+            HookTool.ANTIGRAVITY, HookTool.HERMES, HookTool.PI
+        )) {
+            HookInstaller.InstallResult result = installer.install(tool);
+            assertThat(result.success()).as(result.message()).isTrue();
+            assertThat(Files.exists(tool.ownedScript(tempHome)))
+                .as("%s owned script", tool.displayName)
+                .isTrue();
+            HookInstaller.StatusResult status = installer.showAll().stream()
+                .filter(r -> r.tool() == tool).findFirst().orElseThrow();
+            assertThat(status.installed()).isTrue();
+            assertThat(status.integrity()).isEqualTo(HookIntegrity.OK);
+        }
     }
 }

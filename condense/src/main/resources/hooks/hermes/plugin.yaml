@@ -1,0 +1,10 @@
+# Installed by: condense init
+# Tool: Hermes
+# Do not edit manually — run `condense init` to reinstall or `condense init --remove` to uninstall
+name: condense
+version: "1"
+description: Deny matching shell commands and ask the agent to retry through condense.
+hooks:
+  PreToolUse:
+    matcher: Bash
+    entry: __init__.py

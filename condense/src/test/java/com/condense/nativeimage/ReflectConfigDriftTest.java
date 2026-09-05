@@ -70,6 +70,7 @@ class ReflectConfigDriftTest {
             TrackingRepository.WeeklyStat.class.getName(),
             TrackingRepository.TopCommand.class.getName(),
             TrackingRepository.RecentCommand.class.getName(),
+            TrackingRepository.HookBaseline.class.getName(),
             com.condense.trust.TrustFile.class.getName(),
             com.condense.trust.TrustRecord.class.getName(),
             com.condense.trust.Capability.class.getName(),

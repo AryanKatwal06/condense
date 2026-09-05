@@ -35,6 +35,7 @@ public record DoctorReport(
     @JsonProperty("project_override") String projectOverride,
     @JsonProperty("global_override") String globalOverride,
     @JsonProperty("hooks") List<HookStatus> hooks,
+    @JsonProperty("hook_event_count") long hookEventCount,
     @JsonProperty("tee_files") int teeFiles,
     @JsonProperty("tee_oldest_ts") Long teeOldestTs,
     @JsonProperty("tee_old_remaining") int teeOldRemaining,
@@ -44,6 +45,8 @@ public record DoctorReport(
     @RegisterForReflection
     public record HookStatus(
         @JsonProperty("tool") String tool,
-        @JsonProperty("installed") boolean installed
+        @JsonProperty("installed") boolean installed,
+        @JsonProperty("integrity") String integrity,
+        @JsonProperty("path") String path
     ) {}
 }

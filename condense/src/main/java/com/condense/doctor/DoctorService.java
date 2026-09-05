@@ -5,6 +5,7 @@ import com.condense.core.TrackingRepository;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import com.condense.filter.pipeline.config.FilterOverrideValidationResult;
 import com.condense.hooks.HookInstaller;
+import com.condense.hooks.HookIntegrity;
 import com.condense.persist.SchemaMigrator;
 import com.condense.persist.TeeRetention;
 import com.condense.trust.TrustGate;
@@ -70,7 +71,7 @@ public class DoctorService {
             warnings.add("analytics writes have failed; see logs");
         }
 
-        List<DoctorReport.HookStatus> hooks = hookStatuses();
+        List<DoctorReport.HookStatus> hooks = hookStatuses(warnings);
         boolean hooksInstalled = hooks.stream().anyMatch(DoctorReport.HookStatus::installed);
         String emptyReason = emptyReason(
             unreadable, migrateFailed, existedBefore, commandCount, hooksInstalled);
@@ -110,6 +111,7 @@ public class DoctorService {
             statusName(project),
             statusName(global),
             hooks,
+            tracking.countHookEvents(),
             teeFiles,
             tee == null ? null : tee.oldestMtimeEpoch(),
             tee == null ? 0 : tee.remainingOld(),
@@ -157,14 +159,22 @@ public class DoctorService {
         };
     }
 
-    private List<DoctorReport.HookStatus> hookStatuses() {
+    private List<DoctorReport.HookStatus> hookStatuses(List<String> warnings) {
         List<DoctorReport.HookStatus> hooks = new ArrayList<>();
         try {
             for (HookInstaller.StatusResult status : hookInstaller.showAll()) {
-                hooks.add(new DoctorReport.HookStatus(status.tool().displayName, status.installed()));
+                Path script = status.tool().ownedScript(HookInstaller.home());
+                if (status.installed() && HookIntegrity.worldWritable(script)) {
+                    warnings.add(status.tool().displayName + " hook script is world-writable");
+                }
+                hooks.add(new DoctorReport.HookStatus(
+                    status.tool().displayName,
+                    status.installed(),
+                    status.integrity(),
+                    status.hookFile() == null ? null : status.hookFile().toString()));
             }
         } catch (RuntimeException e) {
-            hooks.add(new DoctorReport.HookStatus("unavailable", false));
+            hooks.add(new DoctorReport.HookStatus("unavailable", false, null, null));
         }
         return hooks;
     }

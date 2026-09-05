@@ -1,6 +1,7 @@
 package com.condense.hooks;
 
 import com.condense.core.ConfigLoader;
+import jakarta.enterprise.inject.Vetoed;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,16 +28,7 @@ public class ClineVerificationTest {
         System.setProperty("condense.test.home", testHome.toString());
         installer = new HookInstaller();
         // We mock config loader to return empty excluded list
-        installer.configLoader = new ConfigLoader() {
-            @Override
-            public com.condense.core.CondenseConfig load() {
-                return new com.condense.core.CondenseConfig(
-                    new com.condense.core.CondenseConfig.HooksConfig(List.of()),
-                    new com.condense.core.CondenseConfig.TeeConfig(true, com.condense.core.TeeMode.FAILURES),
-                    java.util.Map.of()
-                );
-            }
-        };
+        installer.configLoader = new EmptyHooksConfig();
     }
 
     @AfterEach
@@ -158,5 +150,17 @@ public class ClineVerificationTest {
         assertTrue(Files.exists(hookFile));
         assertEquals(dummyContent, Files.readString(hookFile));
         System.out.println("Unmanaged file content unchanged.");
+    }
+
+    @Vetoed
+    static final class EmptyHooksConfig extends ConfigLoader {
+        @Override
+        public com.condense.core.CondenseConfig load() {
+            return new com.condense.core.CondenseConfig(
+                new com.condense.core.CondenseConfig.HooksConfig(List.of()),
+                new com.condense.core.CondenseConfig.TeeConfig(true, com.condense.core.TeeMode.FAILURES),
+                java.util.Map.of()
+            );
+        }
     }
 }

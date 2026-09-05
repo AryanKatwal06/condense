@@ -140,7 +140,11 @@ public class PlatformDirs {
 
     static String env(String name) {
         String value = System.getenv(name);
-        return notBlank(value) ? value.trim() : null;
+        if (notBlank(value)) {
+            return value.trim();
+        }
+        String property = System.getProperty(name);
+        return notBlank(property) ? property.trim() : null;
     }
 
     static boolean notBlank(String value) {

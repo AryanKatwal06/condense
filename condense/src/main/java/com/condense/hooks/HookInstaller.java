@@ -2,6 +2,8 @@ package com.condense.hooks;
 
 import com.condense.core.ConfigLoader;
 import com.condense.core.CondenseConfig;
+import com.condense.core.PlatformDirs;
+import com.condense.core.TrackingRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
@@ -23,6 +25,12 @@ public class HookInstaller {
 
     @Inject
     ConfigLoader configLoader;
+
+    @Inject
+    PlatformDirs platformDirs;
+
+    @Inject
+    TrackingRepository tracking;
 
 
 
@@ -60,7 +68,7 @@ public class HookInstaller {
         Path home = home();
         List<StatusResult> results = new ArrayList<>();
         for (HookTool tool : HookTool.values()) {
-            results.add(status(tool, home));
+            results.add(decorateIntegrity(status(tool, home), home));
         }
         return results;
     }
@@ -95,7 +103,11 @@ public class HookInstaller {
 
 
     public record InstallResult(HookTool tool, boolean success, String message) {}
-    public record StatusResult(HookTool tool, boolean installed, Path hookFile) {}
+    public record StatusResult(HookTool tool, boolean installed, Path hookFile, String integrity) {
+        public StatusResult(HookTool tool, boolean installed, Path hookFile) {
+            this(tool, installed, hookFile, installed ? HookIntegrity.OK : HookIntegrity.MISSING);
+        }
+    }
     public record RemoveResult(HookTool tool, boolean removed, String message) {}
 
 
@@ -118,6 +130,33 @@ public class HookInstaller {
         }
         if (tool == HookTool.WINDSURF) {
             return installWindsurf(tool, home, excluded);
+        }
+        if (tool == HookTool.CODEX) {
+            return installPreToolUse(tool, home, excluded,
+                home.resolve(".codex/hooks.json"),
+                home.resolve(".codex/hooks/condense-hook.sh"),
+                "PreToolUse", "Bash");
+        }
+        if (tool == HookTool.ANTIGRAVITY) {
+            return installPreToolUse(tool, home, excluded,
+                home.resolve(".gemini/antigravity-cli/hooks.json"),
+                home.resolve(".gemini/antigravity-cli/hooks/condense-hook.sh"),
+                "PreToolUse", "run_command");
+        }
+        if (tool == HookTool.KILO) {
+            return installPreToolUse(tool, home, excluded,
+                home.resolve(".config/kilo/hooks.json"),
+                home.resolve(".config/kilo/hooks/condense-hook.sh"),
+                "PreToolUse", "Bash");
+        }
+        if (tool == HookTool.OPENCODE) {
+            return installOpenCode(tool, home, excluded);
+        }
+        if (tool == HookTool.HERMES) {
+            return installHermes(tool, home, excluded);
+        }
+        if (tool == HookTool.PI) {
+            return installOwnedPlugin(tool, home, excluded);
         }
 
         Path hookFile = tool.hookFile(home);
@@ -150,6 +189,7 @@ public class HookInstaller {
             Files.move(tmp, hookFile,
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING,
                 java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            rememberOwnedScript(tool, hookFile);
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
             return new InstallResult(tool, true,
@@ -177,6 +217,12 @@ public class HookInstaller {
         }
         if (tool == HookTool.WINDSURF) {
             return statusWindsurf(tool, home);
+        }
+        if (tool == HookTool.CODEX || tool == HookTool.ANTIGRAVITY || tool == HookTool.KILO) {
+            return statusByMarker(tool, home, "condense-hook");
+        }
+        if (tool == HookTool.OPENCODE || tool == HookTool.HERMES || tool == HookTool.PI) {
+            return statusOwned(tool, home);
         }
 
         Path hookFile = tool.hookFile(home);
@@ -208,6 +254,12 @@ public class HookInstaller {
         if (tool == HookTool.WINDSURF) {
             return removeWindsurf(tool, home);
         }
+        if (tool == HookTool.CODEX || tool == HookTool.ANTIGRAVITY || tool == HookTool.KILO) {
+            return removePreToolUse(tool, home);
+        }
+        if (tool == HookTool.OPENCODE || tool == HookTool.HERMES || tool == HookTool.PI) {
+            return removeOwned(tool, home);
+        }
 
         Path hookFile = tool.hookFile(home);
         if (!Files.exists(hookFile)) {
@@ -238,7 +290,7 @@ public class HookInstaller {
             String template = HookTemplate.load(tool);
             String content = HookTemplate.apply(tool, template, excluded);
             Files.createDirectories(scriptFile.getParent());
-            Files.writeString(scriptFile, content);
+            writeOwnedScript(tool, scriptFile, content);
             try {
                 Set<PosixFilePermission> perms = EnumSet.of(
                     PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -315,7 +367,7 @@ public class HookInstaller {
             preToolUseNode.add(hookEntry);
 
             Files.createDirectories(hookFile.getParent());
-            Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+            writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
             
@@ -390,7 +442,7 @@ public class HookInstaller {
                                 }
                             }
                             if (found) {
-                                Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+                                writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
                                 removedAnything = true;
                             }
                         }
@@ -416,7 +468,7 @@ public class HookInstaller {
             String template = HookTemplate.load(tool);
             String content = HookTemplate.apply(tool, template, excluded);
             Files.createDirectories(scriptFile.getParent());
-            Files.writeString(scriptFile, content);
+            writeOwnedScript(tool, scriptFile, content);
             try {
                 Set<PosixFilePermission> perms = EnumSet.of(
                     PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -474,7 +526,7 @@ public class HookInstaller {
             beforeShellExecNode.add(hookEntry);
 
             Files.createDirectories(hookFile.getParent());
-            Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+            writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
             
@@ -543,7 +595,7 @@ public class HookInstaller {
                                 }
                             }
                             if (found) {
-                                Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+                                writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
                                 removedAnything = true;
                             }
                         }
@@ -569,7 +621,7 @@ public class HookInstaller {
             String template = HookTemplate.load(tool);
             String content = HookTemplate.apply(tool, template, excluded);
             Files.createDirectories(scriptFile.getParent());
-            Files.writeString(scriptFile, content);
+            writeOwnedScript(tool, scriptFile, content);
             try {
                 Set<PosixFilePermission> perms = EnumSet.of(
                     PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -650,7 +702,7 @@ public class HookInstaller {
             beforeToolNode.add(hookEntry);
 
             Files.createDirectories(hookFile.getParent());
-            Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+            writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
             
@@ -728,7 +780,7 @@ public class HookInstaller {
                                 }
                             }
                             if (found) {
-                                Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+                                writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
                                 removedAnything = true;
                             }
                         }
@@ -804,6 +856,7 @@ public class HookInstaller {
             Files.move(tmp, hookFile,
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING,
                 java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            rememberOwnedScript(tool, hookFile);
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
             return new InstallResult(tool, true,
@@ -833,7 +886,7 @@ public class HookInstaller {
             String bashTemplate = HookTemplate.load(tool);
             String bashContent = HookTemplate.apply(tool, bashTemplate, excluded);
             Files.createDirectories(hooksDir);
-            Files.writeString(bashScript, bashContent);
+            writeOwnedScript(tool, bashScript, bashContent);
             try {
                 Set<PosixFilePermission> perms = EnumSet.of(
                     PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -901,7 +954,7 @@ public class HookInstaller {
 
             preToolUseNode.add(hookEntry);
 
-            Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+            writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
             
@@ -976,7 +1029,7 @@ public class HookInstaller {
                                 }
                             }
                             if (found) {
-                                Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+                                writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
                                 removedAnything = true;
                             }
                         }
@@ -1002,7 +1055,7 @@ public class HookInstaller {
             String bashTemplate = HookTemplate.load(tool);
             String bashContent = HookTemplate.apply(tool, bashTemplate, excluded);
             Files.createDirectories(bashScript.getParent());
-            Files.writeString(bashScript, bashContent);
+            writeOwnedScript(tool, bashScript, bashContent);
             try {
                 Set<PosixFilePermission> perms = EnumSet.of(
                     PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -1067,7 +1120,7 @@ public class HookInstaller {
 
             preRunCmdNode.add(hookEntry);
 
-            Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+            writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
             
@@ -1141,7 +1194,7 @@ public class HookInstaller {
                                 }
                             }
                             if (found) {
-                                Files.writeString(hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+                                writeThirdPartyConfig(tool, hookFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
                                 removedAnything = true;
                             }
                         }
@@ -1158,11 +1211,316 @@ public class HookInstaller {
         return new RemoveResult(tool, true, "✓ Removed hook for " + tool.displayName);
     }
 
-    static Path home() {
+    public static Path home() {
         String testHome = System.getProperty("condense.test.home");
         if (testHome != null && !testHome.isBlank()) {
             return Path.of(testHome);
         }
+        String envHome = System.getenv("CONDENSE_TEST_HOME");
+        if (envHome != null && !envHome.isBlank()) {
+            return Path.of(envHome);
+        }
         return Path.of(System.getProperty("user.home"));
+    }
+
+    private Path dataDir() {
+        if (platformDirs != null) {
+            return platformDirs.getDataDir();
+        }
+        String testHome = System.getProperty("condense.test.home");
+        if (testHome != null && !testHome.isBlank()) {
+            return Path.of(testHome).resolve("condense-data");
+        }
+        return Path.of(System.getProperty("user.home", "."), ".condense-data");
+    }
+
+    private void writeThirdPartyConfig(HookTool tool, Path hookFile, String json) throws IOException {
+        Path backup = HookBackup.copyExisting(dataDir(), tool, hookFile);
+        audit(tool, "backup", backup, true, backup == null ? "created" : backup.toString());
+        Files.createDirectories(hookFile.getParent());
+        Files.writeString(hookFile, json);
+    }
+
+    private void writeOwnedScript(HookTool tool, Path scriptFile, String content) throws IOException {
+        Files.createDirectories(scriptFile.getParent());
+        Files.writeString(scriptFile, content);
+        rememberOwnedScript(tool, scriptFile);
+    }
+
+    private void rememberOwnedScript(HookTool tool, Path scriptFile) {
+        try {
+            String sha = HookIntegrity.hashFile(scriptFile);
+            if (tracking != null) {
+                tracking.upsertHookBaseline(tool.name(), scriptFile.toAbsolutePath().toString(), sha);
+            }
+            audit(tool, "install", scriptFile, true, sha);
+        } catch (Exception e) {
+            log.warnf("Hook baseline failed for %s: %s", tool.displayName, e.getMessage());
+        }
+    }
+
+    private void audit(HookTool tool, String action, Path path, boolean success, String detail) {
+        if (tracking == null) {
+            return;
+        }
+        String sha = null;
+        try {
+            if (path != null && Files.isRegularFile(path)) {
+                sha = HookIntegrity.hashFile(path);
+            }
+        } catch (IOException ignored) {
+        }
+        tracking.insertHookEvent(
+            tool.name(),
+            action,
+            path == null ? null : path.toString(),
+            sha,
+            success,
+            detail);
+    }
+
+    private StatusResult decorateIntegrity(StatusResult raw, Path home) {
+        if (raw == null) {
+            return raw;
+        }
+        if (!raw.installed()) {
+            return new StatusResult(raw.tool(), false, raw.hookFile(), HookIntegrity.MISSING);
+        }
+        String integrity = HookIntegrity.verify(tracking, raw.tool(), raw.tool().ownedScript(home));
+        return new StatusResult(raw.tool(), true, raw.hookFile(), integrity);
+    }
+
+    private StatusResult statusByMarker(HookTool tool, Path home, String marker) {
+        Path hookFile = tool.hookFile(home);
+        if (!Files.exists(hookFile)) {
+            return new StatusResult(tool, false, hookFile);
+        }
+        try {
+            return new StatusResult(tool, Files.readString(hookFile).contains(marker), hookFile);
+        } catch (IOException e) {
+            return new StatusResult(tool, false, hookFile);
+        }
+    }
+
+    private StatusResult statusOwned(HookTool tool, Path home) {
+        Path script = tool.ownedScript(home);
+        if (!Files.exists(script)) {
+            return new StatusResult(tool, false, script);
+        }
+        try {
+            return new StatusResult(tool, HookTemplate.isManagedByCondense(Files.readString(script)), script);
+        } catch (IOException e) {
+            return new StatusResult(tool, false, script);
+        }
+    }
+
+    private InstallResult installPreToolUse(
+            HookTool tool,
+            Path home,
+            List<String> excluded,
+            Path configFile,
+            Path scriptFile,
+            String eventKey,
+            String matcher
+    ) {
+        try {
+            String template = HookTemplate.load(tool);
+            String content = HookTemplate.apply(tool, template, excluded);
+            writeOwnedScript(tool, scriptFile, content);
+            try {
+                Set<PosixFilePermission> perms = EnumSet.of(
+                    PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+                );
+                Files.setPosixFilePermissions(scriptFile, perms);
+            } catch (UnsupportedOperationException ignored) {
+            }
+
+            com.fasterxml.jackson.databind.node.ObjectNode root;
+            if (Files.exists(configFile) && Files.size(configFile) > 0) {
+                root = (com.fasterxml.jackson.databind.node.ObjectNode) com.condense.core.Mappers.JSON.readTree(Files.readString(configFile));
+            } else {
+                root = com.condense.core.Mappers.JSON.createObjectNode();
+            }
+            com.fasterxml.jackson.databind.node.ObjectNode hooksNode = root.has("hooks") && root.get("hooks").isObject()
+                ? (com.fasterxml.jackson.databind.node.ObjectNode) root.get("hooks")
+                : root.putObject("hooks");
+            com.fasterxml.jackson.databind.node.ArrayNode events = hooksNode.has(eventKey) && hooksNode.get(eventKey).isArray()
+                ? (com.fasterxml.jackson.databind.node.ArrayNode) hooksNode.get(eventKey)
+                : hooksNode.putArray(eventKey);
+            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = events.elements();
+            while (it.hasNext()) {
+                com.fasterxml.jackson.databind.JsonNode node = it.next();
+                String blob = node.toString();
+                if (blob.contains("condense-hook")) {
+                    it.remove();
+                }
+            }
+            com.fasterxml.jackson.databind.node.ObjectNode entry = events.addObject();
+            entry.put("matcher", matcher);
+            com.fasterxml.jackson.databind.node.ArrayNode inner = entry.putArray("hooks");
+            com.fasterxml.jackson.databind.node.ObjectNode cmd = inner.addObject();
+            cmd.put("type", "command");
+            cmd.put("command", scriptFile.toAbsolutePath().toString().replace("\\", "/"));
+            cmd.put("timeout", 30);
+            writeThirdPartyConfig(tool, configFile, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+            return new InstallResult(tool, true, "✓ Installed hook for " + tool.displayName + " → " + configFile);
+        } catch (Exception e) {
+            return new InstallResult(tool, false, "✗ Failed: " + tool.displayName + " — " + e.getMessage());
+        }
+    }
+
+    private RemoveResult removePreToolUse(HookTool tool, Path home) {
+        Path configFile = tool.hookFile(home);
+        Path scriptFile = tool.ownedScript(home);
+        boolean removed = false;
+        if (Files.exists(scriptFile)) {
+            try {
+                Files.delete(scriptFile);
+                removed = true;
+            } catch (IOException ignored) {
+            }
+        }
+        if (Files.exists(configFile)) {
+            try {
+                com.fasterxml.jackson.databind.node.ObjectNode root =
+                    (com.fasterxml.jackson.databind.node.ObjectNode) com.condense.core.Mappers.JSON.readTree(Files.readString(configFile));
+                if (root.has("hooks") && root.get("hooks").isObject()) {
+                    com.fasterxml.jackson.databind.node.ObjectNode hooksNode =
+                        (com.fasterxml.jackson.databind.node.ObjectNode) root.get("hooks");
+                    for (String key : List.of("PreToolUse", "BeforeTool")) {
+                        if (!hooksNode.has(key) || !hooksNode.get(key).isArray()) {
+                            continue;
+                        }
+                        com.fasterxml.jackson.databind.node.ArrayNode arr =
+                            (com.fasterxml.jackson.databind.node.ArrayNode) hooksNode.get(key);
+                        java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = arr.elements();
+                        while (it.hasNext()) {
+                            if (it.next().toString().contains("condense-hook")) {
+                                it.remove();
+                                removed = true;
+                            }
+                        }
+                    }
+                    writeThirdPartyConfig(tool, configFile,
+                        com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+                }
+            } catch (Exception e) {
+                log.warnf("Failed to remove %s hook entry: %s", tool.displayName, e.getMessage());
+            }
+        }
+        if (tracking != null) {
+            tracking.deleteHookBaseline(tool.name());
+        }
+        audit(tool, "remove", scriptFile, removed, null);
+        return removed
+            ? new RemoveResult(tool, true, "✓ Removed hook for " + tool.displayName)
+            : new RemoveResult(tool, false, "• " + tool.displayName + ": not installed");
+    }
+
+    private InstallResult installOwnedPlugin(HookTool tool, Path home, List<String> excluded) {
+        try {
+            Path dest = tool.ownedScript(home);
+            String content = HookTemplate.apply(tool, HookTemplate.load(tool), excluded);
+            writeOwnedScript(tool, dest, content);
+            return new InstallResult(tool, true, "✓ Installed hook for " + tool.displayName + " → " + dest);
+        } catch (Exception e) {
+            return new InstallResult(tool, false, "✗ Failed: " + tool.displayName + " — " + e.getMessage());
+        }
+    }
+
+    private InstallResult installOpenCode(HookTool tool, Path home, List<String> excluded) {
+        try {
+            Path plugin = tool.ownedScript(home);
+            String content = HookTemplate.apply(tool, HookTemplate.load(tool), excluded);
+            writeOwnedScript(tool, plugin, content);
+            Path config = tool.hookFile(home);
+            com.fasterxml.jackson.databind.node.ObjectNode root;
+            if (Files.exists(config) && Files.size(config) > 0) {
+                root = (com.fasterxml.jackson.databind.node.ObjectNode) com.condense.core.Mappers.JSON.readTree(Files.readString(config));
+            } else {
+                root = com.condense.core.Mappers.JSON.createObjectNode();
+            }
+            com.fasterxml.jackson.databind.node.ObjectNode hooks = root.has("hooks") && root.get("hooks").isObject()
+                ? (com.fasterxml.jackson.databind.node.ObjectNode) root.get("hooks")
+                : root.putObject("hooks");
+            com.fasterxml.jackson.databind.node.ArrayNode before = hooks.has("PreToolUse") && hooks.get("PreToolUse").isArray()
+                ? (com.fasterxml.jackson.databind.node.ArrayNode) hooks.get("PreToolUse")
+                : hooks.putArray("PreToolUse");
+            java.util.Iterator<com.fasterxml.jackson.databind.JsonNode> it = before.elements();
+            while (it.hasNext()) {
+                if (it.next().toString().contains("condense")) {
+                    it.remove();
+                }
+            }
+            com.fasterxml.jackson.databind.node.ObjectNode entry = before.addObject();
+            entry.put("matcher", "Bash");
+            com.fasterxml.jackson.databind.node.ArrayNode inner = entry.putArray("hooks");
+            com.fasterxml.jackson.databind.node.ObjectNode cmd = inner.addObject();
+            cmd.put("type", "command");
+            cmd.put("command", "node " + plugin.toAbsolutePath().toString().replace("\\", "/"));
+            writeThirdPartyConfig(tool, config, com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(root));
+            return new InstallResult(tool, true, "✓ Installed hook for " + tool.displayName + " → " + config);
+        } catch (Exception e) {
+            return new InstallResult(tool, false, "✗ Failed: " + tool.displayName + " — " + e.getMessage());
+        }
+    }
+
+    private InstallResult installHermes(HookTool tool, Path home, List<String> excluded) {
+        try {
+            Path yaml = tool.hookFile(home);
+            Path py = tool.ownedScript(home);
+            writeOwnedScript(tool, yaml, HookTemplate.load(tool));
+            String pyTemplate;
+            try (java.io.InputStream in = HookInstaller.class.getResourceAsStream("/hooks/hermes/__init__.py")) {
+                if (in == null) {
+                    throw new IOException("missing /hooks/hermes/__init__.py");
+                }
+                pyTemplate = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            }
+            writeOwnedScript(tool, py, HookTemplate.apply(tool, pyTemplate, excluded));
+            Path config = home.resolve(".hermes/config.yaml");
+            String existing = Files.exists(config) ? Files.readString(config) : "";
+            if (!existing.contains("condense")) {
+                writeThirdPartyConfig(tool, config, existing + (existing.endsWith("\n") || existing.isEmpty() ? "" : "\n")
+                    + "plugins:\n  enabled:\n    - condense\n");
+            }
+            return new InstallResult(tool, true, "✓ Installed hook for " + tool.displayName + " → " + yaml);
+        } catch (Exception e) {
+            return new InstallResult(tool, false, "✗ Failed: " + tool.displayName + " — " + e.getMessage());
+        }
+    }
+
+    private RemoveResult removeOwned(HookTool tool, Path home) {
+        Path script = tool.ownedScript(home);
+        boolean removed = false;
+        if (Files.exists(script)) {
+            try {
+                if (HookTemplate.isManagedByCondense(Files.readString(script))) {
+                    Files.delete(script);
+                    removed = true;
+                }
+            } catch (IOException e) {
+                return new RemoveResult(tool, false, "✗ Failed to remove " + tool.displayName + ": " + e.getMessage());
+            }
+        }
+        Path config = tool.hookFile(home);
+        if (config != null && Files.exists(config) && !config.equals(script)) {
+            try {
+                String text = Files.readString(config);
+                if (text.contains("condense")) {
+                    writeThirdPartyConfig(tool, config, text);
+                }
+            } catch (IOException ignored) {
+            }
+        }
+        if (tracking != null) {
+            tracking.deleteHookBaseline(tool.name());
+        }
+        audit(tool, "remove", script, removed, null);
+        return removed
+            ? new RemoveResult(tool, true, "✓ Removed hook for " + tool.displayName)
+            : new RemoveResult(tool, false, "• " + tool.displayName + ": exists but was not installed by condense — skipped");
     }
 }

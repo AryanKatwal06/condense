@@ -12,12 +12,13 @@ import java.sql.Statement;
  *
  * <p>Version 1 creates the historical {@code commands} table (if missing) and
  * the {@code filter_outcomes} sibling. It does not {@code ALTER} {@code commands}.
+ * Version 2 adds {@code hook_events} and {@code hook_baselines}.
  * A database written by a newer binary ({@code user_version > TARGET}) is left
  * untouched so an older CLI fail-opens instead of destroying data.
  */
 public final class SchemaMigrator {
 
-    public static final int TARGET_VERSION = 1;
+    public static final int TARGET_VERSION = 2;
 
     private static final Logger log = Logger.getLogger(SchemaMigrator.class);
 
@@ -56,7 +57,12 @@ public final class SchemaMigrator {
         connection.setAutoCommit(false);
         try {
             try (Statement st = connection.createStatement()) {
-                applyV1(st);
+                if (current < 1) {
+                    applyV1(st);
+                }
+                if (current < 2) {
+                    applyV2(st);
+                }
                 st.executeUpdate("PRAGMA user_version = " + TARGET_VERSION);
             }
             connection.commit();
@@ -102,5 +108,30 @@ public final class SchemaMigrator {
             )
             """);
         st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_outcomes_ts ON filter_outcomes(ts)");
+    }
+
+    private static void applyV2(Statement st) throws SQLException {
+        st.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS hook_events (
+                id      INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts      INTEGER NOT NULL,
+                tool    TEXT    NOT NULL,
+                action  TEXT    NOT NULL,
+                path    TEXT,
+                sha256  TEXT,
+                success INTEGER NOT NULL,
+                detail  TEXT
+            )
+            """);
+        st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_hook_events_ts ON hook_events(ts)");
+        st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_hook_events_tool ON hook_events(tool)");
+        st.executeUpdate("""
+            CREATE TABLE IF NOT EXISTS hook_baselines (
+                tool         TEXT PRIMARY KEY,
+                path         TEXT    NOT NULL,
+                sha256       TEXT    NOT NULL,
+                installed_ts INTEGER NOT NULL
+            )
+            """);
     }
 }

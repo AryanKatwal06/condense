@@ -245,12 +245,15 @@ class McpHandlersTest {
     }
 
     private static HookInstaller noHooks() {
-        return new HookInstaller() {
-            @Override
-            public List<HookInstaller.StatusResult> showAll() {
-                return List.of(new HookInstaller.StatusResult(HookTool.CURSOR, false, Path.of("/tmp/none")));
-            }
-        };
+        return new NoHooks();
+    }
+
+    @Vetoed
+    static final class NoHooks extends HookInstaller {
+        @Override
+        public List<HookInstaller.StatusResult> showAll() {
+            return List.of(new HookInstaller.StatusResult(HookTool.CURSOR, false, Path.of("/tmp/none")));
+        }
     }
 
     @Vetoed

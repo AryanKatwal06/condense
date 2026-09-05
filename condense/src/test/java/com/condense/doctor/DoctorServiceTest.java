@@ -6,7 +6,9 @@ import com.condense.core.PlatformDirs;
 import com.condense.core.TrackingRepository;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import com.condense.hooks.HookInstaller;
+import com.condense.hooks.HookIntegrity;
 import com.condense.hooks.HookTool;
+import jakarta.enterprise.inject.Vetoed;
 import com.condense.persist.SchemaMigrator;
 import com.condense.trust.TrustGate;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -55,7 +57,9 @@ class DoctorServiceTest {
         assertThat(report.ok()).isTrue();
         assertThat(report.emptyTrackingReason()).isNull();
         assertThat(report.commandCount()).isEqualTo(1);
-        assertThat(report.schemaVersion()).isEqualTo(1);
+        assertThat(report.schemaVersion()).isEqualTo(SchemaMigrator.TARGET_VERSION);
+        assertThat(report.hooks()).isNotEmpty();
+        assertThat(report.hooks().get(0).integrity()).isEqualTo(HookIntegrity.MISSING);
         assertThat(new DoctorCommand(fixture.service).call()).isZero();
         fixture.tracking.close();
     }
@@ -96,12 +100,15 @@ class DoctorServiceTest {
     }
 
     private static HookInstaller noHooks() {
-        return new HookInstaller() {
-            @Override
-            public List<StatusResult> showAll() {
-                return List.of(new StatusResult(HookTool.CURSOR, false, Path.of("/tmp/none")));
-            }
-        };
+        return new NoHooks();
+    }
+
+    @Vetoed
+    private static final class NoHooks extends HookInstaller {
+        @Override
+        public List<StatusResult> showAll() {
+            return List.of(new StatusResult(HookTool.CURSOR, false, Path.of("/tmp/none")));
+        }
     }
 
     private record Fixture(TrackingRepository tracking, DoctorService service) {}

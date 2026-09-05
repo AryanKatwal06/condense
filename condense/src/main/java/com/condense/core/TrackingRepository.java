@@ -1,6 +1,7 @@
 package com.condense.core;
 
 import com.condense.filter.pipeline.FilterIncident;
+import com.condense.persist.BackupRetention;
 import com.condense.persist.RetentionPolicy;
 import com.condense.persist.SchemaMigrator;
 import com.condense.persist.TeeRetention;
@@ -33,6 +34,17 @@ public class TrackingRepository {
     private static final String INSERT_OUTCOME = """
         INSERT INTO filter_outcomes(ts, command, project, filter_name, kind, stage_name, fallback_succeeded, detail)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+    private static final String INSERT_HOOK_EVENT = """
+        INSERT INTO hook_events(ts, tool, action, path, sha256, success, detail)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """;
+
+    private static final String UPSERT_HOOK_BASELINE = """
+        INSERT INTO hook_baselines(tool, path, sha256, installed_ts)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(tool) DO UPDATE SET path = excluded.path, sha256 = excluded.sha256, installed_ts = excluded.installed_ts
         """;
 
     private final PlatformDirs platformDirs;
@@ -138,6 +150,84 @@ public class TrackingRepository {
         }
         for (FilterIncident incident : incidents) {
             insertOutcome(command, project, incident);
+        }
+    }
+
+    public void insertHookEvent(String tool, String action, String path, String sha256, boolean success, String detail) {
+        try {
+            try (PreparedStatement ps = connection().prepareStatement(INSERT_HOOK_EVENT)) {
+                ps.setLong(1, System.currentTimeMillis() / 1000L);
+                ps.setString(2, tool == null ? "" : tool);
+                ps.setString(3, action == null ? "" : action);
+                ps.setString(4, path);
+                ps.setString(5, sha256);
+                ps.setInt(6, success ? 1 : 0);
+                ps.setString(7, detail);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to record hook event for '%s': %s", tool, e.getMessage());
+        }
+    }
+
+    public void upsertHookBaseline(String tool, String path, String sha256) {
+        if (tool == null || tool.isBlank() || path == null || sha256 == null) {
+            return;
+        }
+        try {
+            try (PreparedStatement ps = connection().prepareStatement(UPSERT_HOOK_BASELINE)) {
+                ps.setString(1, tool);
+                ps.setString(2, path);
+                ps.setString(3, sha256);
+                ps.setLong(4, System.currentTimeMillis() / 1000L);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to upsert hook baseline for '%s': %s", tool, e.getMessage());
+        }
+    }
+
+    public void deleteHookBaseline(String tool) {
+        if (tool == null || tool.isBlank()) {
+            return;
+        }
+        try (PreparedStatement ps = connection().prepareStatement("DELETE FROM hook_baselines WHERE tool = ?")) {
+            ps.setString(1, tool);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to delete hook baseline for '%s': %s", tool, e.getMessage());
+        }
+    }
+
+    public HookBaseline findHookBaseline(String tool) {
+        if (tool == null || tool.isBlank()) {
+            return null;
+        }
+        try (PreparedStatement ps = connection().prepareStatement(
+            "SELECT tool, path, sha256, installed_ts FROM hook_baselines WHERE tool = ?")) {
+            ps.setString(1, tool);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new HookBaseline(
+                        rs.getString("tool"),
+                        rs.getString("path"),
+                        rs.getString("sha256"),
+                        rs.getLong("installed_ts"));
+                }
+            }
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to read hook baseline for '%s': %s", tool, e.getMessage());
+        }
+        return null;
+    }
+
+    public long countHookEvents() {
+        try (Statement st = connection().createStatement();
+             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM hook_events")) {
+            return rs.next() ? rs.getLong(1) : 0L;
+        } catch (SQLException e) {
+            log.warnf(e, "Failed to count hook events: %s", e.getMessage());
+            return 0L;
         }
     }
 
@@ -406,6 +496,8 @@ public class TrackingRepository {
         }
     }
 
+    public record HookBaseline(String tool, String path, String sha256, long installedTs) {}
+
     public record RecentCommand(
         long ts, String command, int rawTokens, int outTokens, long execMs) {
         public int savingsPct() {
@@ -516,10 +608,21 @@ public class TrackingRepository {
         } catch (SQLException e) {
             log.warnf("Outcome retention prune failed: %s", e.getMessage());
         }
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM hook_events WHERE ts < ?")) {
+            ps.setLong(1, cutoff);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            log.warnf("Hook event retention prune failed: %s", e.getMessage());
+        }
         try {
             lastTeeSweep = TeeRetention.prune(platformDirs.getDataDir());
         } catch (RuntimeException e) {
             log.warnf("Tee retention sweep failed: %s", e.getMessage());
+        }
+        try {
+            BackupRetention.prune(platformDirs.getDataDir());
+        } catch (RuntimeException e) {
+            log.warnf("Hook backup retention sweep failed: %s", e.getMessage());
         }
     }
 }

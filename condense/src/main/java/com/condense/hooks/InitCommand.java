@@ -23,14 +23,14 @@ import java.util.List;
     mixinStandardHelpOptions = true,
     footer = {
         "",
-        "Supported tools: Claude Code, Cursor, Gemini CLI, Windsurf, Copilot, Cline",
+        "Supported tools: Claude Code, Cursor, Gemini CLI, Windsurf, Copilot, Cline,",
+        "Codex, OpenCode, Kilo Code, Antigravity, Hermes, Pi",
         "",
-        "After running `condense init -g`, AI tools will automatically route matching",
-        "commands through condense without any change to your workflow.",
+        "MCP is the preferred agent path (`condense mcp --start`). Hooks are the fallback.",
+        "Matched commands are denied with a retry message; they are never rewritten and allowed.",
         "",
-        "Note: Claude Code handles multiple hooks rewriting the same command",
-        "in parallel with no guaranteed order. If you have competing PreToolUse hooks,",
-        "condense's interception may not always take effect.",
+        "Note: Claude Code handles multiple PreToolUse hooks in parallel with no guaranteed",
+        "order. If you have competing hooks, condense's interception may not always take effect.",
         "",
         "Hooks can be removed at any time with `condense init --remove`."
     }
@@ -42,7 +42,7 @@ public class InitCommand implements Runnable {
     boolean global;
 
     @Option(names = "--show",
-        description = "Show which AI tool hooks are currently installed.")
+        description = "Show which AI tool hooks are currently installed, including integrity.")
     boolean show;
 
     @Option(names = "--remove",
@@ -51,7 +51,8 @@ public class InitCommand implements Runnable {
 
     @Option(names = "--tool",
         description = "Install hook for a specific tool only. " +
-                      "Values: claude-code, cursor, gemini, windsurf, copilot, cline",
+                      "Values: claude-code, cursor, gemini, windsurf, copilot, cline, " +
+                      "codex, opencode, kilo, antigravity, hermes, pi",
         paramLabel = "TOOL")
     String tool;
 
@@ -91,12 +92,13 @@ public class InitCommand implements Runnable {
 
     private void runShow() {
         System.out.println("Condense Hook Status\n");
-        System.out.printf("  %-20s  %-12s  %s%n", "Tool", "Status", "Path");
-        System.out.println("  " + "─".repeat(70));
+        System.out.printf("  %-20s  %-14s  %-12s  %s%n", "Tool", "Status", "Integrity", "Path");
+        System.out.println("  " + "─".repeat(80));
         installer.showAll().forEach(r ->
-            System.out.printf("  %-20s  %-12s  %s%n",
+            System.out.printf("  %-20s  %-14s  %-12s  %s%n",
                 r.tool().displayName,
-                r.installed() ? "✓ installed" : "✗ not installed",
+                r.installed() ? "installed" : "not installed",
+                r.integrity() == null ? "-" : r.integrity(),
                 r.hookFile()));
     }
 

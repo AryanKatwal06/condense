@@ -38,7 +38,7 @@ public class SafePathValidator {
      * Recognized condense-owned subdirectory names under the data or config root.
      * Contents are validated one level deep as regular files only.
      */
-    public static final Set<String> KNOWN_CONDENSE_DIRECTORIES = Set.of("tee");
+    public static final Set<String> KNOWN_CONDENSE_DIRECTORIES = Set.of("tee", "backups");
 
     private final PlatformDirs platformDirs;
     private final Path binaryPath;

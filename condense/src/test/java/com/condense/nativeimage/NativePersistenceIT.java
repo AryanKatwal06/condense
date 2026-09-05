@@ -81,6 +81,34 @@ class NativePersistenceIT {
     }
 
     @Test
+    void nativeBinaryMigratesV1DatabaseToVersionTwo() throws Exception {
+        Path configDir = tempDir.resolve("v1-config");
+        Path dataDir = tempDir.resolve("v1-data");
+        Files.createDirectories(configDir);
+        Files.createDirectories(dataDir);
+        Path db = dataDir.resolve("condense.db");
+        LegacyDatabase.writeV1(db);
+
+        NativeBinarySupport.CliResult gain = NativeBinarySupport.run(
+            configDir, dataDir, "gain", "--format", "json"
+        );
+        assertThat(gain.exitCode()).isZero();
+
+        Driver driver = new org.sqlite.JDBC();
+        try (Connection connection = driver.connect("jdbc:sqlite:" + db.toAbsolutePath(), new Properties());
+             Statement st = connection.createStatement()) {
+            try (ResultSet version = st.executeQuery("PRAGMA user_version")) {
+                assertThat(version.next()).isTrue();
+                assertThat(version.getInt(1)).isEqualTo(SchemaMigrator.TARGET_VERSION);
+            }
+            try (ResultSet tables = st.executeQuery(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='hook_events'")) {
+                assertThat(tables.next()).isTrue();
+            }
+        }
+    }
+
+    @Test
     void doctorOnEmptyDirsExplainsMissingTracking() throws Exception {
         Path configDir = tempDir.resolve("empty-config");
         Path dataDir = tempDir.resolve("empty-data");

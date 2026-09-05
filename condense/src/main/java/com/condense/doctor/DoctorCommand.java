@@ -65,6 +65,15 @@ public class DoctorCommand implements Callable<Integer> {
         System.out.println("Commands:    " + report.commandCount());
         System.out.println("Outcomes:    " + report.outcomeCount());
         System.out.println("Tee files:   " + report.teeFiles());
+        System.out.println("Hook events: " + report.hookEventCount());
+        if (report.hooks() != null && !report.hooks().isEmpty()) {
+            System.out.println("Hooks:");
+            for (DoctorReport.HookStatus hook : report.hooks()) {
+                System.out.println("  - " + hook.tool() + " "
+                    + (hook.installed() ? "installed" : "absent")
+                    + (hook.integrity() == null ? "" : " integrity=" + hook.integrity()));
+            }
+        }
         if (report.emptyTrackingReason() != null) {
             System.out.println("Empty gain:  " + report.emptyTrackingReason());
         } else {

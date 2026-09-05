@@ -310,10 +310,13 @@ class UninstallCommandTest {
     void purge_succeedsWhenTeeAndFiltersTomlAreTheOnlyExtras() throws IOException {
         Path db = fakeDataDir.resolve("condense.db");
         Path teeFile = fakeDataDir.resolve("tee").resolve("abcd1234-1700000000.txt");
+        Path backup = fakeDataDir.resolve("backups").resolve("cursor-1700000000.json");
         Path filters = fakeConfigDir.resolve("filters.toml");
         Files.writeString(db, "db");
         Files.createDirectories(teeFile.getParent());
+        Files.createDirectories(backup.getParent());
         Files.writeString(teeFile, "dump");
+        Files.writeString(backup, "{}\n");
         Files.writeString(filters, "schema_version = 1\n");
 
         UninstallCommand cmd = new UninstallCommand();
@@ -326,6 +329,7 @@ class UninstallCommandTest {
         assertThat(exitCode).isEqualTo(0);
         assertThat(Files.exists(db)).isFalse();
         assertThat(Files.exists(teeFile)).isFalse();
+        assertThat(Files.exists(backup)).isFalse();
         assertThat(Files.exists(filters)).isFalse();
         assertThat(Files.exists(fakeDataDir)).isFalse();
         assertThat(Files.exists(fakeConfigDir)).isFalse();
