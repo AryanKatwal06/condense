@@ -2,7 +2,7 @@
 
 Filtered output is a **typed document** plus renderers, not 32 ad-hoc formatters. Default CLI output stays compact **text**. `condense --format json <command>` prints one schema-1 JSON object after the child exits. `condense explain --format json` embeds the same records on `document`.
 
-Phase 12 MCP tools must consume this envelope. They must not invent a second model.
+The MCP `run` tool returns this envelope. It must not invent a second model. See [docs/mcp.md](mcp.md).
 
 ## Envelope
 

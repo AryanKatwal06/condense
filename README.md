@@ -149,7 +149,7 @@ To verify hooks are working, run a few commands via your AI and then run `conden
 
 AI agents increasingly ship with their own context-saving mechanisms. Condense is designed to compose cleanly with them:
 
-*   **Claude Desktop (MCP)**: An MCP server mode is planned — this would let Claude Desktop use condense natively without hook installation. Not yet available in v1.0.x.
+*   **Claude Desktop (MCP)**: `condense mcp --start` speaks MCP on stdio. Tools are `run`, `explain`, and `read`. Resources are `condense://gain` and `condense://doctor`. `run` returns the schema-1 IR envelope. See [docs/mcp.md](docs/mcp.md). Hooks remain the fallback path.
 *   **Claude Code (Compact Mode)**: Claude Code strips some whitespace automatically. Condense runs *first*, stripping entire irrelevant blocks (like passing tests), and then Claude compacts what's left. They stack multiplicatively.
 *   **Aider (Repo Map)**: Aider uses ctags to map codebases. Condense doesn't interfere with this; it focuses purely on transient shell output, which Aider's map doesn't cover.
 
@@ -165,6 +165,12 @@ condense --format json npm install
 ```
 
 JSON does not live-print fragments, even for STREAM commands such as `npm install`. See [docs/ir.md](docs/ir.md).
+
+---
+
+## MCP
+
+`condense mcp --start` is a stdio JSON-RPC server. Tools `run`, `explain`, and `read` reuse the CLI engines. `run` returns the same schema-1 document as `condense --format json`. Resources `condense://gain` and `condense://doctor` return the existing JSON reports. See [docs/mcp.md](docs/mcp.md).
 
 ---
 

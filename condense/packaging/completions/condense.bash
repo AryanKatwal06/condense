@@ -9,7 +9,7 @@ _condense_completion() {
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
   # Top-level subcommands
-  local subcommands="gain doctor explain read init config"
+  local subcommands="gain doctor explain read init config mcp"
 
   # Commands condense can proxy
   local proxy_commands="git cargo pytest go npm npx docker kubectl aws ls grep rg find cat make mvn gradle vitest jest eslint tsc ruff pip golangci-lint"
@@ -44,6 +44,10 @@ _condense_completion() {
       ;;
     config)
       COMPREPLY=($(compgen -W "--list --get --set --reset --help" -- "$cur"))
+      return 0
+      ;;
+    mcp)
+      COMPREPLY=($(compgen -W "--start --help" -- "$cur"))
       return 0
       ;;
     --scope)

@@ -11,6 +11,7 @@ _condense() {
     'read:Read a source file with comment-strip or outline'
     'init:Install AI tool hooks'
     'config:Read and write configuration'
+    'mcp:MCP server over stdio'
   )
 
   proxy_commands=(
@@ -94,6 +95,10 @@ _condense() {
             '--get=[Get key value]:key:(tee.enabled tee.mode hooks.exclude_commands)' \
             '--set=[Set key=value]:keyval:()' \
             '--reset[Reset to defaults]'
+          ;;
+        mcp)
+          _arguments \
+            '--start[Start the MCP server on stdin/stdout]'
           ;;
         git)
           _git

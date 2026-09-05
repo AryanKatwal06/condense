@@ -1,10 +1,10 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 11 IR closeout).
+**Written:** 4 September 2026. **Revised:** 5 September 2026 (Phase 12 MCP closeout).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
-**Branch at handoff:** `main` after Phase 11. Confirm with `git log -1` and origin before starting Phase 12.
+**Branch at handoff:** `main` after Phase 12. Confirm with `git log -1` and origin before starting Phase 13.
 
 > **Authority rule.** Where this document and the live repository disagree, **the repository wins** — then correct this file. Every factual claim below was verified against source on the revision date; §12 records how.
 
@@ -162,7 +162,7 @@ Registered subcommands: `gain`, `doctor`, `explain`, `read`, `init`, `config` (w
 
 Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus standard help/version.
 
-`mcp` is a **stub** — `--start` prints an error and returns 1; the bare command prints a "planned" notice and a sample client config. Phase 12.
+`mcp` is real. Bare `condense mcp` prints a client snippet and exits 0. `condense mcp --start` speaks newline-delimited JSON-RPC on stdio. Tools are `run`, `explain`, `read`; resources are `condense://gain` and `condense://doctor`. See [docs/mcp.md](docs/mcp.md).
 
 ### 4.6 Filters — exact counts (verified)
 
@@ -328,7 +328,7 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | D23 | ~~Filtering is capture-only; nothing is emitted until the child exits~~ **FIXED** | Derived STREAM/CAPTURE + `StreamingProxy` live print | Phase 9 |
 | D24 | ~~No token-optimized source-file reading capability at all~~ **FIXED** | `condense read` + language catalog + `NativeReadIT` | Phase 10 |
 | D25 | ~~No structured output IR; each filter emits ad-hoc text~~ **FIXED** | schema-1 `Document` + text/JSON renderers; unmigrated commands are `opaque` | Phase 11 |
-| D26 | `condense mcp` is a stub | `commands/McpCommand.java` | Phase 12 |
+| D26 | ~~`condense mcp` is a stub~~ **FIXED** | stdio JSON-RPC MCP server; `run` returns schema-1 IR; `NativeMcpIT` | Phase 12 |
 | D27 | No hook integrity/tamper verification, and **no backup before editing third-party configs** | `hooks/HookInstaller.java` | Phase 13 |
 | D28 | Agent coverage is a strict subset of Zap's, plus a generic-bash fallback | `hooks/HookTool.java` | Phase 13 |
 | D29 | Benchmarks print numbers but assert nothing; no enforced performance budget | `FilterPipelineBenchmarkTest`, `FilterOverrideBenchmarkTest` | Phase 1 baseline, Phase 17 gate |
@@ -416,18 +416,19 @@ Planning plus Phase 1 through Phase 10 code, then an independent audit of those 
 | Phase 9 code | **LANDED** | Per-invocation `StageSession`; derived STREAM/CAPTURE; live `npm install` / `docker build`; `Utf8LineDecoder`; wait-until-exit proxy; 10 MB fail-open; `pipeline_mode` on explain. Docs commit `9b6ffd4` had **red** native CI ([run 33947816965](https://github.com/AryanKatwal06/condense/actions/runs/33947816965)) because `@CommandFilters` prefixes were invisible in the image; `447eeb6` fixed registration. `IncrementalEquivalenceTest` now compares `StreamingProxy.replay` / stamped `execute` to `apply()`. `NativeStreamingIT` times first-line-before-exit on a PATH-stubbed npm. |
 | Phase 10 code | **LANDED** | `condense read`; per-language scanner; original line numbers; builtin `languages/*.toml`; workspace containment; `NativeReadIT`. |
 | Phase 11 code | **LANDED** | Schema-1 `Document`; text + JSON renderers; pytest/eslint/npm install/docker ps exemplars; opaque fallback; root `--format`; `NativeIrIT`. |
-| Phases 12–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
+| Phase 12 code | **LANDED** | Hand-rolled stdio MCP; `ProxyService`; tools `run`/`explain`/`read`; resources `gain`/`doctor`; `NativeMcpIT`. |
+| Phases 13–17 code | **NOT STARTED** | Each needs its own plan-then-approve cycle |
 | Phase 1–10 audit | **COMPLETED** | Independent re-read of plans, tree, local `mvn test` (510 / 0 / 0 / 9 on this Windows JVM; 9 skips are POSIX `CommandExecutorTest`), and CI 33950449575. |
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
 | This handoff | **CURRENT** | Corrected 5 Sep 2026 so §4 matches the live tree. |
 
-**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p11` are marked `completed`, `p12`–`p17` `pending`. **That file is untracked and local-only (see §3).**
+**Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p12` are marked `completed`, `p13`–`p17` `pending`. **That file is untracked and local-only (see §3).**
 
 ---
 
 ## 9. The 17-phase roadmap — all phases, statuses preserved
 
-**Phase 1 through Phase 11 code have landed.** Phases 12–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
+**Phase 1 through Phase 12 code have landed.** Phases 13–17 have not been implemented. Each remaining phase still needs its own plan-then-approve cycle.
 
 The phase count was derived from real architectural dependencies, not padded or compressed. **Do not renumber, merge, split, or reorder phases** without an explicit decision from the user.
 
@@ -785,7 +786,9 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 ### Phase 12 — MCP server as the agent-native path
 
-**Status: PENDING**
+**Status: LANDED** (5 Sep 2026)
+
+**Shipped.** Hand-rolled stdio JSON-RPC 2.0 (no MCP Java SDK). Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Tools `run` / `explain` / `read` reuse `ProxyService`, `ExplainService`, `ReadService`. Resources `condense://gain` and `condense://doctor`. `run` returns the Phase 11 envelope; child exit ≠ 0 is not `isError`. MCP paths go through `ReadPathGate`. `McpCommand` is `@Unremovable`. Logs on stderr. Native proof is `NativeMcpIT`. Spec: [docs/mcp.md](docs/mcp.md).
 
 **Goal.** Replace the `McpCommand` stub with a real stdio MCP server, so agents consume Condense as tools and resources rather than through brittle shell-hook command rewriting.
 
@@ -977,6 +980,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 | Phase 3 catalog covers 32 domain filters | `CorpusCoverageTest` plus `grep implements FilterStrategy` |
 | Phase 3 floors match measured savings | `FidelityCorpusTest` printed table, 4 Sep 2026; floors baked as measured−5 or 60 |
 | Phase 3 fuzz does not change filters | `git diff` on `src/main/java/com/condense/filter` is empty for this phase |
+| Phase 12 MCP is stdio JSON-RPC, not a stub | `McpServerTest` / `McpHandlersTest` green on this Windows JVM; `NativeMcpIT` is Failsafe `*IT.java` |
 
 **Not verified in this workspace (and why):** no native binary was built here (this is a Windows dev box without the GraalVM native toolchain). Native-image claims for the current tree come from [Build & Test run 33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575) plus the workflow/POM/Graal files. Check the latest Actions run before starting new work.
 
@@ -984,9 +988,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Phase 1–11 code landed. Audit remediation R0–R12 landed 5 Sep 2026 (hygiene, not a new numbered phase). Filtered runs attach a schema-1 `Document`; default CLI stays compact text. This Windows workspace does not build native images.
+**Where we are.** Phase 1–12 code landed. Audit remediation R0–R12 landed 5 Sep 2026 (hygiene, not a new numbered phase). `condense mcp --start` speaks MCP on stdio; `run` returns the schema-1 IR envelope. This Windows workspace does not build native images.
 
-**Do not start Phase 12 code.** Present a complete Phase 12 plan (constraint #9) and wait for a fresh "proceed".
+**Do not start Phase 13 code.** Present a complete Phase 13 plan (constraint #9) and wait for a fresh "proceed".
 
 ---
 
@@ -1007,8 +1011,8 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Phase 11 code has landed. Confirm `NativeIrIT` appears in native job logs, `GoldenLockTest` is green, and `condense --format json --help` exists.
-9. **Do not start Phase 12 code.** Present a complete Phase 12 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
+8. Phase 12 code has landed. Confirm `NativeMcpIT` appears in native job logs, `GoldenLockTest` is green, and `condense mcp --help` mentions `--start`.
+9. **Do not start Phase 13 code.** Present a complete Phase 13 plan containing all six required elements (constraint #9) and wait for a fresh "proceed". Repeat for all remaining phases.
 
 **Standing rules while working**
 

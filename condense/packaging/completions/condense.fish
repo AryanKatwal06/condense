@@ -17,6 +17,7 @@ complete -c condense -n '__fish_use_subcommand' -a explain -d 'Show which filter
 complete -c condense -n '__fish_use_subcommand' -a read    -d 'Read a source file with comment-strip or outline'
 complete -c condense -n '__fish_use_subcommand' -a init   -d 'Install AI tool hooks'
 complete -c condense -n '__fish_use_subcommand' -a config -d 'Read and write configuration'
+complete -c condense -n '__fish_use_subcommand' -a mcp    -d 'MCP server over stdio'
 
 # Proxy commands
 for cmd in git cargo pytest go npm docker kubectl aws ls grep rg find cat make mvn gradle
@@ -63,3 +64,5 @@ complete -c condense -n '__fish_seen_subcommand_from config' -l get   -d 'Get ke
   -a 'tee.enabled tee.mode hooks.exclude_commands'
 complete -c condense -n '__fish_seen_subcommand_from config' -l set   -d 'Set key=value' -r
 complete -c condense -n '__fish_seen_subcommand_from config' -l reset -d 'Reset to defaults'
+
+complete -c condense -n '__fish_seen_subcommand_from mcp' -l start -d 'Start the MCP server on stdin/stdout'

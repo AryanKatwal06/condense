@@ -22,6 +22,9 @@ condense \- high-performance CLI proxy that filters command output to save AI to
 .br
 .B condense config
 [\fIOPTIONS\fR]
+.br
+.B condense mcp
+[\fI\-\-start\fR]
 .SH DESCRIPTION
 .B condense
 is a CLI proxy that sits between your AI coding assistant and the shell.
@@ -81,6 +84,11 @@ to uninstall.
 Read and write Condense configuration. Use \fBcondense config \-\-list\fR,
 \fBcondense config \-\-get KEY\fR, \fBcondense config \-\-set KEY=VALUE\fR,
 or \fBcondense config \-\-reset\fR.
+.TP
+.B condense mcp
+Print an MCP client snippet, or start the stdio JSON-RPC server with
+\fBcondense mcp \-\-start\fR. Tools are \fBrun\fR, \fBexplain\fR, and
+\fBread\fR. Resources are \fBcondense://gain\fR and \fBcondense://doctor\fR.
 .SH EXAMPLES
 .TP
 Filter git status:
@@ -103,6 +111,9 @@ Show token savings dashboard:
 .TP
 30\-day savings graph:
 .B condense gain \-\-graph
+.TP
+Start the MCP server on stdio:
+.B condense mcp \-\-start
 .TP
 Install AI tool hooks:
 .B condense init \-g

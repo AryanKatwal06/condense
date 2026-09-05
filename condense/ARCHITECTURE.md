@@ -19,7 +19,8 @@ condense --version / --help
         ├── ConfigLoader → reads ~/.config/condense/config.toml (or platform equivalent)
         │     └── CondenseConfig (record) + TeeMode (enum)
         ├── PlatformDirs → resolves config/data dirs per OS
-        └── TrackingRepository → SQLite at {dataDir}/condense.db (user_version, WAL, retention)
+        ├── TrackingRepository → SQLite at {dataDir}/condense.db (user_version, WAL, retention)
+        └── McpCommand --start → hand-rolled stdio JSON-RPC (tools run/explain/read, resources gain/doctor)
 ```
 
 ## File Responsibilities
@@ -27,7 +28,10 @@ condense --version / --help
 | File | Package | Responsibility |
 |------|---------|---------------|
 | `CondenseMain.java` | `com.condense` | Quarkus entry point; wires picocli `CommandLine` with CDI factory |
-| `CondenseRootCommand.java` | `com.condense` | Root `@Command`; handles `--help`, `--version`, `-v`, `-u`, `--format` |
+| `CondenseRootCommand.java` | `com.condense` | Root `@Command`; handles `--help`, `--version`, `-v`, `-u`, `--format`; delegates proxy runs to `ProxyService` |
+| `ProxyService.java` | `com.condense.core` | Shared proxy engine for the CLI and the MCP `run` tool |
+| `McpCommand.java` | `com.condense.commands` | `condense mcp` — config snippet, or `--start` for stdio JSON-RPC |
+| `McpServer.java` / `McpHandlers.java` | `com.condense.mcp` | Newline-delimited JSON-RPC loop and closed tool/resource switch |
 | `VersionProvider.java` | `com.condense` | Reads version from `version.properties`; implements `IVersionProvider` |
 | `PlatformDirs.java` | `com.condense.core` | OS-specific path resolution, overridable via `CONDENSE_CONFIG_DIR` / `CONDENSE_DATA_DIR` |
 | `CondenseConfig.java` | `com.condense.core` | Root config record with `HooksConfig` and `TeeConfig` nested records |
@@ -71,6 +75,8 @@ condense --version / --help
 11. **Derived streaming**: Each `FilterStage` declares `streamability()`. The pipeline is STREAM only when every stage is `order_local` or `windowed`; otherwise CAPTURE. `CondenseRootCommand` live-prints STREAM and unmatched passthrough (`LIVE_RAW`) through `StreamingProxy`. Capture-to-disk remains the tee/token/fail-open backstop. See `docs/streaming.md`.
 
 12. **Structured diagnostics IR**: Exemplar stages populate a `DocumentBuilder` sidecar on `FilterContext`. `TextRenderer` is the default CLI; `JsonRenderer` emits schema 1. Everyone else, gates, and IR-build failures wrap existing text as `kind=opaque`. `--format json` waits for the child to exit. See `docs/ir.md`.
+
+13. **MCP over stdio**: `condense mcp --start` is a hand-rolled JSON-RPC server (no extra Maven dependency). `run` returns the Phase 11 envelope; `explain` / `read` / `gain` / `doctor` reuse existing records. MCP paths go through `ReadPathGate`. Logs go to stderr so stdout stays JSON-RPC-only. See `docs/mcp.md`.
 
 ## Technology Stack
 
