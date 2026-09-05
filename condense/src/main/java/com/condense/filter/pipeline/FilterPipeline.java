@@ -49,6 +49,33 @@ public class FilterPipeline {
     }
 
     /**
+     * Live-print capability derived from every stage's {@link FilterStage#streamability()}.
+     * Empty pipelines are identity and therefore {@link PipelineMode#STREAM}.
+     */
+    public PipelineMode mode() {
+        if (stages.isEmpty()) {
+            return PipelineMode.STREAM;
+        }
+        for (FilterStage stage : stages) {
+            Streamability streamability = stage.streamability();
+            if (streamability == Streamability.DOCUMENT
+                || streamability == Streamability.FINALIZE_ONLY) {
+                return PipelineMode.CAPTURE;
+            }
+        }
+        return PipelineMode.STREAM;
+    }
+
+    /**
+     * Incremental replay of the same stages. Until stages grow real sessions this
+     * is {@link DocumentSession} wrapping {@link FilterStage#process}, so output
+     * must match {@link #execute}.
+     */
+    public String executeIncremental(String input, FilterContext context) {
+        return walkSessions(input, context).output();
+    }
+
+    /**
      * Executes all stages in sequence on the given input text.
      *
      * <p>If any stage throws an exception, it is caught, logged, and execution continues
@@ -141,6 +168,36 @@ public class FilterPipeline {
             }
         }
         return new PipelineTrace(current, traces == null ? List.of() : traces, shortCircuited);
+    }
+
+    private CollectingSink walkSessions(String input, FilterContext context) {
+        String current = input != null ? input : "";
+        FilterContext ctx = context != null ? context : FilterContext.empty();
+        CollectingSink last = new CollectingSink();
+        last.emitDocument(current);
+        boolean skipping = false;
+
+        for (FilterStage stage : stages) {
+            if (skipping) {
+                continue;
+            }
+            CollectingSink sink = new CollectingSink();
+            try {
+                StageSession session = stage.openSession();
+                session.acceptDocument(current, sink, ctx);
+            } catch (Exception e) {
+                log.warnf("Stage %s threw an exception during pipeline execution: %s",
+                    stage.stageId(), e.getMessage());
+                ctx.recordIncident(FilterIncident.stageException(stage.stageId(), e.getMessage()));
+                continue;
+            }
+            current = sink.output();
+            last = sink;
+            if (sink.isShortCircuited()) {
+                skipping = true;
+            }
+        }
+        return last;
     }
 
     public static final class Builder {

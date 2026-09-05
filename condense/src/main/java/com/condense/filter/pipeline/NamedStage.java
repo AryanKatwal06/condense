@@ -44,4 +44,14 @@ public final class NamedStage implements FilterStage {
     public String stageId() {
         return id;
     }
+
+    @Override
+    public Streamability streamability() {
+        return delegate.streamability();
+    }
+
+    @Override
+    public StageSession openSession() {
+        return delegate.openSession();
+    }
 }

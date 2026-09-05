@@ -36,4 +36,19 @@ public interface FilterStage {
         String simple = getClass().getSimpleName();
         return simple == null || simple.isBlank() ? getClass().getName() : simple;
     }
+
+    /**
+     * How this stage may emit relative to input arrival. Default is
+     * {@link Streamability#DOCUMENT} so an unmarked stage cannot go live by accident.
+     */
+    default Streamability streamability() {
+        return Streamability.DOCUMENT;
+    }
+
+    /**
+     * Per-invocation state. Default buffers the document and calls {@link #process}.
+     */
+    default StageSession openSession() {
+        return new DocumentSession(this);
+    }
 }
