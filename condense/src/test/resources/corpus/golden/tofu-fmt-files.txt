@@ -1,0 +1,4 @@
+condense[filtered]
+main.tf
+variables.tf
+modules/vpc/main.tf

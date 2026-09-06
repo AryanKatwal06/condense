@@ -1,0 +1,3 @@
+condense[filtered]
+Plan: 1 to add, 0 to change, 0 to destroy
+aws_instance.web create

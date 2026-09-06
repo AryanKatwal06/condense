@@ -1,0 +1,2 @@
+condense[filtered]
+  Terraform has been successfully initialized! : 1

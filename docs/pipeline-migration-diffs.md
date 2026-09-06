@@ -60,3 +60,11 @@ reason here. Unexplained golden edits fail review.
 | npm-install/typical | Phase 9 streams irrevocable `npm warn` lines plus the existing summary |
 | npm-install/with-vulns | Phase 9 streams irrevocable `npm warn` lines plus the existing summary |
 | docker-build/typical | Phase 9 streams `#N DONE` step completions plus the existing summary |
+| terraform/plan-json | New superiority Phase 4 row. Machine-UI NDJSON plan becomes infra resource text |
+| terraform/validate-json | New superiority Phase 4 row. Validate JSON becomes diagnostic text |
+| terraform/init-text | New superiority Phase 4 row. Grouping keeps the initialized line |
+| terraform-fmt/files | New superiority Phase 4 row. Fmt filenames stay identity (`too_small`) |
+| terraform-state/typical | New superiority Phase 4 row. State list grouped by type (`too_small`) |
+| tofu/plan-json | New superiority Phase 4 row. OpenTofu machine-UI plan |
+| tofu-fmt/files | New superiority Phase 4 row. Same fmt identity as terraform-fmt |
+| tofu-state/typical | New superiority Phase 4 row. Same state-list grouping as terraform-state |

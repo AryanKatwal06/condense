@@ -1,0 +1,10 @@
+{
+  "zap_commit": "d9498bb",
+  "commands": [
+    "terraform plan",
+    "tofu fmt",
+    "tofu init",
+    "tofu plan",
+    "tofu validate"
+  ]
+}

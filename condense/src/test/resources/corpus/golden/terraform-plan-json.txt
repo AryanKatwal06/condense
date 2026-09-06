@@ -1,0 +1,8 @@
+condense[filtered]
+Plan: 2 to add, 1 to change, 2 to destroy, 1 to replace
+aws_instance.web create
+aws_security_group.web update
+aws_eip.old delete
+aws_instance.api replace (cannot_update)
+aws_s3_bucket.logs update
+aws_instance.web error (Missing required argument)

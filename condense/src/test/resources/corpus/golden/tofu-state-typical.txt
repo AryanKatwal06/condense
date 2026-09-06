@@ -1,0 +1,14 @@
+condense[filtered]
+7 resources in 5 types
+aws_instance: 2
+aws_subnet: 2
+aws_security_group: 1
+aws_s3_bucket: 1
+aws_ami: 1
+aws_instance.web
+aws_instance.api
+aws_security_group.web
+aws_s3_bucket.logs
+module.vpc.aws_subnet.private[0]
+module.vpc.aws_subnet.private[1]
+data.aws_ami.ubuntu
