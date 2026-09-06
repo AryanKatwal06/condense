@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 6 September 2026 (superiority Phase 1 reliability contract).
+**Written:** 4 September 2026. **Revised:** 6 September 2026 (superiority Phase 2 durable-state harness).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -342,8 +342,15 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | S3 | ~~Invalid UTF-8 vanished via `Files.readString`~~ **FIXED** | UTF-8 replacement decode | Superiority Phase 1 |
 | S4 | ~~Self-proxy guard only matched the token `condense`~~ **FIXED** | File name + PATH/PATHEXT + current process; `SelfProxyGuardTest` | Superiority Phase 1 |
 | S5 | ~~`Utf8LineDecoder` current line unbounded~~ **FIXED** | 1 MiB line cap; `Utf8LineDecoderBoundTest` | Superiority Phase 1 |
+| S6 | ~~No injectable clock; retention/tee/trust/insert used `System.currentTimeMillis`~~ **FIXED** | `CondenseClock`; `ClockJumpRetentionTest` | Superiority Phase 2 |
+| S7 | ~~No injectable filesystem; atomic writes were four divergent snippets~~ **FIXED** | `DurableIo` + `AtomicFile`; last-good bytes on injected failure | Superiority Phase 2 |
+| S8 | ~~Third-party hook configs truncated in place~~ **FIXED** | `HookInstaller.writeThirdPartyConfig` uses `AtomicFile` | Superiority Phase 2 |
+| S9 | ~~Override cache never went stale~~ **FIXED** | mtime+size freshness; `OverrideCacheFreshnessTest` | Superiority Phase 2 |
+| S10 | ~~`reasonFor()` always `no_match` after a matching def; `hash-mismatch` collapsed to `untrusted`~~ **FIXED** | `pipeline_build_failed` / `hash_mismatch` | Superiority Phase 2 |
+| S11 | ~~Corrupt ledger JSON reset the loss count to 0~~ **FIXED** | last-good in-memory snapshot; `ledger_unwritable` doctor warning | Superiority Phase 2 |
+| S12 | ~~Doctor did not name orphan tmp / ledger-unwritable / integrity-check modes~~ **FIXED** | `durable-fault-contract.json` + doctor string match | Superiority Phase 2 |
 
-The executable contract is `condense/src/test/resources/reliability/failure-contract.json` plus `docs/reliability.md`. Native proof is `NativeReliabilityIT`.
+The executable proxy contract is `condense/src/test/resources/reliability/failure-contract.json` plus `docs/reliability.md`. The durable-state contract is `durable-fault-contract.json` plus `docs/durability.md`. Native proof is `NativeReliabilityIT` and `NativeChaosIT`.
 
 ### Known test-coverage gaps (from the filter-subsystem audit)
 
@@ -444,7 +451,9 @@ Planning plus Phase 1 through Phase 17 code, then an independent audit of Phases
 | Audit remediation R0–R12 | **LANDED** | Hygiene train, not a new numbered phase. |
 | Phase 11–15 audit | **COMPLETED** | Re-read of approved plans, tree, local `mvn test` (**594 / 1 / 0 / 10** on this Windows JVM at that date — the 1 was `TrackingConcurrencyTest` / `SQLITE_READONLY`; **R16** makes loss visible instead of requiring 200 rows), and CI [33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (**594 / 0 / 0 / 1** JVM on Linux). |
 | Audit remediation R13–R26 | **LANDED** | Round 2 hygiene. **R25** semantic savings stays deferred. D29 closed in Phase 17. |
-| This handoff | **CURRENT** | Corrected 5 Sep 2026 (R13) so §4 matches the live tree again. |
+| Superiority Phase 1 | **LANDED** | Proxy reliability catalog; fail-open drain/timeout/cap; `NativeReliabilityIT`. |
+| Superiority Phase 2 | **LANDED** | Durable-state chaos harness (`DurableIo`, `AtomicFile`, `CondenseClock`); `durable-fault-contract.json`; `NativeChaosIT`. Schema target stays 2. |
+| This handoff | **CURRENT** | Corrected 6 Sep 2026 so §4 / §13 match superiority Phase 2. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p17` are marked `completed`. **That file is untracked and local-only (see §3).**
 
@@ -1024,9 +1033,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Superiority **Phase 1** (permanent reliability contract) has landed on top of the completed 17-phase product roadmap. Drain I/O is fail-open, timeout appends instead of replacing stderr, captures decode with UTF-8 replacement, self-proxy matches the shipped binary names, and `Utf8LineDecoder` caps the current line at 1 MiB. The catalog is `failure-contract.json`. Native proof is `NativeReliabilityIT` (this Windows workspace does not build native images; the next Actions run after push is the native gate). Round 2 **R25** (semantic savings) stays deferred.
+**Where we are.** Superiority **Phase 2** (chaos and durable-state harness) has landed on top of Phase 1's reliability contract and the completed 17-phase product roadmap. Durable writes go through `AtomicFile` / `DurableIo`. Clock-sensitive paths use `CondenseClock`. SQLite opens with `PRAGMA integrity_check` and still uses `new org.sqlite.JDBC()`. The catalog is `durable-fault-contract.json`. Native proof is `NativeChaosIT` (this Windows workspace does not build native images; the next Actions run after push is the native gate). Schema target stays **2**. Round 2 **R25** (semantic savings) stays deferred.
 
-**Do not plan or implement superiority Phase 2** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
+**Do not plan or implement superiority Phase 3** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
 
 ---
 
@@ -1047,7 +1056,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Superiority Phase 1 has landed. Confirm `mvn test` is green, `FailureContractCatalogTest` maps every `failure-contract.json` id, and `NativeReliabilityIT` is on the Failsafe `*IT.java` path. Do not start superiority Phase 2 from this stop point unless the user explicitly asks.
+8. Superiority Phase 2 has landed. Confirm `mvn test` is green, `DurableFaultCatalogTest` maps every `durable-fault-contract.json` id, and `NativeChaosIT` is on the Failsafe `*IT.java` path. Do not start superiority Phase 3 from this stop point unless the user explicitly asks.
 9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
 10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 

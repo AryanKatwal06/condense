@@ -17,10 +17,11 @@ connection = driver.connect(url, new java.util.Properties());
 
 1. `PRAGMA busy_timeout = 5000`
 2. `PRAGMA journal_mode = WAL` (fail-open if the filesystem cannot do WAL)
-3. Forward-only schema migration
-4. Retention prune
+3. `PRAGMA integrity_check` — if the result is not `ok`, the repository marks degraded, skips migrate, and the proxy stays fail-open
+4. Forward-only schema migration
+5. Retention prune and a bounded orphan sweep of known Condense temp files
 
-WAL plus `busy_timeout` is the multi-process contract: two agent sessions can share one database. One `TrackingRepository` instance is still single-threaded. Analytics `insert` retries `SQLITE_BUSY` / `SQLITE_LOCKED` only. `SQLITE_READONLY` is not retried. Lost writes stay fail-open (they never change a child exit code) and are counted in `{dataDir}/write-failures.json` so `condense doctor` can see them after a restart. Schema target stays 2.
+WAL plus `busy_timeout` is the multi-process contract: two agent sessions can share one database. One `TrackingRepository` instance is still single-threaded. Analytics `insert` retries `SQLITE_BUSY` / `SQLITE_LOCKED` only. `SQLITE_READONLY` is not retried. Lost writes stay fail-open (they never change a child exit code) and are counted in `{dataDir}/write-failures.json` so `condense doctor` can see them after a restart. Durable replacements go through `AtomicFile` (temp in the same directory, then rename). Timestamps for retention, tee names, trust pins, and inserts use `CondenseClock`. Schema target stays 2. See [docs/durability.md](durability.md).
 
 ## Schema version
 
