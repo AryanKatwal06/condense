@@ -8,7 +8,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 - Drain I/O no longer becomes Condense exit 1. Partial capture bytes are kept, a provenance-marked `condense: stdout drain failed` / `stderr drain failed` line is appended to stderr, and the child's exit is preserved when it can be reaped.
-- Timeout no longer replaces stderr. The timeout diagnostic is appended after the child's prior stderr bytes, and stdout is kept. See [docs/reliability.md](docs/reliability.md).
+- Timeout no longer replaces stderr. The timeout diagnostic is appended after the child's prior stderr bytes, and stdout is kept. The CLI process exits 124 on timeout (Quarkus treats in-process `-1` as success). See [docs/reliability.md](docs/reliability.md).
 - Invalid UTF-8 in capture files is decoded with replacement instead of vanishing into an empty string.
 - Self-proxy refusal matches `condense.exe` / `condense-runner` paths, not only the token `condense`.
 - `Utf8LineDecoder` caps the current line at 1 MiB so a giant STREAM line cannot grow without bound.

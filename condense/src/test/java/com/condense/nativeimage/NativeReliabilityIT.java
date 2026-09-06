@@ -63,12 +63,14 @@ class NativeReliabilityIT {
             Map.of(com.condense.core.CommandExecutor.TIMEOUT_ENV, "1"),
             "sleepy"
         );
+        String combined = result.stdout() + "\n" + result.stderr();
         assertThat(result.exitCode())
-            .as("stdout=%s stderr=%s", result.stdout(), result.stderr())
-            .isEqualTo(-1);
-        assertThat(result.stderr()).contains("prior-stderr");
-        assertThat(result.stderr()).contains("timed out");
-        assertThat(result.stdout()).contains("prior-stdout");
+            .as("Quarkus maps in-process -1 to 0; CLI must emit 124. stdout=%s stderr=%s",
+                result.stdout(), result.stderr())
+            .isEqualTo(com.condense.core.CommandExecutor.OS_DESTROYED_EXIT);
+        assertThat(combined).contains("prior-stdout");
+        assertThat(combined).contains("prior-stderr");
+        assertThat(combined).contains("timed out");
     }
 
     @Test
@@ -103,7 +105,8 @@ class NativeReliabilityIT {
         assertThat(result.stderr())
             .as("stdout=%s stderr=%s", result.stdout(), result.stderr())
             .contains("condense: output capped at 10MB");
-        assertThat(result.exitCode()).isIn(-1, 1, 7);
+        assertThat(result.exitCode()).isIn(
+            com.condense.core.CommandExecutor.OS_DESTROYED_EXIT, 1, 7);
     }
 
     @Test

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,9 +83,7 @@ public final class StreamingProxy {
         LiveSession live = new LiveSession(pipeline, command, config, verbose, ultraCompact, liveOut);
         ExecutionResult result = executor.execute(args, CommandExecutor.resolveProxyTimeout(), live);
         live.finishDecoders();
-        if (live.capped && err != null && !err.checkError()) {
-            err.println("condense: output capped at 10MB");
-        }
+        printExecutorDiagnostics(result, err);
         FilterResult gate = pipelineFilter.evaluateGate(command, result, config, verbose, ultraCompact);
         if (gate != null && !live.emittedAny) {
             FilterResult gated = gate.withDocument(Documents.fromResult(command, filterName, result, gate));
@@ -152,12 +151,22 @@ public final class StreamingProxy {
         RawSession raw = new RawSession(liveOut);
         ExecutionResult result = executor.execute(args, CommandExecutor.resolveProxyTimeout(), raw);
         raw.finish();
-        if (raw.capped && err != null && !err.checkError()) {
-            err.println("condense: output capped at 10MB");
-        }
+        printExecutorDiagnostics(result, err);
         FilterResult passthrough = FilterResult.passthrough(result)
             .withDocument(Documents.fromResult(command, "passthrough", result, FilterResult.passthrough(result)));
         return new StreamedRun(passthrough, result, !suppressLivePrint);
+    }
+
+    private static void printExecutorDiagnostics(ExecutionResult result, PrintStream err) {
+        if (err == null || err.checkError() || result == null) {
+            return;
+        }
+        if (result.termination() == TerminationReason.OUTPUT_CAP) {
+            err.println("condense: output capped at 10MB");
+        }
+        if (result.termination() == TerminationReason.TIMEOUT) {
+            err.println(CommandExecutor.timeoutMessage(Duration.ofMillis(Math.max(0, result.durationMs()))));
+        }
     }
 
     private static int tokenCount(ExecutionResult result) {

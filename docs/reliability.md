@@ -7,7 +7,8 @@ Condense is a proxy. The child’s observable status and the bytes already captu
 | Code | Meaning |
 |---|---|
 | Child `exitValue()` | The process was reaped and Condense did not invent a status. Drain faults, a broken consumer pipe, and filter/analytics failures must not replace this. |
-| `-1` | Condense destroyed the child or could not reap a status. Used for timeout, output cap when the child was killed, drain failure when no status is available, and JVM shutdown (`DESTROYED`). |
+| `-1` (in-process) | `ExecutionResult.exitCode()` when Condense destroyed the child or could not reap a status (timeout, cap-kill, unreaped drain, shutdown). Never inferred from `-1` alone — see `termination()`. |
+| `124` (CLI process) | `QuarkusApplication.run` treats `-1` as the unset default and would exit 0. The CLI therefore maps in-process `-1` to 124 (GNU `timeout`). Agents see a non-zero status. |
 | `1` from Condense itself | Launch error only. Empty argv, self-proxy refusal, and `ProcessBuilder.start()` failure. Not used for stream I/O faults after the child has started. |
 
 `ExecutionResult.termination()` is a closed enum: `CHILD_EXIT`, `TIMEOUT`, `OUTPUT_CAP`, `DRAIN_ERROR`, `DESTROYED`. It is never inferred from `-1` alone. Schema-1 JSON may include `termination` on the document envelope; it is omitted for a normal `CHILD_EXIT`.
@@ -31,7 +32,7 @@ to the **stderr** capture (append, never replace stdout or prior stderr), and re
 condense: command timed out after Ns
 ```
 
-is **appended** to the existing stderr file. Bytes the child already wrote on stdout and stderr stay. Exit `-1`, reason `TIMEOUT`.
+is **appended** to the existing stderr file. Bytes the child already wrote on stdout and stderr stay. In-process exit `-1`, reason `TIMEOUT`. The CLI process exits 124.
 
 ### Output cap
 

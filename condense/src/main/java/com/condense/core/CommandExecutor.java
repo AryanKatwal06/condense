@@ -35,6 +35,20 @@ public class CommandExecutor {
     public static final String STDOUT_DRAIN_FAILED = "condense: stdout drain failed";
     public static final String STDERR_DRAIN_FAILED = "condense: stderr drain failed";
 
+    /**
+     * Process-visible stand-in for in-process exit {@code -1}. QuarkusApplication
+     * treats {@code -1} as the unset default and exits 0. GNU {@code timeout} uses 124.
+     */
+    public static final int OS_DESTROYED_EXIT = 124;
+
+    /**
+     * Map an {@link ExecutionResult#exitCode()} onto a value safe to return from
+     * {@link io.quarkus.runtime.QuarkusApplication#run(String...)}.
+     */
+    public static int toOsExitCode(int exitCode) {
+        return exitCode < 0 ? OS_DESTROYED_EXIT : exitCode;
+    }
+
     private static final Set<String> SELF_BINARY_NAMES = Set.of(
         "condense",
         "condense.exe",
@@ -320,7 +334,7 @@ public class CommandExecutor {
         );
     }
 
-    private static String timeoutMessage(Duration timeout) {
+    static String timeoutMessage(Duration timeout) {
         long seconds = timeout == null ? 0 : timeout.toSeconds();
         return String.format("condense: command timed out after %ds", seconds);
     }

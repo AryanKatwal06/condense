@@ -20,7 +20,7 @@ An override that swaps a streamable summary for `grouping` becomes CAPTURE autom
 
 The proxy waits until the child exits unless `CONDENSE_COMMAND_TIMEOUT_SEC` is a positive integer. Live `condense explain` (no `--input` / `--stdin`) uses the same `resolveProxyTimeout()` as the proxy. `CommandExecutor.execute(args)` without a duration still defaults to 60 seconds for tests.
 
-On timeout, Condense destroys the child tree, joins drain threads, and **appends** `condense: command timed out after Ns` to the existing stderr capture. Bytes the child already wrote are kept. Exit is `-1` with termination `TIMEOUT`.
+On timeout, Condense destroys the child tree, joins drain threads, and **appends** `condense: command timed out after Ns` to the existing stderr capture. Bytes the child already wrote are kept. In-process exit is `-1` with termination `TIMEOUT`. The CLI process exits 124 (Quarkus would turn `-1` into 0). STREAM/LIVE_RAW also prints that diagnostic to process stderr.
 
 If either stream exceeds 10 MB, Condense stops capturing, destroys the child, prints `condense: output capped at 10MB` to stderr, and keeps whatever exit code the child produced (or `-1` if it was killed). Termination is `OUTPUT_CAP`. It does not replace that code with a generic error 1.
 

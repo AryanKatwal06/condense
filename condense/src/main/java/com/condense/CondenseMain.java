@@ -31,8 +31,8 @@ public class CondenseMain implements QuarkusApplication {
         // If the root command stored a passthrough exit code, use that instead
         Object result = cmd.getExecutionResult();
         if (result instanceof Integer passthroughExit) {
-            return passthroughExit;
+            exitCode = passthroughExit;
         }
-        return exitCode;
+        return com.condense.core.CommandExecutor.toOsExitCode(exitCode);
     }
 }

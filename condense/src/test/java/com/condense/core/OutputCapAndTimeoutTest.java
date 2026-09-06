@@ -110,4 +110,11 @@ class OutputCapAndTimeoutTest {
         assertThat(result.readStderr()).contains("timed out");
         assertThat(result.durationMs()).isLessThan(8_000);
     }
+
+    @Test
+    void negativeInProcessExitBecomesOs124() {
+        assertThat(CommandExecutor.toOsExitCode(-1)).isEqualTo(CommandExecutor.OS_DESTROYED_EXIT);
+        assertThat(CommandExecutor.toOsExitCode(0)).isEqualTo(0);
+        assertThat(CommandExecutor.toOsExitCode(7)).isEqualTo(7);
+    }
 }
