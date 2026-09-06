@@ -1,6 +1,6 @@
 # Filter schema v1
 
-Builtin pipelines and user overrides share one schema. Data is interpreted by a hardcoded `StageFactory` switch. A TOML file cannot name a Java class. A leftover builtin definition **can** register commands: if none of its `commands` already belong to a `@CommandFilter` bean, `StrategyRegistry` constructs a `CatalogBackedFilter` for that definition name. Existing Java-backed rows stay on their beans. A `gate` key in a user override is still an unknown-key reject.
+Builtin pipelines and user overrides share one schema. Data is interpreted by the generated `StageFactory` registry (see [generated/stage-inventory.md](generated/stage-inventory.md)). A TOML file cannot name a Java class. A leftover builtin definition **can** register commands: if none of its `commands` already belong to a `@CommandFilter` bean, `StrategyRegistry` constructs a `CatalogBackedFilter` for that definition name. Existing Java-backed rows stay on their beans. A `gate` key in a user override is still an unknown-key reject.
 
 ## Two document types
 
@@ -74,7 +74,7 @@ Override files without `schema_version` fail-open at runtime.
 
 ## Stage vocabulary
 
-Generic aliases (canonical snake_case; hyphen/short aliases exist for the original six):
+The live alias list is generated from `@DeclarativeStage` and checked in CI: [generated/stage-inventory.md](generated/stage-inventory.md). Parameter notes for the generic stages:
 
 | Strategy | Parameters |
 |---|---|
@@ -88,10 +88,7 @@ Generic aliases (canonical snake_case; hyphen/short aliases exist for the origin
 | `regex_capture` | `pattern`, `format` (`$1`, `$0`), `fallback` |
 | `git_status`, `json_lines`, `docker_ps` | none |
 
-Named command-specific aliases (no user params; trusted Java):  
-`git_add_summary`, `git_commit_summary`, `git_diff_summary`, `git_log`, `git_push_summary`, `ls_empty_tree_fallback`, `cat_content`, `docker_build_summary`, `kubectl_dispatch`, `cargo_clippy_summary`, `cargo_install_summary`, `cargo_test_summary`, `gradle_summary`, `make_summary`, `mvn_summary`, `eslint_json`, `eslint_text`, `jest_summary`, `npm_install_summary`, `tsc_summary`, `vitest_summary`, `golangci_summary`, `pip_install_summary`, `pytest_summary`, `ruff_summary`.
-
-User overrides may use any alias in v1. Project files still need a matching capability grant (`reduce` / `reshape` / `rewrite`). See [trust.md](trust.md).
+Named command-specific aliases take no user params. User overrides may use any alias in v1. Project files still need a matching capability grant (`reduce` / `reshape` / `rewrite`). See [trust.md](trust.md) and [schema-lifecycle.md](schema-lifecycle.md).
 
 ## Builtin-only optional keys
 
@@ -110,4 +107,4 @@ Prefer a leftover catalog definition (no Java class):
 2. Append the name to `filters/index.toml`.
 3. Add corpus fixtures, a `catalog.json` row, and a golden lock. See [fidelity-corpus.md](fidelity-corpus.md) and [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Add a `PipelineBackedFilter` with `@CommandFilter` only when you need a handwritten gate, a new `StageFactory` alias, or a router. Do not override `buildPipeline()`. New Java is otherwise needed only when `StageFactory` lacks a stage.
+Add a `PipelineBackedFilter` with `@CommandFilter` only when you need a handwritten gate, a new `@DeclarativeStage`, or a router. Do not override `buildPipeline()`. New Java is otherwise needed only when no existing stage alias fits.

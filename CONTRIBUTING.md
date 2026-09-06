@@ -34,7 +34,7 @@ See [docs/perf-baseline.md](docs/perf-baseline.md) for the CI gates (relative JV
 
 **Contribution Bar:** A new compressing filter must add a row to `condense/src/test/resources/corpus/catalog.json` with `savings_floor` ≥ 60, measured with `utf8_weighted_v1` (see [docs/token-estimator.md](docs/token-estimator.md) and [docs/fidelity-corpus.md](docs/fidelity-corpus.md)). `FidelityCorpusTest` enforces 100% critical-signal retention. Entries that structurally cannot compress must declare `savings_exemption` (`passthrough`, `too_small`, `verbose_mode`, `failure_verbatim`, `intentional_identity`). Do not set `meets_contribution_bar: false` on new work — that flag is only for grandfathered fixtures that already shipped below 60%.
 
-Adding support for a new command (e.g. `helm install`) is **catalog-only by default**. Write `filters/helm.toml`, list it in `index.toml`, and add a corpus row. `StrategyRegistry` registers leftover `commands` on a `CatalogBackedFilter` host. Do **not** add a Java `@CommandFilter` class unless you need a handwritten gate, a new `StageFactory` alias, or a router. See [docs/filter-schema.md](docs/filter-schema.md).
+Adding support for a new command (e.g. `helm install`) is **catalog-only by default**. Write `filters/helm.toml`, list it in `index.toml`, and add a corpus row. `StrategyRegistry` registers leftover `commands` on a `CatalogBackedFilter` host. Do **not** add a Java `@CommandFilter` class unless you need a handwritten gate, a new `@DeclarativeStage`, or a router. See [docs/filter-schema.md](docs/filter-schema.md).
 
 ### 1. Write the builtin definition and list it in the index
 
