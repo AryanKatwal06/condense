@@ -47,6 +47,11 @@ definitions = [
   "rubocop",
   "ruff",
   "terraform",
+  "terraform-fmt",
+  "terraform-state",
+  "tofu",
+  "tofu-fmt",
+  "tofu-state",
   "tsc",
   "vitest",
   "wget"

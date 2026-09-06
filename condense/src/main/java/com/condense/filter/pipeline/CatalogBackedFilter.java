@@ -70,6 +70,7 @@ public final class CatalogBackedFilter extends PipelineBackedFilter {
         }
         return switch (key) {
             case BuiltinDefinition.SELECT_STDERR_THEN_STDOUT -> stderrThenStdout(result);
+            case BuiltinDefinition.SELECT_STDOUT_THEN_STDERR -> stdoutThenStderr(result);
             case BuiltinDefinition.SELECT_STDOUT -> result.readStdout();
             case BuiltinDefinition.SELECT_STDERR -> result.readStderr();
             default -> super.selectInput(command, result, config, verbose, ultraCompact);

@@ -1,0 +1,18 @@
+schema_version = 1
+name = "tofu-state"
+commands = ["tofu state list"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "resource_graph"
+key = "resource_type"
+header = "{lines} resources in {keys} types"
+top_n = 20
+max_lines = 2000
+
+[[tests]]
+id = "state-list"
+input = "aws_instance.web\naws_instance.api\n"
+expected = "2 resources in 1 types\naws_instance: 2\naws_instance.web\naws_instance.api"

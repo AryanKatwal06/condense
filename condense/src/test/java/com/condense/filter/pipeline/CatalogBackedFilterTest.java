@@ -57,6 +57,22 @@ class CatalogBackedFilterTest {
     }
 
     @Test
+    void terraformStdoutThenStderrKeepsStderrErrorWithJsonPlan() {
+        CatalogBackedFilter filter = new CatalogBackedFilter("terraform");
+        String stdout = """
+            {"@module":"terraform.ui","type":"version","ui":"1.0"}
+            {"@module":"terraform.ui","type":"planned_change","change":{"resource":{"addr":"aws_instance.web","resource_type":"aws_instance"},"action":"create"}}
+            {"@module":"terraform.ui","type":"change_summary","changes":{"add":1,"change":0,"remove":0}}
+            """;
+        ExecutionResult execution = new ExecutionResult(1, stdout, "Error: Missing required argument\n", 10L);
+        FilterResult result = filter.apply("terraform plan", execution, CondenseConfig.defaults(), 0, false);
+        assertThat(result.wasFiltered()).isTrue();
+        assertThat(result.output()).contains("aws_instance.web create");
+        assertThat(result.output()).contains("Error: Missing required argument");
+        assertThat(result.document().kind()).isEqualTo(com.condense.ir.Document.DocumentKind.RESOURCE);
+    }
+
+    @Test
     void curlSuccessStillFiltersAndStamps() {
         CatalogBackedFilter filter = new CatalogBackedFilter("curl");
         String raw = """

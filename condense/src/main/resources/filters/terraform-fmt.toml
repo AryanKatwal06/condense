@@ -1,0 +1,22 @@
+schema_version = 1
+name = "terraform-fmt"
+commands = ["terraform fmt"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "regex_capture"
+pattern = "(?s)(.+)"
+format = "$1"
+fallback = "fmt: ok"
+
+[[tests]]
+id = "empty-ok"
+input = ""
+expected = "fmt: ok"
+
+[[tests]]
+id = "changed-files"
+input = "main.tf\nvariables.tf"
+expected = "main.tf\nvariables.tf"

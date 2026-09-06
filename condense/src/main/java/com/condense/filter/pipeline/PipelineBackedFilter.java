@@ -113,6 +113,19 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
         return err + "\n" + out;
     }
 
+    /** Stdout first, then stderr — keep machine output ahead of diagnostic chatter. */
+    protected static String stdoutThenStderr(ExecutionResult result) {
+        String out = result.readStdout();
+        String err = result.readStderr();
+        if (out.isBlank()) {
+            return err;
+        }
+        if (err.isBlank()) {
+            return out;
+        }
+        return out + "\n" + err;
+    }
+
     protected final FilterOverrideLoader overrideLoader() {
         return overrideLoader;
     }

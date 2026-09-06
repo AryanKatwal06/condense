@@ -18,6 +18,7 @@ definitions = [
   "git",
   "go",
   "infra-helm",
+  "infra-opentofu",
   "infra-terraform",
   "java-gradle",
   "java-make",

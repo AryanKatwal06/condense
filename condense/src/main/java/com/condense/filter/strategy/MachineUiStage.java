@@ -58,7 +58,14 @@ public final class MachineUiStage implements FilterStage {
 
         for (String line : raw.split("\n", -1)) {
             String trimmed = line.strip();
-            if (trimmed.isEmpty() || !trimmed.startsWith("{")) {
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            if (!trimmed.startsWith("{")) {
+                if (looksLikeError(trimmed) && diagnosticCount < MAX_DIAGNOSTICS) {
+                    rows.add(Document.ResourceRow.infra(trimmed, "error", null, null));
+                    diagnosticCount++;
+                }
                 continue;
             }
             if (trimmed.length() > MAX_LINE_CHARS) {
@@ -187,6 +194,11 @@ public final class MachineUiStage implements FilterStage {
             replace,
             capped ? Boolean.TRUE : null);
         return new Parsed(payload);
+    }
+
+    private static boolean looksLikeError(String line) {
+        String lower = line.toLowerCase(Locale.ROOT);
+        return lower.startsWith("error") || lower.contains("error:");
     }
 
     private static boolean isUiEvent(JsonNode node, String type) {

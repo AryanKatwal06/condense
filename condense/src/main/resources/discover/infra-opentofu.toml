@@ -1,0 +1,6 @@
+schema_version = 1
+name = "infra-opentofu"
+family = "opentofu"
+priority = 10
+signals = [".opentofu-version", ".terraform.lock.hcl", "main.tf"]
+recommend = ["tofu", "tofu-fmt", "tofu-state"]

@@ -37,6 +37,7 @@ public record BuiltinDefinition(
 ) {
     public static final String SELECT_STDOUT_OR_STDERR = "stdout_or_stderr";
     public static final String SELECT_STDERR_THEN_STDOUT = "stderr_then_stdout";
+    public static final String SELECT_STDOUT_THEN_STDERR = "stdout_then_stderr";
     public static final String SELECT_STDOUT = "stdout";
     public static final String SELECT_STDERR = "stderr";
 

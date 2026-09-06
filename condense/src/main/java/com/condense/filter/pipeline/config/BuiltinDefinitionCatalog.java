@@ -26,6 +26,7 @@ public final class BuiltinDefinitionCatalog {
     private static final Set<String> SELECT_INPUTS = Set.of(
         BuiltinDefinition.SELECT_STDOUT_OR_STDERR,
         BuiltinDefinition.SELECT_STDERR_THEN_STDOUT,
+        BuiltinDefinition.SELECT_STDOUT_THEN_STDERR,
         BuiltinDefinition.SELECT_STDOUT,
         BuiltinDefinition.SELECT_STDERR
     );
