@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 6 September 2026 (superiority Phase 2 durable-state harness).
+**Written:** 4 September 2026. **Revised:** 6 September 2026 (superiority Phase 3 generated stage registry).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -236,7 +236,7 @@ java.sql.Driver driver = new org.sqlite.JDBC();
 connection = driver.connect(url, new java.util.Properties());
 ```
 
-Every open applies `PRAGMA busy_timeout=5000`, `PRAGMA journal_mode=WAL` (fail-open), then `SchemaMigrator` (`PRAGMA user_version`, target **1**). Version 1 keeps `commands` unchanged and adds `filter_outcomes` for fail-open incidents. Newer-than-us schemas skip migrations. Retention is 90 days for both tables and a bounded tee sweep (256 unlinks, no symlink follow). Writes stay synchronous and fail-open. Spec: [docs/persistence.md](docs/persistence.md).
+Every open applies `PRAGMA busy_timeout=5000`, `PRAGMA journal_mode=WAL` (fail-open), `PRAGMA integrity_check`, then `SchemaMigrator` (`PRAGMA user_version`, target **2**). Version 1 keeps `commands` unchanged and adds `filter_outcomes`. Version 2 adds `hook_events` and `hook_baselines`. Newer-than-us schemas skip migrations. Retention is 90 days for both tables and a bounded tee sweep (256 unlinks, no symlink follow). Writes stay synchronous and fail-open. Spec: [docs/persistence.md](docs/persistence.md) and [docs/schema-lifecycle.md](docs/schema-lifecycle.md).
 
 `gain` (`analytics/`) supports the default summary, `--graph`, `--history [N]`, `--daily`, `--weekly`, `--top N`, `--format json`, `--since DAYS` (default 30), `--all`, and project-vs-global scope. Degraded persistence prints `⚠ analytics unavailable — persistence failed, see logs` to stderr. An empty healthy store prints `No tracking data yet. Run condense doctor to see why.` `condense doctor` (text / `--format json`) names `empty_tracking_reason`.
 
@@ -275,7 +275,7 @@ KNOWN_CONDENSE_DIRECTORIES = Set.of("tee", "backups");
 |---|---|
 | `native-image.properties` | `--no-fallback`, `-H:+ReportExceptionStackTraces`, build-time init for slf4j/jboss-logging, run-time init for `org.sqlite.{JDBC, core.NativeDB, core.DB}` |
 | `jni-config.json` | `org.sqlite.core.NativeDB` methods (`_open_utf8`, `close`, `interrupt`, `busy_timeout`, `exec_utf8`, `changes`, `total_changes`) |
-| `resource-config.json` | `com/condense/version.properties`, `filters/.*\.toml`, `languages/.*\.toml`, `hooks/.*`, `application.properties`, `org/sqlite/native/.*` |
+| `resource-config.json` | `com/condense/version.properties`, `filters/.*\.toml`, `languages/.*\.toml`, `hooks/.*`, `META-INF/condense/.*`, `application.properties`, `org/sqlite/native/.*` |
 | `reflect-config.json` | Hand-maintained. **No duplicate class names.** `ReflectConfigDriftTest` fails `mvn test` if a required type is missing or a name appears twice. |
 
 `resource-config.json` includes `filters/.*\.toml` and `languages/.*\.toml`. Phase 5 ships `filters/index.toml` plus 31 definition files (no `python.toml`). Phase 10 ships `languages/index.toml` plus 24 definition files. Enumeration is the index; runtime never walks the directory. POM native args add `--initialize-at-build-time=com.condense` plus a per-OS `sqlite.native.exclude` regex that strips non-matching SQLite native libraries.
@@ -296,7 +296,7 @@ Surefire explicitly excludes `**/*IT.java` (documented rationale: prevent ITs fr
 | `release.yml` | tag `v*` | create-release → build-native (linux-x64, linux-aarch64, macos-aarch64, windows-x64) → build-deb → publish (checksums, cosign, CycloneDX SBOM). After package, **Failsafe and the 80 MiB ceiling match `build.yml`** (remediation R4) |
 | `phase3-verification.yml` | `workflow_dispatch` | Linux x64 native + Failsafe with `-Dcondense.soak.runs=300` (same tests as `build.yml` / `release.yml`, isolated `CONDENSE_*` dirs) |
 
-`native-builds` on `build.yml` builds with `mvn package -Pnative -DskipTests`, then **runs Failsafe** (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativeBuiltinDefinitionIT`, `NativeTrustIT`, `NativePersistenceIT`, `NativeExplainIT`, `NativeStreamingIT`, `NativeReadIT`, `NativeIrIT`, `NativeMcpIT`, `NativeHookIT`, `NativeCatalogIT`, `NativeDiscoverIT`, `NativeProposeIT`, `NativeBudgetIT`, `NativeSoakIT`, `NativeConcurrencyIT`, `NativeAnalyticsFailOpenIT`). It then enforces an **80 MiB** uncompressed size ceiling (`83886080`) in both Failsafe and bash, records binary size and 5× cold-start annotations, keeps the uninstall/purge shell smokes, and pushes metrics to a `ci-metrics` branch. linux-x64 pushes to `main` (and tag releases) pass `-Dcondense.soak.runs=300`.
+`native-builds` on `build.yml` builds with `mvn package -Pnative -DskipTests`, then **runs Failsafe** (`NativeCliIT`, `NativeAnalyticsIT`, `NativeCorpusIT`, `NativeBuiltinDefinitionIT`, `NativeTrustIT`, `NativePersistenceIT`, `NativeExplainIT`, `NativeStreamingIT`, `NativeReadIT`, `NativeIrIT`, `NativeMcpIT`, `NativeHookIT`, `NativeCatalogIT`, `NativeDiscoverIT`, `NativeProposeIT`, `NativeBudgetIT`, `NativeSoakIT`, `NativeConcurrencyIT`, `NativeAnalyticsFailOpenIT`, `NativeReliabilityIT`, `NativeChaosIT`, `NativeStageRegistryIT`). It then enforces an **80 MiB** uncompressed size ceiling (`83886080`) in both Failsafe and bash, records binary size and 5× cold-start annotations, keeps the uninstall/purge shell smokes, and pushes metrics to a `ci-metrics` branch. linux-x64 pushes to `main` (and tag releases) pass `-Dcondense.soak.runs=300`.
 
 Current native proof for `main` at `8ea298b` is [Build & Test run 33973423793](https://github.com/AryanKatwal06/condense/actions/runs/33973423793) (all five jobs green; ubuntu-latest Failsafe **45 / 0 / 0 / 0**). Run [33950449575](https://github.com/AryanKatwal06/condense/actions/runs/33950449575) on `cdd3d43` is the Phase 10 snapshot, not this tree. This Windows workspace does not build native images.
 
@@ -349,8 +349,12 @@ Ordered by the phase that owns each item. **Do not opportunistically fix items o
 | S10 | ~~`reasonFor()` always `no_match` after a matching def; `hash-mismatch` collapsed to `untrusted`~~ **FIXED** | `pipeline_build_failed` / `hash_mismatch` | Superiority Phase 2 |
 | S11 | ~~Corrupt ledger JSON reset the loss count to 0~~ **FIXED** | last-good in-memory snapshot; `ledger_unwritable` doctor warning | Superiority Phase 2 |
 | S12 | ~~Doctor did not name orphan tmp / ledger-unwritable / integrity-check modes~~ **FIXED** | `durable-fault-contract.json` + doctor string match | Superiority Phase 2 |
+| S13 | ~~`StageFactory` was four parallel handwritten switches~~ **FIXED** | `@DeclarativeStage` + `GeneratedStageRegistry`; `StageFactory` is a facade | Superiority Phase 3 |
+| S14 | ~~Duplicate stage aliases failed only at review~~ **FIXED** | Processor rejects colliding aliases at compile time | Superiority Phase 3 |
+| S15 | ~~Schema compatibility policy was scattered prose~~ **FIXED** | `docs/schema-lifecycle.md` + `SchemaCompatibilityTest` | Superiority Phase 3 |
+| S16 | ~~Stage alias tables drifted from `ALLOWED_ALIASES`~~ **FIXED** | `docs/generated/stage-inventory.md` + `StageInventoryDriftTest` | Superiority Phase 3 |
 
-The executable proxy contract is `condense/src/test/resources/reliability/failure-contract.json` plus `docs/reliability.md`. The durable-state contract is `durable-fault-contract.json` plus `docs/durability.md`. Native proof is `NativeReliabilityIT` and `NativeChaosIT`.
+The executable proxy contract is `condense/src/test/resources/reliability/failure-contract.json` plus `docs/reliability.md`. The durable-state contract is `durable-fault-contract.json` plus `docs/durability.md`. Schema policy is `docs/schema-lifecycle.md`. Native proof is `NativeReliabilityIT`, `NativeChaosIT`, and `NativeStageRegistryIT`.
 
 ### Known test-coverage gaps (from the filter-subsystem audit)
 
@@ -453,7 +457,8 @@ Planning plus Phase 1 through Phase 17 code, then an independent audit of Phases
 | Audit remediation R13–R26 | **LANDED** | Round 2 hygiene. **R25** semantic savings stays deferred. D29 closed in Phase 17. |
 | Superiority Phase 1 | **LANDED** | Proxy reliability catalog; fail-open drain/timeout/cap; `NativeReliabilityIT`. |
 | Superiority Phase 2 | **LANDED** | Durable-state chaos harness (`DurableIo`, `AtomicFile`, `CondenseClock`); `durable-fault-contract.json`; `NativeChaosIT`. Schema target stays 2. |
-| This handoff | **CURRENT** | Corrected 6 Sep 2026 so §4 / §13 match superiority Phase 2. |
+| Superiority Phase 3 | **LANDED** | `@DeclarativeStage` processor, `GeneratedStageRegistry`, `LegacyStageFactory` parity, schema lifecycle fixtures, `NativeStageRegistryIT`. Schema target stays 2. |
+| This handoff | **CURRENT** | Corrected 6 Sep 2026 so §4 / §13 match superiority Phase 3. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p17` are marked `completed`. **That file is untracked and local-only (see §3).**
 
@@ -678,7 +683,7 @@ Reading of the chain: **trust the binary and the measurements (1) → trust the 
 **What shipped (implementation, 4 Sep 2026).**
 
 - Schema v1 for builtins and overrides: required `schema_version = 1`, unknown-key rejection via dedicated `DefinitionMappers.STRICT_TOML` (`Mappers.TOML` unchanged), `DefinitionError` with dotted path and line/column when available.
-- `StageFactory` hardcoded switch: promoted shared stages plus named command-specific aliases. `aggregate_by_key` presets and `regex_capture` string templates. No reflection.
+- `StageFactory` alias set (later generated in superiority Phase 3): promoted shared stages plus named command-specific aliases. `aggregate_by_key` presets and `regex_capture` string templates. No reflection.
 - 31 `filters/*.toml` files + `filters/index.toml`. `PipelineBackedFilter.buildPipeline()` is final and loads `BuiltinDefinitionCatalog`. Subclasses keep gates and `definitionName()`. `PythonFilter` unchanged.
 - Inline `[[tests]]` runner shared by Surefire and `BuiltinDefinitionValidator` (exec-maven-plugin at `process-classes`).
 - Loader gaps closed: prefix match, empty `stages = []` replacement, `json_structure`, global-when-project-unmatched, concurrent resolve, `TimeoutCharSequence`.
@@ -1033,9 +1038,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Superiority **Phase 2** (chaos and durable-state harness) has landed on top of Phase 1's reliability contract and the completed 17-phase product roadmap. Durable writes go through `AtomicFile` / `DurableIo`. Clock-sensitive paths use `CondenseClock`. SQLite opens with `PRAGMA integrity_check` and still uses `new org.sqlite.JDBC()`. The catalog is `durable-fault-contract.json`. Native proof is `NativeChaosIT` (this Windows workspace does not build native images; the next Actions run after push is the native gate). Schema target stays **2**. Round 2 **R25** (semantic savings) stays deferred.
+**Where we are.** Superiority **Phase 3** (generated stage registry and schema lifecycles) has landed on top of Phase 2's durable-state harness and Phase 1's reliability contract. Stage aliases come from `@DeclarativeStage` via `GeneratedStageRegistry`. `StageFactory` is a facade. Schema policy is `docs/schema-lifecycle.md`. Filter/IR stay at **1**; SQLite stays at **2**. Native proof is `NativeStageRegistryIT` (this Windows workspace does not build native images; the next Actions run after push is the native gate). Round 2 **R25** (semantic savings) stays deferred.
 
-**Do not plan or implement superiority Phase 3** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
+**Do not plan or implement superiority Phase 4** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
 
 ---
 
@@ -1056,7 +1061,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Superiority Phase 2 has landed. Confirm `mvn test` is green, `DurableFaultCatalogTest` maps every `durable-fault-contract.json` id, and `NativeChaosIT` is on the Failsafe `*IT.java` path. Do not start superiority Phase 3 from this stop point unless the user explicitly asks.
+8. Superiority Phase 3 has landed. Confirm `mvn test` is green, `StageRegistryParityTest` matches `LegacyStageFactory`, `SchemaCompatibilityTest` is green, and `NativeStageRegistryIT` is on the Failsafe `*IT.java` path. Do not start superiority Phase 4 from this stop point unless the user explicitly asks.
 9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
 10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 
