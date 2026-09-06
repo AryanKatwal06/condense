@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "disk_full",
+      "mode": "fs",
+      "test": "com.condense.persist.AtomicFileTest#diskFullLeavesDestinationUnchanged",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "disk_full",
+      "native_it": false
+    },
+    {
+      "id": "readonly",
+      "mode": "fs",
+      "test": "com.condense.persist.AtomicFileTest#readonlyLeavesDestinationUnchanged",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "readonly",
+      "native_it": false
+    },
+    {
+      "id": "rename_fail",
+      "mode": "fs",
+      "test": "com.condense.persist.AtomicFileTest#renameFailLeavesDestinationUnchanged",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "rename_fail",
+      "native_it": false
+    },
+    {
+      "id": "kill_between_tmp_and_rename",
+      "mode": "fs",
+      "test": "com.condense.persist.AtomicFileTest#killBetweenWriteAndMoveLeavesTmpAndDestination",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "kill_between_tmp_and_rename",
+      "native_it": false
+    },
+    {
+      "id": "symlink_swap",
+      "mode": "fs",
+      "test": "com.condense.persist.AtomicFileTest#symlinkSwapIsRejectedAndDestinationUntouched",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "symlink_swap",
+      "native_it": false
+    },
+    {
+      "id": "partial_trust_write",
+      "mode": "trust",
+      "test": "com.condense.trust.TrustStoreAtomicityTest#partialWriteLeavesLastGoodBytes",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "partial_trust_write",
+      "native_it": false
+    },
+    {
+      "id": "partial_config_write",
+      "mode": "config",
+      "test": "com.condense.persist.AtomicFileTest#partialConfigWriteLeavesLastGoodBytes",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "partial_config_write",
+      "native_it": false
+    },
+    {
+      "id": "partial_hook_write",
+      "mode": "hook",
+      "test": "com.condense.hooks.HookConfigAtomicityTest#partialWriteLeavesLastGoodBytes",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "partial_hook_write",
+      "native_it": false
+    },
+    {
+      "id": "ledger_corrupt_json",
+      "mode": "ledger",
+      "test": "com.condense.persist.WriteFailureLedgerChaosTest#corruptJsonDoesNotResetCountToZero",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "last_good_count",
+      "diagnostic": "ledger_unwritable",
+      "native_it": false
+    },
+    {
+      "id": "ledger_unwritable",
+      "mode": "ledger",
+      "test": "com.condense.persist.WriteFailureLedgerChaosTest#unwritableDataDirDoesNotThrow",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "last_good_count",
+      "diagnostic": "ledger_unwritable",
+      "native_it": false
+    },
+    {
+      "id": "corrupt_db",
+      "mode": "sqlite",
+      "test": "com.condense.persist.SchemaMigratorTest#corruptFileDoesNotEscapeRepositoryApis",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "corrupt_db",
+      "native_it": false
+    },
+    {
+      "id": "integrity_check_failed",
+      "mode": "sqlite",
+      "test": "com.condense.persist.SqliteIntegrityTest#corruptDbSkipsMigrateAndMarksDegraded",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "integrity_check_failed",
+      "native_it": false
+    },
+    {
+      "id": "schema_ahead",
+      "mode": "sqlite",
+      "test": "com.condense.persist.SchemaMigratorTest#newerSchemaIsLeftUntouched",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "schema_ahead",
+      "native_it": false
+    },
+    {
+      "id": "lock_storm",
+      "mode": "sqlite",
+      "test": "com.condense.persist.TrackingConcurrencyTest#fiveRepositoriesShareOneFileWithoutCorruption",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "lock_storm",
+      "native_it": false
+    },
+    {
+      "id": "concurrent_migrate",
+      "mode": "sqlite",
+      "test": "com.condense.persist.TrackingConcurrencyTest#twoThreadsMigrateV0WithoutCorruption",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "concurrent_migrate",
+      "native_it": false
+    },
+    {
+      "id": "clock_jump",
+      "mode": "clock",
+      "test": "com.condense.persist.ClockJumpRetentionTest#jumpForwardDeletesExpiredRows",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "current_rows_kept",
+      "diagnostic": "clock_jump",
+      "native_it": false
+    },
+    {
+      "id": "clock_jump_back",
+      "mode": "clock",
+      "test": "com.condense.persist.ClockJumpRetentionTest#jumpBackDoesNotWipeCurrentRows",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "current_rows_kept",
+      "diagnostic": "clock_jump",
+      "native_it": false
+    },
+    {
+      "id": "override_cache_mutation",
+      "mode": "cache",
+      "test": "com.condense.filter.pipeline.config.OverrideCacheFreshnessTest#mtimeAndSizeChangeReloadsPipeline",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "override_cache_mutation",
+      "native_it": false
+    },
+    {
+      "id": "override_cache_appear",
+      "mode": "cache",
+      "test": "com.condense.filter.pipeline.config.OverrideCacheFreshnessTest#absentFileAppearingIsLoaded",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "override_cache_mutation",
+      "native_it": false
+    },
+    {
+      "id": "hash_mismatch",
+      "mode": "trust",
+      "test": "com.condense.filter.pipeline.config.OverrideCacheFreshnessTest#hashMismatchReasonIsNotCollapsed",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "hash_mismatch",
+      "native_it": false
+    },
+    {
+      "id": "pipeline_build_failed",
+      "mode": "override",
+      "test": "com.condense.filter.pipeline.config.OverrideCacheFreshnessTest#matchingDefWithFailedBuildIsPipelineBuildFailed",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "pipeline_build_failed",
+      "native_it": false
+    },
+    {
+      "id": "orphan_tmp",
+      "mode": "fs",
+      "test": "com.condense.persist.OrphanSweepTest#deletesKnownTempsAndSkipsWal",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "orphan_tmp",
+      "native_it": false
+    },
+    {
+      "id": "proxy_tee_fail_open",
+      "mode": "proxy",
+      "test": "com.condense.core.ProxyFailOpenTest#teeFaultDoesNotChangeChildExitOrStdout",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "proxy_analytics_fail_open",
+      "mode": "proxy",
+      "test": "com.condense.core.ProxyFailOpenTest#analyticsFaultDoesNotChangeChildExitOrStdout",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "doctor_modes",
+      "mode": "doctor",
+      "test": "com.condense.persist.DurableFaultDoctorModesTest#everyCatalogIdAppearsInDoctorOutput",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "native_corrupt_db",
+      "mode": "sqlite",
+      "test": "com.condense.nativeimage.NativeChaosIT#corruptDbProxyStillExitsZero",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "corrupt_db",
+      "native_it": true
+    },
+    {
+      "id": "native_schema_ahead",
+      "mode": "sqlite",
+      "test": "com.condense.nativeimage.NativeChaosIT#schemaAheadDoctorWarns",
+      "exit_policy": "fail_open_proxy",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "schema_ahead",
+      "native_it": true
+    },
+    {
+      "id": "native_orphan_trust_tmp",
+      "mode": "fs",
+      "test": "com.condense.nativeimage.NativeChaosIT#leftoverTrustTmpStillReadsLastGood",
+      "exit_policy": "fail_closed_state",
+      "output_retention": "last_good_bytes",
+      "diagnostic": "kill_between_tmp_and_rename",
+      "native_it": true
+    }
+  ]
+}
