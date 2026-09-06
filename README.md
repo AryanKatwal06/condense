@@ -131,7 +131,9 @@ For any unrecognized command, condense passes output through unchanged — it is
 | `bundle install` | Install noise; keeps Bundler errors | ~60% |
 | `rspec` | Passing examples; keeps failures | ~80% |
 | `rubocop` | Offenses grouped by file | ~90% |
-| `terraform plan` / `terraform apply` | Refresh noise; keeps Error / Plan / create-destroy | ~85% |
+| `terraform` / `tofu` plan, apply, destroy, init, validate | Machine-UI JSON or refresh noise; keeps addresses, Plan, Error, validate findings | ~85% |
+| `terraform fmt` / `tofu fmt` | Identity file list, or `fmt: ok` when empty | — |
+| `terraform state list` / `tofu state list` | Addresses grouped by type | — |
 | `helm install` / `helm upgrade` / `helm list` | Wait noise; keeps STATUS / Error | ~65% |
 | `gh pr list` / `gh issue list` / `gh run list` | Long list middle | ~65% |
 | `glab mr list` / `glab issue list` / `glab ci list` | Long list middle | ~65% |

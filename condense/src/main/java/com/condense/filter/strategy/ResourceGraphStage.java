@@ -36,6 +36,8 @@ public final class ResourceGraphStage implements FilterStage {
             + "(?:[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]+|[A-Za-z][A-Za-z0-9_]*)"
             + "\\.[A-Za-z0-9_-]+"
             + "(?:\\[[^\\]]+\\])?$");
+    private static final Pattern MODULE_PREFIX = Pattern.compile(
+        "^module\\.[A-Za-z0-9_-]+(?:\\[[^\\]]+\\])?\\.");
 
     private final Function<String, String> keyOf;
     private final String headerTemplate;
@@ -180,7 +182,7 @@ public final class ResourceGraphStage implements FilterStage {
         if (line == null || line.isBlank() || line.contains(" ") || line.contains("/")) {
             return false;
         }
-        if (!ADDRESS.matcher(line).matches()) {
+        if (!BoundedRegex.matcher(ADDRESS, line).matches()) {
             return false;
         }
         if (line.startsWith("module.") || line.startsWith("data.")) {
@@ -195,10 +197,12 @@ public final class ResourceGraphStage implements FilterStage {
             return "";
         }
         String rest = address;
-        Matcher module = Pattern.compile("^module\\.[A-Za-z0-9_-]+(?:\\[[^\\]]+\\])?\\.").matcher(rest);
-        while (module.find()) {
+        while (true) {
+            Matcher module = BoundedRegex.matcher(MODULE_PREFIX, rest);
+            if (!module.find()) {
+                break;
+            }
             rest = rest.substring(module.end());
-            module = Pattern.compile("^module\\.[A-Za-z0-9_-]+(?:\\[[^\\]]+\\])?\\.").matcher(rest);
         }
         if (rest.startsWith("data.")) {
             rest = rest.substring("data.".length());

@@ -22,9 +22,11 @@ public class ClineVerificationTest {
     Path testHome;
 
     private HookInstaller installer;
+    private String previousOsName;
 
     @BeforeEach
     void setUp() {
+        previousOsName = System.getProperty("os.name");
         System.setProperty("condense.test.home", testHome.toString());
         installer = new HookInstaller();
         // We mock config loader to return empty excluded list
@@ -34,7 +36,11 @@ public class ClineVerificationTest {
     @AfterEach
     void tearDown() {
         System.clearProperty("condense.test.home");
-        System.clearProperty("os.name");
+        if (previousOsName == null) {
+            System.clearProperty("os.name");
+        } else {
+            System.setProperty("os.name", previousOsName);
+        }
     }
 
     @Test

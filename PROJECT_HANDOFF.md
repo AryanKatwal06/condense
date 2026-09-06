@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 6 September 2026 (superiority Phase 3 generated stage registry).
+**Written:** 4 September 2026. **Revised:** 6 September 2026 (superiority Phase 4 Terraform/OpenTofu machine-output parsing).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -172,10 +172,10 @@ Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus
 
 - **32 domain filter classes**, plus `PassthroughStrategy` = **33 classes implementing `FilterStrategy`**. Leftover catalog prefixes share one non-CDI `CatalogBackedFilter` host (not a 34th domain class).
 - Package breakdown: `git` 6, `node` 5, `cloud` 5, `python` 4, `fs` 4, `cargo` 3, `build` 3, `golang` 2. (6+5+5+4+4+3+3+2 = 32.)
-- **50 builtin definitions** in `filters/index.toml` (31 Java-backed + 19 leftover). **~75 registered command prefixes** across Java `@CommandFilter` annotations and leftover `commands =` rows (several definitions claim multiple prefixes, e.g. `CargoInstallFilter` → `cargo install` + `cargo build`; `GrepFilter` → `grep` + `rg`; `pnpm-install` → `pnpm install` / `i` / `add` / `ci`). **`CatFilter` is `cat` only** — `read` is the Phase 10 subcommand, not a proxied prefix.
+- **55 builtin definitions** in `filters/index.toml` (31 Java-backed + 24 leftover). **~87 registered command prefixes** across Java `@CommandFilter` annotations and leftover `commands =` rows (several definitions claim multiple prefixes, e.g. `CargoInstallFilter` → `cargo install` + `cargo build`; `GrepFilter` → `grep` + `rg`; `pnpm-install` → `pnpm install` / `i` / `add` / `ci`; leftover terraform/tofu plan/apply/destroy/init/validate/fmt/`state list`). **`CatFilter` is `cat` only** — `read` is the Phase 10 subcommand, not a proxied prefix. Bare `terraform state` / `tofu state` are not claimed, so `state show` stays passthrough.
 - **All 31 compressing domain filters extend `PipelineBackedFilter`.** `PythonFilter` is the documented router (`python -m pytest` → `PytestFilter`; `python -c` stays identity). `PassthroughStrategy` remains the unmatched-command fallback and does not extend the adapter.
 - **`apply()` is final on the adapter.** Gates live in `beforePipeline`; parsing lives in named `FilterStage`s. No-arg constructors used by the corpus share `FilterOverrideLoader.standalone()`.
-- **Shared stages:** the original six (`AnsiStrip`, `Deduplication`, `Grouping`, `JsonStructure`, `StateMachine`, `TreeCompression`) plus `TailLinesStage`, `HeadTailStage`, `AggregateByKeyStage`, `RegexCaptureStage`, `GitStatusStage`, `JsonLinesStage`, `DockerPsStage`. Supporting: `BoundedRegex`, `TimeoutCharSequence`, `RegexTimeoutException`.
+- **Shared stages:** the original six (`AnsiStrip`, `Deduplication`, `Grouping`, `JsonStructure`, `StateMachine`, `TreeCompression`) plus `TailLinesStage`, `HeadTailStage`, `AggregateByKeyStage`, `RegexCaptureStage`, `GitStatusStage`, `JsonLinesStage`, `DockerPsStage`, `MachineUiStage`, `ValidateJsonStage`, `ResourceGraphStage`. Supporting: `BoundedRegex`, `TimeoutCharSequence`, `RegexTimeoutException`. Machine-output rules are in `docs/machine-output.md`.
 
 ### 4.7 Pipeline (`filter/pipeline/`)
 
@@ -458,7 +458,8 @@ Planning plus Phase 1 through Phase 17 code, then an independent audit of Phases
 | Superiority Phase 1 | **LANDED** | Proxy reliability catalog; fail-open drain/timeout/cap; `NativeReliabilityIT`. |
 | Superiority Phase 2 | **LANDED** | Durable-state chaos harness (`DurableIo`, `AtomicFile`, `CondenseClock`); `durable-fault-contract.json`; `NativeChaosIT`. Schema target stays 2. |
 | Superiority Phase 3 | **LANDED** | `@DeclarativeStage` processor, `GeneratedStageRegistry`, `LegacyStageFactory` parity, schema lifecycle fixtures, `NativeStageRegistryIT`. Schema target stays 2. |
-| This handoff | **CURRENT** | Corrected 6 Sep 2026 so §4 / §13 match superiority Phase 3. |
+| Superiority Phase 4 | **LANDED** | Leftover Terraform/OpenTofu machine-UI NDJSON, validate JSON, and `resource_graph`; additive IR fields; `stdout_then_stderr`; `TerraformInventoryTest`; `NativeTerraformIT`. Filter/IR stay at 1. SQLite stays at 2. No `-json` argv rewrite. |
+| This handoff | **CURRENT** | Corrected 6 Sep 2026 so §4 / §13 match superiority Phase 4. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p17` are marked `completed`. **That file is untracked and local-only (see §3).**
 
@@ -1038,9 +1039,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Superiority **Phase 3** (generated stage registry and schema lifecycles) has landed on top of Phase 2's durable-state harness and Phase 1's reliability contract. Stage aliases come from `@DeclarativeStage` via `GeneratedStageRegistry`. `StageFactory` is a facade. Schema policy is `docs/schema-lifecycle.md`. Filter/IR stay at **1**; SQLite stays at **2**. Native proof is `NativeStageRegistryIT` (this Windows workspace does not build native images; the next Actions run after push is the native gate). Round 2 **R25** (semantic savings) stays deferred.
+**Where we are.** Superiority **Phase 4** (structured Terraform/OpenTofu parsing) has landed on top of Phase 3's generated stage registry. Leftover terraform/tofu pipelines parse machine-UI NDJSON and validate JSON, group human text as before, and leave `state show` unmatched. Schema policy is `docs/schema-lifecycle.md` and `docs/machine-output.md`. Filter/IR stay at **1**; SQLite stays at **2**. Native proof is `NativeTerraformIT` (this Windows workspace does not build native images; the next Actions run after push is the native gate). Round 2 **R25** (semantic savings) stays deferred.
 
-**Do not plan or implement superiority Phase 4** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
+**Do not plan or implement superiority Phase 5** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
 
 ---
 
@@ -1061,7 +1062,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Superiority Phase 3 has landed. Confirm `mvn test` is green, `StageRegistryParityTest` matches `LegacyStageFactory`, `SchemaCompatibilityTest` is green, and `NativeStageRegistryIT` is on the Failsafe `*IT.java` path. Do not start superiority Phase 4 from this stop point unless the user explicitly asks.
+8. Superiority Phase 4 has landed. Confirm `mvn test` is green, `TerraformInventoryTest` and `IrRendererGoldenTest` are green, `SchemaCompatibilityTest` is green, and `NativeTerraformIT` is on the Failsafe `*IT.java` path. Do not start superiority Phase 5 from this stop point unless the user explicitly asks.
 9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
 10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 

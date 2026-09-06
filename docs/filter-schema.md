@@ -86,6 +86,9 @@ The live alias list is generated from `@DeclarativeStage` and checked in CI: [ge
 | `head_tail` | `head`, `tail` |
 | `aggregate_by_key` | `key` in `{prefix_before_colon, file_extension}`, `header` (`{lines}`, `{keys}`), `top_n` |
 | `regex_capture` | `pattern`, `format` (`$1`, `$0`), `fallback` |
+| `machine_ui` | none. Terraform/OpenTofu NDJSON machine UI. Caps and detect rules are in [machine-output.md](machine-output.md) |
+| `validate_json` | none. Single `validate -json` object |
+| `resource_graph` | `key` in `{resource_type, whole_line}`, `header` (`{lines}`, `{keys}`), `top_n`, `max_lines`, `fallback` |
 | `git_status`, `json_lines`, `docker_ps` | none |
 
 Named command-specific aliases take no user params. User overrides may use any alias in v1. Project files still need a matching capability grant (`reduce` / `reshape` / `rewrite`). See [trust.md](trust.md) and [schema-lifecycle.md](schema-lifecycle.md).
@@ -96,7 +99,7 @@ These fields are valid on `classpath:filters/<name>.toml` only. They are unknown
 
 | Key | Values / fields |
 |---|---|
-| `select_input` | `stdout_or_stderr` (default), `stderr_then_stdout`, `stdout`, `stderr` |
+| `select_input` | `stdout_or_stderr` (default), `stderr_then_stdout`, `stdout_then_stderr`, `stdout`, `stderr` |
 | `[gate]` | `passthrough_verbose`, `passthrough_max_lines`, `passthrough_nonzero_exit` (all default off) |
 
 ## Adding a definition

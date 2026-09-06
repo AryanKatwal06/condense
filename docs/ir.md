@@ -30,9 +30,9 @@ Unknown keys fail on parse. `kind` is a closed set — renderers switch on it; t
 | `kind` | Producers | Payload |
 |---|---|---|
 | `test` | `pytest` | cases (`name`, `status`, `detail`) + counts |
-| `diagnostic` | `eslint` / `npx eslint` | findings + grouped counts |
+| `diagnostic` | `eslint` / `npx eslint`; leftover `terraform validate` / `tofu validate` JSON | findings + grouped counts; optional `tool` (`validate` when set, else the text renderer still prints `eslint`) |
 | `dependency` | `npm install` / `npm ci` / `npm i` | added packages, vulnerability text, irrevocable warn/err lines (capped at 20) |
-| `resource` | `docker ps` | column-stable rows |
+| `resource` | `docker ps`; leftover Terraform/OpenTofu machine-UI and `state list` | docker columns when `format` is omitted; infra addresses/actions when `format=infra` |
 | `opaque` | everyone else, gates, IR-build failure | `body` = the filtered or passthrough text **without** inventing structure |
 
 Unmigrated commands always have a document. Missing JSON is a bug.
@@ -61,4 +61,4 @@ If IR construction throws, Condense records a `ir_fallback` incident and emits `
 
 ## Native proof
 
-`NativeIrIT` (never skip) runs PATH-stubbed `pytest`, `npm install`, `eslint`, `docker ps`, and `git status` through the shipped binary with `--format json`, and checks `condense explain --format json --input <pytest fixture> pytest` for `document.kind=test`.
+`NativeIrIT` (never skip) runs PATH-stubbed `pytest`, `npm install`, `eslint`, `docker ps`, and `git status` through the shipped binary with `--format json`, and checks `condense explain --format json --input <pytest fixture> pytest` for `document.kind=test`. Terraform/OpenTofu leftovers are `NativeTerraformIT`. Machine-UI and validate JSON are documented in [machine-output.md](machine-output.md).
