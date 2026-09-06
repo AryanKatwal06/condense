@@ -1,8 +1,8 @@
 # Schema lifecycle
 
-Condense versions several documents independently. This file is the policy. Numbers do not change in superiority Phase 4.
+Condense versions several documents independently. This file is the policy. Numbers do not change in superiority Phase 5.
 
-Additive optional fields are allowed within a major version. Unknown keys stay rejected on filter and IR documents. Unknown runtime stage names cannot instantiate a stage. Phase 4 added optional IR fields on `ResourceDocument` (`format`, `add`, `change`, `destroy`, `replace`, `capped`) and `ResourceRow` (`address`, `action`, `reason`, `resourceType`), plus `DiagnosticDocument.tool`. They are omitted when unused so docker/eslint schema-1 JSON stays byte-stable. See [machine-output.md](machine-output.md).
+Additive optional fields are allowed within a major version. Unknown keys stay rejected on filter and IR documents. Unknown runtime stage names cannot instantiate a stage. Phase 4 added optional IR fields on `ResourceDocument` (`format`, `add`, `change`, `destroy`, `replace`, `capped`) and `ResourceRow` (`address`, `action`, `reason`, `resourceType`), plus `DiagnosticDocument.tool`. Phase 5 added optional `TestCase` (`file`, `durationMs`, `stack`) and `TestDocument` (`skipped`, `total`, `tool`) fields. They are omitted when unused so pytest/eslint/docker schema-1 JSON stays byte-stable. See [machine-output.md](machine-output.md) and [dotnet-artifacts.md](dotnet-artifacts.md).
 
 | Surface | Current | Ahead or unknown | Missing version |
 |---|---|---|---|

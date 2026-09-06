@@ -58,6 +58,10 @@ If the agent’s stdout `PrintStream.checkError()` is true, Condense stops live-
 
 A `ShutdownEvent` observer destroys active children and descendants. `execute` returns `-1` / `DESTROYED` instead of hanging.
 
+### .NET artifacts
+
+Malformed, truncated, version-unsupported, XXE, and gzip-bomb sidecar inputs stay bounded and fail-open. Catalog ids `binlog_gzip_bomb`, `binlog_truncated_varint`, `trx_xxe`, and `format_malformed` map to JVM `@Test` methods. A parser miss leaves the existing grouping or tail pipeline. Child exit is unchanged. See [dotnet-artifacts.md](dotnet-artifacts.md).
+
 ## Native proof
 
 `NativeReliabilityIT` (never skip) covers timeout with prior stderr, the cap banner, and proxied `exit 7` staying 7.

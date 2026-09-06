@@ -4,7 +4,7 @@ Condense parses Terraform and OpenTofu **machine-readable** streams when the age
 
 This is leftover catalog work (`terraform`, `terraform-fmt`, `terraform-state`, `tofu`, `tofu-fmt`, `tofu-state`). There is no Java `@CommandFilter` host. `terraform state show` and other unmatched subcommands stay passthrough.
 
-See [filter-schema.md](filter-schema.md) and [ir.md](ir.md).
+See [filter-schema.md](filter-schema.md) and [ir.md](ir.md). .NET sidecar artifacts (MSBuild binlog, TRX, `dotnet format` JSON) are documented in [dotnet-artifacts.md](dotnet-artifacts.md).
 
 ## Formats
 

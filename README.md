@@ -127,7 +127,8 @@ For any unrecognized command, condense passes output through unchanged — it is
 | `pip install` / `pip3 install` | Download progress bars | ~90% |
 | `python -c` / `python3 -c` | Identity (no compression) | — |
 | `mypy` / `python -m mypy` / `python3 -m mypy` | Errors grouped by file | ~90% |
-| `dotnet test` / `dotnet build` / `dotnet restore` | Failed tests, compiler errors, restore tail | ~60–80% |
+| `dotnet test` / `dotnet build` / `dotnet restore` | Failed tests, compiler errors, restore tail; TRX / binlog when present | ~60–80% |
+| `dotnet format` / `msbuild` / `dotnet msbuild` | Format DiagnosticIds or compiler errors; format JSON / binlog when present | ~60–80% |
 | `bundle install` | Install noise; keeps Bundler errors | ~60% |
 | `rspec` | Passing examples; keeps failures | ~80% |
 | `rubocop` | Offenses grouped by file | ~90% |
