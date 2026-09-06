@@ -1,0 +1,26 @@
+schema_version = 1
+name = "ping"
+commands = ["ping"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "regex_capture"
+pattern = "(?s).*?(\\d+ packets transmitted, \\d+ received, [^\\r\\n]+)"
+format = "$1"
+fallback = ""
+
+[[tests]]
+id = "loss-summary"
+input = """
+PING 1.1.1.1
+64 bytes from 1.1.1.1
+4 packets transmitted, 3 received, 25% packet loss, time 3003ms
+"""
+expected = "4 packets transmitted, 3 received, 25% packet loss, time 3003ms"
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not ping output\n"
+expected = ""

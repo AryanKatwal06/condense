@@ -1,0 +1,10 @@
+condense[filtered]
+PID TTY TIME CMD
+1000 pts/0 00:00:00 worker-0
+1001 pts/0 00:00:00 worker-1
+1002 pts/0 00:00:00 worker-2
+... (54 lines omitted) ...
+1057 pts/0 00:00:00 worker-57
+1058 pts/0 00:00:00 worker-58
+1059 pts/0 00:00:00 worker-59
+9999 pts/0 00:00:01 invoice-worker

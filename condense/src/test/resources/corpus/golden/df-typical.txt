@@ -1,0 +1,3 @@
+condense[filtered]
+  /dev/sda1      100G   99G  1G  100%  : 1
+  Filesystem     Size  Used Avail Use% : 1

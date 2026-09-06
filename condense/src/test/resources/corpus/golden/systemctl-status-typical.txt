@@ -1,0 +1,3 @@
+condense[filtered]
+  Active: failed (Result: exit-code)       : 1
+  Unit invoice.service could not be found. : 1

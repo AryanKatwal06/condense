@@ -1,0 +1,23 @@
+schema_version = 1
+name = "systemctl-status"
+commands = ["systemctl status"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(Active:|error|Error|failed|Failed|Unit ).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+Active: failed (Result: exit-code)
+"""
+expected = """  Active: failed (Result: exit-code) : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

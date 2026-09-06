@@ -1,0 +1,8 @@
+condense[filtered]
+Chain INPUT (policy ACCEPT)
+num target prot opt source destination
+1 ACCEPT all -- 0.0.0.0/0 0.0.0.0/0
+Chain FORWARD (policy DROP)
+1 ACCEPT tcp -- 0.0.0.0/0 0.0.0.0/0
+Chain OUTPUT (policy ACCEPT)
+1 ACCEPT all -- 0.0.0.0/0 0.0.0.0/0

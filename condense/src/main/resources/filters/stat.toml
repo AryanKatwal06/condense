@@ -1,0 +1,23 @@
+schema_version = 1
+name = "stat"
+commands = ["stat"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(File:|Size:|Access:|Modify:).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+  File: invoice.txt
+"""
+expected = """  File: invoice.txt : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

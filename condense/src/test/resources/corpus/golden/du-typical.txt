@@ -1,0 +1,10 @@
+condense[filtered]
+... (showing last 8 of 41 lines)
+967M	/var/lib/data33
+966M	/var/lib/data34
+965M	/var/lib/data35
+964M	/var/lib/data36
+963M	/var/lib/data37
+962M	/var/lib/data38
+961M	/var/lib/data39
+12K	/var/lib/invoice

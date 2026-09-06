@@ -1,0 +1,2 @@
+condense[filtered]
+4 packets transmitted, 3 received, 25% packet loss, time 3003ms

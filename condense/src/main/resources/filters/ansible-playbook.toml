@@ -1,0 +1,23 @@
+schema_version = 1
+name = "ansible-playbook"
+commands = ["ansible-playbook"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(FAILED|fatal|ERROR|PLAY RECAP|failed=).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+fatal: [web]: FAILED! => {"msg": "timeout"}
+"""
+expected = """  fatal: [web]: FAILED! => {"msg": "timeout"} : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

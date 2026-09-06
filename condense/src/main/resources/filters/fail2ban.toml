@@ -1,0 +1,23 @@
+schema_version = 1
+name = "fail2ban"
+commands = ["fail2ban-client"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(ERROR|Banned|Jail).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+ERROR Failed to access socket
+"""
+expected = """  ERROR Failed to access socket : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

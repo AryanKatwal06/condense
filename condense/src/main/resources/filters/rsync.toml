@@ -1,0 +1,23 @@
+schema_version = 1
+name = "rsync"
+commands = ["rsync"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(rsync error|error|ERROR).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+rsync error: some files could not be transferred
+"""
+expected = """  rsync error: some files could not be transferred : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

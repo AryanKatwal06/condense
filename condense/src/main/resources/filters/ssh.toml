@@ -1,0 +1,23 @@
+schema_version = 1
+name = "ssh"
+commands = ["ssh"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(Permission denied|Host key|Connection (refused|timed out|closed)|Could not resolve).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+Permission denied (publickey).
+"""
+expected = """  Permission denied (publickey). : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

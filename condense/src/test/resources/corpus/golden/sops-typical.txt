@@ -1,0 +1,3 @@
+condense[filtered]
+  MAC OK                 : 1
+  encrypted secrets.yaml : 1

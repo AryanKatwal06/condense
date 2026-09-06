@@ -654,6 +654,102 @@
       "exit_code": 0,
       "savings_exemption": "too_small",
       "critical_signals": ["aws_instance.web", "module.vpc.aws_subnet.private[0]"]
+    },
+    {
+      "id": "systemctl-status/typical",
+      "command": "systemctl status",
+      "fixture": "fixtures/systemctl-status/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Active: failed", "invoice.service"]
+    },
+    {
+      "id": "ssh/typical",
+      "command": "ssh",
+      "fixture": "fixtures/ssh/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Permission denied", "host.example"]
+    },
+    {
+      "id": "rsync/typical",
+      "command": "rsync",
+      "fixture": "fixtures/rsync/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["rsync error", "invoice.txt"]
+    },
+    {
+      "id": "fail2ban/typical",
+      "command": "fail2ban-client",
+      "fixture": "fixtures/fail2ban/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["ERROR", "Banned"]
+    },
+    {
+      "id": "ansible-playbook/typical",
+      "command": "ansible-playbook",
+      "fixture": "fixtures/ansible-playbook/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["FAILED", "PLAY RECAP"]
+    },
+    {
+      "id": "sops/typical",
+      "command": "sops",
+      "fixture": "fixtures/sops/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["encrypted", "secrets.yaml"]
+    },
+    {
+      "id": "df/typical",
+      "command": "df",
+      "fixture": "fixtures/df/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Filesystem", "100%"]
+    },
+    {
+      "id": "stat/typical",
+      "command": "stat",
+      "fixture": "fixtures/stat/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["File:", "invoice.txt"]
+    },
+    {
+      "id": "ping/typical",
+      "command": "ping",
+      "fixture": "fixtures/ping/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["25% packet loss", "3 received"]
+    },
+    {
+      "id": "du/typical",
+      "command": "du",
+      "fixture": "fixtures/du/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["invoice"]
+    },
+    {
+      "id": "ps/typical",
+      "command": "ps",
+      "fixture": "fixtures/ps/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["PID TTY TIME CMD", "invoice-worker"]
+    },
+    {
+      "id": "iptables/typical",
+      "command": "iptables",
+      "fixture": "fixtures/iptables/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["Chain INPUT (policy ACCEPT)", "1 ACCEPT all -- 0.0.0.0/0 0.0.0.0/0", "Chain FORWARD (policy DROP)"]
     }
   ]
 }

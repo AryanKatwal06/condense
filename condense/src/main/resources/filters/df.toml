@@ -1,0 +1,23 @@
+schema_version = 1
+name = "df"
+commands = ["df"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(Filesystem|Use%|100%| 9[0-9]%).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+/dev/sda1 100G 99G 1G 100%
+"""
+expected = """  /dev/sda1 100G 99G 1G 100% : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

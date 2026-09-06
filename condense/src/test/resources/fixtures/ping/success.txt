@@ -1,0 +1,9 @@
+64 bytes from 1.1.1.1 step 1 ok
+64 bytes from 1.1.1.1 step 2 ok
+64 bytes from 1.1.1.1 step 3 ok
+64 bytes from 1.1.1.1 step 4 ok
+64 bytes from 1.1.1.1 step 5 ok
+64 bytes from 1.1.1.1 step 6 ok
+64 bytes from 1.1.1.1 step 7 ok
+64 bytes from 1.1.1.1 step 8 ok
+4 packets transmitted, 4 received, 0% packet loss, time 3001ms

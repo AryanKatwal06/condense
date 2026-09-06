@@ -1,0 +1,38 @@
+schema_version = 1
+name = "iptables"
+commands = ["iptables"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "state_machine"
+initial_state = "KEEP"
+transitions = [
+  { from_state = "KEEP", pattern = "^Chain (DOCKER|BR-)", action = "DISCARD", next_state = "SKIP" },
+  { from_state = "KEEP", pattern = "^Chain ", action = "EMIT", next_state = "KEEP" },
+  { from_state = "SKIP", pattern = "^Chain (DOCKER|BR-)", action = "DISCARD", next_state = "SKIP" },
+  { from_state = "SKIP", pattern = "^Chain ", action = "EMIT", next_state = "KEEP" }
+]
+default_actions = { KEEP = "EMIT", SKIP = "DISCARD" }
+
+[[tests]]
+id = "keeps-input-rules"
+input = """
+Chain INPUT (policy ACCEPT)
+1 ACCEPT all -- 0.0.0.0/0 0.0.0.0/0
+Chain DOCKER (1 references)
+ DOCKER all -- 0.0.0.0/0 0.0.0.0/0
+Chain FORWARD (policy DROP)
+1 ACCEPT tcp
+"""
+expected = "Chain INPUT (policy ACCEPT)\n1 ACCEPT all -- 0.0.0.0/0 0.0.0.0/0\nChain FORWARD (policy DROP)\n1 ACCEPT tcp"
+
+[[tests]]
+id = "drops-docker-orphan"
+input = """
+Chain DOCKER (1 references)
+ DOCKER all -- 0.0.0.0/0 0.0.0.0/0
+Chain BR-abcdef (0 references)
+"""
+expected = ""

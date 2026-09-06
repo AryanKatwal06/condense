@@ -1,0 +1,25 @@
+schema_version = 1
+name = "sops"
+commands = ["sops"]
+
+[gate]
+passthrough_nonzero_exit = true
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(error|Error|ERROR|encrypted|MAC).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+MAC mismatch
+"""
+expected = """  MAC mismatch : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

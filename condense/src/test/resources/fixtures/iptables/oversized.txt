@@ -1,0 +1,331 @@
+Chain INPUT (policy ACCEPT)
+num target prot opt source destination
+1 ACCEPT all -- 0.0.0.0/0 0.0.0.0/0
+Chain DOCKER-ISOLATE-0 (1 references)
+ DROP all -- 172.17.0.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-1 (1 references)
+ DROP all -- 172.17.1.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-2 (1 references)
+ DROP all -- 172.17.2.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-3 (1 references)
+ DROP all -- 172.17.3.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-4 (1 references)
+ DROP all -- 172.17.4.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-5 (1 references)
+ DROP all -- 172.17.5.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-6 (1 references)
+ DROP all -- 172.17.6.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-7 (1 references)
+ DROP all -- 172.17.7.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-8 (1 references)
+ DROP all -- 172.17.8.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-9 (1 references)
+ DROP all -- 172.17.9.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-10 (1 references)
+ DROP all -- 172.17.10.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-11 (1 references)
+ DROP all -- 172.17.11.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-12 (1 references)
+ DROP all -- 172.17.12.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-13 (1 references)
+ DROP all -- 172.17.13.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-14 (1 references)
+ DROP all -- 172.17.14.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-15 (1 references)
+ DROP all -- 172.17.15.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-16 (1 references)
+ DROP all -- 172.17.16.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-17 (1 references)
+ DROP all -- 172.17.17.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-18 (1 references)
+ DROP all -- 172.17.18.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-19 (1 references)
+ DROP all -- 172.17.19.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-0 (1 references)
+ DROP all -- 172.17.0.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-1 (1 references)
+ DROP all -- 172.17.1.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-2 (1 references)
+ DROP all -- 172.17.2.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-3 (1 references)
+ DROP all -- 172.17.3.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-4 (1 references)
+ DROP all -- 172.17.4.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-5 (1 references)
+ DROP all -- 172.17.5.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-6 (1 references)
+ DROP all -- 172.17.6.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-7 (1 references)
+ DROP all -- 172.17.7.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-8 (1 references)
+ DROP all -- 172.17.8.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-9 (1 references)
+ DROP all -- 172.17.9.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-10 (1 references)
+ DROP all -- 172.17.10.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-11 (1 references)
+ DROP all -- 172.17.11.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-12 (1 references)
+ DROP all -- 172.17.12.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-13 (1 references)
+ DROP all -- 172.17.13.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-14 (1 references)
+ DROP all -- 172.17.14.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-15 (1 references)
+ DROP all -- 172.17.15.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-16 (1 references)
+ DROP all -- 172.17.16.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-17 (1 references)
+ DROP all -- 172.17.17.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-18 (1 references)
+ DROP all -- 172.17.18.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-19 (1 references)
+ DROP all -- 172.17.19.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-0 (1 references)
+ DROP all -- 172.17.0.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-1 (1 references)
+ DROP all -- 172.17.1.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-2 (1 references)
+ DROP all -- 172.17.2.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-3 (1 references)
+ DROP all -- 172.17.3.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-4 (1 references)
+ DROP all -- 172.17.4.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-5 (1 references)
+ DROP all -- 172.17.5.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-6 (1 references)
+ DROP all -- 172.17.6.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-7 (1 references)
+ DROP all -- 172.17.7.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-8 (1 references)
+ DROP all -- 172.17.8.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-9 (1 references)
+ DROP all -- 172.17.9.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-10 (1 references)
+ DROP all -- 172.17.10.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-11 (1 references)
+ DROP all -- 172.17.11.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-12 (1 references)
+ DROP all -- 172.17.12.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-13 (1 references)
+ DROP all -- 172.17.13.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-14 (1 references)
+ DROP all -- 172.17.14.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-15 (1 references)
+ DROP all -- 172.17.15.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-16 (1 references)
+ DROP all -- 172.17.16.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-17 (1 references)
+ DROP all -- 172.17.17.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-18 (1 references)
+ DROP all -- 172.17.18.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-19 (1 references)
+ DROP all -- 172.17.19.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-0 (1 references)
+ DROP all -- 172.17.0.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-1 (1 references)
+ DROP all -- 172.17.1.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-2 (1 references)
+ DROP all -- 172.17.2.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-3 (1 references)
+ DROP all -- 172.17.3.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-4 (1 references)
+ DROP all -- 172.17.4.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-5 (1 references)
+ DROP all -- 172.17.5.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-6 (1 references)
+ DROP all -- 172.17.6.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-7 (1 references)
+ DROP all -- 172.17.7.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-8 (1 references)
+ DROP all -- 172.17.8.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-9 (1 references)
+ DROP all -- 172.17.9.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-10 (1 references)
+ DROP all -- 172.17.10.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-11 (1 references)
+ DROP all -- 172.17.11.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-12 (1 references)
+ DROP all -- 172.17.12.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-13 (1 references)
+ DROP all -- 172.17.13.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-14 (1 references)
+ DROP all -- 172.17.14.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-15 (1 references)
+ DROP all -- 172.17.15.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-16 (1 references)
+ DROP all -- 172.17.16.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-17 (1 references)
+ DROP all -- 172.17.17.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-18 (1 references)
+ DROP all -- 172.17.18.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-19 (1 references)
+ DROP all -- 172.17.19.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-0 (1 references)
+ DROP all -- 172.17.0.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-1 (1 references)
+ DROP all -- 172.17.1.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-2 (1 references)
+ DROP all -- 172.17.2.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-3 (1 references)
+ DROP all -- 172.17.3.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-4 (1 references)
+ DROP all -- 172.17.4.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-5 (1 references)
+ DROP all -- 172.17.5.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-6 (1 references)
+ DROP all -- 172.17.6.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-7 (1 references)
+ DROP all -- 172.17.7.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-8 (1 references)
+ DROP all -- 172.17.8.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-9 (1 references)
+ DROP all -- 172.17.9.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-10 (1 references)
+ DROP all -- 172.17.10.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-11 (1 references)
+ DROP all -- 172.17.11.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-12 (1 references)
+ DROP all -- 172.17.12.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-13 (1 references)
+ DROP all -- 172.17.13.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-14 (1 references)
+ DROP all -- 172.17.14.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-15 (1 references)
+ DROP all -- 172.17.15.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-16 (1 references)
+ DROP all -- 172.17.16.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-17 (1 references)
+ DROP all -- 172.17.17.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-18 (1 references)
+ DROP all -- 172.17.18.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-19 (1 references)
+ DROP all -- 172.17.19.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-0 (1 references)
+ DROP all -- 172.17.0.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-1 (1 references)
+ DROP all -- 172.17.1.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-2 (1 references)
+ DROP all -- 172.17.2.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-3 (1 references)
+ DROP all -- 172.17.3.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-4 (1 references)
+ DROP all -- 172.17.4.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-5 (1 references)
+ DROP all -- 172.17.5.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-6 (1 references)
+ DROP all -- 172.17.6.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-7 (1 references)
+ DROP all -- 172.17.7.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-8 (1 references)
+ DROP all -- 172.17.8.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-9 (1 references)
+ DROP all -- 172.17.9.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-10 (1 references)
+ DROP all -- 172.17.10.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-11 (1 references)
+ DROP all -- 172.17.11.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-12 (1 references)
+ DROP all -- 172.17.12.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-13 (1 references)
+ DROP all -- 172.17.13.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-14 (1 references)
+ DROP all -- 172.17.14.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-15 (1 references)
+ DROP all -- 172.17.15.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-16 (1 references)
+ DROP all -- 172.17.16.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-17 (1 references)
+ DROP all -- 172.17.17.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-18 (1 references)
+ DROP all -- 172.17.18.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-19 (1 references)
+ DROP all -- 172.17.19.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-0 (1 references)
+ DROP all -- 172.17.0.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-1 (1 references)
+ DROP all -- 172.17.1.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-2 (1 references)
+ DROP all -- 172.17.2.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-3 (1 references)
+ DROP all -- 172.17.3.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-4 (1 references)
+ DROP all -- 172.17.4.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-5 (1 references)
+ DROP all -- 172.17.5.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-6 (1 references)
+ DROP all -- 172.17.6.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-7 (1 references)
+ DROP all -- 172.17.7.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-8 (1 references)
+ DROP all -- 172.17.8.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-9 (1 references)
+ DROP all -- 172.17.9.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-10 (1 references)
+ DROP all -- 172.17.10.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-11 (1 references)
+ DROP all -- 172.17.11.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-12 (1 references)
+ DROP all -- 172.17.12.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-13 (1 references)
+ DROP all -- 172.17.13.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-14 (1 references)
+ DROP all -- 172.17.14.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-15 (1 references)
+ DROP all -- 172.17.15.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-16 (1 references)
+ DROP all -- 172.17.16.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-17 (1 references)
+ DROP all -- 172.17.17.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-18 (1 references)
+ DROP all -- 172.17.18.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-19 (1 references)
+ DROP all -- 172.17.19.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-0 (1 references)
+ DROP all -- 172.17.0.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-1 (1 references)
+ DROP all -- 172.17.1.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-2 (1 references)
+ DROP all -- 172.17.2.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-3 (1 references)
+ DROP all -- 172.17.3.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-4 (1 references)
+ DROP all -- 172.17.4.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-5 (1 references)
+ DROP all -- 172.17.5.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-6 (1 references)
+ DROP all -- 172.17.6.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-7 (1 references)
+ DROP all -- 172.17.7.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-8 (1 references)
+ DROP all -- 172.17.8.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-9 (1 references)
+ DROP all -- 172.17.9.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-10 (1 references)
+ DROP all -- 172.17.10.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-11 (1 references)
+ DROP all -- 172.17.11.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-12 (1 references)
+ DROP all -- 172.17.12.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-13 (1 references)
+ DROP all -- 172.17.13.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-14 (1 references)
+ DROP all -- 172.17.14.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-15 (1 references)
+ DROP all -- 172.17.15.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-16 (1 references)
+ DROP all -- 172.17.16.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-17 (1 references)
+ DROP all -- 172.17.17.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-18 (1 references)
+ DROP all -- 172.17.18.0/24 0.0.0.0/0
+Chain DOCKER-ISOLATE-19 (1 references)
+ DROP all -- 172.17.19.0/24 0.0.0.0/0
+Chain DOCKER (1 references)
+ DOCKER all -- 0.0.0.0/0 0.0.0.0/0
+Chain BR-abcdef (0 references)
+ ACCEPT all -- 10.0.0.0/8 0.0.0.0/0
+Chain FORWARD (policy DROP)
+1 ACCEPT tcp -- 0.0.0.0/0 0.0.0.0/0
+Chain OUTPUT (policy ACCEPT)
+1 ACCEPT all -- 0.0.0.0/0 0.0.0.0/0

@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR: invoice.txt vanished                      : 1
+  rsync error: some files could not be transferred : 1

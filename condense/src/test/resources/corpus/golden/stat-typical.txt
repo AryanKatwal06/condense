@@ -1,0 +1,3 @@
+condense[filtered]
+  File: invoice.txt : 1
+  Size: 2048        : 1

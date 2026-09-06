@@ -1,0 +1,9 @@
+ok step 1 ok
+ok step 2 ok
+ok step 3 ok
+ok step 4 ok
+ok step 5 ok
+ok step 6 ok
+ok step 7 ok
+ok step 8 ok
+/mnt/データ      50G   50G  0G  100%
