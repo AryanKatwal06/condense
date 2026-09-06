@@ -1,11 +1,14 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.HeadTailStage;
 import com.condense.filter.strategy.JsonStructureStrategy;
 
+@DeclarativeStage(aliases = {"cat_content"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class CatContentStage implements FilterStage {
     public static final CatContentStage INSTANCE = new CatContentStage();
     private static final HeadTailStage HEAD_TAIL = new HeadTailStage(20, 20);

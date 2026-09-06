@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.core.ExecutionResult;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
@@ -12,6 +14,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"tsc_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class TscSummaryStage implements FilterStage {
     public static final TscSummaryStage INSTANCE = new TscSummaryStage();
     private static final Pattern FILE_PATTERN = Pattern.compile("^(\\S+\\.ts)\\(");

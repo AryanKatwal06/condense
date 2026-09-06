@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.CollectingSink;
 import com.condense.filter.pipeline.EmissionSink;
 import com.condense.filter.pipeline.FilterContext;
@@ -12,6 +14,7 @@ import com.condense.filter.strategy.BoundedRegex;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"docker_build_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class DockerBuildSummaryStage implements FilterStage {
     public static final DockerBuildSummaryStage INSTANCE = new DockerBuildSummaryStage();
     private static final Pattern IMAGE_ID =

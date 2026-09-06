@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.filter.pipeline.FilterContext;
@@ -9,6 +11,7 @@ import com.condense.filter.pipeline.StageResult;
 import java.util.ArrayList;
 import java.util.List;
 
+@DeclarativeStage(aliases = {"cargo_test_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class CargoTestSummaryStage implements FilterStage {
     public static final CargoTestSummaryStage INSTANCE = new CargoTestSummaryStage();
 

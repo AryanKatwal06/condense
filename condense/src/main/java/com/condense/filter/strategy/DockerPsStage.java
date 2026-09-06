@@ -1,5 +1,7 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
@@ -14,6 +16,7 @@ import java.util.regex.Pattern;
  * Compact {@code docker ps} table. Column heuristics are command-specific;
  * a generic tabular stage would be Phase 5 vocabulary.
  */
+@DeclarativeStage(aliases = {"docker_ps", "docker-ps"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class DockerPsStage implements FilterStage {
 
     public static final DockerPsStage INSTANCE = new DockerPsStage();

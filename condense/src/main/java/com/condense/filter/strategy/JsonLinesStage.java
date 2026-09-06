@@ -1,5 +1,7 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.core.Mappers;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
@@ -14,6 +16,7 @@ import java.util.List;
  * Parses Go test2json-style JSONL events. One JSON document per line.
  * {@link JsonStructureStrategy} is a single document at depth 6 and cannot do this.
  */
+@DeclarativeStage(aliases = {"json_lines", "json-lines"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class JsonLinesStage implements FilterStage {
 
     public static final JsonLinesStage INSTANCE = new JsonLinesStage();

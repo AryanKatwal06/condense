@@ -1,9 +1,13 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.config.FilterOverrideConfig;
+import com.condense.filter.pipeline.config.StageValidation;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -12,6 +16,7 @@ import java.util.regex.Pattern;
 /**
  * Runs a bounded regex against the whole input and formats the first match.
  */
+@DeclarativeStage(aliases = {"regex_capture", "regex-capture"}, capability = "REWRITE", factory = "fromDef")
 public final class RegexCaptureStage implements FilterStage {
 
     private final Pattern pattern;
@@ -31,6 +36,16 @@ public final class RegexCaptureStage implements FilterStage {
      */
     public RegexCaptureStage(Pattern pattern, String format, String fallback) {
         this(pattern, (matcher, ignored) -> expandTemplate(format != null ? format : "$0", matcher), fallback);
+    }
+
+    public static FilterStage fromDef(FilterOverrideConfig.StageDef stageDef) {
+        Pattern pattern = Pattern.compile(
+            stageDef.pattern() != null && !stageDef.pattern().isBlank() ? stageDef.pattern() : "(.*)");
+        return new RegexCaptureStage(pattern, stageDef.format(), stageDef.fallback());
+    }
+
+    public static void validate(String location, FilterOverrideConfig.StageDef stage, List<String> errors) {
+        StageValidation.validateRegex(location, "'pattern'", stage.pattern(), false, errors);
     }
 
     static String expandTemplate(String format, Matcher matcher) {

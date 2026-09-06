@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.core.ExecutionResult;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"cargo_clippy_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class CargoClippySummaryStage implements FilterStage {
     public static final CargoClippySummaryStage INSTANCE = new CargoClippySummaryStage();
     private static final Pattern WARNING_RULE =

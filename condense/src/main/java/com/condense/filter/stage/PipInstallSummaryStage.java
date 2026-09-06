@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
@@ -7,6 +9,7 @@ import com.condense.filter.strategy.AnsiStripStrategy;
 
 import java.util.List;
 
+@DeclarativeStage(aliases = {"pip_install_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class PipInstallSummaryStage implements FilterStage {
     public static final PipInstallSummaryStage INSTANCE = new PipInstallSummaryStage();
 

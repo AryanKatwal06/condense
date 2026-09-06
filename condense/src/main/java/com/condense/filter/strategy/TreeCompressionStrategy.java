@@ -1,11 +1,14 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 
 import java.util.*;
 
+@DeclarativeStage(aliases = {"tree_compression", "tree-compression", "tree"}, capability = "REDUCE", singleton = "INSTANCE")
 public final class TreeCompressionStrategy implements FilterStage {
 
     public static final TreeCompressionStrategy INSTANCE = new TreeCompressionStrategy();

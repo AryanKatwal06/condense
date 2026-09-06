@@ -1,8 +1,12 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.config.FilterOverrideConfig;
+import com.condense.filter.pipeline.config.StageFactory;
+import com.condense.filter.pipeline.config.StageValidation;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,6 +14,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@DeclarativeStage(aliases = {"grouping", "group"}, capability = "RESHAPE", factory = "fromDef")
 public final class GroupingStrategy implements FilterStage {
 
     private final Pattern keyPattern;
@@ -32,6 +37,18 @@ public final class GroupingStrategy implements FilterStage {
         this.keyPattern = keyPattern;
         this.includeOther = includeOther;
         this.timeoutMillis = timeoutMillis;
+    }
+
+    public static FilterStage fromDef(FilterOverrideConfig.StageDef stageDef) {
+        Pattern pattern = stageDef.pattern() != null && !stageDef.pattern().isBlank()
+            ? Pattern.compile(stageDef.pattern())
+            : Pattern.compile("(.*)");
+        boolean includeOther = Boolean.TRUE.equals(stageDef.includeOther());
+        return new GroupingStrategy(pattern, includeOther, StageFactory.REGEX_TIMEOUT_MS);
+    }
+
+    public static void validate(String location, FilterOverrideConfig.StageDef stage, List<String> errors) {
+        StageValidation.validateRegex(location, "'pattern'", stage.pattern(), true, errors);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
@@ -8,6 +10,7 @@ import com.condense.filter.strategy.BoundedRegex;
 import java.util.List;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"gradle_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class GradleSummaryStage implements FilterStage {
     public static final GradleSummaryStage INSTANCE = new GradleSummaryStage();
     private static final Pattern BUILD_SUCCESSFUL = Pattern.compile("BUILD SUCCESSFUL");

@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.filter.pipeline.FilterContext;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"jest_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class JestSummaryStage implements FilterStage {
     public static final JestSummaryStage INSTANCE = new JestSummaryStage();
     private static final Pattern FAIL_SUITE = Pattern.compile("^\\s*FAIL\\s+(.+)$");

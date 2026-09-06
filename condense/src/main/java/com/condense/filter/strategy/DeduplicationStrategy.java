@@ -1,12 +1,15 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.config.FilterOverrideConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@DeclarativeStage(aliases = {"deduplication", "dedup"}, capability = "REDUCE", factory = "fromDef")
 public final class DeduplicationStrategy implements FilterStage {
 
     public static final DeduplicationStrategy DEFAULT = new DeduplicationStrategy(50);
@@ -19,6 +22,18 @@ public final class DeduplicationStrategy implements FilterStage {
 
     public DeduplicationStrategy(int windowSize) {
         this.windowSize = windowSize;
+    }
+
+    public static FilterStage fromDef(FilterOverrideConfig.StageDef stageDef) {
+        int window = (stageDef.windowSize() != null && stageDef.windowSize() > 0)
+            ? stageDef.windowSize() : 50;
+        return new DeduplicationStrategy(window);
+    }
+
+    public static void validate(String location, FilterOverrideConfig.StageDef stage, List<String> errors) {
+        if (stage.windowSize() != null && (stage.windowSize() <= 0 || stage.windowSize() > 10000)) {
+            errors.add(location + ": 'window_size' must be between 1 and 10000, got: " + stage.windowSize());
+        }
     }
 
     private static final java.util.regex.Pattern MULTIPLIER_PATTERN = java.util.regex.Pattern.compile("\\s+\\(×\\d+\\)$");

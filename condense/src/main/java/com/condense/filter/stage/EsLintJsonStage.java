@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.core.Mappers;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
@@ -12,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@DeclarativeStage(aliases = {"eslint_json"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class EsLintJsonStage implements FilterStage {
     public static final EsLintJsonStage INSTANCE = new EsLintJsonStage();
 

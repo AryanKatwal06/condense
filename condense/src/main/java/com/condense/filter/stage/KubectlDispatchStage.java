@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
@@ -10,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"kubectl_dispatch"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class KubectlDispatchStage implements FilterStage {
     public static final KubectlDispatchStage INSTANCE = new KubectlDispatchStage();
     private static final Pattern NOT_RUNNING =

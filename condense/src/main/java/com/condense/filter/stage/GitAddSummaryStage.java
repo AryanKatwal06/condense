@@ -1,9 +1,12 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 
+@DeclarativeStage(aliases = {"git_add_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class GitAddSummaryStage implements FilterStage {
     public static final GitAddSummaryStage INSTANCE = new GitAddSummaryStage();
 

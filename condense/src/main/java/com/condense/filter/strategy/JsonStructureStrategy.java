@@ -1,5 +1,7 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
@@ -11,6 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 import java.util.Map;
 
+@DeclarativeStage(aliases = {"json_structure", "json-structure", "json"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class JsonStructureStrategy implements FilterStage {
 
     public static final JsonStructureStrategy INSTANCE = new JsonStructureStrategy();

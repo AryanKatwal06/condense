@@ -6,6 +6,7 @@
       { "pattern": "languages/.*\\.toml" },
       { "pattern": "discover/.*\\.toml" },
       { "pattern": "hooks/.*" },
+      { "pattern": "META-INF/condense/.*" },
       { "pattern": "application\\.properties" },
       { "pattern": "org/sqlite/native/.*" }
     ]

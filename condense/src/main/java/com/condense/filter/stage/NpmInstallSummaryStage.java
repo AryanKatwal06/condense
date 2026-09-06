@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.CollectingSink;
 import com.condense.filter.pipeline.EmissionSink;
 import com.condense.filter.pipeline.FilterContext;
@@ -15,6 +17,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"npm_install_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class NpmInstallSummaryStage implements FilterStage {
     public static final NpmInstallSummaryStage INSTANCE = new NpmInstallSummaryStage();
     private static final Pattern ADDED_PATTERN = Pattern.compile("added (\\d+) packages?");

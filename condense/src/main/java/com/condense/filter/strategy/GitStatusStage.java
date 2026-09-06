@@ -1,5 +1,7 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
@@ -11,6 +13,7 @@ import java.util.regex.Pattern;
 /**
  * Porcelain XY status plus human-readable section parsing for {@code git status}.
  */
+@DeclarativeStage(aliases = {"git_status", "git-status"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class GitStatusStage implements FilterStage {
 
     public static final GitStatusStage INSTANCE = new GitStatusStage();

@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
@@ -8,6 +10,7 @@ import com.condense.filter.strategy.BoundedRegex;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"git_commit_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class GitCommitSummaryStage implements FilterStage {
     public static final GitCommitSummaryStage INSTANCE = new GitCommitSummaryStage();
     private static final Pattern COMMIT_LINE =

@@ -104,29 +104,15 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${compiler-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>compile-stage-processor</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration combine.self="override">
-                            <release>${java.version}</release>
-                            <compileSourceRoots>
-                                <compileSourceRoot>${project.basedir}/src/processor/java</compileSourceRoot>
-                            </compileSourceRoots>
-                            <outputDirectory>${project.build.directory}/processor-classes</outputDirectory>
-                            <proc>none</proc>
-                            <annotationProcessorPaths combine.self="override"/>
-                        </configuration>
-                    </execution>
-                </executions>
                 <configuration>
                     <release>${java.version}</release>
                     <compilerArgs>
                         <arg>-parameters</arg>
                         <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+                        <arg>-processorpath</arg>
+                        <arg>${project.build.directory}/processor-classes</arg>
+                        <arg>-processor</arg>
+                        <arg>com.condense.codegen.StageRegistryProcessor</arg>
                     </compilerArgs>
                     <additionalClasspathElements>
                         <additionalClasspathElement>${project.build.directory}/processor-classes</additionalClasspathElement>
@@ -178,6 +164,24 @@
                 <version>3.5.0</version>
                 <executions>
                     <execution>
+                        <id>compile-stage-processor</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/javac</executable>
+                            <arguments>
+                                <argument>-d</argument>
+                                <argument>${project.build.directory}/processor-classes</argument>
+                                <argument>-proc:none</argument>
+                                <argument>--release</argument>
+                                <argument>${java.version}</argument>
+                                <argument>${project.basedir}/src/processor/java/com/condense/codegen/StageRegistryProcessor.java</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>validate-builtin-filters</id>
                         <phase>process-classes</phase>
                         <goals>
@@ -196,6 +200,17 @@
                         </goals>
                         <configuration>
                             <mainClass>com.condense.read.LanguageDefinitionValidator</mainClass>
+                            <classpathScope>compile</classpathScope>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>validate-stage-inventory</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.condense.filter.pipeline.config.StageInventoryWriter</mainClass>
                             <classpathScope>compile</classpathScope>
                         </configuration>
                     </execution>

@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.core.ExecutionResult;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
@@ -7,6 +9,7 @@ import com.condense.filter.pipeline.StageResult;
 
 import java.util.List;
 
+@DeclarativeStage(aliases = {"make_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class MakeSummaryStage implements FilterStage {
     public static final MakeSummaryStage INSTANCE = new MakeSummaryStage();
 

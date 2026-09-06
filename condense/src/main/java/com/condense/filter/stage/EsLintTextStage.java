@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"eslint_text"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class EsLintTextStage implements FilterStage {
     public static final EsLintTextStage INSTANCE = new EsLintTextStage();
     private static final Pattern RULE_PATTERN =

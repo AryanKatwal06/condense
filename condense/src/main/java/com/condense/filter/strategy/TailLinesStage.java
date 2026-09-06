@@ -1,14 +1,17 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.pipeline.config.FilterOverrideConfig;
 
 import java.util.List;
 
 /**
  * Keeps the last {@code maxLines} lines and prefixes a truncation notice.
  */
+@DeclarativeStage(aliases = {"tail_lines", "tail-lines"}, capability = "REDUCE", factory = "fromDef")
 public final class TailLinesStage implements FilterStage {
 
     private final int maxLines;
@@ -26,6 +29,20 @@ public final class TailLinesStage implements FilterStage {
         this.maxLines = maxLines;
         this.skipBlank = skipBlank;
         this.headerOnlyWhenTruncating = headerOnlyWhenTruncating;
+    }
+
+    public static FilterStage fromDef(FilterOverrideConfig.StageDef stageDef) {
+        int max = stageDef.maxLines() != null ? stageDef.maxLines() : 20;
+        boolean skipBlank = Boolean.TRUE.equals(stageDef.skipBlank());
+        boolean headerOnly = stageDef.headerOnlyWhenTruncating() == null
+            || Boolean.TRUE.equals(stageDef.headerOnlyWhenTruncating());
+        return new TailLinesStage(max, skipBlank, headerOnly);
+    }
+
+    public static void validate(String location, FilterOverrideConfig.StageDef stage, List<String> errors) {
+        if (stage.maxLines() == null || stage.maxLines() < 1) {
+            errors.add(location + ": 'max_lines' must be >= 1");
+        }
     }
 
     @Override

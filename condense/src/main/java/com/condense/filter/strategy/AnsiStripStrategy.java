@@ -1,5 +1,7 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.filter.pipeline.EmissionSink;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
@@ -9,6 +11,7 @@ import com.condense.filter.pipeline.Streamability;
 
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"ansi_strip", "ansi-strip", "ansi"}, capability = "REDUCE", singleton = "INSTANCE")
 public final class AnsiStripStrategy implements FilterStage {
 
     public static final AnsiStripStrategy INSTANCE = new AnsiStripStrategy();

@@ -1,11 +1,13 @@
 package com.condense.filter.strategy;
 
+import com.condense.annotation.DeclarativeStage;
 import com.condense.filter.pipeline.EmissionSink;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.pipeline.StageSession;
 import com.condense.filter.pipeline.Streamability;
+import com.condense.filter.pipeline.config.FilterOverrideConfig;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.List;
 /**
  * Emits the first {@code head} and last {@code tail} lines of a large text body.
  */
+@DeclarativeStage(aliases = {"head_tail", "head-tail"}, capability = "REDUCE", factory = "fromDef")
 public final class HeadTailStage implements FilterStage {
 
     private final int head;
@@ -26,6 +29,21 @@ public final class HeadTailStage implements FilterStage {
         }
         this.head = head;
         this.tail = tail;
+    }
+
+    public static FilterStage fromDef(FilterOverrideConfig.StageDef stageDef) {
+        int head = stageDef.head() != null ? stageDef.head() : 20;
+        int tail = stageDef.tail() != null ? stageDef.tail() : 20;
+        return new HeadTailStage(head, tail);
+    }
+
+    public static void validate(String location, FilterOverrideConfig.StageDef stage, List<String> errors) {
+        if (stage.head() == null || stage.head() < 0) {
+            errors.add(location + ": 'head' must be >= 0");
+        }
+        if (stage.tail() == null || stage.tail() < 0) {
+            errors.add(location + ": 'tail' must be >= 0");
+        }
     }
 
     @Override

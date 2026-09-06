@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.core.CondenseConfig;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"pytest_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class PytestSummaryStage implements FilterStage {
     public static final PytestSummaryStage INSTANCE = new PytestSummaryStage();
     private static final Pattern FAILED_LINE = Pattern.compile("^FAILED\\s+");

@@ -1,5 +1,7 @@
 package com.condense.filter.stage;
 
+import com.condense.annotation.DeclarativeStage;
+
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.filter.pipeline.FilterContext;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+@DeclarativeStage(aliases = {"mvn_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class MvnSummaryStage implements FilterStage {
     public static final MvnSummaryStage INSTANCE = new MvnSummaryStage();
     private static final Pattern BUILD_SUCCESS = Pattern.compile("BUILD SUCCESS");
