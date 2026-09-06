@@ -145,15 +145,17 @@ public final class TextRenderer {
 
     private static String renderInfra(Document.ResourceDocument payload) {
         StringBuilder sb = new StringBuilder();
-        int add = payload.add() == null ? 0 : payload.add();
-        int change = payload.change() == null ? 0 : payload.change();
-        int destroy = payload.destroy() == null ? 0 : payload.destroy();
-        sb.append("Plan: ")
-            .append(add).append(" to add, ")
-            .append(change).append(" to change, ")
-            .append(destroy).append(" to destroy");
-        if (payload.replace() != null && payload.replace() > 0) {
-            sb.append(", ").append(payload.replace()).append(" to replace");
+        if (payload.add() != null || payload.change() != null || payload.destroy() != null) {
+            int add = payload.add() == null ? 0 : payload.add();
+            int change = payload.change() == null ? 0 : payload.change();
+            int destroy = payload.destroy() == null ? 0 : payload.destroy();
+            sb.append("Plan: ")
+                .append(add).append(" to add, ")
+                .append(change).append(" to change, ")
+                .append(destroy).append(" to destroy");
+            if (payload.replace() != null && payload.replace() > 0) {
+                sb.append(", ").append(payload.replace()).append(" to replace");
+            }
         }
         if (payload.rows() != null) {
             for (Document.ResourceRow row : payload.rows()) {
@@ -166,17 +168,25 @@ public final class TextRenderer {
                 if (address == null || address.isBlank()) {
                     continue;
                 }
-                sb.append('\n').append(address);
-                if (row.action() != null && !row.action().isBlank()) {
-                    sb.append(' ').append(row.action());
+                if (sb.length() > 0) {
+                    sb.append('\n');
                 }
-                if (row.reason() != null && !row.reason().isBlank()) {
-                    sb.append(" (").append(row.reason()).append(')');
+                sb.append(address);
+                if (row.address() != null && !row.address().isBlank()) {
+                    if (row.action() != null && !row.action().isBlank()) {
+                        sb.append(' ').append(row.action());
+                    }
+                    if (row.reason() != null && !row.reason().isBlank()) {
+                        sb.append(" (").append(row.reason()).append(')');
+                    }
                 }
             }
         }
         if (Boolean.TRUE.equals(payload.capped())) {
-            sb.append('\n').append("condense: machine_ui capped");
+            if (sb.length() > 0) {
+                sb.append('\n');
+            }
+            sb.append("condense: machine_ui capped");
         }
         return sb.toString();
     }

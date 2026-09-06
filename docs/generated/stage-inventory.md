@@ -37,9 +37,11 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `pip_install_summary` | `pip_install_summary` | RESHAPE | `com.condense.filter.stage.PipInstallSummaryStage` |
 | `pytest_summary` | `pytest_summary` | RESHAPE | `com.condense.filter.stage.PytestSummaryStage` |
 | `regex_capture` | `regex_capture`, `regex-capture` | REWRITE | `com.condense.filter.strategy.RegexCaptureStage` |
+| `resource_graph` | `resource_graph`, `resource-graph` | RESHAPE | `com.condense.filter.strategy.ResourceGraphStage` |
 | `ruff_summary` | `ruff_summary` | RESHAPE | `com.condense.filter.stage.RuffSummaryStage` |
 | `state_machine` | `state_machine`, `state-machine` | REWRITE | `com.condense.filter.strategy.StateMachineStrategy` |
 | `tail_lines` | `tail_lines`, `tail-lines` | REDUCE | `com.condense.filter.strategy.TailLinesStage` |
 | `tree_compression` | `tree_compression`, `tree-compression`, `tree` | REDUCE | `com.condense.filter.strategy.TreeCompressionStrategy` |
 | `tsc_summary` | `tsc_summary` | RESHAPE | `com.condense.filter.stage.TscSummaryStage` |
+| `validate_json` | `validate_json`, `validate-json` | RESHAPE | `com.condense.filter.strategy.ValidateJsonStage` |
 | `vitest_summary` | `vitest_summary` | RESHAPE | `com.condense.filter.stage.VitestSummaryStage` |

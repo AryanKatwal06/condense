@@ -1,0 +1,7 @@
+aws_instance.web
+aws_instance.api
+aws_security_group.web
+aws_s3_bucket.logs
+module.vpc.aws_subnet.private[0]
+module.vpc.aws_subnet.private[1]
+data.aws_ami.ubuntu

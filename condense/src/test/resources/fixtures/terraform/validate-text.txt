@@ -1,0 +1,6 @@
+Error: Invalid resource type
+
+  on main.tf line 3, in resource "aws_instancee" "web":
+   3: resource "aws_instancee" "web" {
+
+The resource type aws_instancee is not valid.
