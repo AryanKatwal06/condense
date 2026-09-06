@@ -15,6 +15,7 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `docker_ps` | `docker_ps`, `docker-ps` | RESHAPE | `com.condense.filter.strategy.DockerPsStage` |
 | `eslint_json` | `eslint_json` | RESHAPE | `com.condense.filter.stage.EsLintJsonStage` |
 | `eslint_text` | `eslint_text` | RESHAPE | `com.condense.filter.stage.EsLintTextStage` |
+| `format_report` | `format_report`, `format-report` | RESHAPE | `com.condense.filter.strategy.FormatReportStage` |
 | `git_add_summary` | `git_add_summary` | RESHAPE | `com.condense.filter.stage.GitAddSummaryStage` |
 | `git_commit_summary` | `git_commit_summary` | RESHAPE | `com.condense.filter.stage.GitCommitSummaryStage` |
 | `git_diff_summary` | `git_diff_summary` | RESHAPE | `com.condense.filter.stage.GitDiffSummaryStage` |
@@ -43,6 +44,7 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `state_machine` | `state_machine`, `state-machine` | REWRITE | `com.condense.filter.strategy.StateMachineStrategy` |
 | `tail_lines` | `tail_lines`, `tail-lines` | REDUCE | `com.condense.filter.strategy.TailLinesStage` |
 | `tree_compression` | `tree_compression`, `tree-compression`, `tree` | REDUCE | `com.condense.filter.strategy.TreeCompressionStrategy` |
+| `trx_report` | `trx_report`, `trx-report` | RESHAPE | `com.condense.filter.strategy.TrxReportStage` |
 | `tsc_summary` | `tsc_summary` | RESHAPE | `com.condense.filter.stage.TscSummaryStage` |
 | `validate_json` | `validate_json`, `validate-json` | RESHAPE | `com.condense.filter.strategy.ValidateJsonStage` |
 | `vitest_summary` | `vitest_summary` | RESHAPE | `com.condense.filter.stage.VitestSummaryStage` |

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TestRun>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" />
+  </ResultSummary>
+  <Results>
+    <UnitTestResult testName="App.Tests.Merge.TestMerged" outcome="Failed" duration="00:00:00.0030000">
+      <Output>
+        <ErrorInfo>
+          <Message>merged failure</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+</TestRun>

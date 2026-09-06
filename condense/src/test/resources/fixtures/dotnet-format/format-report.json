@@ -1,0 +1,24 @@
+[
+  {
+    "DocumentId": {
+      "ProjectId": { "Id": "18cf4766-380a-4dc6-ab56-bc1e3b7625a8" },
+      "Id": "81d1c87b-2187-4a7c-905d-9c413b17f0af"
+    },
+    "FileName": "Program.cs",
+    "FilePath": "C:\\work\\App\\Program.cs",
+    "FileChanges": [
+      {
+        "LineNumber": 12,
+        "CharNumber": 20,
+        "DiagnosticId": "IDE0055",
+        "FormatDescription": "Fix whitespace formatting."
+      },
+      {
+        "LineNumber": 14,
+        "CharNumber": 1,
+        "DiagnosticId": "IDE0005",
+        "FormatDescription": "Remove unnecessary using."
+      }
+    ]
+  }
+]

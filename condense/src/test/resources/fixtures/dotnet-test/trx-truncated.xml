@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TestRun>
+  <ResultSummary outcome="Failed">
+    <Counters total="3" executed="3" passed="2" failed="1" />
+  </ResultSummary>
+  <Results>
+    <UnitTestResult testName="App.Tests.Kept.TestKept" outcome="Failed" duration="00:00:00.0040000">
+      <Output>
+        <ErrorInfo>
+          <Message>kept failure
