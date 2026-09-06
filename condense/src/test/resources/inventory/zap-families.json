@@ -2,70 +2,593 @@
   "zap_commit": "d9498bb",
   "families": [
     {
+      "id": "ansible-playbook",
+      "zap_source": "filters/ansible-playbook.toml",
+      "zap_commands": [
+        "ansible-playbook"
+      ],
+      "condense_definition": "ansible-playbook"
+    },
+    {
+      "id": "basedpyright",
+      "zap_source": "filters/basedpyright.toml",
+      "zap_commands": [
+        "basedpyright"
+      ],
+      "condense_definition": "basedpyright"
+    },
+    {
+      "id": "biome",
+      "zap_source": "filters/biome.toml",
+      "zap_commands": [
+        "biome"
+      ],
+      "condense_definition": "biome"
+    },
+    {
+      "id": "brew-install",
+      "zap_source": "filters/brew-install.toml",
+      "zap_commands": [
+        "brew install"
+      ],
+      "condense_definition": "brew-install"
+    },
+    {
       "id": "bundle-install",
       "zap_source": "filters/bundle-install.toml",
-      "zap_commands": ["bundle install"],
+      "zap_commands": [
+        "bundle install"
+      ],
       "condense_definition": "bundle-install"
+    },
+    {
+      "id": "composer-install",
+      "zap_source": "filters/composer-install.toml",
+      "zap_commands": [
+        "composer install"
+      ],
+      "condense_definition": "composer-install"
+    },
+    {
+      "id": "df",
+      "zap_source": "filters/df.toml",
+      "zap_commands": [
+        "df"
+      ],
+      "condense_definition": "df"
     },
     {
       "id": "dotnet-build",
       "zap_source": "filters/dotnet-build.toml",
-      "zap_commands": ["dotnet build"],
+      "zap_commands": [
+        "dotnet build"
+      ],
       "condense_definition": "dotnet-build"
+    },
+    {
+      "id": "du",
+      "zap_source": "filters/du.toml",
+      "zap_commands": [
+        "du"
+      ],
+      "condense_definition": "du"
+    },
+    {
+      "id": "fail2ban-client",
+      "zap_source": "filters/fail2ban-client.toml",
+      "zap_commands": [
+        "fail2ban-client"
+      ],
+      "condense_definition": "fail2ban"
+    },
+    {
+      "id": "gcc",
+      "zap_source": "filters/gcc.toml",
+      "zap_commands": [
+        "gcc"
+      ],
+      "condense_definition": "gcc"
+    },
+    {
+      "id": "gcloud",
+      "zap_source": "filters/gcloud.toml",
+      "zap_commands": [
+        "gcloud"
+      ],
+      "condense_definition": "gcloud"
     },
     {
       "id": "gradle",
       "zap_source": "filters/gradle.toml",
-      "zap_commands": ["gradle"],
+      "zap_commands": [
+        "gradle"
+      ],
       "condense_definition": "gradle"
+    },
+    {
+      "id": "hadolint",
+      "zap_source": "filters/hadolint.toml",
+      "zap_commands": [
+        "hadolint"
+      ],
+      "condense_definition": "hadolint"
     },
     {
       "id": "helm",
       "zap_source": "filters/helm.toml",
-      "zap_commands": ["helm install", "helm upgrade", "helm list"],
+      "zap_commands": [
+        "helm install",
+        "helm upgrade",
+        "helm list"
+      ],
       "condense_definition": "helm"
+    },
+    {
+      "id": "iptables",
+      "zap_source": "filters/iptables.toml",
+      "zap_commands": [
+        "iptables"
+      ],
+      "condense_definition": "iptables"
+    },
+    {
+      "id": "jira",
+      "zap_source": "filters/jira.toml",
+      "zap_commands": [
+        "jira"
+      ],
+      "condense_definition": "jira"
+    },
+    {
+      "id": "jj",
+      "zap_source": "filters/jj.toml",
+      "zap_commands": [
+        "jj"
+      ],
+      "condense_definition": "jj"
+    },
+    {
+      "id": "jq",
+      "zap_source": "filters/jq.toml",
+      "zap_commands": [
+        "jq"
+      ],
+      "condense_definition": "jq"
+    },
+    {
+      "id": "just",
+      "zap_source": "filters/just.toml",
+      "zap_commands": [
+        "just"
+      ],
+      "condense_definition": "just"
+    },
+    {
+      "id": "liquibase",
+      "zap_source": "filters/liquibase.toml",
+      "zap_commands": [
+        "liquibase"
+      ],
+      "condense_definition": "liquibase"
     },
     {
       "id": "make",
       "zap_source": "filters/make.toml",
-      "zap_commands": ["make"],
+      "zap_commands": [
+        "make"
+      ],
       "condense_definition": "make"
+    },
+    {
+      "id": "markdownlint",
+      "zap_source": "filters/markdownlint.toml",
+      "zap_commands": [
+        "markdownlint"
+      ],
+      "condense_definition": "markdownlint"
+    },
+    {
+      "id": "mise",
+      "zap_source": "filters/mise.toml",
+      "zap_commands": [
+        "mise"
+      ],
+      "condense_definition": "mise"
+    },
+    {
+      "id": "mix-compile",
+      "zap_source": "filters/mix-compile.toml",
+      "zap_commands": [
+        "mix compile"
+      ],
+      "condense_definition": "mix-compile"
+    },
+    {
+      "id": "mix-format",
+      "zap_source": "filters/mix-format.toml",
+      "zap_commands": [
+        "mix format"
+      ],
+      "condense_definition": "mix-format"
     },
     {
       "id": "mvn-build",
       "zap_source": "filters/mvn-build.toml",
-      "zap_commands": ["mvn"],
+      "zap_commands": [
+        "mvn"
+      ],
       "condense_definition": "mvn"
+    },
+    {
+      "id": "nx",
+      "zap_source": "filters/nx.toml",
+      "zap_commands": [
+        "nx"
+      ],
+      "condense_definition": "nx"
+    },
+    {
+      "id": "ollama",
+      "zap_source": "filters/ollama.toml",
+      "zap_commands": [
+        "ollama"
+      ],
+      "condense_definition": "ollama"
+    },
+    {
+      "id": "oxlint",
+      "zap_source": "filters/oxlint.toml",
+      "zap_commands": [
+        "oxlint"
+      ],
+      "condense_definition": "oxlint"
+    },
+    {
+      "id": "ping",
+      "zap_source": "filters/ping.toml",
+      "zap_commands": [
+        "ping"
+      ],
+      "condense_definition": "ping"
+    },
+    {
+      "id": "pio-run",
+      "zap_source": "filters/pio-run.toml",
+      "zap_commands": [
+        "pio run"
+      ],
+      "condense_definition": "pio-run"
+    },
+    {
+      "id": "poetry-install",
+      "zap_source": "filters/poetry-install.toml",
+      "zap_commands": [
+        "poetry install"
+      ],
+      "condense_definition": "poetry-install"
+    },
+    {
+      "id": "pre-commit",
+      "zap_source": "filters/pre-commit.toml",
+      "zap_commands": [
+        "pre-commit"
+      ],
+      "condense_definition": "pre-commit"
+    },
+    {
+      "id": "ps",
+      "zap_source": "filters/ps.toml",
+      "zap_commands": [
+        "ps"
+      ],
+      "condense_definition": "ps"
+    },
+    {
+      "id": "quarto-render",
+      "zap_source": "filters/quarto-render.toml",
+      "zap_commands": [
+        "quarto render"
+      ],
+      "condense_definition": "quarto-render"
+    },
+    {
+      "id": "rsync",
+      "zap_source": "filters/rsync.toml",
+      "zap_commands": [
+        "rsync"
+      ],
+      "condense_definition": "rsync"
+    },
+    {
+      "id": "shellcheck",
+      "zap_source": "filters/shellcheck.toml",
+      "zap_commands": [
+        "shellcheck"
+      ],
+      "condense_definition": "shellcheck"
+    },
+    {
+      "id": "shopify-theme",
+      "zap_source": "filters/shopify-theme.toml",
+      "zap_commands": [
+        "shopify theme"
+      ],
+      "condense_definition": "shopify-theme"
+    },
+    {
+      "id": "skopeo",
+      "zap_source": "filters/skopeo.toml",
+      "zap_commands": [
+        "skopeo"
+      ],
+      "condense_definition": "skopeo"
+    },
+    {
+      "id": "sops",
+      "zap_source": "filters/sops.toml",
+      "zap_commands": [
+        "sops"
+      ],
+      "condense_definition": "sops"
+    },
+    {
+      "id": "spring-boot",
+      "zap_source": "filters/spring-boot.toml",
+      "zap_commands": [
+        "spring-boot"
+      ],
+      "condense_definition": "spring-boot"
+    },
+    {
+      "id": "ssh",
+      "zap_source": "filters/ssh.toml",
+      "zap_commands": [
+        "ssh"
+      ],
+      "condense_definition": "ssh"
+    },
+    {
+      "id": "stat",
+      "zap_source": "filters/stat.toml",
+      "zap_commands": [
+        "stat"
+      ],
+      "condense_definition": "stat"
+    },
+    {
+      "id": "swift-build",
+      "zap_source": "filters/swift-build.toml",
+      "zap_commands": [
+        "swift build"
+      ],
+      "condense_definition": "swift-build"
+    },
+    {
+      "id": "systemctl-status",
+      "zap_source": "filters/systemctl-status.toml",
+      "zap_commands": [
+        "systemctl status"
+      ],
+      "condense_definition": "systemctl-status"
+    },
+    {
+      "id": "task",
+      "zap_source": "filters/task.toml",
+      "zap_commands": [
+        "task"
+      ],
+      "condense_definition": "task"
     },
     {
       "id": "terraform-plan",
       "zap_source": "filters/terraform-plan.toml",
-      "zap_commands": ["terraform plan"],
+      "zap_commands": [
+        "terraform plan"
+      ],
       "condense_definition": "terraform"
     },
     {
       "id": "tofu-fmt",
       "zap_source": "filters/tofu-fmt.toml",
-      "zap_commands": ["tofu fmt"],
+      "zap_commands": [
+        "tofu fmt"
+      ],
       "condense_definition": "tofu-fmt"
     },
     {
       "id": "tofu-init",
       "zap_source": "filters/tofu-init.toml",
-      "zap_commands": ["tofu init"],
+      "zap_commands": [
+        "tofu init"
+      ],
       "condense_definition": "tofu"
     },
     {
       "id": "tofu-plan",
       "zap_source": "filters/tofu-plan.toml",
-      "zap_commands": ["tofu plan"],
+      "zap_commands": [
+        "tofu plan"
+      ],
       "condense_definition": "tofu"
     },
     {
       "id": "tofu-validate",
       "zap_source": "filters/tofu-validate.toml",
-      "zap_commands": ["tofu validate"],
+      "zap_commands": [
+        "tofu validate"
+      ],
       "condense_definition": "tofu"
+    },
+    {
+      "id": "trunk-build",
+      "zap_source": "filters/trunk-build.toml",
+      "zap_commands": [
+        "trunk"
+      ],
+      "condense_definition": "trunk-build"
+    },
+    {
+      "id": "turbo",
+      "zap_source": "filters/turbo.toml",
+      "zap_commands": [
+        "turbo"
+      ],
+      "condense_definition": "turbo"
+    },
+    {
+      "id": "ty",
+      "zap_source": "filters/ty.toml",
+      "zap_commands": [
+        "ty"
+      ],
+      "condense_definition": "ty"
+    },
+    {
+      "id": "uv-sync",
+      "zap_source": "filters/uv-sync.toml",
+      "zap_commands": [
+        "uv sync"
+      ],
+      "condense_definition": "uv-sync"
+    },
+    {
+      "id": "xcodebuild",
+      "zap_source": "filters/xcodebuild.toml",
+      "zap_commands": [
+        "xcodebuild"
+      ],
+      "condense_definition": "xcodebuild"
+    },
+    {
+      "id": "yadm",
+      "zap_source": "filters/yadm.toml",
+      "zap_commands": [
+        "yadm"
+      ],
+      "condense_definition": "yadm"
+    },
+    {
+      "id": "yamllint",
+      "zap_source": "filters/yamllint.toml",
+      "zap_commands": [
+        "yamllint"
+      ],
+      "condense_definition": "yamllint"
+    },
+    {
+      "id": "gt",
+      "zap_source": "cmds/git/gt_cmd.rs",
+      "zap_commands": [
+        "gt"
+      ],
+      "condense_definition": "gt"
+    },
+    {
+      "id": "rake",
+      "zap_source": "cmds/ruby/rake_cmd.rs",
+      "zap_commands": [
+        "rake"
+      ],
+      "condense_definition": "rake"
+    },
+    {
+      "id": "read",
+      "zap_source": "cmds/system/read.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap file-read subcommand, not a third-party proxy. Condense exposes condense read instead."
+      }
+    },
+    {
+      "id": "summary",
+      "zap_source": "cmds/system/summary.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal summary helper, not a third-party command proxy."
+      }
+    },
+    {
+      "id": "tree",
+      "zap_source": "cmds/system/tree.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal tree helper, not a leftover Unix tree proxy."
+      }
+    },
+    {
+      "id": "wc",
+      "zap_source": "cmds/system/wc_cmd.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal word-count helper, not a leftover Unix wc proxy."
+      }
+    },
+    {
+      "id": "json",
+      "zap_source": "cmds/system/json_cmd.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal JSON helper, not a third-party command proxy."
+      }
+    },
+    {
+      "id": "format",
+      "zap_source": "cmds/system/format_cmd.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal format helper, not a third-party command proxy."
+      }
+    },
+    {
+      "id": "env",
+      "zap_source": "cmds/system/env_cmd.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal environment helper, not a leftover env proxy."
+      }
+    },
+    {
+      "id": "pipe",
+      "zap_source": "cmds/system/pipe_cmd.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal pipe helper, not a third-party command proxy."
+      }
+    },
+    {
+      "id": "local_llm",
+      "zap_source": "cmds/system/local_llm.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal local LLM helper, not a third-party command proxy."
+      }
+    },
+    {
+      "id": "log",
+      "zap_source": "cmds/system/log_cmd.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal log helper, not a third-party command proxy."
+      }
+    },
+    {
+      "id": "deps",
+      "zap_source": "cmds/system/deps.rs",
+      "zap_commands": [],
+      "exclusion": {
+        "kind": "zap_internal",
+        "reason": "Zap-internal dependency helper, not a third-party command proxy."
+      }
     }
   ]
 }
