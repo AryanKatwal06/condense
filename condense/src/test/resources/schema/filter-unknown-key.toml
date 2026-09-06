@@ -1,0 +1,7 @@
+schema_version = 1
+extra = true
+
+[filters."npm install"]
+stages = [
+  { strategy = "ansi_strip" }
+]

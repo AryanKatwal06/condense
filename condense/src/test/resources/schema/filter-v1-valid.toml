@@ -1,0 +1,7 @@
+schema_version = 1
+
+[filters."npm install"]
+stages = [
+  { strategy = "ansi_strip" },
+  { strategy = "tail_lines", max_lines = 20, skip_blank = true }
+]

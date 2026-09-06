@@ -17,7 +17,7 @@ connection = driver.connect(url, new java.util.Properties());
 
 1. `PRAGMA busy_timeout = 5000`
 2. `PRAGMA journal_mode = WAL` (fail-open if the filesystem cannot do WAL)
-3. `PRAGMA integrity_check` — if the result is not `ok`, the repository marks degraded, skips migrate, and the proxy stays fail-open
+3. `PRAGMA integrity_check` — if the result is not `ok`, the repository marks degraded, skips migrate, and the proxy stays fail-open. Schema target stays **2**. See [schema-lifecycle.md](schema-lifecycle.md).
 4. Forward-only schema migration
 5. Retention prune and a bounded orphan sweep of known Condense temp files
 
