@@ -32,6 +32,7 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `ls_empty_tree_fallback` | `ls_empty_tree_fallback` | RESHAPE | `com.condense.filter.stage.LsEmptyTreeFallbackStage` |
 | `machine_ui` | `machine_ui`, `machine-ui` | RESHAPE | `com.condense.filter.strategy.MachineUiStage` |
 | `make_summary` | `make_summary` | RESHAPE | `com.condense.filter.stage.MakeSummaryStage` |
+| `msbuild_binlog` | `msbuild_binlog`, `msbuild-binlog` | RESHAPE | `com.condense.filter.strategy.MsbuildBinlogStage` |
 | `mvn_summary` | `mvn_summary` | RESHAPE | `com.condense.filter.stage.MvnSummaryStage` |
 | `npm_install_summary` | `npm_install_summary` | RESHAPE | `com.condense.filter.stage.NpmInstallSummaryStage` |
 | `pip_install_summary` | `pip_install_summary` | RESHAPE | `com.condense.filter.stage.PipInstallSummaryStage` |

@@ -16,6 +16,8 @@ public record FilterIncident(
     public static final String KIND_APPLY_FALLBACK = "apply_fallback";
     public static final String KIND_IR_FALLBACK = "ir_fallback";
     public static final String KIND_MACHINE_UI_VERSION = "machine_ui_version";
+    public static final String KIND_BINLOG_VERSION = "binlog_version";
+    public static final String KIND_TRX_XXE = "trx_xxe";
     public static final int DETAIL_MAX = 500;
 
     public FilterIncident {
