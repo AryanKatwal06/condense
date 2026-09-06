@@ -109,8 +109,11 @@ public class CommandExecutor {
 
             boolean finished = waitFor(process, timeout);
             TerminationReason reason = TerminationReason.CHILD_EXIT;
+            boolean shutdown = destroyedByShutdown.contains(process);
 
-            if (!finished) {
+            if (shutdown) {
+                reason = TerminationReason.DESTROYED;
+            } else if (!finished) {
                 destroyTree(process);
                 reason = TerminationReason.TIMEOUT;
                 long elapsed = System.currentTimeMillis() - startMs;
@@ -138,13 +141,13 @@ public class CommandExecutor {
             }
 
             long durationMs = System.currentTimeMillis() - startMs;
-            int exitCode;
             if (destroyedByShutdown.contains(process)
                     && reason != TerminationReason.TIMEOUT
                     && reason != TerminationReason.OUTPUT_CAP) {
                 reason = TerminationReason.DESTROYED;
-                exitCode = -1;
-            } else if (reason == TerminationReason.TIMEOUT) {
+            }
+            int exitCode;
+            if (reason == TerminationReason.DESTROYED || reason == TerminationReason.TIMEOUT) {
                 exitCode = -1;
             } else if (process.isAlive()) {
                 exitCode = -1;
@@ -183,9 +186,10 @@ public class CommandExecutor {
 
     void onStop(@jakarta.enterprise.event.Observes io.quarkus.runtime.ShutdownEvent ev) {
         for (Process p : activeProcesses) {
+            // Mark first so execute cannot observe SIGTERM 143 as a normal CHILD_EXIT.
+            destroyedByShutdown.add(p);
             if (p.isAlive()) {
                 destroyTree(p);
-                destroyedByShutdown.add(p);
             }
         }
     }
