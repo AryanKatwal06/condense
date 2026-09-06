@@ -5,6 +5,7 @@ import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import com.condense.ir.Document;
 import com.condense.ir.JsonRenderer;
+import com.condense.ir.TextRenderer;
 import com.condense.mcp.McpMessages;
 import com.condense.persist.SchemaMigrator;
 import com.condense.trust.TrustTestSupport;
@@ -51,6 +52,33 @@ class SchemaCompatibilityTest {
     void irSchemaAheadIsRejected() {
         assertThatThrownBy(() -> JsonRenderer.parse(resource("ir-schema-ahead.json")))
             .isInstanceOfAny(IllegalArgumentException.class, UncheckedIOException.class);
+    }
+
+    @Test
+    void oldResourceDocumentWithoutFormatStillParses() throws Exception {
+        Document parsed = JsonRenderer.parse(resource("ir-v1-resource-containers.json"));
+        assertThat(parsed.kind()).isEqualTo(Document.DocumentKind.RESOURCE);
+        Document.ResourceDocument payload = (Document.ResourceDocument) parsed.document();
+        assertThat(payload.format()).isNull();
+        assertThat(payload.infra()).isFalse();
+        assertThat(payload.rows()).hasSize(1);
+        assertThat(payload.rows().getFirst().id()).isEqualTo("a1b2c3d4");
+        assertThat(TextRenderer.render(parsed)).contains("ID       IMAGE");
+        assertThat(TextRenderer.render(parsed)).doesNotContain("Plan:");
+    }
+
+    @Test
+    void infraResourceDocumentParsesAndRendersWithoutDockerHeader() throws Exception {
+        Document parsed = JsonRenderer.parse(resource("ir-v1-resource-infra.json"));
+        assertThat(parsed.kind()).isEqualTo(Document.DocumentKind.RESOURCE);
+        Document.ResourceDocument payload = (Document.ResourceDocument) parsed.document();
+        assertThat(payload.infra()).isTrue();
+        assertThat(payload.add()).isEqualTo(1);
+        assertThat(payload.rows().getFirst().address()).isEqualTo("aws_instance.web");
+        String text = TextRenderer.render(parsed);
+        assertThat(text).startsWith("Plan: 1 to add, 0 to change, 0 to destroy");
+        assertThat(text).contains("aws_instance.web create");
+        assertThat(text).doesNotContain("ID       IMAGE");
     }
 
     @Test

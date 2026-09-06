@@ -46,10 +46,14 @@ public final class TextRenderer {
         if (payload == null) {
             return "";
         }
+        String tool = payload.tool();
+        boolean namedTool = tool != null && !tool.isBlank();
         if (payload.clean()) {
-            return "✓ no lint issues";
+            return namedTool ? tool + ": ok" : "✓ no lint issues";
         }
-        StringBuilder sb = new StringBuilder("eslint: ")
+        String label = namedTool ? tool : "eslint";
+        StringBuilder sb = new StringBuilder(label)
+            .append(": ")
             .append(payload.errors())
             .append(" error(s), ")
             .append(payload.warnings())
@@ -57,6 +61,22 @@ public final class TextRenderer {
         String groups = formatGroups(payload);
         if (!groups.isBlank()) {
             sb.append('\n').append(groups);
+        }
+        if (namedTool && payload.findings() != null) {
+            for (Document.Finding finding : payload.findings()) {
+                if (finding == null || finding.message() == null || finding.message().isBlank()) {
+                    continue;
+                }
+                sb.append('\n');
+                if (finding.file() != null && !finding.file().isBlank()) {
+                    sb.append(finding.file());
+                    if (finding.line() != null) {
+                        sb.append(':').append(finding.line());
+                    }
+                    sb.append(' ');
+                }
+                sb.append(finding.message());
+            }
         }
         return sb.toString().stripTrailing();
     }
@@ -101,6 +121,9 @@ public final class TextRenderer {
     }
 
     public static String renderResource(Document.ResourceDocument payload) {
+        if (payload != null && payload.infra()) {
+            return renderInfra(payload);
+        }
         if (payload == null || payload.empty()) {
             return "(no containers running)";
         }
@@ -116,6 +139,44 @@ public final class TextRenderer {
                 sb.append(String.format("%-8s %-20s %-10s %s",
                     row.id(), row.image(), row.status(), row.name()));
             }
+        }
+        return sb.toString();
+    }
+
+    private static String renderInfra(Document.ResourceDocument payload) {
+        StringBuilder sb = new StringBuilder();
+        int add = payload.add() == null ? 0 : payload.add();
+        int change = payload.change() == null ? 0 : payload.change();
+        int destroy = payload.destroy() == null ? 0 : payload.destroy();
+        sb.append("Plan: ")
+            .append(add).append(" to add, ")
+            .append(change).append(" to change, ")
+            .append(destroy).append(" to destroy");
+        if (payload.replace() != null && payload.replace() > 0) {
+            sb.append(", ").append(payload.replace()).append(" to replace");
+        }
+        if (payload.rows() != null) {
+            for (Document.ResourceRow row : payload.rows()) {
+                if (row == null) {
+                    continue;
+                }
+                String address = row.address() != null && !row.address().isBlank()
+                    ? row.address()
+                    : row.raw();
+                if (address == null || address.isBlank()) {
+                    continue;
+                }
+                sb.append('\n').append(address);
+                if (row.action() != null && !row.action().isBlank()) {
+                    sb.append(' ').append(row.action());
+                }
+                if (row.reason() != null && !row.reason().isBlank()) {
+                    sb.append(" (").append(row.reason()).append(')');
+                }
+            }
+        }
+        if (Boolean.TRUE.equals(payload.capped())) {
+            sb.append('\n').append("condense: machine_ui capped");
         }
         return sb.toString();
     }

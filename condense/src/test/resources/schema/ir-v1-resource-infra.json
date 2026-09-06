@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "kind": "resource",
+  "command": "terraform plan",
+  "filter": "CatalogBackedFilter",
+  "child_exit_code": 0,
+  "was_filtered": true,
+  "provenance": { "applied": true, "stamp": "condense[filtered]" },
+  "document": {
+    "rows": [
+      {
+        "id": "",
+        "image": "",
+        "status": "",
+        "name": "",
+        "raw": "",
+        "address": "aws_instance.web",
+        "action": "create",
+        "resource_type": "aws_instance"
+      }
+    ],
+    "empty": false,
+    "format": "infra",
+    "add": 1,
+    "change": 0,
+    "destroy": 0
+  }
+}

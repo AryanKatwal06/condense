@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "kind": "resource",
+  "command": "docker ps",
+  "filter": "DockerPsFilter",
+  "child_exit_code": 0,
+  "was_filtered": true,
+  "provenance": { "applied": true, "stamp": "condense[filtered]" },
+  "document": {
+    "rows": [
+      {
+        "id": "a1b2c3d4",
+        "image": "nginx:latest",
+        "status": "Up",
+        "name": "web",
+        "raw": ""
+      }
+    ],
+    "empty": false
+  }
+}

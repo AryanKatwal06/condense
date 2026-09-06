@@ -181,7 +181,9 @@ public record Document(
         int warnings,
         List<GroupCount> groups,
         String groupStyle,
-        boolean clean
+        boolean clean,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String tool
     ) {
         public static final String GROUP_ALIGNED = "aligned";
         public static final String GROUP_COLON = "colon";
@@ -190,6 +192,18 @@ public record Document(
             findings = copy(findings);
             groups = copy(groups);
             groupStyle = groupStyle == null || groupStyle.isBlank() ? GROUP_ALIGNED : groupStyle;
+            tool = tool == null || tool.isBlank() ? null : tool;
+        }
+
+        public DiagnosticDocument(
+            List<Finding> findings,
+            int errors,
+            int warnings,
+            List<GroupCount> groups,
+            String groupStyle,
+            boolean clean
+        ) {
+            this(findings, errors, warnings, groups, groupStyle, clean, null);
         }
     }
 
@@ -227,21 +241,71 @@ public record Document(
     @RegisterForReflection
     public record ResourceDocument(
         List<ResourceRow> rows,
-        boolean empty
+        boolean empty,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String format,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer add,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer change,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer destroy,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer replace,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Boolean capped
     ) {
+        public static final String FORMAT_CONTAINERS = "containers";
+        public static final String FORMAT_INFRA = "infra";
+
         public ResourceDocument {
             rows = copy(rows);
+            format = format == null || format.isBlank() ? null : format;
+        }
+
+        public ResourceDocument(List<ResourceRow> rows, boolean empty) {
+            this(rows, empty, null, null, null, null, null, null);
+        }
+
+        public boolean infra() {
+            return FORMAT_INFRA.equals(format);
         }
     }
 
     @RegisterForReflection
-    public record ResourceRow(String id, String image, String status, String name, String raw) {
+    public record ResourceRow(
+        String id,
+        String image,
+        String status,
+        String name,
+        String raw,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String address,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String action,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String reason,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String resourceType
+    ) {
         public ResourceRow {
             id = id == null ? "" : id;
             image = image == null ? "" : image;
             status = status == null ? "" : status;
             name = name == null ? "" : name;
             raw = raw == null ? "" : raw;
+            address = address == null || address.isBlank() ? null : address;
+            action = action == null || action.isBlank() ? null : action;
+            reason = reason == null || reason.isBlank() ? null : reason;
+            resourceType = resourceType == null || resourceType.isBlank() ? null : resourceType;
+        }
+
+        public ResourceRow(String id, String image, String status, String name, String raw) {
+            this(id, image, status, name, raw, null, null, null, null);
+        }
+
+        public static ResourceRow infra(String address, String action, String reason, String resourceType) {
+            return new ResourceRow("", "", "", "", "", address, action, reason, resourceType);
         }
     }
 
