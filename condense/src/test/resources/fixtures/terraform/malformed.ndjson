@@ -1,0 +1,5 @@
+{"@level":"info","@message":"Terraform 1.9.0","@module":"terraform.ui","type":"version","ui":"1.0"}
+{"type":"planned_change","@module":"terraform.ui","change":{"resource":{"addr":"aws_instance.web","resource_type":"aws_instance"},"action":"create"}}
+{"type":"planned_change","change":{"resource":{"addr":"aws_vpc.broken"
+not-json
+{"type":"change_summary","@module":"terraform.ui","changes":{"add":1,"change":0,"remove":0,"operation":"plan"}}

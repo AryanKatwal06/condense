@@ -1,0 +1,10 @@
+{"@level":"info","@message":"Terraform 1.9.0","@module":"terraform.ui","@timestamp":"2026-01-01T00:00:00Z","terraform":"1.9.0","type":"version","ui":"1.2"}
+{"@level":"info","@message":"aws_instance.web: Plan to create","@module":"terraform.ui","type":"planned_change","change":{"resource":{"addr":"aws_instance.web","resource_type":"aws_instance","resource_name":"web"},"action":"create"}}
+{"@level":"info","@message":"aws_security_group.web: Plan to update","@module":"terraform.ui","type":"planned_change","change":{"resource":{"addr":"aws_security_group.web","resource_type":"aws_security_group","resource_name":"web"},"action":"update"}}
+{"@level":"info","@message":"aws_eip.old: Plan to delete","@module":"terraform.ui","type":"planned_change","change":{"resource":{"addr":"aws_eip.old","resource_type":"aws_eip","resource_name":"old"},"action":"delete"}}
+{"@level":"info","@message":"aws_instance.api: Plan to replace","@module":"terraform.ui","type":"planned_change","change":{"resource":{"addr":"aws_instance.api","resource_type":"aws_instance","resource_name":"api"},"action":"replace","reason":"cannot_update"}}
+{"@level":"info","@message":"aws_s3_bucket.logs: Drift detected","@module":"terraform.ui","type":"resource_drift","change":{"resource":{"addr":"aws_s3_bucket.logs","resource_type":"aws_s3_bucket","resource_name":"logs"},"action":"update"}}
+{"@level":"info","@message":"random_pet.unused: Refreshing","@module":"terraform.ui","type":"refresh_start","hook":{"resource":{"addr":"random_pet.unused"}}}
+{"@level":"info","@message":"random_pet.unused: Refresh complete","@module":"terraform.ui","type":"refresh_complete","hook":{"resource":{"addr":"random_pet.unused"}}}
+{"@level":"info","@message":"Plan: 2 to add, 1 to change, 2 to destroy.","@module":"terraform.ui","type":"change_summary","changes":{"add":2,"change":1,"remove":2,"operation":"plan"}}
+{"@level":"error","@message":"Error: Missing required argument","@module":"terraform.ui","type":"diagnostic","diagnostic":{"severity":"error","summary":"Missing required argument","address":"aws_instance.web"}}

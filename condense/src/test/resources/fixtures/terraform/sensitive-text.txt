@@ -1,0 +1,8 @@
+Terraform will perform the following actions:
+
+  # aws_instance.web will be updated
+      password     = (sensitive value)
+      public_ip    = (known after apply)
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+Error: Missing required argument

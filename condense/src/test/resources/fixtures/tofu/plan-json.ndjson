@@ -1,0 +1,3 @@
+{"@level":"info","@message":"OpenTofu 1.8.0","@module":"terraform.ui","type":"version","ui":"1.2"}
+{"@level":"info","@message":"aws_instance.web will be created","@module":"terraform.ui","type":"planned_change","change":{"resource":{"addr":"aws_instance.web","resource_type":"aws_instance","resource_name":"web"},"action":"create"}}
+{"@level":"info","@message":"Plan: 1 to add, 0 to change, 0 to destroy.","@module":"terraform.ui","type":"change_summary","changes":{"add":1,"change":0,"remove":0,"operation":"plan"}}

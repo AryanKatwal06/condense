@@ -30,6 +30,7 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `json_structure` | `json_structure`, `json-structure`, `json` | RESHAPE | `com.condense.filter.strategy.JsonStructureStrategy` |
 | `kubectl_dispatch` | `kubectl_dispatch` | RESHAPE | `com.condense.filter.stage.KubectlDispatchStage` |
 | `ls_empty_tree_fallback` | `ls_empty_tree_fallback` | RESHAPE | `com.condense.filter.stage.LsEmptyTreeFallbackStage` |
+| `machine_ui` | `machine_ui`, `machine-ui` | RESHAPE | `com.condense.filter.strategy.MachineUiStage` |
 | `make_summary` | `make_summary` | RESHAPE | `com.condense.filter.stage.MakeSummaryStage` |
 | `mvn_summary` | `mvn_summary` | RESHAPE | `com.condense.filter.stage.MvnSummaryStage` |
 | `npm_install_summary` | `npm_install_summary` | RESHAPE | `com.condense.filter.stage.NpmInstallSummaryStage` |

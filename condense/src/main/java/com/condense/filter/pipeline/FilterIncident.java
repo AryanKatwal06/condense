@@ -15,6 +15,7 @@ public record FilterIncident(
     public static final String KIND_STAGE_EXCEPTION = "stage_exception";
     public static final String KIND_APPLY_FALLBACK = "apply_fallback";
     public static final String KIND_IR_FALLBACK = "ir_fallback";
+    public static final String KIND_MACHINE_UI_VERSION = "machine_ui_version";
     public static final int DETAIL_MAX = 500;
 
     public FilterIncident {
@@ -31,6 +32,10 @@ public record FilterIncident(
 
     public static FilterIncident irFallback(String stageName, String detail) {
         return new FilterIncident(KIND_IR_FALLBACK, null, stageName, true, detail);
+    }
+
+    public static FilterIncident machineUiVersion(String detail) {
+        return new FilterIncident(KIND_MACHINE_UI_VERSION, null, "machine_ui", true, detail);
     }
 
     public FilterIncident withFilterName(String name) {

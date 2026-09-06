@@ -1,0 +1,7 @@
+{"@level":"info","@message":"Terraform 1.9.0","@module":"terraform.ui","terraform":"1.9.0","type":"version","ui":"1.1"}
+{"@level":"info","@message":"random_pet.animal: Plan to create","@module":"terraform.ui","type":"planned_change","change":{"resource":{"addr":"random_pet.animal","resource_type":"random_pet","resource_name":"animal"},"action":"create"}}
+{"@level":"info","@message":"random_pet.animal: Creating...","@module":"terraform.ui","type":"apply_start"}
+{"@level":"info","@message":"random_pet.animal: Still creating...","@module":"terraform.ui","type":"apply_progress"}
+{"@level":"info","@message":"random_pet.animal: Creation complete","@module":"terraform.ui","type":"apply_complete"}
+{"@level":"info","@message":"Apply complete! Resources: 1 added, 0 changed, 0 destroyed.","@module":"terraform.ui","type":"change_summary","changes":{"add":1,"change":0,"remove":0,"operation":"apply"}}
+{"@level":"info","@message":"Outputs: 1","@module":"terraform.ui","type":"outputs","outputs":{"pets":{"sensitive":false,"type":"string","value":"redacted-name"},"secret":{"sensitive":true,"type":"string","value":"should-not-appear"}}}
