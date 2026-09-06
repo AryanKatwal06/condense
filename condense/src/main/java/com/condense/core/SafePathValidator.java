@@ -75,6 +75,9 @@ public class SafePathValidator {
         if (fileName.startsWith(".condense-atomic-") && fileName.endsWith(".tmp")) {
             return true;
         }
+        if (fileName.startsWith("condense-dotnet-")) {
+            return true;
+        }
         return false;
     }
 

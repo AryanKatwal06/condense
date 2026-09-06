@@ -82,6 +82,33 @@ class SchemaCompatibilityTest {
     }
 
     @Test
+    void oldTestDocumentWithoutOptionalFieldsStillParses() throws Exception {
+        Document parsed = JsonRenderer.parse(resource("ir-v1-test-pytest.json"));
+        assertThat(parsed.kind()).isEqualTo(Document.DocumentKind.TEST);
+        Document.TestDocument payload = (Document.TestDocument) parsed.document();
+        assertThat(payload.tool()).isNull();
+        assertThat(payload.skipped()).isNull();
+        assertThat(payload.total()).isNull();
+        assertThat(payload.cases()).hasSize(1);
+        assertThat(payload.cases().getFirst().file()).isNull();
+        assertThat(payload.cases().getFirst().stack()).isNull();
+        assertThat(TextRenderer.render(parsed)).contains("FAILED tests/test_math.py::test_mul");
+    }
+
+    @Test
+    void trxTestDocumentParsesOptionalFields() throws Exception {
+        Document parsed = JsonRenderer.parse(resource("ir-v1-test-trx.json"));
+        assertThat(parsed.kind()).isEqualTo(Document.DocumentKind.TEST);
+        Document.TestDocument payload = (Document.TestDocument) parsed.document();
+        assertThat(payload.tool()).isEqualTo("trx");
+        assertThat(payload.total()).isEqualTo(39);
+        assertThat(payload.cases().getFirst().file()).isEqualTo("InvoiceTests.cs");
+        assertThat(payload.cases().getFirst().durationMs()).isEqualTo(12);
+        assertThat(payload.cases().getFirst().stack()).contains("TestInvoiceTotal");
+        assertThat(TextRenderer.render(parsed)).contains("Failed TestInvoiceTotal");
+    }
+
+    @Test
     void unknownMcpProtocolFallsBack() {
         assertThat(McpMessages.negotiateProtocol("not-a-protocol"))
             .isEqualTo(McpMessages.FALLBACK_PROTOCOL);

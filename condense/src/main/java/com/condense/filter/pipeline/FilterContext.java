@@ -17,6 +17,7 @@ import java.util.List;
  * @param ultraCompact     whether ultra-compact mode is enabled
  * @param incidents        mutable per-execute list of fail-open events; never shared across calls
  * @param documentBuilder  mutable sidecar for the Phase 11 diagnostics document
+ * @param argv             original proxied tokens when known; otherwise space-split {@code command}
  */
 public record FilterContext(
     String command,
@@ -25,7 +26,8 @@ public record FilterContext(
     int verbose,
     boolean ultraCompact,
     List<FilterIncident> incidents,
-    DocumentBuilder documentBuilder
+    DocumentBuilder documentBuilder,
+    List<String> argv
 ) {
     public FilterContext {
         command = command != null ? command : "";
@@ -35,6 +37,11 @@ public record FilterContext(
         }
         if (documentBuilder == null) {
             documentBuilder = new DocumentBuilder();
+        }
+        if (argv == null || argv.isEmpty()) {
+            argv = tokens(command);
+        } else {
+            argv = List.copyOf(argv);
         }
     }
 
@@ -47,7 +54,7 @@ public record FilterContext(
             CondenseConfig config,
             int verbose,
             boolean ultraCompact) {
-        this(command, result, config, verbose, ultraCompact, new ArrayList<>(), new DocumentBuilder());
+        this(command, result, config, verbose, ultraCompact, new ArrayList<>(), new DocumentBuilder(), tokens(command));
     }
 
     public FilterContext(
@@ -57,14 +64,36 @@ public record FilterContext(
             int verbose,
             boolean ultraCompact,
             List<FilterIncident> incidents) {
-        this(command, result, config, verbose, ultraCompact, incidents, new DocumentBuilder());
+        this(command, result, config, verbose, ultraCompact, incidents, new DocumentBuilder(), tokens(command));
+    }
+
+    public FilterContext(
+            String command,
+            ExecutionResult result,
+            CondenseConfig config,
+            int verbose,
+            boolean ultraCompact,
+            List<FilterIncident> incidents,
+            DocumentBuilder documentBuilder) {
+        this(command, result, config, verbose, ultraCompact, incidents, documentBuilder, tokens(command));
     }
 
     public static FilterContext empty() {
-        return new FilterContext("", null, CondenseConfig.defaults(), 0, false, new ArrayList<>(), new DocumentBuilder());
+        return new FilterContext(
+            "", null, CondenseConfig.defaults(), 0, false, new ArrayList<>(), new DocumentBuilder(), List.of());
     }
 
     public static FilterContext of(String command, ExecutionResult result, CondenseConfig config, int verbose, boolean ultraCompact) {
+        return of(command, result, config, verbose, ultraCompact, tokens(command));
+    }
+
+    public static FilterContext of(
+            String command,
+            ExecutionResult result,
+            CondenseConfig config,
+            int verbose,
+            boolean ultraCompact,
+            List<String> argv) {
         return new FilterContext(
             command != null ? command : "",
             result,
@@ -72,8 +101,16 @@ public record FilterContext(
             verbose,
             ultraCompact,
             new ArrayList<>(),
-            new DocumentBuilder()
+            new DocumentBuilder(),
+            argv
         );
+    }
+
+    static List<String> tokens(String command) {
+        if (command == null || command.isBlank()) {
+            return List.of();
+        }
+        return List.of(command.trim().split("\\s+"));
     }
 
     public void recordIncident(FilterIncident incident) {

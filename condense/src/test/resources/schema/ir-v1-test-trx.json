@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "kind": "test",
+  "command": "dotnet test",
+  "filter": "dotnet-test",
+  "child_exit_code": 1,
+  "was_filtered": true,
+  "provenance": { "applied": true, "stamp": "condense[filtered]" },
+  "document": {
+    "cases": [
+      {
+        "name": "App.Tests.InvoiceTests.TestInvoiceTotal",
+        "status": "failed",
+        "detail": "Failed TestInvoiceTotal",
+        "file": "InvoiceTests.cs",
+        "duration_ms": 12,
+        "stack": "at App.Tests.InvoiceTests.TestInvoiceTotal()"
+      }
+    ],
+    "passed": 38,
+    "failed": 1,
+    "errors": 0,
+    "lines": ["Failed TestInvoiceTotal"],
+    "empty_fallback": "",
+    "skipped": 0,
+    "total": 39,
+    "tool": "trx"
+  }
+}

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -15,25 +16,38 @@ import java.util.stream.Stream;
  * @param stderrFile   temp file containing captured standard error
  * @param durationMs   wall-clock time from process start to exit, in milliseconds
  * @param termination  why wait ended; never inferred from {@code -1} alone
+ * @param artifacts    sidecar files the child wrote or the user already named
  */
 public record ExecutionResult(
     int exitCode,
     Path stdoutFile,
     Path stderrFile,
     long durationMs,
-    TerminationReason termination
+    TerminationReason termination,
+    List<Path> artifacts
 ) {
 
     public ExecutionResult {
         termination = termination == null ? TerminationReason.CHILD_EXIT : termination;
+        artifacts = artifacts == null || artifacts.isEmpty() ? List.of() : List.copyOf(artifacts);
     }
 
     public ExecutionResult(int exitCode, Path stdoutFile, Path stderrFile, long durationMs) {
-        this(exitCode, stdoutFile, stderrFile, durationMs, TerminationReason.CHILD_EXIT);
+        this(exitCode, stdoutFile, stderrFile, durationMs, TerminationReason.CHILD_EXIT, List.of());
+    }
+
+    public ExecutionResult(
+            int exitCode,
+            Path stdoutFile,
+            Path stderrFile,
+            long durationMs,
+            TerminationReason termination
+    ) {
+        this(exitCode, stdoutFile, stderrFile, durationMs, termination, List.of());
     }
 
     public ExecutionResult(int exitCode, String stdout, String stderr, long durationMs) {
-        this(exitCode, writeStringSafe(stdout), writeStringSafe(stderr), durationMs, TerminationReason.CHILD_EXIT);
+        this(exitCode, writeStringSafe(stdout), writeStringSafe(stderr), durationMs, TerminationReason.CHILD_EXIT, List.of());
     }
 
     public ExecutionResult(
@@ -43,7 +57,11 @@ public record ExecutionResult(
             long durationMs,
             TerminationReason termination
     ) {
-        this(exitCode, writeStringSafe(stdout), writeStringSafe(stderr), durationMs, termination);
+        this(exitCode, writeStringSafe(stdout), writeStringSafe(stderr), durationMs, termination, List.of());
+    }
+
+    public ExecutionResult withArtifacts(List<Path> next) {
+        return new ExecutionResult(exitCode, stdoutFile, stderrFile, durationMs, termination, next);
     }
 
     private static Path writeStringSafe(String s) {

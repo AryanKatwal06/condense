@@ -42,6 +42,7 @@ class OrphanSweepTest {
         assertThat(Files.readString(shm)).isEqualTo("shm");
         assertThat(Files.readString(keep)).isEqualTo("{}");
         assertThat(SafePathValidator.isKnownCondenseTemp("trust.json.tmp")).isTrue();
+        assertThat(SafePathValidator.isKnownCondenseTemp("condense-dotnet-1234")).isTrue();
         assertThat(SafePathValidator.isKnownCondenseTemp("condense.db-wal")).isFalse();
     }
 }

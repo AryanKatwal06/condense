@@ -156,21 +156,55 @@ public record Document(
         int failed,
         int errors,
         List<String> lines,
-        String emptyFallback
+        String emptyFallback,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer skipped,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer total,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String tool
     ) {
         public TestDocument {
             cases = copy(cases);
             lines = copy(lines);
             emptyFallback = emptyFallback == null ? "" : emptyFallback;
+            tool = tool == null || tool.isBlank() ? null : tool;
+        }
+
+        public TestDocument(
+                List<TestCase> cases,
+                int passed,
+                int failed,
+                int errors,
+                List<String> lines,
+                String emptyFallback
+        ) {
+            this(cases, passed, failed, errors, lines, emptyFallback, null, null, null);
         }
     }
 
     @RegisterForReflection
-    public record TestCase(String name, String status, String detail) {
+    public record TestCase(
+        String name,
+        String status,
+        String detail,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String file,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer durationMs,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String stack
+    ) {
         public TestCase {
             name = name == null ? "" : name;
             status = status == null ? "" : status;
             detail = detail == null ? "" : detail;
+            file = file == null || file.isBlank() ? null : file;
+            stack = stack == null || stack.isBlank() ? null : stack;
+        }
+
+        public TestCase(String name, String status, String detail) {
+            this(name, status, detail, null, null, null);
         }
     }
 

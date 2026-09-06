@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "kind": "test",
+  "command": "pytest",
+  "filter": "PytestFilter",
+  "child_exit_code": 1,
+  "was_filtered": true,
+  "provenance": { "applied": true, "stamp": "condense[filtered]" },
+  "document": {
+    "cases": [
+      { "name": "tests/test_math.py::test_mul", "status": "failed", "detail": "FAILED tests/test_math.py::test_mul" }
+    ],
+    "passed": 3,
+    "failed": 1,
+    "errors": 0,
+    "lines": ["FAILED tests/test_math.py::test_mul"],
+    "empty_fallback": ""
+  }
+}
