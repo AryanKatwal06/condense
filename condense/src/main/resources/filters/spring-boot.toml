@@ -1,0 +1,23 @@
+schema_version = 1
+name = "spring-boot"
+commands = ["spring-boot"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(ERROR|Error|APPLICATION FAILED).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+APPLICATION FAILED TO START invoice
+"""
+expected = """  APPLICATION FAILED TO START invoice : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

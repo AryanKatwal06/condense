@@ -1,0 +1,23 @@
+schema_version = 1
+name = "turbo"
+commands = ["turbo", "turbo run", "turbo build"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(ERROR|error|failed|FAILED).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+ERROR invoice#build failed
+"""
+expected = """  ERROR invoice#build failed : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

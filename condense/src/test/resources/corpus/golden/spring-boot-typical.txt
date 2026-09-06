@@ -1,0 +1,3 @@
+condense[filtered]
+  APPLICATION FAILED TO START : 1
+  Error: invoice bean missing : 1

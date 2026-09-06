@@ -1,0 +1,4 @@
+condense[filtered]
+30 issue(s) in 2 file(s)
+  src/app.py: 20
+  src/invoice.py: 10

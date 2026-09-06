@@ -1,0 +1,23 @@
+schema_version = 1
+name = "nx"
+commands = ["nx", "nx run", "nx build", "nx test"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(error|Error|ERROR|failed|FAILED|NX).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+NX Failed to process invoice
+"""
+expected = """  NX Failed to process invoice : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

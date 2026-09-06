@@ -1,0 +1,23 @@
+schema_version = 1
+name = "just"
+commands = ["just"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(error|Error|ERROR).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+error: Justfile does not contain recipe invoice
+"""
+expected = """  error: Justfile does not contain recipe invoice : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

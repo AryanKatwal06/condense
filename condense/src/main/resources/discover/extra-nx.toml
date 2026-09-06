@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-nx"
+family = "nx"
+priority = 10
+signals = ["nx.json"]
+recommend = ["nx"]

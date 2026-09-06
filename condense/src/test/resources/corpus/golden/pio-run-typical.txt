@@ -1,0 +1,3 @@
+condense[filtered]
+  *** [build] Error 1               : 1
+  error: 'invoice' was not declared : 1

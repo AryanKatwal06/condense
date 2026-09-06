@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-poetry"
+family = "poetry"
+priority = 10
+signals = ["poetry.lock"]
+recommend = ["poetry-install"]

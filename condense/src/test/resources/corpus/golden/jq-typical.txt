@@ -1,0 +1,11 @@
+condense[filtered]
+[ {
+  "id" : 0,
+  "name" : "<string>",
+  "nested" : {
+    "a" : 0,
+    "b" : 0,
+    "c" : 0
+  },
+  "tags" : [ "<string>", "... +2 more" ]
+}, "... +39 more" ]

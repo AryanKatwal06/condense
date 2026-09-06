@@ -1,0 +1,4 @@
+condense[filtered]
+30 issue(s) in 2 file(s)
+  scripts/deploy.sh: 20
+  scripts/invoice.sh: 10

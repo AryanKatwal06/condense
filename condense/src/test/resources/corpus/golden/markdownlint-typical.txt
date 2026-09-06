@@ -1,0 +1,4 @@
+condense[filtered]
+30 issue(s) in 2 file(s)
+  README.md: 20
+  docs/invoice.md: 10

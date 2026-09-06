@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-task"
+family = "task"
+priority = 10
+signals = ["Taskfile.yml"]
+recommend = ["task"]

@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-turbo"
+family = "turbo"
+priority = 10
+signals = ["turbo.json"]
+recommend = ["turbo"]

@@ -1,0 +1,23 @@
+schema_version = 1
+name = "quarto-render"
+commands = ["quarto render"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(ERROR|Error|error).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+ERROR Unable to render invoice.qmd
+"""
+expected = """  ERROR Unable to render invoice.qmd : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

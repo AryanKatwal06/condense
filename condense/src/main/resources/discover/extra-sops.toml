@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-sops"
+family = "sops"
+priority = 10
+signals = [".sops.yaml"]
+recommend = ["sops"]

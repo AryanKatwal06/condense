@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-markdownlint"
+family = "markdownlint"
+priority = 10
+signals = [".markdownlint.json"]
+recommend = ["markdownlint"]

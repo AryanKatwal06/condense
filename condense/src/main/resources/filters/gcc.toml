@@ -1,0 +1,23 @@
+schema_version = 1
+name = "gcc"
+commands = ["gcc", "g++"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(error:).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+invoice.c:1:1: error: expected
+"""
+expected = """  invoice.c:1:1: error: expected : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

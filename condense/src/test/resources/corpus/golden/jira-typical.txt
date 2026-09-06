@@ -1,0 +1,10 @@
+condense[filtered]
+ISSUE KEY SUMMARY
+row 0 ok
+row 1 ok
+row 2 ok
+... (44 lines omitted) ...
+row 47 ok
+row 48 ok
+row 49 ok
+INV-1 failed deploy

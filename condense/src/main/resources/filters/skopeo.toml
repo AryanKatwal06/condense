@@ -1,0 +1,23 @@
+schema_version = 1
+name = "skopeo"
+commands = ["skopeo"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(error|Error|ERROR).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+FATA[0000] Error invoice
+"""
+expected = """  FATA[0000] Error invoice : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

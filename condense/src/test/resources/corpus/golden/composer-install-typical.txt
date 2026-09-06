@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR package invoice missing                          : 1
+  Error: Your requirements could not be resolved invoice : 1

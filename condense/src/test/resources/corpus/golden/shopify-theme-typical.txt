@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR upload failed         : 1
+  Error: theme invoice failed : 1

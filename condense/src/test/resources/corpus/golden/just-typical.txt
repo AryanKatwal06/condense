@@ -1,0 +1,3 @@
+condense[filtered]
+  error: Justfile does not contain recipe invoice : 1
+  error: Recipe `test` failed                     : 1

@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-ansible"
+family = "ansible"
+priority = 10
+signals = ["ansible.cfg"]
+recommend = ["ansible-playbook"]

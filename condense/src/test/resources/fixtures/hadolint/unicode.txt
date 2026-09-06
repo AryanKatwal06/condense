@@ -1,0 +1,1 @@
+src/カフェ.ts:1: error: DL3008

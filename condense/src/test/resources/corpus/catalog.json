@@ -750,6 +750,310 @@
       "exit_code": 0,
       "savings_floor": 60,
       "critical_signals": ["Chain INPUT (policy ACCEPT)", "1 ACCEPT all -- 0.0.0.0/0 0.0.0.0/0", "Chain FORWARD (policy DROP)"]
+    },
+    {
+      "id": "biome/typical",
+      "command": "biome",
+      "fixture": "fixtures/biome/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["src/app.ts", "src/invoice.ts"]
+    },
+    {
+      "id": "oxlint/typical",
+      "command": "oxlint",
+      "fixture": "fixtures/oxlint/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["src/app.ts", "src/invoice.ts"]
+    },
+    {
+      "id": "shellcheck/typical",
+      "command": "shellcheck",
+      "fixture": "fixtures/shellcheck/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["scripts/deploy.sh", "scripts/invoice.sh"]
+    },
+    {
+      "id": "yamllint/typical",
+      "command": "yamllint",
+      "fixture": "fixtures/yamllint/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["deploy.yml", "invoice.yml"]
+    },
+    {
+      "id": "markdownlint/typical",
+      "command": "markdownlint",
+      "fixture": "fixtures/markdownlint/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["README.md", "docs/invoice.md"]
+    },
+    {
+      "id": "basedpyright/typical",
+      "command": "basedpyright",
+      "fixture": "fixtures/basedpyright/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["src/app.py", "src/invoice.py"]
+    },
+    {
+      "id": "ty/typical",
+      "command": "ty",
+      "fixture": "fixtures/ty/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["src/app.py", "src/invoice.py"]
+    },
+    {
+      "id": "hadolint/typical",
+      "command": "hadolint",
+      "fixture": "fixtures/hadolint/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Dockerfile", "invoice.Dockerfile"]
+    },
+    {
+      "id": "nx/typical",
+      "command": "nx",
+      "fixture": "fixtures/nx/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["NX", "invoice"]
+    },
+    {
+      "id": "turbo/typical",
+      "command": "turbo",
+      "fixture": "fixtures/turbo/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["ERROR", "invoice"]
+    },
+    {
+      "id": "mise/typical",
+      "command": "mise",
+      "fixture": "fixtures/mise/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error:", "node"]
+    },
+    {
+      "id": "pre-commit/typical",
+      "command": "pre-commit",
+      "fixture": "fixtures/pre-commit/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Failed", "invoice"]
+    },
+    {
+      "id": "just/typical",
+      "command": "just",
+      "fixture": "fixtures/just/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["error:", "invoice"]
+    },
+    {
+      "id": "task/typical",
+      "command": "task",
+      "fixture": "fixtures/task/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Failed", "invoice"]
+    },
+    {
+      "id": "rake/typical",
+      "command": "rake",
+      "fixture": "fixtures/rake/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["rake aborted", "invoice"]
+    },
+    {
+      "id": "swift-build/typical",
+      "command": "swift build",
+      "fixture": "fixtures/swift-build/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["error:", "Invoice"]
+    },
+    {
+      "id": "xcodebuild/typical",
+      "command": "xcodebuild",
+      "fixture": "fixtures/xcodebuild/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["BUILD FAILED", "error:"]
+    },
+    {
+      "id": "mix-compile/typical",
+      "command": "mix compile",
+      "fixture": "fixtures/mix-compile/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["error:", "invoice"]
+    },
+    {
+      "id": "quarto-render/typical",
+      "command": "quarto render",
+      "fixture": "fixtures/quarto-render/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["ERROR", "invoice.qmd"]
+    },
+    {
+      "id": "liquibase/typical",
+      "command": "liquibase",
+      "fixture": "fixtures/liquibase/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["ERROR", "invoice"]
+    },
+    {
+      "id": "poetry-install/typical",
+      "command": "poetry install",
+      "fixture": "fixtures/poetry-install/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error:", "invoice"]
+    },
+    {
+      "id": "uv-sync/typical",
+      "command": "uv sync",
+      "fixture": "fixtures/uv-sync/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["error:", "invoice"]
+    },
+    {
+      "id": "composer-install/typical",
+      "command": "composer install",
+      "fixture": "fixtures/composer-install/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error", "invoice"]
+    },
+    {
+      "id": "brew-install/typical",
+      "command": "brew install",
+      "fixture": "fixtures/brew-install/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error:", "invoice"]
+    },
+    {
+      "id": "gcc/typical",
+      "command": "gcc",
+      "fixture": "fixtures/gcc/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["error:", "invoice.c"]
+    },
+    {
+      "id": "gcloud/typical",
+      "command": "gcloud",
+      "fixture": "fixtures/gcloud/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["ERROR", "invoice"]
+    },
+    {
+      "id": "ollama/typical",
+      "command": "ollama",
+      "fixture": "fixtures/ollama/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error:", "invoice"]
+    },
+    {
+      "id": "pio-run/typical",
+      "command": "pio run",
+      "fixture": "fixtures/pio-run/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["error:", "invoice"]
+    },
+    {
+      "id": "shopify-theme/typical",
+      "command": "shopify theme",
+      "fixture": "fixtures/shopify-theme/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error:", "invoice"]
+    },
+    {
+      "id": "skopeo/typical",
+      "command": "skopeo",
+      "fixture": "fixtures/skopeo/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["Error", "invoice"]
+    },
+    {
+      "id": "spring-boot/typical",
+      "command": "spring-boot",
+      "fixture": "fixtures/spring-boot/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["APPLICATION FAILED", "invoice"]
+    },
+    {
+      "id": "trunk-build/typical",
+      "command": "trunk",
+      "fixture": "fixtures/trunk-build/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["error:", "invoice"]
+    },
+    {
+      "id": "gt/typical",
+      "command": "gt",
+      "fixture": "fixtures/gt/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["Showing 12 stacked PRs", "invoice failed deploy"]
+    },
+    {
+      "id": "jj/typical",
+      "command": "jj",
+      "fixture": "fixtures/jj/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["Working copy", "Conflict in invoice.txt"]
+    },
+    {
+      "id": "jira/typical",
+      "command": "jira",
+      "fixture": "fixtures/jira/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["ISSUE KEY SUMMARY", "INV-1 failed deploy"]
+    },
+    {
+      "id": "yadm/typical",
+      "command": "yadm",
+      "fixture": "fixtures/yadm/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["On branch main", "invoice.conf modified"]
+    },
+    {
+      "id": "mix-format/typical",
+      "command": "mix format",
+      "fixture": "fixtures/mix-format/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["lib/invoice.ex", "lib/z_last.ex"]
+    },
+    {
+      "id": "jq/typical",
+      "command": "jq",
+      "fixture": "fixtures/jq/typical.txt",
+      "exit_code": 0,
+      "savings_floor": 60,
+      "critical_signals": ["id", "name"]
     }
   ]
 }

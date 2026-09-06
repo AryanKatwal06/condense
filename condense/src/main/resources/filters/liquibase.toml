@@ -1,0 +1,23 @@
+schema_version = 1
+name = "liquibase"
+commands = ["liquibase"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(ERROR|Error|error|changeset).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+ERROR Failed changeset invoice
+"""
+expected = """  ERROR Failed changeset invoice : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-basedpyright"
+family = "basedpyright"
+priority = 10
+signals = ["pyrightconfig.json"]
+recommend = ["basedpyright"]

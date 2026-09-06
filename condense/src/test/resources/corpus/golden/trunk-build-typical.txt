@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR linter failed         : 1
+  error: invoice check failed : 1

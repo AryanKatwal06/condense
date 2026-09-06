@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-swift"
+family = "swift"
+priority = 10
+signals = ["Package.swift"]
+recommend = ["swift-build"]

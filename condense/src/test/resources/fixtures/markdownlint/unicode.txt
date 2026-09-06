@@ -1,0 +1,1 @@
+src/カフェ.ts:1: error: MD013

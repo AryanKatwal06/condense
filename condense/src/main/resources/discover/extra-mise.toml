@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-mise"
+family = "mise"
+priority = 10
+signals = ["mise.toml"]
+recommend = ["mise"]

@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR unauthorized                 : 1
+  FATA[0000] Error invoice not found : 1

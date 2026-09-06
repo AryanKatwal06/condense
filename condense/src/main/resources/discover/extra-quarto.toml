@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-quarto"
+family = "quarto"
+priority = 10
+signals = ["_quarto.yml"]
+recommend = ["quarto-render"]

@@ -1,0 +1,23 @@
+schema_version = 1
+name = "task"
+commands = ["task"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(error|Error|ERROR|FAILED|Failed).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+task: Failed to run task invoice
+"""
+expected = """  task: Failed to run task invoice : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

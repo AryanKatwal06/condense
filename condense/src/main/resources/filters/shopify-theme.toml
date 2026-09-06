@@ -1,0 +1,23 @@
+schema_version = 1
+name = "shopify-theme"
+commands = ["shopify theme"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(error|Error|ERROR).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+Error: theme invoice failed
+"""
+expected = """  Error: theme invoice failed : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

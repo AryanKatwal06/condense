@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR Failed changeset invoice : 1
+  changeset 12 failed            : 1

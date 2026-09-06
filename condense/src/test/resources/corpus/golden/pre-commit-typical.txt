@@ -1,0 +1,3 @@
+condense[filtered]
+  invoice.py failed hook                                        : 1
+  ruff...................................................Failed : 1

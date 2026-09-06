@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-composer"
+family = "php"
+priority = 10
+signals = ["composer.lock"]
+recommend = ["composer-install"]

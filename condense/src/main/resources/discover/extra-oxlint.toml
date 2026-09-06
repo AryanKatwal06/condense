@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-oxlint"
+family = "oxlint"
+priority = 10
+signals = [".oxlintrc.json"]
+recommend = ["oxlint"]

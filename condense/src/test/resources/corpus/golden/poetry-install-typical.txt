@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR package missing             : 1
+  Error: SolverProblemError invoice : 1

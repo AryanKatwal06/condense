@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-pre-commit"
+family = "pre-commit"
+priority = 10
+signals = [".pre-commit-config.yaml"]
+recommend = ["pre-commit"]

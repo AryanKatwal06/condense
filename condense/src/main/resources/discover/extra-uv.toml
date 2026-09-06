@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-uv"
+family = "uv"
+priority = 10
+signals = ["uv.lock"]
+recommend = ["uv-sync"]

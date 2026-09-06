@@ -1,0 +1,22 @@
+schema_version = 1
+name = "jq"
+commands = ["jq"]
+
+[[stages]]
+strategy = "json_structure"
+
+[[tests]]
+id = "skeleton"
+input = """
+[{"id":1,"name":"a","tags":["x","y"]},{"id":2,"name":"b","tags":["z"]}]
+"""
+expected = """[ {
+  "id" : 0,
+  "name" : "<string>",
+  "tags" : [ "<string>", "... +1 more" ]
+}, "... +1 more" ]"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not json\n"
+expected = "not json\n"

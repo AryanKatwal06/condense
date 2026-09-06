@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR: (gcloud) invoice failed : 1
+  Error: permission denied       : 1

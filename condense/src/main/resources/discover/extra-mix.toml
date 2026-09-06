@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-mix"
+family = "elixir"
+priority = 10
+signals = ["mix.exs"]
+recommend = ["mix-compile"]

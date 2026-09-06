@@ -1,0 +1,3 @@
+condense[filtered]
+  Error: invoice task failed : 1
+  rake aborted!              : 1

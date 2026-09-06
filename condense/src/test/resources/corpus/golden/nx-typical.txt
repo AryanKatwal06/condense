@@ -1,0 +1,3 @@
+condense[filtered]
+  Error: build failed          : 1
+  NX Failed to process invoice : 1

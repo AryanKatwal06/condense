@@ -1,0 +1,3 @@
+condense[filtered]
+  error: build failed                 : 1
+  error: cannot find Invoice in scope : 1

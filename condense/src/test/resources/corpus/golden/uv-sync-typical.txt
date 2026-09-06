@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR resolution failed           : 1
+  error: Failed to download invoice : 1

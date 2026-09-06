@@ -1,0 +1,35 @@
+schema_version = 1
+name = "jj"
+commands = ["jj", "jj log", "jj status"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "head_tail"
+head = 4
+tail = 4
+
+[[tests]]
+id = "omits-middle"
+input = """
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+"""
+expected = "1\n2\n3\n4\n... (5 lines omitted) ...\n10\n11\n12\n13"
+
+[[tests]]
+id = "garbage-falls-through"
+input = "short"
+expected = "short"

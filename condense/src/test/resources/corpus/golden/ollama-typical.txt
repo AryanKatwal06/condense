@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR pull failed              : 1
+  Error: model invoice not found : 1

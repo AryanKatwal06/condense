@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR command failed             : 1
+  task: Failed to run task invoice : 1

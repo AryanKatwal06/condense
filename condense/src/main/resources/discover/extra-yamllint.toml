@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-yamllint"
+family = "yamllint"
+priority = 10
+signals = [".yamllint"]
+recommend = ["yamllint"]

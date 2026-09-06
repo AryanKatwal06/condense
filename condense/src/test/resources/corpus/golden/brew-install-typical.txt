@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR bottle missing     : 1
+  Error: invoice not found : 1

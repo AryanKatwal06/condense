@@ -1,0 +1,23 @@
+schema_version = 1
+name = "ollama"
+commands = ["ollama", "ollama run"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(Error|error|ERROR).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+Error: model invoice not found
+"""
+expected = """  Error: model invoice not found : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

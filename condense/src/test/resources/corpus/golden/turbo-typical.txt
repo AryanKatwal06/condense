@@ -1,0 +1,3 @@
+condense[filtered]
+  ERROR invoice#build failed : 1
+  failed to cache invoice    : 1

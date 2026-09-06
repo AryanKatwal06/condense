@@ -1,0 +1,23 @@
+schema_version = 1
+name = "pre-commit"
+commands = ["pre-commit", "pre-commit run"]
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(Failed|failed|error|Error).*)$"
+include_other = false
+
+[[tests]]
+id = "keeps-signal"
+input = """
+trim trailing whitespace Failed
+"""
+expected = """  trim trailing whitespace Failed : 1"""
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a matching diagnostic line\n"
+expected = ""

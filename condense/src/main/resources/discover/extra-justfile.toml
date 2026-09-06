@@ -1,0 +1,6 @@
+schema_version = 1
+name = "extra-justfile"
+family = "just"
+priority = 20
+signals = ["Justfile"]
+recommend = ["just"]
