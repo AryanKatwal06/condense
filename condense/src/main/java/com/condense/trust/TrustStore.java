@@ -2,6 +2,7 @@ package com.condense.trust;
 
 import com.condense.core.PlatformDirs;
 import com.condense.core.SafePathValidator;
+import com.condense.persist.AtomicFile;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -10,7 +11,6 @@ import org.jboss.logging.Logger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -37,9 +37,15 @@ public final class TrustStore {
     }
 
     private final PlatformDirs platformDirs;
+    private final AtomicFile atomic;
 
     public TrustStore(PlatformDirs platformDirs) {
+        this(platformDirs, AtomicFile.SYSTEM);
+    }
+
+    public TrustStore(PlatformDirs platformDirs, AtomicFile atomic) {
         this.platformDirs = platformDirs;
+        this.atomic = atomic == null ? AtomicFile.SYSTEM : atomic;
     }
 
     public Path storePath() {
@@ -172,13 +178,7 @@ public final class TrustStore {
         }
         try {
             byte[] bytes = JSON.writerWithDefaultPrettyPrinter().writeValueAsBytes(file);
-            Path tmp = configDir.resolve(FILE_NAME + ".tmp");
-            Files.write(tmp, bytes);
-            try {
-                Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (IOException atomicFailed) {
-                Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
-            }
+            atomic.write(target, configDir, bytes, ".condense-trust-", ".tmp");
         } catch (IOException e) {
             throw new IllegalStateException("Cannot write trust.json: " + e.getMessage(), e);
         }

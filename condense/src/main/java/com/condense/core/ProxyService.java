@@ -94,7 +94,14 @@ public class ProxyService {
                 commandStr, result, config, verbose, ultraCompact);
         }
 
-        Path teePath = teeWriter.maybeDump(commandStr, result);
+        Path teePath = null;
+        if (teeWriter != null) {
+            try {
+                teePath = teeWriter.maybeDump(commandStr, result);
+            } catch (RuntimeException ignored) {
+                // Fail-open. A tee fault must not change the child exit or filtered stdout.
+            }
+        }
 
         if (filtered.document() == null) {
             filtered = filtered.withDocument(Documents.fromResult(

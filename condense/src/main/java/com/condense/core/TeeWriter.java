@@ -4,11 +4,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
+import com.condense.persist.AtomicFile;
+import com.condense.persist.CondenseClock;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 
 /**
  * Saves raw command output to a file when the tee system is active.
@@ -35,11 +37,20 @@ public class TeeWriter {
     @Inject
     ConfigLoader configLoader;
 
-    public TeeWriter() {}
+    private final AtomicFile atomic;
+
+    public TeeWriter() {
+        this.atomic = AtomicFile.SYSTEM;
+    }
 
     public TeeWriter(PlatformDirs platformDirs, ConfigLoader configLoader) {
+        this(platformDirs, configLoader, AtomicFile.SYSTEM);
+    }
+
+    public TeeWriter(PlatformDirs platformDirs, ConfigLoader configLoader, AtomicFile atomic) {
         this.platformDirs = platformDirs;
         this.configLoader = configLoader;
+        this.atomic = atomic == null ? AtomicFile.SYSTEM : atomic;
     }
 
     /**
@@ -74,20 +85,19 @@ public class TeeWriter {
     private Path dump(String command, ExecutionResult result) {
         try {
             Path teeDir = platformDirs.getDataDir().resolve("tee");
-            Files.createDirectories(teeDir);
-
             String hash = ProjectFingerprint.of(command).substring(0, 8);
-            long ts = Instant.now().getEpochSecond();
+            long ts = CondenseClock.epochSeconds();
             String filename = hash + "-" + ts + ".txt";
             Path file = teeDir.resolve(filename);
 
-            try (java.io.OutputStream out = Files.newOutputStream(file, java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
-                 java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(out, StandardCharsets.UTF_8))) {
+            atomic.write(file, teeDir, out -> {
+                java.io.BufferedWriter writer = new java.io.BufferedWriter(
+                    new java.io.OutputStreamWriter(out, StandardCharsets.UTF_8));
                 writer.write("# condense tee dump\n");
                 writer.write("# command: " + command + "\n");
                 writer.write("# exit:    " + result.exitCode() + "\n");
                 writer.write("# elapsed: " + result.durationMs() + "ms\n");
-                writer.write("# timestamp: " + Instant.now() + "\n");
+                writer.write("# timestamp: " + CondenseClock.instant() + "\n");
                 writer.write("#\n");
 
                 if (result.stdoutFile() != null && Files.size(result.stdoutFile()) > 0) {
@@ -107,7 +117,8 @@ public class TeeWriter {
                     }
                     writer.write("\n");
                 }
-            }
+                writer.flush();
+            }, ".condense-tee-", ".tmp");
 
             log.debugf("Tee file written: %s", file);
             return file;

@@ -13,6 +13,7 @@ import jakarta.enterprise.inject.Vetoed;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.Driver;
@@ -90,6 +91,46 @@ class TrackingConcurrencyTest {
         }
 
         Path db = tempDir.resolve("data").resolve("condense.db");
+        Driver driver = new org.sqlite.JDBC();
+        try (Connection connection = driver.connect("jdbc:sqlite:" + db.toAbsolutePath(), new Properties());
+             Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery("PRAGMA integrity_check")) {
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getString(1)).isEqualTo("ok");
+        }
+    }
+
+    @Test
+    void twoThreadsMigrateV0WithoutCorruption() throws Exception {
+        Path data = tempDir.resolve("v0-data");
+        Files.createDirectories(data);
+        Path db = data.resolve("condense.db");
+        LegacyDatabase.writeV0(db);
+        PlatformDirs dirs = new IsolatedPlatformDirs(tempDir.resolve("v0-config"), data);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        List<Callable<Long>> tasks = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            tasks.add(() -> {
+                TrackingRepository repo = new TrackingRepository(dirs);
+                try {
+                    return repo.countAll();
+                } finally {
+                    repo.close();
+                }
+            });
+        }
+        for (Future<Long> future : pool.invokeAll(tasks)) {
+            future.get();
+        }
+        pool.shutdownNow();
+
+        TrackingRepository check = new TrackingRepository(dirs);
+        try {
+            assertThat(check.schemaVersion()).isEqualTo(SchemaMigrator.TARGET_VERSION);
+            assertThat(check.isIntegrityFailed()).isFalse();
+        } finally {
+            check.close();
+        }
         Driver driver = new org.sqlite.JDBC();
         try (Connection connection = driver.connect("jdbc:sqlite:" + db.toAbsolutePath(), new Properties());
              Statement st = connection.createStatement();

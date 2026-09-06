@@ -2,6 +2,8 @@ package com.condense.core;
 
 import com.condense.filter.pipeline.FilterIncident;
 import com.condense.persist.BackupRetention;
+import com.condense.persist.CondenseClock;
+import com.condense.persist.OrphanSweep;
 import com.condense.persist.RetentionPolicy;
 import com.condense.persist.SchemaMigrator;
 import com.condense.persist.TeeRetention;
@@ -58,6 +60,7 @@ public class TrackingRepository {
     private volatile boolean degraded = false;
     private volatile boolean migrateFailed = false;
     private volatile boolean schemaAhead = false;
+    private volatile boolean integrityFailed = false;
     private volatile int lastSchemaVersion = -1;
     private volatile String lastJournalMode = "";
     private volatile TeeRetention.SweepResult lastTeeSweep = TeeRetention.SweepResult.empty();
@@ -77,6 +80,10 @@ public class TrackingRepository {
 
     public boolean isSchemaAhead() {
         return schemaAhead;
+    }
+
+    public boolean isIntegrityFailed() {
+        return integrityFailed;
     }
 
     public int schemaVersion() {
@@ -122,11 +129,11 @@ public class TrackingRepository {
      */
     public void insert(String command, String project, String cwd,
                        int rawTokens, int outTokens, long execMs) {
-        insertAt(System.currentTimeMillis() / 1000L, command, project, cwd, rawTokens, outTokens, execMs);
+        insertAt(CondenseClock.epochSeconds(), command, project, cwd, rawTokens, outTokens, execMs);
     }
 
-    /** Package-visible so retention tests can plant expired rows. */
-    void insertAt(long ts, String command, String project, String cwd,
+    /** Tests plant expired or future rows against {@link CondenseClock}. */
+    public void insertAt(long ts, String command, String project, String cwd,
                   int rawTokens, int outTokens, long execMs) {
         SQLException last = null;
         for (int attempt = 0; attempt <= INSERT_BUSY_RETRIES; attempt++) {
@@ -200,7 +207,7 @@ public class TrackingRepository {
     public void insertHookEvent(String tool, String action, String path, String sha256, boolean success, String detail) {
         try {
             try (PreparedStatement ps = connection().prepareStatement(INSERT_HOOK_EVENT)) {
-                ps.setLong(1, System.currentTimeMillis() / 1000L);
+                ps.setLong(1, CondenseClock.epochSeconds());
                 ps.setString(2, tool == null ? "" : tool);
                 ps.setString(3, action == null ? "" : action);
                 ps.setString(4, path);
@@ -223,7 +230,7 @@ public class TrackingRepository {
                 ps.setString(1, tool);
                 ps.setString(2, path);
                 ps.setString(3, sha256);
-                ps.setLong(4, System.currentTimeMillis() / 1000L);
+                ps.setLong(4, CondenseClock.epochSeconds());
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
@@ -305,7 +312,7 @@ public class TrackingRepository {
         }
         try {
             try (PreparedStatement ps = connection().prepareStatement(INSERT_OUTCOME)) {
-                ps.setLong(1, System.currentTimeMillis() / 1000L);
+                ps.setLong(1, CondenseClock.epochSeconds());
                 ps.setString(2, command);
                 ps.setString(3, project);
                 ps.setString(4, incident.filterName());
@@ -393,7 +400,7 @@ public class TrackingRepository {
     }
 
     public List<DailyStat> queryDaily(int days, String projectHash) {
-        long since = System.currentTimeMillis() / 1000L - (long) days * 86400;
+        long since = CondenseClock.epochSeconds() - (long) days * 86400;
         String projectFilter = projectHash != null
             ? " AND project = ?" : "";
         String sql = """
@@ -430,7 +437,7 @@ public class TrackingRepository {
     }
 
     public List<WeeklyStat> queryWeekly(int weeks, String projectHash) {
-        long since = System.currentTimeMillis() / 1000L - (long) weeks * 7 * 86400;
+        long since = CondenseClock.epochSeconds() - (long) weeks * 7 * 86400;
         String projectFilter = projectHash != null ? " AND project = ?" : "";
         String sql = """
             SELECT
@@ -702,12 +709,21 @@ public class TrackingRepository {
             try {
                 java.nio.file.Path dbFile = platformDirs.getDatabaseFile();
                 String url = "jdbc:sqlite:" + dbFile.toAbsolutePath();
+                // Direct org.sqlite.JDBC connect. Native-image persistence
+                // depends on this; do not switch to URL-based driver lookup.
                 java.sql.Driver driver = new org.sqlite.JDBC();
                 connection = driver.connect(url, new java.util.Properties());
                 if (connection == null) {
                     throw new SQLException("SQLite driver did not accept URL: " + url);
                 }
                 applyPragmas(connection);
+                if (!integrityOk(connection)) {
+                    this.degraded = true;
+                    this.integrityFailed = true;
+                    log.warnf("PRAGMA integrity_check failed; skipping migrate");
+                    return connection;
+                }
+                this.integrityFailed = false;
                 try {
                     SchemaMigrator.Result migrated = SchemaMigrator.migrate(connection);
                     this.schemaAhead = migrated.schemaAhead();
@@ -718,12 +734,27 @@ public class TrackingRepository {
                     throw e;
                 }
                 prune(connection);
+                try {
+                    OrphanSweep.sweep(platformDirs.resolveConfigDir(), platformDirs.resolveDataDir());
+                } catch (RuntimeException e) {
+                    log.warnf("Orphan temp sweep failed: %s", e.getMessage());
+                }
             } catch (SQLException e) {
                 this.degraded = true;
                 throw e;
             }
         }
         return connection;
+    }
+
+    private boolean integrityOk(Connection connection) {
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery("PRAGMA integrity_check")) {
+            return rs.next() && "ok".equalsIgnoreCase(rs.getString(1));
+        } catch (SQLException e) {
+            log.warnf("PRAGMA integrity_check failed: %s", e.getMessage());
+            return false;
+        }
     }
 
     private void applyPragmas(Connection connection) {

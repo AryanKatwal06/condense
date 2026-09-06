@@ -41,6 +41,43 @@ public class SafePathValidator {
      */
     public static final Set<String> KNOWN_CONDENSE_DIRECTORIES = Set.of("tee", "backups");
 
+    /**
+     * Leftover atomic-write temps. Uninstall must not treat these as
+     * {@link Status#UNEXPECTED_CONTENTS}. Never includes {@code condense.db-wal}
+     * or {@code condense.db-shm}.
+     */
+    public static boolean isKnownCondenseTemp(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return false;
+        }
+        if ("trust.json.tmp".equals(fileName)) {
+            return true;
+        }
+        if (fileName.startsWith(".condense-config-") && fileName.endsWith(".toml.tmp")) {
+            return true;
+        }
+        if (fileName.startsWith(".condense-hook-") && fileName.endsWith(".tmp")) {
+            return true;
+        }
+        if ((fileName.startsWith(".condense-propose-") || fileName.startsWith(".condense-proposed-"))
+            && fileName.endsWith(".tmp")) {
+            return true;
+        }
+        if (fileName.startsWith(".condense-trust-") && fileName.endsWith(".tmp")) {
+            return true;
+        }
+        if (fileName.startsWith(".condense-ledger-") && fileName.endsWith(".tmp")) {
+            return true;
+        }
+        if (fileName.startsWith(".condense-tee-") && fileName.endsWith(".tmp")) {
+            return true;
+        }
+        if (fileName.startsWith(".condense-atomic-") && fileName.endsWith(".tmp")) {
+            return true;
+        }
+        return false;
+    }
+
     private final PlatformDirs platformDirs;
     private final Path binaryPath;
 
@@ -350,7 +387,7 @@ public class SafePathValidator {
                     } else {
                         unexpected.add(entry);
                     }
-                } else if (!KNOWN_CONDENSE_FILES.contains(fileName)) {
+                } else if (!KNOWN_CONDENSE_FILES.contains(fileName) && !isKnownCondenseTemp(fileName)) {
                     unexpected.add(entry);
                 } else if (Files.isSymbolicLink(entry)) {
                     ValidationResult symlink = rejectEscapingSymlink(entry);

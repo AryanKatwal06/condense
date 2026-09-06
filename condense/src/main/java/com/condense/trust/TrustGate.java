@@ -5,7 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -111,7 +110,7 @@ public class TrustGate {
             TrustStore.canonicalize(canonicalFile).toString(),
             TrustStore.sha256Hex(bytes),
             tokens,
-            Instant.now().toString()
+            com.condense.persist.CondenseClock.instant().toString()
         ));
     }
 

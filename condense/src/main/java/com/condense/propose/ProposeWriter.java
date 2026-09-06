@@ -2,13 +2,13 @@ package com.condense.propose;
 
 import com.condense.core.SafePathValidator;
 import com.condense.filter.pipeline.config.FilterOverrideConfig;
+import com.condense.persist.AtomicFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 
@@ -22,13 +22,19 @@ public final class ProposeWriter {
     public static final String PROPOSED_FILE_NAME = "filters.toml.proposed";
 
     private final ProposeService service;
+    private final AtomicFile atomic;
 
     public ProposeWriter() {
-        this(new ProposeService());
+        this(new ProposeService(), AtomicFile.SYSTEM);
     }
 
     public ProposeWriter(ProposeService service) {
+        this(service, AtomicFile.SYSTEM);
+    }
+
+    public ProposeWriter(ProposeService service, AtomicFile atomic) {
         this.service = service;
+        this.atomic = atomic == null ? AtomicFile.SYSTEM : atomic;
     }
 
     public Path write(Path root, ProposeReport report) throws IOException {
@@ -58,22 +64,7 @@ public final class ProposeWriter {
         Map<String, List<FilterOverrideConfig.StageDef>> filters = service.readyFilters(report);
         byte[] bytes = ProposeToml.document(filters).getBytes(StandardCharsets.UTF_8);
         Path parent = destination.getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
-        Path tmp = Files.createTempFile(
-            parent == null ? Path.of(".") : parent,
-            ".condense-proposed-",
-            ".toml.tmp");
-        try {
-            Files.write(tmp, bytes);
-            Files.move(tmp, destination,
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            Files.deleteIfExists(tmp);
-            throw e;
-        }
+        atomic.write(destination, containedBy, bytes, ".condense-propose-", ".tmp");
         return destination;
     }
 }

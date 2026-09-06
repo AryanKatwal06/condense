@@ -6,14 +6,13 @@ import com.condense.core.PlatformDirs;
 import com.condense.core.TeeMode;
 import com.condense.core.CondenseConfig;
 import com.condense.core.Mappers;
+import com.condense.persist.AtomicFile;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,6 +40,22 @@ public class ConfigWriter {
 
     @Inject
     ConfigLoader configLoader;
+
+    private final AtomicFile atomic;
+
+    public ConfigWriter() {
+        this.atomic = AtomicFile.SYSTEM;
+    }
+
+    public ConfigWriter(PlatformDirs platformDirs, ConfigLoader configLoader) {
+        this(platformDirs, configLoader, AtomicFile.SYSTEM);
+    }
+
+    public ConfigWriter(PlatformDirs platformDirs, ConfigLoader configLoader, AtomicFile atomic) {
+        this.platformDirs = platformDirs;
+        this.configLoader = configLoader;
+        this.atomic = atomic == null ? AtomicFile.SYSTEM : atomic;
+    }
 
     /**
      * Sets a config key to a value and writes the result to disk.
@@ -137,19 +152,9 @@ public class ConfigWriter {
 
     private void write(CondenseConfig config) throws IOException {
         Path configFile = platformDirs.getConfigFile();
-        Files.createDirectories(configFile.getParent());
-
-        // Write to temp file in the same directory, then atomically rename
-        Path tmp = Files.createTempFile(configFile.getParent(), ".condense-config-", ".toml.tmp");
-        try {
-            TOML.writeValue(tmp.toFile(), config);
-            Files.move(tmp, configFile,
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE);
-            log.debugf("Config written to %s", configFile);
-        } catch (IOException e) {
-            Files.deleteIfExists(tmp);
-            throw e;
-        }
+        Path parent = configFile.getParent();
+        byte[] bytes = TOML.writeValueAsBytes(config);
+        atomic.write(configFile, parent, bytes, ".condense-config-", ".toml.tmp");
+        log.debugf("Config written to %s", configFile);
     }
 }

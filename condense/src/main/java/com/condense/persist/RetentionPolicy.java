@@ -14,7 +14,7 @@ public final class RetentionPolicy {
     private RetentionPolicy() {}
 
     public static long cutoffEpochSeconds() {
-        return cutoffEpochSeconds(System.currentTimeMillis() / 1000L);
+        return cutoffEpochSeconds(CondenseClock.epochSeconds());
     }
 
     public static long cutoffEpochSeconds(long nowEpochSeconds) {

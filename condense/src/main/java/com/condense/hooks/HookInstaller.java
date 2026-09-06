@@ -4,11 +4,13 @@ import com.condense.core.ConfigLoader;
 import com.condense.core.CondenseConfig;
 import com.condense.core.PlatformDirs;
 import com.condense.core.TrackingRepository;
+import com.condense.persist.AtomicFile;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -34,6 +36,12 @@ public class HookInstaller {
 
     @Inject
     com.condense.core.StrategyRegistry strategyRegistry;
+
+    private AtomicFile atomic = AtomicFile.SYSTEM;
+
+    void useAtomicFile(AtomicFile atomic) {
+        this.atomic = atomic == null ? AtomicFile.SYSTEM : atomic;
+    }
 
 
 
@@ -173,8 +181,12 @@ public class HookInstaller {
 
             Files.createDirectories(hookFile.getParent());
 
-            Path tmp = Files.createTempFile(hookFile.getParent(), ".condense-hook-", ".tmp");
-            Files.writeString(tmp, content);
+            atomic.write(
+                hookFile,
+                hookFile.getParent(),
+                content.getBytes(StandardCharsets.UTF_8),
+                ".condense-hook-",
+                ".tmp");
 
             if (!tool.isJson) {
                 try {
@@ -187,15 +199,12 @@ public class HookInstaller {
                         PosixFilePermission.OTHERS_READ,
                         PosixFilePermission.OTHERS_EXECUTE
                     );
-                    Files.setPosixFilePermissions(tmp, perms);
+                    Files.setPosixFilePermissions(hookFile, perms);
                 } catch (UnsupportedOperationException ignored) {
                     // Windows — no POSIX permissions
                 }
             }
 
-            Files.move(tmp, hookFile,
-                java.nio.file.StandardCopyOption.REPLACE_EXISTING,
-                java.nio.file.StandardCopyOption.ATOMIC_MOVE);
             rememberOwnedScript(tool, hookFile);
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
@@ -844,8 +853,12 @@ public class HookInstaller {
 
             Files.createDirectories(hookFile.getParent());
 
-            Path tmp = Files.createTempFile(hookFile.getParent(), ".condense-hook-", ".tmp");
-            Files.writeString(tmp, content);
+            atomic.write(
+                hookFile,
+                hookFile.getParent(),
+                content.getBytes(StandardCharsets.UTF_8),
+                ".condense-hook-",
+                ".tmp");
 
             try {
                 Set<PosixFilePermission> perms = EnumSet.of(
@@ -857,14 +870,11 @@ public class HookInstaller {
                     PosixFilePermission.OTHERS_READ,
                     PosixFilePermission.OTHERS_EXECUTE
                 );
-                Files.setPosixFilePermissions(tmp, perms);
+                Files.setPosixFilePermissions(hookFile, perms);
             } catch (UnsupportedOperationException ignored) {
                 // Windows — no POSIX permissions, but we skip Windows above anyway.
             }
 
-            Files.move(tmp, hookFile,
-                java.nio.file.StandardCopyOption.REPLACE_EXISTING,
-                java.nio.file.StandardCopyOption.ATOMIC_MOVE);
             rememberOwnedScript(tool, hookFile);
 
             log.infof("Installed hook for %s at %s", tool.displayName, hookFile);
@@ -1243,16 +1253,26 @@ public class HookInstaller {
         return Path.of(System.getProperty("user.home", "."), ".condense-data");
     }
 
-    private void writeThirdPartyConfig(HookTool tool, Path hookFile, String json) throws IOException {
+    void writeThirdPartyConfig(HookTool tool, Path hookFile, String json) throws IOException {
         Path backup = HookBackup.copyExisting(dataDir(), tool, hookFile);
         audit(tool, "backup", backup, true, backup == null ? "created" : backup.toString());
         Files.createDirectories(hookFile.getParent());
-        Files.writeString(hookFile, json);
+        atomic.write(
+            hookFile,
+            hookFile.getParent(),
+            json.getBytes(StandardCharsets.UTF_8),
+            ".condense-hook-",
+            ".tmp");
     }
 
     private void writeOwnedScript(HookTool tool, Path scriptFile, String content) throws IOException {
         Files.createDirectories(scriptFile.getParent());
-        Files.writeString(scriptFile, content);
+        atomic.write(
+            scriptFile,
+            scriptFile.getParent(),
+            content.getBytes(StandardCharsets.UTF_8),
+            ".condense-hook-",
+            ".tmp");
         rememberOwnedScript(tool, scriptFile);
     }
 

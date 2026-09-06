@@ -6,6 +6,8 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import com.condense.persist.CondenseClock;
+
 /**
  * Copies an existing third-party agent config before Condense merges into it.
  * Fail-closed: callers must not overwrite the original if this throws.
@@ -36,9 +38,9 @@ public final class HookBackup {
             ext = name.substring(dot);
         }
         String toolKey = tool.name().toLowerCase().replace('_', '-');
-        Path dest = backupDir.resolve(toolKey + "-" + (System.currentTimeMillis() / 1000L) + ext);
+        Path dest = backupDir.resolve(toolKey + "-" + CondenseClock.epochSeconds() + ext);
         if (Files.exists(dest, LinkOption.NOFOLLOW_LINKS)) {
-            dest = backupDir.resolve(toolKey + "-" + (System.currentTimeMillis() / 1000L) + "-" + System.nanoTime() + ext);
+            dest = backupDir.resolve(toolKey + "-" + CondenseClock.epochSeconds() + "-" + System.nanoTime() + ext);
         }
         Files.copy(source, dest, StandardCopyOption.COPY_ATTRIBUTES);
         return dest;
