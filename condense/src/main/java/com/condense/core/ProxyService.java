@@ -74,6 +74,8 @@ public class ProxyService {
         String commandStr = String.join(" ", argList);
         FilterStrategy strategy = registry.lookup(argList.toArray(new String[0]));
         CondenseConfig config = configLoader.load();
+        SidecarArgvPolicy.Decision sidecar = SidecarArgvPolicy.prepare(argList);
+        List<String> launchArgs = sidecar.launchArgs().isEmpty() ? argList : sidecar.launchArgs();
         ExecutionResult result;
         FilterResult filtered;
         boolean alreadyPrinted = false;
@@ -81,17 +83,23 @@ public class ProxyService {
         PrintStream liveOut = out == null
             ? new PrintStream(OutputStream.nullOutputStream(), true, StandardCharsets.UTF_8)
             : out;
-        if (StreamingProxy.shouldStream(strategy, commandStr)) {
-            StreamingProxy.StreamedRun streamed = StreamingProxy.run(
-                executor, strategy, argList, commandStr, config,
-                verbose, ultraCompact, liveOut, liveErr, json);
-            result = streamed.result();
-            filtered = streamed.filtered();
-            alreadyPrinted = streamed.alreadyPrinted();
-        } else {
-            result = executor.execute(argList, CommandExecutor.resolveProxyTimeout());
-            filtered = strategy.apply(
-                commandStr, result, config, verbose, ultraCompact);
+        try {
+            if (StreamingProxy.shouldStream(strategy, commandStr)) {
+                StreamingProxy.StreamedRun streamed = StreamingProxy.run(
+                    executor, strategy, launchArgs, commandStr, config,
+                    verbose, ultraCompact, liveOut, liveErr, json);
+                result = streamed.result().withArtifacts(
+                    SidecarArgvPolicy.collect(sidecar, Path.of(System.getProperty("user.dir", "."))));
+                filtered = streamed.filtered();
+                alreadyPrinted = streamed.alreadyPrinted();
+            } else {
+                result = executor.execute(launchArgs, CommandExecutor.resolveProxyTimeout())
+                    .withArtifacts(SidecarArgvPolicy.collect(sidecar, Path.of(System.getProperty("user.dir", "."))));
+                filtered = strategy.apply(
+                    commandStr, result, config, verbose, ultraCompact);
+            }
+        } finally {
+            SidecarArgvPolicy.cleanup(sidecar);
         }
 
         Path teePath = null;
