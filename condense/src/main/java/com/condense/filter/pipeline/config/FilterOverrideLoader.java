@@ -126,10 +126,12 @@ public class FilterOverrideLoader {
 
         if (projectDir != null) {
             Path normalizedProjectDir = projectDir.toAbsolutePath().normalize();
-            CachedOverride projectCached = projectConfigCache.computeIfAbsent(
-                normalizedProjectDir,
-                this::loadProjectOverride
-            );
+            Path projectFile = normalizedProjectDir.resolve(PROJECT_OVERRIDE_REL_PATH);
+            CachedOverride projectCached = projectConfigCache.get(normalizedProjectDir);
+            if (projectCached == null || !projectCached.statMatches(projectFile)) {
+                projectCached = loadProjectOverride(normalizedProjectDir);
+                projectConfigCache.put(normalizedProjectDir, projectCached);
+            }
             FilterPipeline projectPipeline = projectCached.getOrCreatePipeline(normalizedCmd, this);
             String projectSource = pathString(normalizedProjectDir.resolve(PROJECT_OVERRIDE_REL_PATH));
             if (projectPipeline != null) {
@@ -176,10 +178,11 @@ public class FilterOverrideLoader {
             return null;
         }
         CachedOverride globalCached = globalConfigCache;
-        if (globalCached == null) {
+        Path globalFile = globalOverridePath();
+        if (globalCached == null || !globalCached.statMatches(globalFile)) {
             synchronized (globalCacheLock) {
                 globalCached = globalConfigCache;
-                if (globalCached == null) {
+                if (globalCached == null || !globalCached.statMatches(globalFile)) {
                     globalCached = loadGlobalOverride();
                     globalConfigCache = globalCached;
                 }
@@ -378,8 +381,9 @@ public class FilterOverrideLoader {
                 return CachedOverride.skipped("invalid", projectOverrideFile);
             }
 
-            if (parsed.fileConfig() == null || parsed.fileConfig().filters() == null) {
-                return CachedOverride.skipped("absent", projectOverrideFile);
+            if (parsed.fileConfig() == null || parsed.fileConfig().filters() == null
+                || parsed.fileConfig().filters().isEmpty()) {
+                return CachedOverride.skipped("empty", projectOverrideFile);
             }
 
             Path canonical = projectOverrideFile.toRealPath();
@@ -418,8 +422,9 @@ public class FilterOverrideLoader {
                 return CachedOverride.skipped("invalid", globalOverrideFile);
             }
 
-            if (parsed.fileConfig() == null || parsed.fileConfig().filters() == null) {
-                return CachedOverride.skipped("absent", globalOverrideFile);
+            if (parsed.fileConfig() == null || parsed.fileConfig().filters() == null
+                || parsed.fileConfig().filters().isEmpty()) {
+                return CachedOverride.skipped("empty", globalOverrideFile);
             }
 
             return CachedOverride.loaded(parsed.fileConfig(), globalOverrideFile);
@@ -430,10 +435,47 @@ public class FilterOverrideLoader {
     }
 
     static String explainTrustReason(String trustReason) {
+        if (trustReason != null && trustReason.contains("hash-mismatch")) {
+            return "hash_mismatch";
+        }
         if (trustReason != null && trustReason.contains("capability")) {
             return "capability";
         }
         return "untrusted";
+    }
+
+    static final class FileStat {
+        final Path path;
+        final boolean exists;
+        final long mtimeMillis;
+        final long size;
+
+        FileStat(Path path, boolean exists, long mtimeMillis, long size) {
+            this.path = path;
+            this.exists = exists;
+            this.mtimeMillis = mtimeMillis;
+            this.size = size;
+        }
+
+        static FileStat of(Path path) {
+            if (path == null || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+                return new FileStat(path, false, 0L, 0L);
+            }
+            try {
+                return new FileStat(
+                    path,
+                    true,
+                    Files.getLastModifiedTime(path, LinkOption.NOFOLLOW_LINKS).toMillis(),
+                    Files.size(path));
+            } catch (Exception e) {
+                return new FileStat(path, false, 0L, 0L);
+            }
+        }
+
+        boolean matches(Path other) {
+            FileStat now = of(other);
+            return exists == now.exists && mtimeMillis == now.mtimeMillis && size == now.size;
+        }
     }
 
     static final class CachedOverride {
@@ -443,22 +485,34 @@ public class FilterOverrideLoader {
         final FilterOverrideConfig.FileConfig config;
         final String skipReason;
         final Path sourcePath;
+        final FileStat stat;
         final java.util.concurrent.ConcurrentHashMap<String, FilterPipeline> pipelineCache;
 
-        CachedOverride(boolean exists, FilterOverrideConfig.FileConfig config, String skipReason, Path sourcePath) {
+        CachedOverride(
+                boolean exists,
+                FilterOverrideConfig.FileConfig config,
+                String skipReason,
+                Path sourcePath,
+                FileStat stat
+        ) {
             this.exists = exists;
             this.config = config;
             this.skipReason = skipReason;
             this.sourcePath = sourcePath;
+            this.stat = stat == null ? FileStat.of(sourcePath) : stat;
             this.pipelineCache = new java.util.concurrent.ConcurrentHashMap<>();
         }
 
         static CachedOverride skipped(String reason, Path sourcePath) {
-            return new CachedOverride(false, null, reason == null ? "absent" : reason, sourcePath);
+            return new CachedOverride(false, null, reason == null ? "absent" : reason, sourcePath, FileStat.of(sourcePath));
         }
 
         static CachedOverride loaded(FilterOverrideConfig.FileConfig config, Path sourcePath) {
-            return new CachedOverride(true, config, null, sourcePath);
+            return new CachedOverride(true, config, null, sourcePath, FileStat.of(sourcePath));
+        }
+
+        boolean statMatches(Path path) {
+            return stat.matches(path);
         }
 
         boolean hasPipelines() {
@@ -471,10 +525,13 @@ public class FilterOverrideLoader {
                 return skipReason;
             }
             if (!hasPipelines()) {
-                return "absent";
+                return exists ? "empty" : "absent";
             }
             if (loader.findMatchingFilterDef(config.filters(), command) == null) {
                 return "no_match";
+            }
+            if (getOrCreatePipeline(command, loader) == null) {
+                return "pipeline_build_failed";
             }
             return "no_match";
         }
@@ -517,7 +574,7 @@ public class FilterOverrideLoader {
         }
     }
 
-    private FilterOverrideConfig.FilterDef findMatchingFilterDef(
+    FilterOverrideConfig.FilterDef findMatchingFilterDef(
         Map<String, FilterOverrideConfig.FilterDef> filters,
         String command
     ) {
@@ -544,7 +601,7 @@ public class FilterOverrideLoader {
         return null;
     }
 
-    private FilterPipeline buildPipelineFromDef(FilterOverrideConfig.FilterDef filterDef) {
+    FilterPipeline buildPipelineFromDef(FilterOverrideConfig.FilterDef filterDef) {
         return StageFactory.buildPipeline(filterDef.stages());
     }
 

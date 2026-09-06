@@ -4,8 +4,11 @@ import com.condense.core.PlatformDirs;
 import com.condense.core.TrackingRepository;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import com.condense.filter.pipeline.config.FilterOverrideValidationResult;
+import com.condense.filter.pipeline.config.PipelineDecision;
 import com.condense.hooks.HookInstaller;
 import com.condense.hooks.HookIntegrity;
+import com.condense.persist.CondenseClock;
+import com.condense.persist.OrphanSweep;
 import com.condense.persist.SchemaMigrator;
 import com.condense.persist.TeeRetention;
 import com.condense.persist.WriteFailureLedger;
@@ -55,21 +58,36 @@ public class DoctorService {
         Path database = dataDir.resolve("condense.db");
         boolean existedBefore = Files.exists(database);
 
+        OrphanSweep.Result orphans = OrphanSweep.sweep(configDir, dataDir);
+        addOrphanWarnings(warnings, orphans);
+        warnSymlink(warnings, configDir == null ? null : configDir.resolve("trust.json"));
+        warnSymlink(warnings, configDir == null ? null : configDir.resolve("config.toml"));
+
         long commandCount = tracking.countAll();
         int schemaVersion = tracking.schemaVersion();
         String journalMode = tracking.journalMode();
-        boolean unreadable = tracking.isDegraded() && schemaVersion < 0;
+        boolean unreadable = tracking.isDegraded() && (schemaVersion < 0 || tracking.isIntegrityFailed());
         boolean migrateFailed = tracking.isMigrateFailed();
+
+        if (unreadable) {
+            warnings.add("corrupt_db");
+        }
 
         if (journalMode != null && !journalMode.isBlank() && !"wal".equalsIgnoreCase(journalMode)) {
             warnings.add("journal_mode is '" + journalMode + "' (expected wal)");
         }
         if (tracking.isSchemaAhead()) {
-            warnings.add("schema version " + schemaVersion + " is newer than this binary (target "
+            warnings.add("schema_ahead: schema version " + schemaVersion + " is newer than this binary (target "
                 + SchemaMigrator.TARGET_VERSION + ")");
+        }
+        if (tracking.isIntegrityFailed()) {
+            warnings.add("corrupt_db integrity_check_failed");
         }
         if (tracking.isDegraded() && !unreadable && !migrateFailed) {
             warnings.add("analytics writes have failed; see logs");
+        }
+        if (migrateFailed) {
+            warnings.add("concurrent_migrate migrate_failed");
         }
 
         List<DoctorReport.HookStatus> hooks = hookStatuses(warnings);
@@ -82,11 +100,42 @@ public class DoctorService {
         FilterOverrideValidationResult global = overrideLoader.validateGlobalOverrides();
         warnOverride(warnings, "project", project);
         warnOverride(warnings, "global", global);
+        addOverrideSkipWarnings(warnings);
 
         WriteFailureLedger.Snapshot writeLoss = WriteFailureLedger.read(dataDir);
+        if (WriteFailureLedger.jsonUnreadable(dataDir)) {
+            warnings.add("ledger_corrupt_json");
+        }
+        if (WriteFailureLedger.isUnwritable(dataDir)) {
+            warnings.add("ledger_unwritable: " + WriteFailureLedger.unwritableError(dataDir));
+            warnings.add("readonly");
+        }
         if (writeLoss.count() > 0) {
             warnings.add("analytics writes failed " + writeLoss.count() + " time(s); last: "
                 + (writeLoss.lastError() == null ? "unknown" : writeLoss.lastError()));
+            String last = writeLoss.lastError() == null ? "" : writeLoss.lastError().toLowerCase();
+            if (last.contains("disk_full") || last.contains("enospc") || last.contains("no space")) {
+                warnings.add("disk_full");
+            }
+            if (last.contains("rename")) {
+                warnings.add("rename_fail");
+            }
+            if (last.contains("readonly") || last.contains("access denied") || last.contains("sqlite_readonly")) {
+                warnings.add("readonly");
+            }
+            if (last.contains("busy") || last.contains("locked") || last.contains("sqlite_busy")
+                || last.contains("sqlite_locked")) {
+                warnings.add("lock_storm");
+                warnings.add("concurrent_migrate");
+            }
+            if (last.contains("symlink")) {
+                warnings.add("symlink_swap");
+            }
+        }
+
+        Long newest = tracking.newestCommandTs();
+        if (newest != null && newest > CondenseClock.epochSeconds() + 86400L) {
+            warnings.add("clock_jump: newest command timestamp is in the future");
         }
 
         TeeRetention.SweepResult tee = tracking.lastTeeSweep();
@@ -136,7 +185,7 @@ public class DoctorService {
             boolean existedBefore,
             long commandCount,
             boolean hooksInstalled) {
-        if (unreadable) {
+        if (unreadable || tracking.isIntegrityFailed()) {
             return "unreadable";
         }
         if (migrateFailed) {
@@ -200,6 +249,63 @@ public class DoctorService {
         } catch (RuntimeException e) {
             warnings.add("trust store is unreadable: " + e.getMessage());
             return new TrustInspection(storePath, 0, false);
+        }
+    }
+
+    private void addOverrideSkipWarnings(List<String> warnings) {
+        try {
+            Path cwd = Path.of(System.getProperty("user.dir", "."));
+            PipelineDecision decision = overrideLoader.resolveDecision(
+                "_doctor_probe",
+                com.condense.filter.pipeline.FilterPipeline.builder().build(),
+                cwd,
+                null);
+            if (decision != null && decision.skipped() != null) {
+                for (PipelineDecision.SkippedTier skipped : decision.skipped()) {
+                    if (skipped == null || skipped.reason() == null) {
+                        continue;
+                    }
+                    if ("pipeline_build_failed".equals(skipped.reason())) {
+                        warnings.add("pipeline_build_failed");
+                    }
+                    if ("hash_mismatch".equals(skipped.reason())) {
+                        warnings.add("hash_mismatch");
+                    }
+                }
+            }
+            Path projectFile = cwd.resolve(FilterOverrideLoader.PROJECT_OVERRIDE_REL_PATH);
+            Path globalFile = platformDirs.resolveConfigDir() == null
+                ? null
+                : platformDirs.resolveConfigDir().resolve(FilterOverrideLoader.GLOBAL_OVERRIDE_FILE_NAME);
+            if (Files.isRegularFile(projectFile) || (globalFile != null && Files.isRegularFile(globalFile))) {
+                warnings.add("override_cache_mutation: cache reloads when filters.toml mtime or size changes");
+            }
+        } catch (RuntimeException ignored) {
+        }
+    }
+
+    private static void addOrphanWarnings(List<String> warnings, OrphanSweep.Result orphans) {
+        if (orphans == null || orphans.names() == null || orphans.names().isEmpty()) {
+            return;
+        }
+        warnings.add("orphan_tmp: " + String.join(", ", orphans.names()));
+        warnings.add("kill_between_tmp_and_rename");
+        for (String name : orphans.names()) {
+            if ("trust.json.tmp".equals(name) || name.startsWith(".condense-trust-")) {
+                warnings.add("partial_trust_write");
+            }
+            if (name.startsWith(".condense-config-")) {
+                warnings.add("partial_config_write");
+            }
+            if (name.startsWith(".condense-hook-")) {
+                warnings.add("partial_hook_write");
+            }
+        }
+    }
+
+    private static void warnSymlink(List<String> warnings, Path path) {
+        if (path != null && Files.isSymbolicLink(path)) {
+            warnings.add("symlink_swap: " + path);
         }
     }
 

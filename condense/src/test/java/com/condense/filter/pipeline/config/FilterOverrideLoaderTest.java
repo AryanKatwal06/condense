@@ -194,9 +194,8 @@ class FilterOverrideLoaderTest {
         Files.delete(overrideFile);
         assertThat(Files.exists(overrideFile)).isFalse();
 
-        FilterPipeline second = loader.resolvePipeline("npm install", defaultPipeline, projectDir);
-        assertThat(second).isSameAs(first);
-        assertThat(second.execute("\u001B[31merror\u001B[0m")).isEqualTo("error");
+        FilterPipeline afterDelete = loader.resolvePipeline("npm install", defaultPipeline, projectDir);
+        assertThat(afterDelete).isSameAs(defaultPipeline);
 
         Path emptyProject = tempDir.resolve("empty-cached-project");
         Files.createDirectories(emptyProject);
@@ -244,16 +243,15 @@ class FilterOverrideLoaderTest {
               { strategy = "deduplication", window_size = 5 }
             ]
             """);
-
-        FilterPipeline stillV1 = loader.resolvePipeline("cmd", defaultPipeline, projectDir);
-        assertThat(stillV1).isSameAs(v1);
-
-        loader.invalidateCache(projectDir);
         TrustTestSupport.trustProject(dirs, projectDir);
 
         FilterPipeline v2 = loader.resolvePipeline("cmd", defaultPipeline, projectDir);
         assertThat(v2).isNotSameAs(v1);
         assertThat(v2.execute("repeat\nrepeat\nother")).isEqualTo("repeat (×2)\nother");
+
+        loader.invalidateCache(projectDir);
+        FilterPipeline v2Again = loader.resolvePipeline("cmd", defaultPipeline, projectDir);
+        assertThat(v2Again.execute("repeat\nrepeat\nother")).isEqualTo("repeat (×2)\nother");
     }
 
     @Test
