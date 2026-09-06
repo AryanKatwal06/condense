@@ -1,0 +1,8 @@
+{
+  "zap_commit": "d9498bb",
+  "commands": [
+    "dotnet test",
+    "dotnet build",
+    "dotnet format"
+  ]
+}

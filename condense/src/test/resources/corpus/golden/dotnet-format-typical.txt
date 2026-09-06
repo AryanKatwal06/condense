@@ -1,0 +1,5 @@
+condense[filtered]
+  C:\work\App\Program.cs(12,20): warning IDE0055: Fix whitespace formatting. : 1
+  C:\work\App\Program.cs(14,1): warning IDE0005: Remove unnecessary using.   : 1
+  Formatted 2 of 40 files.                                                   : 1
+  Formatted code file 'Program.cs'.                                          : 1

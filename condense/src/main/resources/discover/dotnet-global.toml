@@ -3,4 +3,4 @@ name = "dotnet-global"
 family = "dotnet"
 priority = 10
 signals = ["global.json"]
-recommend = ["dotnet-test", "dotnet-build", "dotnet-restore"]
+recommend = ["dotnet-test", "dotnet-build", "dotnet-restore", "dotnet-format", "msbuild"]

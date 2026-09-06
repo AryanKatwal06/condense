@@ -1,0 +1,45 @@
+  Determining projects to restore...
+  Restored C:\work\App\App.csproj (in 180 ms).
+  Formatting code files in workspace.
+  Checking File01.cs
+  Checking File02.cs
+  Checking File03.cs
+  Checking File04.cs
+  Checking File05.cs
+  Checking File06.cs
+  Checking File07.cs
+  Checking File08.cs
+  Checking File09.cs
+  Checking File10.cs
+  Checking File11.cs
+  Checking File12.cs
+  Checking File13.cs
+  Checking File14.cs
+  Checking File15.cs
+  Checking File16.cs
+  Checking File17.cs
+  Checking File18.cs
+  Checking File19.cs
+  Checking File20.cs
+  Checking File21.cs
+  Checking File22.cs
+  Checking File23.cs
+  Checking File24.cs
+  Checking File25.cs
+  Checking File26.cs
+  Checking File27.cs
+  Checking File28.cs
+  Checking File29.cs
+  Checking File30.cs
+  Checking File31.cs
+  Checking File32.cs
+  Checking File33.cs
+  Checking File34.cs
+  Checking File35.cs
+  Checking File36.cs
+  Checking File37.cs
+  Checking File38.cs
+Formatted code file 'Program.cs'.
+C:\work\App\Program.cs(12,20): warning IDE0055: Fix whitespace formatting.
+C:\work\App\Program.cs(14,1): warning IDE0005: Remove unnecessary using.
+Formatted 2 of 40 files.

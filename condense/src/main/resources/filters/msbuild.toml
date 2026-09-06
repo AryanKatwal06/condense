@@ -1,6 +1,6 @@
 schema_version = 1
-name = "dotnet-build"
-commands = ["dotnet build"]
+name = "msbuild"
+commands = ["msbuild", "dotnet msbuild"]
 select_input = "stdout_then_stderr"
 
 [[stages]]

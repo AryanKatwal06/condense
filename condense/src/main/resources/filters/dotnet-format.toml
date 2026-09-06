@@ -1,0 +1,30 @@
+schema_version = 1
+name = "dotnet-format"
+commands = ["dotnet format"]
+select_input = "stdout_then_stderr"
+
+[[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
+strategy = "format_report"
+
+[[stages]]
+strategy = "grouping"
+pattern = "^(.*(error|warning|Formatted).*)$"
+include_other = false
+
+[[tests]]
+id = "formatted-file"
+input = "Checking Program.cs\nFormatted code file 'Program.cs'.\n"
+expected = "  Formatted code file 'Program.cs'. : 1"
+
+[[tests]]
+id = "empty-report-ok"
+input = "[]"
+expected = "dotnet-format: ok"
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a format report\n"
+expected = ""

@@ -3,4 +3,4 @@ name = "dotnet-nuget"
 family = "dotnet"
 priority = 20
 signals = ["nuget.config"]
-recommend = ["dotnet-test", "dotnet-build", "dotnet-restore"]
+recommend = ["dotnet-test", "dotnet-build", "dotnet-restore", "dotnet-format", "msbuild"]

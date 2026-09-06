@@ -68,3 +68,5 @@ reason here. Unexplained golden edits fail review.
 | tofu/plan-json | New superiority Phase 4 row. OpenTofu machine-UI plan |
 | tofu-fmt/files | New superiority Phase 4 row. Same fmt identity as terraform-fmt |
 | tofu-state/typical | New superiority Phase 4 row. Same state-list grouping as terraform-state |
+| dotnet-format/typical | New superiority Phase 5 row. Human format console keeps warning and Formatted lines |
+| msbuild/typical | New superiority Phase 5 row. Same compiler-error grouping as dotnet-build |

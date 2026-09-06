@@ -456,6 +456,22 @@
       "critical_signals": ["NU1102", "Restore failed"]
     },
     {
+      "id": "dotnet-format/typical",
+      "command": "dotnet format",
+      "fixture": "fixtures/dotnet-format/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["IDE0055", "IDE0005", "Formatted"]
+    },
+    {
+      "id": "msbuild/typical",
+      "command": "msbuild",
+      "fixture": "fixtures/dotnet-build/typical.txt",
+      "exit_code": 1,
+      "savings_floor": 60,
+      "critical_signals": ["CS0029", "CS0117", "Build FAILED"]
+    },
+    {
       "id": "bundle-install/typical",
       "command": "bundle install",
       "fixture": "fixtures/bundle-install/typical.txt",

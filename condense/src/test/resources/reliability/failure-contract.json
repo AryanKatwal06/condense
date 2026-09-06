@@ -153,6 +153,42 @@
       "output_retention": "prefix_bytes_kept",
       "diagnostic": "",
       "native_it": true
+    },
+    {
+      "id": "binlog_gzip_bomb",
+      "mode": "binlog",
+      "test": "com.condense.filter.strategy.MsbuildBinlogFuzzTest#hugeDecompressedIsCapped",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "condense: msbuild_binlog capped",
+      "native_it": false
+    },
+    {
+      "id": "binlog_truncated_varint",
+      "mode": "binlog",
+      "test": "com.condense.filter.strategy.MsbuildBinlogFuzzTest#truncatedVarintDoesNotThrow",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "trx_xxe",
+      "mode": "trx",
+      "test": "com.condense.filter.strategy.TrxReportStageTest#xxeDoesNotLeakSecret",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "format_malformed",
+      "mode": "format",
+      "test": "com.condense.filter.strategy.FormatReportStageTest#malformedObjectFallsThrough",
+      "exit_policy": "child",
+      "output_retention": "prefix_bytes_kept",
+      "diagnostic": "",
+      "native_it": false
     }
   ]
 }

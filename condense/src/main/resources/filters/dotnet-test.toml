@@ -1,9 +1,16 @@
 schema_version = 1
 name = "dotnet-test"
 commands = ["dotnet test"]
+select_input = "stdout_then_stderr"
 
 [[stages]]
 strategy = "ansi_strip"
+
+[[stages]]
+strategy = "trx_report"
+
+[[stages]]
+strategy = "msbuild_binlog"
 
 [[stages]]
 strategy = "grouping"
@@ -14,3 +21,8 @@ include_other = false
 id = "failed-method"
 input = "  Passed TestOk [1 ms]\n  Failed TestInvoiceTotal [12 ms]\n"
 expected = "  Failed TestInvoiceTotal [12 ms] : 1"
+
+[[tests]]
+id = "garbage-falls-through"
+input = "not a trx file and not a failed test\n"
+expected = ""
