@@ -37,6 +37,12 @@ class TrackingConcurrencyTest {
     @Test
     void fiveRepositoriesShareOneFileWithoutCorruption() throws Exception {
         PlatformDirs dirs = new IsolatedPlatformDirs(tempDir.resolve("config"), tempDir.resolve("data"));
+        TrackingRepository bootstrap = new TrackingRepository(dirs);
+        try {
+            assertThat(bootstrap.countAll()).isZero();
+        } finally {
+            bootstrap.close();
+        }
         int repos = 5;
         int insertsEach = 40;
         ExecutorService pool = Executors.newFixedThreadPool(repos);
