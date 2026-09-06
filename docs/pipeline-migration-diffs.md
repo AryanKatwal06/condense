@@ -71,8 +71,8 @@ reason here. Unexplained golden edits fail review.
 | dotnet-format/typical | New superiority Phase 5 row. Human format console keeps warning and Formatted lines |
 | msbuild/typical | New superiority Phase 5 row. Same compiler-error grouping as dotnet-build |
 | ps/typical | Superiority Phase 6 leftover. `head_tail` widened to 8/8 so fuzz-prefixed noise cannot drop the header |
-| gt/typical | Superiority Phase 6 leftover. `head_tail` widened to 8/8 so fuzz-prefixed noise cannot drop the header |
-| jj/typical | Superiority Phase 6 leftover. `head_tail` widened to 8/8 so fuzz-prefixed noise cannot drop the header |
-| jira/typical | Superiority Phase 6 leftover. `head_tail` widened to 8/8 so fuzz-prefixed noise cannot drop the header |
-| yadm/typical | Superiority Phase 6 leftover. `head_tail` widened to 8/8 so fuzz-prefixed noise cannot drop the header |
-| mix-format/typical | Superiority Phase 6 leftover. `head_tail` widened to 8/8 so fuzz-prefixed noise cannot drop the header |
+| gt/typical | Superiority Phase 6 leftover. Typical fixture lengthened so Linux LF token counts still meet the 60% floor at `head_tail` 8/8 |
+| jj/typical | Superiority Phase 6 leftover. Typical fixture lengthened so Linux LF token counts still meet the 60% floor at `head_tail` 8/8 |
+| jira/typical | Superiority Phase 6 leftover. Typical fixture lengthened so Linux LF token counts still meet the 60% floor at `head_tail` 8/8 |
+| yadm/typical | Superiority Phase 6 leftover. Typical fixture lengthened so Linux LF token counts still meet the 60% floor at `head_tail` 8/8 |
+| mix-format/typical | Superiority Phase 6 leftover. Typical fixture lengthened so Linux LF token counts still meet the 60% floor at `head_tail` 8/8 |

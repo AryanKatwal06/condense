@@ -7,12 +7,12 @@ row 3 ok
 row 4 ok
 row 5 ok
 row 6 ok
-... (36 lines omitted) ...
-row 43 ok
-row 44 ok
-row 45 ok
-row 46 ok
-row 47 ok
-row 48 ok
-row 49 ok
+... (106 lines omitted) ...
+row 113 ok
+row 114 ok
+row 115 ok
+row 116 ok
+row 117 ok
+row 118 ok
+row 119 ok
 Conflict in invoice.txt
