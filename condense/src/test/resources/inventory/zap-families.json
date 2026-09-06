@@ -1,0 +1,71 @@
+{
+  "zap_commit": "d9498bb",
+  "families": [
+    {
+      "id": "bundle-install",
+      "zap_source": "filters/bundle-install.toml",
+      "zap_commands": ["bundle install"],
+      "condense_definition": "bundle-install"
+    },
+    {
+      "id": "dotnet-build",
+      "zap_source": "filters/dotnet-build.toml",
+      "zap_commands": ["dotnet build"],
+      "condense_definition": "dotnet-build"
+    },
+    {
+      "id": "gradle",
+      "zap_source": "filters/gradle.toml",
+      "zap_commands": ["gradle"],
+      "condense_definition": "gradle"
+    },
+    {
+      "id": "helm",
+      "zap_source": "filters/helm.toml",
+      "zap_commands": ["helm install", "helm upgrade", "helm list"],
+      "condense_definition": "helm"
+    },
+    {
+      "id": "make",
+      "zap_source": "filters/make.toml",
+      "zap_commands": ["make"],
+      "condense_definition": "make"
+    },
+    {
+      "id": "mvn-build",
+      "zap_source": "filters/mvn-build.toml",
+      "zap_commands": ["mvn"],
+      "condense_definition": "mvn"
+    },
+    {
+      "id": "terraform-plan",
+      "zap_source": "filters/terraform-plan.toml",
+      "zap_commands": ["terraform plan"],
+      "condense_definition": "terraform"
+    },
+    {
+      "id": "tofu-fmt",
+      "zap_source": "filters/tofu-fmt.toml",
+      "zap_commands": ["tofu fmt"],
+      "condense_definition": "tofu-fmt"
+    },
+    {
+      "id": "tofu-init",
+      "zap_source": "filters/tofu-init.toml",
+      "zap_commands": ["tofu init"],
+      "condense_definition": "tofu"
+    },
+    {
+      "id": "tofu-plan",
+      "zap_source": "filters/tofu-plan.toml",
+      "zap_commands": ["tofu plan"],
+      "condense_definition": "tofu"
+    },
+    {
+      "id": "tofu-validate",
+      "zap_source": "filters/tofu-validate.toml",
+      "zap_commands": ["tofu validate"],
+      "condense_definition": "tofu"
+    }
+  ]
+}
