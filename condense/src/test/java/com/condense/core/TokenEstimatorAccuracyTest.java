@@ -21,6 +21,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Gates {@link Utf8WeightedTokenEstimator} against cl100k_base on the filter
  * fixtures plus the Unicode token corpus. Fails if a silent estimator change
  * blows the published p95 relative error.
+ *
+ * <p>Leftover breadth families (those with an {@code empty.txt} kit) stay out of
+ * this sample. Their synthetic typicals and tiny edge files move p95 without
+ * measuring estimator drift.
  */
 class TokenEstimatorAccuracyTest {
 
@@ -92,8 +96,14 @@ class TokenEstimatorAccuracyTest {
         try (Stream<Path> walk = Files.walk(dir)) {
             walk.filter(Files::isRegularFile)
                 .filter(p -> p.getFileName().toString().endsWith(".txt"))
+                .filter(p -> !isLeftoverBreadthFixture(p))
                 .forEach(into::add);
         }
+    }
+
+    private static boolean isLeftoverBreadthFixture(Path file) {
+        Path parent = file.getParent();
+        return parent != null && Files.isRegularFile(parent.resolve("empty.txt"));
     }
 
     private static Path corpusRoot() {

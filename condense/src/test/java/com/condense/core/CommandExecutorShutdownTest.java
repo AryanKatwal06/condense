@@ -18,7 +18,7 @@ class CommandExecutorShutdownTest {
     void onStopDestroysARunningChild() throws Exception {
         CommandExecutor executor = new CommandExecutor();
         List<String> args = WindowsCommandResolver.isWindows()
-            ? List.of("cmd", "/c", "ping -n 30 127.0.0.1 >nul")
+            ? List.of("cmd", "/c", "timeout /t 30 /nobreak >nul")
             : List.of("sleep", "30");
         AtomicReference<ExecutionResult> holder = new AtomicReference<>();
         AtomicReference<Exception> error = new AtomicReference<>();

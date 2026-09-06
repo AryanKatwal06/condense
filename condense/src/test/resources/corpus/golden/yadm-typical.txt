@@ -3,7 +3,15 @@ On branch main
 row 0 ok
 row 1 ok
 row 2 ok
-... (44 lines omitted) ...
+row 3 ok
+row 4 ok
+row 5 ok
+row 6 ok
+... (36 lines omitted) ...
+row 43 ok
+row 44 ok
+row 45 ok
+row 46 ok
 row 47 ok
 row 48 ok
 row 49 ok

@@ -101,7 +101,8 @@ Then open a pull request. Confirm:
 - [ ] Inline `[[tests]]` green via `process-classes`; Java tests only if you added a class
 - [ ] `ReflectConfigDriftTest` and `FidelityCorpusTest` pass (`mvn test`)
 - [ ] Native image builds without fallback
-- [ ] Native Failsafe ITs pass when the binary is present (`NativeCatalogIT` covers leftover dispatch)
+- [ ] Native Failsafe ITs pass when the binary is present (`NativeCatalogMatrixIT` covers every index definition)
+- [ ] New leftover families are listed in `inventory/zap-families.json` when they close a zap gap. See [docs/command-breadth.md](docs/command-breadth.md).
 
 ## Code Style
 

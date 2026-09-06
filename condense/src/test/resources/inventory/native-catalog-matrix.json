@@ -1,0 +1,967 @@
+{
+  "entries": [
+    {
+      "definition": "pytest",
+      "command": "pytest",
+      "fixture": "fixtures/pytest/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "test_mul"
+      ]
+    },
+    {
+      "definition": "jest",
+      "command": "jest",
+      "fixture": "fixtures/jest/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "FAIL: src/components/Button.test.js"
+      ]
+    },
+    {
+      "definition": "vitest",
+      "command": "vitest",
+      "fixture": "fixtures/vitest/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "divides by zero"
+      ]
+    },
+    {
+      "definition": "eslint",
+      "command": "eslint",
+      "fixture": "fixtures/eslint/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "3 error(s)"
+      ]
+    },
+    {
+      "definition": "tsc",
+      "command": "tsc",
+      "fixture": "fixtures/tsc/typical.txt",
+      "exit_code": 2,
+      "must_contain": [
+        "src/api/client.ts"
+      ]
+    },
+    {
+      "definition": "npm-install",
+      "command": "npm install",
+      "fixture": "fixtures/npm-install/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "packages"
+      ]
+    },
+    {
+      "definition": "pip-install",
+      "command": "pip install",
+      "fixture": "fixtures/pip-install/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "Successfully installed"
+      ]
+    },
+    {
+      "definition": "ruff",
+      "command": "ruff check",
+      "fixture": "fixtures/ruff-check/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "issue(s)"
+      ]
+    },
+    {
+      "definition": "mvn",
+      "command": "mvn",
+      "fixture": "fixtures/mvn/success.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "BUILD SUCCESS"
+      ]
+    },
+    {
+      "definition": "gradle",
+      "command": "gradle",
+      "fixture": "fixtures/gradle/success.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "BUILD SUCCESSFUL"
+      ]
+    },
+    {
+      "definition": "make",
+      "command": "make",
+      "fixture": "fixtures/make/success.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "sudo make install"
+      ]
+    },
+    {
+      "definition": "git-status",
+      "command": "git status",
+      "fixture": "fixtures/git-status/clean.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "[main]"
+      ]
+    },
+    {
+      "definition": "git-diff",
+      "command": "git diff",
+      "fixture": "fixtures/git-diff/stat.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "files changed"
+      ]
+    },
+    {
+      "definition": "git-add",
+      "command": "git add",
+      "fixture": "fixtures/git-add/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "staged"
+      ]
+    },
+    {
+      "definition": "git-log",
+      "command": "git log",
+      "fixture": "fixtures/git-log/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "a1b2c3d4"
+      ]
+    },
+    {
+      "definition": "git-commit",
+      "command": "git commit",
+      "fixture": "fixtures/git-commit/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "main"
+      ]
+    },
+    {
+      "definition": "git-push",
+      "command": "git push",
+      "fixture": "fixtures/git-push/rejected.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "[rejected]"
+      ]
+    },
+    {
+      "definition": "grep",
+      "command": "grep",
+      "fixture": "fixtures/grep/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "src/app.js"
+      ]
+    },
+    {
+      "definition": "find",
+      "command": "find",
+      "fixture": "fixtures/find/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        ".java"
+      ]
+    },
+    {
+      "definition": "ls",
+      "command": "ls",
+      "fixture": "fixtures/ls/large.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "src/"
+      ]
+    },
+    {
+      "definition": "cat",
+      "command": "cat",
+      "fixture": "fixtures/cat/large.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "Data line 1 "
+      ]
+    },
+    {
+      "definition": "kubectl",
+      "command": "kubectl get pods",
+      "fixture": "fixtures/kubectl/pods-unhealthy.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "UNHEALTHY PODS"
+      ]
+    },
+    {
+      "definition": "docker-ps",
+      "command": "docker ps",
+      "fixture": "fixtures/docker-ps/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "web-server"
+      ]
+    },
+    {
+      "definition": "docker-build",
+      "command": "docker build",
+      "fixture": "fixtures/docker-build/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "a1b2c3d4e5f6"
+      ]
+    },
+    {
+      "definition": "docker-logs",
+      "command": "docker logs",
+      "fixture": "fixtures/docker-logs/long.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "connection refused"
+      ]
+    },
+    {
+      "definition": "aws",
+      "command": "aws",
+      "fixture": "fixtures/aws/describe-instances.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "Reservations"
+      ]
+    },
+    {
+      "definition": "go-test",
+      "command": "go test",
+      "fixture": "fixtures/go-test/json-typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "FAIL: TestMultiply"
+      ]
+    },
+    {
+      "definition": "golangci-lint",
+      "command": "golangci-lint run",
+      "fixture": "fixtures/golangci-lint/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "errcheck"
+      ]
+    },
+    {
+      "definition": "cargo-test",
+      "command": "cargo test",
+      "fixture": "fixtures/cargo-test/typical.txt",
+      "exit_code": 101,
+      "must_contain": [
+        "FAILED: tests::test_multiply"
+      ]
+    },
+    {
+      "definition": "cargo-clippy",
+      "command": "cargo clippy",
+      "fixture": "fixtures/cargo-clippy/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "unused_variables"
+      ]
+    },
+    {
+      "definition": "cargo-install",
+      "command": "cargo build",
+      "fixture": "fixtures/cargo-build/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "Finished"
+      ]
+    },
+    {
+      "definition": "mypy",
+      "command": "mypy",
+      "fixture": "fixtures/mypy/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "src/billing/invoice.py"
+      ]
+    },
+    {
+      "definition": "dotnet-test",
+      "command": "dotnet test",
+      "fixture": "fixtures/dotnet-test/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "TestInvoiceTotal"
+      ]
+    },
+    {
+      "definition": "dotnet-build",
+      "command": "dotnet build",
+      "fixture": "fixtures/dotnet-build/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "CS0029"
+      ]
+    },
+    {
+      "definition": "dotnet-restore",
+      "command": "dotnet restore",
+      "fixture": "fixtures/dotnet-restore/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "NU1102"
+      ]
+    },
+    {
+      "definition": "dotnet-format",
+      "command": "dotnet format",
+      "fixture": "fixtures/dotnet-format/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "IDE0055"
+      ]
+    },
+    {
+      "definition": "msbuild",
+      "command": "msbuild",
+      "fixture": "fixtures/dotnet-build/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "CS0029"
+      ]
+    },
+    {
+      "definition": "bundle-install",
+      "command": "bundle install",
+      "fixture": "fixtures/bundle-install/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Bundler::GemNotFound"
+      ]
+    },
+    {
+      "definition": "rspec",
+      "command": "rspec",
+      "fixture": "fixtures/rspec/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "invoice_spec.rb"
+      ]
+    },
+    {
+      "definition": "rubocop",
+      "command": "rubocop",
+      "fixture": "fixtures/rubocop/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "app/models/invoice.rb"
+      ]
+    },
+    {
+      "definition": "terraform",
+      "command": "terraform plan",
+      "fixture": "fixtures/terraform/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error"
+      ]
+    },
+    {
+      "definition": "helm",
+      "command": "helm install",
+      "fixture": "fixtures/helm/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "NAME: web"
+      ]
+    },
+    {
+      "definition": "gh",
+      "command": "gh pr list",
+      "fixture": "fixtures/gh/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "Showing 40 pull requests"
+      ]
+    },
+    {
+      "definition": "glab",
+      "command": "glab mr list",
+      "fixture": "fixtures/glab/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "Showing 40 merge requests"
+      ]
+    },
+    {
+      "definition": "curl",
+      "command": "curl",
+      "fixture": "fixtures/curl/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "HTTP/2 200"
+      ]
+    },
+    {
+      "definition": "wget",
+      "command": "wget",
+      "fixture": "fixtures/wget/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "ERROR 404"
+      ]
+    },
+    {
+      "definition": "psql",
+      "command": "psql",
+      "fixture": "fixtures/psql/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "ERROR"
+      ]
+    },
+    {
+      "definition": "pnpm-install",
+      "command": "pnpm install",
+      "fixture": "fixtures/pnpm-install/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Packages:"
+      ]
+    },
+    {
+      "definition": "next-build",
+      "command": "next build",
+      "fixture": "fixtures/next-build/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error: Failed to compile"
+      ]
+    },
+    {
+      "definition": "prisma",
+      "command": "prisma migrate",
+      "fixture": "fixtures/prisma/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error: P3006"
+      ]
+    },
+    {
+      "definition": "playwright",
+      "command": "playwright test",
+      "fixture": "fixtures/playwright/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "invoice.spec.ts"
+      ]
+    },
+    {
+      "definition": "prettier",
+      "command": "prettier",
+      "fixture": "fixtures/prettier/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "src/app.js"
+      ]
+    },
+    {
+      "definition": "terraform-fmt",
+      "command": "terraform fmt",
+      "fixture": "fixtures/terraform/fmt-files.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "main.tf"
+      ]
+    },
+    {
+      "definition": "terraform-state",
+      "command": "terraform state list",
+      "fixture": "fixtures/terraform/state-list.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "aws_instance.web"
+      ]
+    },
+    {
+      "definition": "tofu",
+      "command": "tofu plan",
+      "fixture": "fixtures/tofu/plan-json.ndjson",
+      "exit_code": 0,
+      "must_contain": [
+        "aws_instance.web"
+      ]
+    },
+    {
+      "definition": "tofu-fmt",
+      "command": "tofu fmt",
+      "fixture": "fixtures/terraform/fmt-files.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "main.tf"
+      ]
+    },
+    {
+      "definition": "tofu-state",
+      "command": "tofu state list",
+      "fixture": "fixtures/terraform/state-list.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "aws_instance.web"
+      ]
+    },
+    {
+      "definition": "systemctl-status",
+      "command": "systemctl status",
+      "fixture": "fixtures/systemctl-status/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Active: failed"
+      ]
+    },
+    {
+      "definition": "ssh",
+      "command": "ssh",
+      "fixture": "fixtures/ssh/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Permission denied"
+      ]
+    },
+    {
+      "definition": "rsync",
+      "command": "rsync",
+      "fixture": "fixtures/rsync/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "rsync error"
+      ]
+    },
+    {
+      "definition": "fail2ban",
+      "command": "fail2ban-client",
+      "fixture": "fixtures/fail2ban/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "ERROR"
+      ]
+    },
+    {
+      "definition": "ansible-playbook",
+      "command": "ansible-playbook",
+      "fixture": "fixtures/ansible-playbook/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "FAILED"
+      ]
+    },
+    {
+      "definition": "sops",
+      "command": "sops",
+      "fixture": "fixtures/sops/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "encrypted"
+      ]
+    },
+    {
+      "definition": "df",
+      "command": "df",
+      "fixture": "fixtures/df/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Filesystem"
+      ]
+    },
+    {
+      "definition": "stat",
+      "command": "stat",
+      "fixture": "fixtures/stat/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "File:"
+      ]
+    },
+    {
+      "definition": "ping",
+      "command": "ping",
+      "fixture": "fixtures/ping/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "25% packet loss"
+      ]
+    },
+    {
+      "definition": "du",
+      "command": "du",
+      "fixture": "fixtures/du/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "invoice"
+      ]
+    },
+    {
+      "definition": "ps",
+      "command": "ps",
+      "fixture": "fixtures/ps/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "PID TTY TIME CMD"
+      ]
+    },
+    {
+      "definition": "iptables",
+      "command": "iptables",
+      "fixture": "fixtures/iptables/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "Chain INPUT (policy ACCEPT)"
+      ]
+    },
+    {
+      "definition": "biome",
+      "command": "biome",
+      "fixture": "fixtures/biome/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "src/app.ts"
+      ]
+    },
+    {
+      "definition": "oxlint",
+      "command": "oxlint",
+      "fixture": "fixtures/oxlint/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "src/app.ts"
+      ]
+    },
+    {
+      "definition": "shellcheck",
+      "command": "shellcheck",
+      "fixture": "fixtures/shellcheck/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "scripts/deploy.sh"
+      ]
+    },
+    {
+      "definition": "yamllint",
+      "command": "yamllint",
+      "fixture": "fixtures/yamllint/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "deploy.yml"
+      ]
+    },
+    {
+      "definition": "markdownlint",
+      "command": "markdownlint",
+      "fixture": "fixtures/markdownlint/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "README.md"
+      ]
+    },
+    {
+      "definition": "basedpyright",
+      "command": "basedpyright",
+      "fixture": "fixtures/basedpyright/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "src/app.py"
+      ]
+    },
+    {
+      "definition": "ty",
+      "command": "ty",
+      "fixture": "fixtures/ty/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "src/app.py"
+      ]
+    },
+    {
+      "definition": "hadolint",
+      "command": "hadolint",
+      "fixture": "fixtures/hadolint/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Dockerfile"
+      ]
+    },
+    {
+      "definition": "nx",
+      "command": "nx",
+      "fixture": "fixtures/nx/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "NX"
+      ]
+    },
+    {
+      "definition": "turbo",
+      "command": "turbo",
+      "fixture": "fixtures/turbo/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "ERROR"
+      ]
+    },
+    {
+      "definition": "mise",
+      "command": "mise",
+      "fixture": "fixtures/mise/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error:"
+      ]
+    },
+    {
+      "definition": "pre-commit",
+      "command": "pre-commit",
+      "fixture": "fixtures/pre-commit/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Failed"
+      ]
+    },
+    {
+      "definition": "just",
+      "command": "just",
+      "fixture": "fixtures/just/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "error:"
+      ]
+    },
+    {
+      "definition": "task",
+      "command": "task",
+      "fixture": "fixtures/task/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Failed"
+      ]
+    },
+    {
+      "definition": "rake",
+      "command": "rake",
+      "fixture": "fixtures/rake/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "rake aborted"
+      ]
+    },
+    {
+      "definition": "swift-build",
+      "command": "swift build",
+      "fixture": "fixtures/swift-build/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "error:"
+      ]
+    },
+    {
+      "definition": "xcodebuild",
+      "command": "xcodebuild",
+      "fixture": "fixtures/xcodebuild/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "BUILD FAILED"
+      ]
+    },
+    {
+      "definition": "mix-compile",
+      "command": "mix compile",
+      "fixture": "fixtures/mix-compile/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "error:"
+      ]
+    },
+    {
+      "definition": "quarto-render",
+      "command": "quarto render",
+      "fixture": "fixtures/quarto-render/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "ERROR"
+      ]
+    },
+    {
+      "definition": "liquibase",
+      "command": "liquibase",
+      "fixture": "fixtures/liquibase/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "ERROR"
+      ]
+    },
+    {
+      "definition": "poetry-install",
+      "command": "poetry install",
+      "fixture": "fixtures/poetry-install/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error:"
+      ]
+    },
+    {
+      "definition": "uv-sync",
+      "command": "uv sync",
+      "fixture": "fixtures/uv-sync/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "error:"
+      ]
+    },
+    {
+      "definition": "composer-install",
+      "command": "composer install",
+      "fixture": "fixtures/composer-install/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error"
+      ]
+    },
+    {
+      "definition": "brew-install",
+      "command": "brew install",
+      "fixture": "fixtures/brew-install/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error:"
+      ]
+    },
+    {
+      "definition": "gcc",
+      "command": "gcc",
+      "fixture": "fixtures/gcc/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "error:"
+      ]
+    },
+    {
+      "definition": "gcloud",
+      "command": "gcloud",
+      "fixture": "fixtures/gcloud/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "ERROR"
+      ]
+    },
+    {
+      "definition": "ollama",
+      "command": "ollama",
+      "fixture": "fixtures/ollama/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error:"
+      ]
+    },
+    {
+      "definition": "pio-run",
+      "command": "pio run",
+      "fixture": "fixtures/pio-run/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "error:"
+      ]
+    },
+    {
+      "definition": "shopify-theme",
+      "command": "shopify theme",
+      "fixture": "fixtures/shopify-theme/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error:"
+      ]
+    },
+    {
+      "definition": "skopeo",
+      "command": "skopeo",
+      "fixture": "fixtures/skopeo/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "Error"
+      ]
+    },
+    {
+      "definition": "spring-boot",
+      "command": "spring-boot",
+      "fixture": "fixtures/spring-boot/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "APPLICATION FAILED"
+      ]
+    },
+    {
+      "definition": "trunk-build",
+      "command": "trunk",
+      "fixture": "fixtures/trunk-build/typical.txt",
+      "exit_code": 1,
+      "must_contain": [
+        "error:"
+      ]
+    },
+    {
+      "definition": "gt",
+      "command": "gt",
+      "fixture": "fixtures/gt/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "Showing 12 stacked PRs"
+      ]
+    },
+    {
+      "definition": "jj",
+      "command": "jj",
+      "fixture": "fixtures/jj/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "Working copy"
+      ]
+    },
+    {
+      "definition": "jira",
+      "command": "jira",
+      "fixture": "fixtures/jira/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "ISSUE KEY SUMMARY"
+      ]
+    },
+    {
+      "definition": "yadm",
+      "command": "yadm",
+      "fixture": "fixtures/yadm/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "On branch main"
+      ]
+    },
+    {
+      "definition": "mix-format",
+      "command": "mix format",
+      "fixture": "fixtures/mix-format/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "lib/invoice.ex"
+      ]
+    },
+    {
+      "definition": "jq",
+      "command": "jq",
+      "fixture": "fixtures/jq/typical.txt",
+      "exit_code": 0,
+      "must_contain": [
+        "id"
+      ]
+    }
+  ]
+}

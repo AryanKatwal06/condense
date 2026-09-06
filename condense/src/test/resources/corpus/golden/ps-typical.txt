@@ -3,7 +3,15 @@ PID TTY TIME CMD
 1000 pts/0 00:00:00 worker-0
 1001 pts/0 00:00:00 worker-1
 1002 pts/0 00:00:00 worker-2
-... (54 lines omitted) ...
+1003 pts/0 00:00:00 worker-3
+1004 pts/0 00:00:00 worker-4
+1005 pts/0 00:00:00 worker-5
+1006 pts/0 00:00:00 worker-6
+... (46 lines omitted) ...
+1053 pts/0 00:00:00 worker-53
+1054 pts/0 00:00:00 worker-54
+1055 pts/0 00:00:00 worker-55
+1056 pts/0 00:00:00 worker-56
 1057 pts/0 00:00:00 worker-57
 1058 pts/0 00:00:00 worker-58
 1059 pts/0 00:00:00 worker-59

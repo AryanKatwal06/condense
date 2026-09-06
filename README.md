@@ -146,6 +146,9 @@ For any unrecognized command, condense passes output through unchanged — it is
 | `prisma migrate` / `prisma generate` | Apply noise; keeps Error / Generated | ~85% |
 | `playwright test` / `npx playwright` | Passing specs; keeps failed titles | ~85% |
 | `prettier` | Checking noise; keeps `[error]` / SyntaxError | ~90% |
+| `systemctl status`, `ssh`, `rsync`, `ping`, `df` / `du` / `stat` / `ps`, `iptables`, `fail2ban-client`, `ansible-playbook`, `sops` | Ops noise; iptables keeps non-Docker chain headers with rules | ≥60% |
+| `biome`, `oxlint`, `nx`, `turbo`, `mise`, `pre-commit`, `shellcheck`, `yamllint`, `markdownlint`, `basedpyright`, `ty`, `just`, `task` | Lint/task noise; file aggregates or error lines | ≥60% |
+| `rake`, `gt`, `jj`, `swift build`, `xcodebuild`, `mix compile` / `mix format`, `quarto render`, `liquibase`, `poetry install`, `uv sync`, `composer install`, `brew install`, `gcc`, `gcloud`, `hadolint`, `jira`, `jq`, `ollama`, `pio run`, `shopify theme`, `skopeo`, `spring-boot`, `trunk`, `yadm` | Remaining verified zap families | ≥60% |
 
 ---
 

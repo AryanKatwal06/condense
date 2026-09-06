@@ -7,8 +7,8 @@ strategy = "ansi_strip"
 
 [[stages]]
 strategy = "head_tail"
-head = 4
-tail = 4
+head = 8
+tail = 8
 
 [[tests]]
 id = "omits-middle"
@@ -26,8 +26,19 @@ input = """
 11
 12
 13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
 """
-expected = "1\n2\n3\n4\n... (5 lines omitted) ...\n10\n11\n12\n13"
+expected = "1\n2\n3\n4\n5\n6\n7\n8\n... (8 lines omitted) ...\n17\n18\n19\n20\n21\n22\n23\n24"
 
 [[tests]]
 id = "garbage-falls-through"

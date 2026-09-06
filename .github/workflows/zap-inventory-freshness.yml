@@ -1,0 +1,50 @@
+name: Zap inventory freshness
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 1 1,4,7,10 *"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  diff-zap-filters:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: List zap HEAD filter families
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          PIN_COMMIT=$(python3 -c "import json; print(json.load(open('condense/src/test/resources/inventory/zap-families.json'))['zap_commit'])")
+          python3 - <<'PY'
+          import json
+          pin = json.load(open("condense/src/test/resources/inventory/zap-families.json", encoding="utf-8"))
+          pinned = {row["id"] for row in pin["families"] if row.get("zap_source", "").startswith("filters/")}
+          open("pinned-zap-filters.txt", "w", encoding="utf-8").write("\n".join(sorted(pinned)) + "\n")
+          print(f"pinned {len(pinned)} filter families at {pin['zap_commit']}")
+          PY
+          gh api "repos/bitan-del/zap/git/trees/HEAD?recursive=1" --jq '.tree[].path' \
+            | grep -E '^src/filters/[^/]+\.toml$' \
+            | sed 's#src/filters/##; s#\.toml$##' \
+            | grep -v '^README$' \
+            | sort > head-zap-filters.txt
+          comm -13 pinned-zap-filters.txt head-zap-filters.txt > new-zap-filters.txt || true
+          comm -23 pinned-zap-filters.txt head-zap-filters.txt > gone-zap-filters.txt || true
+          echo "New zap filter families since pin ${PIN_COMMIT}:"
+          cat new-zap-filters.txt || true
+          echo "Pinned families missing from zap HEAD:"
+          cat gone-zap-filters.txt || true
+          if [ -s new-zap-filters.txt ]; then
+            BODY=$(printf 'Zap HEAD gained filter families that are not in the Condense pin (`%s`).\n\n```\n%s\n```\n' "$PIN_COMMIT" "$(cat new-zap-filters.txt)")
+            EXISTING=$(gh issue list --search "zap inventory freshness" --json number --jq '.[0].number' || true)
+            if [ -n "$EXISTING" ]; then
+              gh issue comment "$EXISTING" --body "$BODY"
+            else
+              gh issue create --title "Zap gained filter families since the Condense pin" --body "$BODY"
+            fi
+          fi
