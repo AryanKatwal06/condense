@@ -50,23 +50,28 @@ class HookDryRunAndUpdateTest {
     HookInstaller installer;
 
     @Test
-    void plan_makesZeroDiskModifications(@TempDir Path tempHome) throws IOException {
-        System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
+    void plan_makesZeroDiskModifications() throws IOException {
+        Path tempHome = Files.createTempDirectory("condense-dryrun-home");
+        try {
+            System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
 
-        List<HookInstaller.PlanResult> plans = installer.planAll();
-        assertThat(plans).hasSize(HookTool.values().length);
+            List<HookInstaller.PlanResult> plans = installer.planAll();
+            assertThat(plans).hasSize(HookTool.values().length);
 
-        for (HookInstaller.PlanResult plan : plans) {
-            assertThat(plan.action()).isEqualTo("INSTALL");
-            assertThat(plan.installed()).isFalse();
-            assertThat(plan.willBackup()).isFalse();
-            assertThat(plan.targetPath()).isNotNull();
-            assertThat(plan.scriptPath()).isNotNull();
-        }
+            for (HookInstaller.PlanResult plan : plans) {
+                assertThat(plan.action()).isEqualTo("INSTALL");
+                assertThat(plan.installed()).isFalse();
+                assertThat(plan.willBackup()).isFalse();
+                assertThat(plan.targetPath()).isNotNull();
+                assertThat(plan.scriptPath()).isNotNull();
+            }
 
-        // Entire temp directory must remain completely empty after planning
-        try (var stream = Files.list(tempHome)) {
-            assertThat(stream.count()).isZero();
+            // Entire temp directory must remain completely empty after planning
+            try (var stream = Files.list(tempHome)) {
+                assertThat(stream.count()).isZero();
+            }
+        } finally {
+            System.clearProperty("condense.test.home");
         }
     }
 

@@ -189,6 +189,51 @@
       "output_retention": "prefix_bytes_kept",
       "diagnostic": "",
       "native_it": false
+    },
+    {
+      "id": "compound_intercept_subshell_ambiguity",
+      "mode": "compound_interception",
+      "test": "com.condense.hooks.CompoundCommandAnalyzerTest#substitutionsAreAmbiguousAndDenied",
+      "exit_policy": "deny_ambiguous",
+      "output_retention": "none",
+      "diagnostic": "ambiguous syntax",
+      "native_it": false
+    },
+    {
+      "id": "compound_intercept_unclosed_quote",
+      "mode": "compound_interception",
+      "test": "com.condense.hooks.CompoundCommandAnalyzerTest#unclosedQuotesAndSyntaxErrorsAreAmbiguous",
+      "exit_policy": "deny_ambiguous",
+      "output_retention": "none",
+      "diagnostic": "unclosed quote or escape",
+      "native_it": false
+    },
+    {
+      "id": "hook_tamper_truncation_detection",
+      "mode": "hook_integrity",
+      "test": "com.condense.hooks.HookTamperingRaceTest#midRunScriptTruncation_detectedAsTampered",
+      "exit_policy": "flag_tampered",
+      "output_retention": "none",
+      "diagnostic": "tampered",
+      "native_it": false
+    },
+    {
+      "id": "hook_dry_run_zero_modification",
+      "mode": "hook_simulation",
+      "test": "com.condense.hooks.HookDryRunAndUpdateTest#plan_makesZeroDiskModifications",
+      "exit_policy": "zero_write",
+      "output_retention": "none",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "mcp_unknown_client_flag",
+      "mode": "mcp_client",
+      "test": "com.condense.mcp.McpClientSnippetTest#cliCommandRejectsUnknownClient",
+      "exit_policy": "launch_error",
+      "output_retention": "none",
+      "diagnostic": "unknown client",
+      "native_it": false
     }
   ]
 }

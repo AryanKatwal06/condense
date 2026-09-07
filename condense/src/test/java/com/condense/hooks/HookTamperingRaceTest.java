@@ -49,27 +49,32 @@ class HookTamperingRaceTest {
     HookInstaller installer;
 
     @Test
-    void midRunScriptTruncation_detectedAsTampered(@TempDir Path tempHome) throws IOException {
-        System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
+    void midRunScriptTruncation_detectedAsTampered() throws IOException {
+        Path tempHome = Files.createTempDirectory("condense-tamper-home");
+        try {
+            System.setProperty("condense.test.home", tempHome.toAbsolutePath().toString());
 
-        installer.install(HookTool.CURSOR);
-        Path script = HookTool.CURSOR.ownedScript(tempHome);
-        assertThat(Files.exists(script)).isTrue();
+            installer.install(HookTool.CURSOR);
+            Path script = HookTool.CURSOR.ownedScript(tempHome);
+            assertThat(Files.exists(script)).isTrue();
 
-        // Truncate to 0 bytes
-        Files.writeString(script, "");
+            // Truncate to 0 bytes
+            Files.writeString(script, "");
 
-        HookInstaller.StatusResult status = installer.showAll().stream()
-            .filter(r -> r.tool() == HookTool.CURSOR).findFirst().orElseThrow();
+            HookInstaller.StatusResult status = installer.showAll().stream()
+                .filter(r -> r.tool() == HookTool.CURSOR).findFirst().orElseThrow();
 
-        assertThat(status.installed()).isTrue();
-        assertThat(status.integrity()).isEqualTo(HookIntegrity.TAMPERED);
+            assertThat(status.installed()).isTrue();
+            assertThat(status.integrity()).isEqualTo(HookIntegrity.TAMPERED);
 
-        // Update heals it back to OK
-        installer.update(HookTool.CURSOR);
-        HookInstaller.StatusResult afterUpdate = installer.showAll().stream()
-            .filter(r -> r.tool() == HookTool.CURSOR).findFirst().orElseThrow();
-        assertThat(afterUpdate.integrity()).isEqualTo(HookIntegrity.OK);
+            // Update heals it back to OK
+            installer.update(HookTool.CURSOR);
+            HookInstaller.StatusResult afterUpdate = installer.showAll().stream()
+                .filter(r -> r.tool() == HookTool.CURSOR).findFirst().orElseThrow();
+            assertThat(afterUpdate.integrity()).isEqualTo(HookIntegrity.OK);
+        } finally {
+            System.clearProperty("condense.test.home");
+        }
     }
 
     @Test

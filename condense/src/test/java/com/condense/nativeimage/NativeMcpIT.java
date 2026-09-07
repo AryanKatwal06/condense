@@ -42,6 +42,33 @@ class NativeMcpIT {
             .isZero();
         assertThat(result.stdout()).containsIgnoringCase("MCP");
         assertThat(result.stdout()).contains("--start");
+        assertThat(result.stdout()).contains("--client");
+        assertThat(result.stdout()).contains("--list-clients");
+    }
+
+    @Test
+    void listClientsShowsAllSupportedAgentHosts() throws Exception {
+        NativeBinarySupport.CliResult result = NativeBinarySupport.run(
+            configDir(), dataDir(), "mcp", "--list-clients");
+        assertThat(result.exitCode()).isZero();
+        assertThat(result.stdout()).contains("claude-desktop");
+        assertThat(result.stdout()).contains("cursor");
+        assertThat(result.stdout()).contains("windsurf");
+        assertThat(result.stdout()).contains("zed");
+        assertThat(result.stdout()).contains("vscode");
+        assertThat(result.stdout()).contains("antigravity");
+    }
+
+    @Test
+    void clientFlagOutputsValidJsonSnippet() throws Exception {
+        NativeBinarySupport.CliResult result = NativeBinarySupport.run(
+            configDir(), dataDir(), "mcp", "-c", "cursor");
+        assertThat(result.exitCode()).isZero();
+        JsonNode root = JSON.readTree(result.stdout());
+        assertThat(root.has("mcpServers")).isTrue();
+        JsonNode server = root.path("mcpServers").path("condense");
+        assertThat(server.path("command").asText()).isEqualTo("condense");
+        assertThat(server.path("args").get(1).asText()).isEqualTo("--start");
     }
 
     @Test

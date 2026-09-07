@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 6 September 2026 (superiority Phase 5 .NET sidecar artifacts).
+**Written:** 4 September 2026. **Revised:** 7 September 2026 (superiority Phase 7 agent integration security).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -461,7 +461,8 @@ Planning plus Phase 1 through Phase 17 code, then an independent audit of Phases
 | Superiority Phase 4 | **LANDED** | Leftover Terraform/OpenTofu machine-UI NDJSON, validate JSON, and `resource_graph`; additive IR fields; `stdout_then_stderr`; `TerraformInventoryTest`; `NativeTerraformIT`. Filter/IR stay at 1. SQLite stays at 2. No `-json` argv rewrite. |
 | Superiority Phase 5 | **LANDED** | Collision-safe `-bl:` / `--report` injection; leftover TRX / MSBuild binlog / format-report stages; `dotnet-format` and `msbuild` catalogs; additive optional test IR fields; `DotnetInventoryTest`; `NativeDotnetIT`. Filter/IR stay at 1. SQLite stays at 2. No TRX-logger injection. No embedded binlog zip. |
 | Superiority Phase 6 | **LANDED** | 50 leftover command families; `zap-families.json` pin at `d9498bb`; `CompetitiveInventoryTest`; `LeftoverBreadthFixtureTest`; `NativeCatalogMatrixIT` for every index name; quarterly zap freshness workflow. No new Java stage. Filter/IR stay at 1. SQLite stays at 2. |
-| This handoff | **CURRENT** | Corrected 6 Sep 2026 so §4 / §13 match superiority Phase 6. |
+| Superiority Phase 7 | **LANDED** | Conservative finite-state compound-command analyzer; MCP 10-client configs and paths; hook dry-run simulation, idempotent healing, mid-run tampering defense; failure-contract catalog rows; NativeHookIT + NativeMcpIT. |
+| This handoff | **CURRENT** | Corrected 7 Sep 2026 so §4 / §13 match superiority Phase 7. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p17` are marked `completed`. **That file is untracked and local-only (see §3).**
 
@@ -1041,9 +1042,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Superiority **Phase 6** (verified command-family breadth) has landed on top of Phase 5 .NET leftovers. `filters/index.toml` has **107** definitions. The zap pin at `d9498bb` is `inventory/zap-families.json`; `CompetitiveInventoryTest` fails if a non-excluded zap family lacks a registered prefix. New leftovers stay `kind=opaque`. Filter/IR stay at **1**; SQLite stays at **2**. Native proof is `NativeCatalogMatrixIT` (this Windows workspace does not build native images; the next Actions run after push is the native gate). Superiority **Phase 7 is not started**. Round 2 **R25** (semantic savings) stays deferred.
+**Where we are.** Superiority **Phase 7** (agent integration security and verification) has landed. Conservative finite-state compound command analyzer eliminates bypasses without rewriting commands; hook templates across 12 targets embed the finite-state tokenizer and default ambiguity to deny; `condense mcp -c/--client` and `--list-clients` provide first-class configs for 10 agent clients; `condense init` provides `-n/--dry-run` simulation, `--update` idempotent healing, and mid-run tampering detection; failure contract has 5 new catalog rows; native proof is `NativeHookIT` and `NativeMcpIT`. Filter/IR stay at **1**; SQLite stays at **2**. Superiority **Phase 8 is not started**. Round 2 **R25** (semantic savings) stays deferred.
 
-**Do not plan or implement superiority Phase 7** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
+**Do not plan or implement superiority Phase 8** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
 
 ---
 
@@ -1064,7 +1065,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Superiority Phase 6 has landed. Confirm `mvn test` is green, `CompetitiveInventoryTest` and `NativeCatalogMatrixCoverageTest` are green, and `NativeCatalogMatrixIT` is on the Failsafe `*IT.java` path. Do not start superiority Phase 7 from this stop point unless the user explicitly asks.
+8. Superiority Phase 7 has landed. Confirm `mvn test` is green, `FailureContractCatalogTest`, `HookDryRunAndUpdateTest`, `HookTamperingRaceTest`, `HookTemplateAnalyzerTest`, `CompoundCommandAnalyzerTest`, and `McpClientSnippetTest` are green, and `NativeHookIT` and `NativeMcpIT` are on the Failsafe `*IT.java` path. Do not start superiority Phase 8 from this stop point unless the user explicitly asks.
 9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
 10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 

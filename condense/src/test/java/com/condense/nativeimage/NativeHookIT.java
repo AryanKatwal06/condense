@@ -143,6 +143,57 @@ class NativeHookIT {
     }
 
     @Test
+    void dryRunDoesNotModifyDisk() throws Exception {
+        NativeBinarySupport.CliResult result = run("init", "-n");
+        assertThat(result.exitCode()).isZero();
+        assertThat(result.stdout()).contains("Condense Hook Dry Run");
+        assertThat(result.stdout()).contains("Claude Code");
+        assertThat(result.stdout()).contains("Action: INSTALL");
+        // Verify fakeHome is still completely empty
+        try (var s = Files.list(fakeHome())) {
+            assertThat(s.count()).isZero();
+        }
+    }
+
+    @Test
+    void updateIdempotentlyHealsTamperedHook() throws Exception {
+        run("init", "--tool", "cursor");
+        Path script = fakeHome().resolve(".cursor").resolve("hooks").resolve("condense-hook.sh");
+        Files.writeString(script, "# tampered mid-run\n");
+
+        NativeBinarySupport.CliResult updateResult = run("init", "--update", "--tool", "cursor");
+        assertThat(updateResult.exitCode()).isZero();
+        assertThat(Files.readString(script)).contains("CONDENSE_COMMANDS");
+
+        NativeBinarySupport.CliResult doctor = run("doctor", "--format", "json");
+        assertThat(doctor.exitCode()).isZero();
+        JsonNode diagnosis = JSON.readTree(doctor.stdout().strip());
+        for (JsonNode hook : diagnosis.get("hooks")) {
+            if (hook.get("tool").asText().toLowerCase().contains("cursor")) {
+                assertThat(hook.get("integrity").asText()).isEqualTo("ok");
+            }
+        }
+    }
+
+    @Test
+    void removalPreservesCustomConfigurations() throws Exception {
+        Path hooksJson = fakeHome().resolve(".cursor").resolve("hooks.json");
+        Files.createDirectories(hooksJson.getParent());
+        Files.writeString(hooksJson, "{\"user_custom\": true, \"version\": 1}\n");
+
+        run("init", "--tool", "cursor");
+        assertThat(Files.readString(hooksJson)).contains("condense-hook.sh");
+
+        NativeBinarySupport.CliResult removeResult = run("init", "--tool", "cursor", "--remove");
+        assertThat(removeResult.exitCode()).isZero();
+
+        String after = Files.readString(hooksJson);
+        assertThat(after).contains("\"user_custom\" : true");
+        assertThat(after).doesNotContain("condense-hook.sh");
+        assertThat(fakeHome().resolve(".cursor").resolve("hooks").resolve("condense-hook.sh")).doesNotExist();
+    }
+
+    @Test
     void mcpStillServesToolsList() throws Exception {
         NativeBinarySupport.StartedRun session = NativeBinarySupport.start(
             configDir(), dataDir(), null, tempDir, extraEnv(), "mcp", "--start");

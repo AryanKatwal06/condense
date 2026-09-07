@@ -2,13 +2,53 @@
 
 **MCP is the preferred agent path** (`condense mcp --start`). Hooks are the fallback for tools that still spawn a shell.
 
-Condense can install hooks that intercept matching shell commands and tell the agent to retry as `condense <command>`. Matched commands are **denied with a retry message**. They are never rewritten and then auto-allowed (`permissionDecision: allow` after a rewrite is forbidden). Standalone pass-through `allow` for unmatched commands stays. `GENERIC_BASH` still `exec condense` and is not a deny-redirect hook.
+Condense installs hooks that intercept matching shell commands and tell the agent to retry as `condense <command>`. Matched commands are **denied with a retry message**. They are never rewritten and then auto-allowed (`permissionDecision: allow` after a rewrite is strictly forbidden). Standalone pass-through `allow` for unmatched commands remains.
 
-After a successful install, Condense stores a SHA-256 baseline of each **Condense-owned script** (not the third-party JSON, which users may edit). `condense init --show` and `condense doctor` report `ok` / `missing` / `tampered` / `unmanaged`. `ok` requires a matching baseline row. A managed script with no tracking, or tracking with no baseline, is `unmanaged`. Before merging into an existing third-party config, Condense copies it to `{dataDir}/backups/{tool}-{epoch}{ext}` (flat, not `backups/hooks/`). If that backup cannot be written, the original file is left untouched. Doctor JSON lists the last 20 `hook_events` (newest first).
+### Interception Policies
 
-Installed scripts match a `CONDENSE_COMMANDS` list filled at install time from registered filter prefixes (catalog leftovers such as `mypy` and `dotnet` included). Templates keep a `{{CONDENSE_COMMANDS}}` placeholder.
+Condense implements two distinct execution models:
+1. **Agent-Specific Interception (Deny-and-Suggest)**: Applied to all AI agent hooks (Claude Code, Cursor, Gemini, Copilot, Windsurf, Cline, Codex, OpenCode, Kilo, Antigravity, Hermes, Pi). Hooks inspect the tool invocation JSON, deny matched commands with a retry explanation, and let the agent tool orchestrator re-issue the command with `condense <cmd>`.
+2. **Generic Bash Execution Wrapper (`GENERIC_BASH`)**: Intercepts commands directly at the shell invocation boundary where no conversational AI agent exists to parse a retry prompt. When the command matches `CONDENSE_COMMANDS`, it invokes `exec condense "$@"` for transparent compression; otherwise it falls back to `exec "$@"`.
 
-This document explains exactly how each hook works mechanically, where files are placed, and how to troubleshoot.
+### Finite-State Compound Command Interception
+
+To prevent bypasses using chained commands (`git commit && rm -rf ...`), pipes (`git status | grep ...`), command substitutions (`$(git diff)`), dynamic evaluation (`eval`), wrappers (`sudo`, `env`), and redirection prefixes (`< input.txt git log`), all hooks employ a conservative finite-state command analyzer:
+- **Zero Command Rewriting**: Commands are analyzed without rewriting or modifying command strings.
+- **Fail-Closed Default (Ask/Deny)**: If any segment matches a registered Condense command, or if command syntax is ambiguous (subshells, backticks, `eval`, `exec`, `source`, unclosed quotes, heredocs), the hook defaults to **deny**. A compound command is only allowed if **all** segments are completely benign and unambiguous.
+- **Path & Name Normalization**: Handles Windows backslashes (`\`), Unix slashes (`/`), environment variables (`GIT_PAGER=cat`), executable suffixes (`.exe`, `.cmd`, `.bat`), and Unicode whitespace (`\u00A0`, `\u202F`).
+
+### CLI Operations
+
+```bash
+condense init -g              # Install hooks for all supported AI tools
+condense init -n              # Dry-run: preview planned actions and backup status without writing
+condense init --update        # Idempotently update installed hooks and repair tampered scripts
+condense init --show          # Show installed hooks and verify SHA-256 integrity
+condense init --remove        # Remove all Condense-managed hooks, cleanly restoring third-party configs
+condense init --tool <tool>   # Target a specific tool (e.g., claude-code, cursor, gemini, etc.)
+```
+
+After a successful install, Condense stores a SHA-256 baseline of each **Condense-owned script** (not third-party JSON/YAML, which users may edit). `condense init --show` and `condense doctor` report `ok`, `missing`, `tampered`, or `unmanaged`. If tampering or mid-run deletion is detected, running `condense init --update` restores the script to baseline. Before merging into an existing third-party config, Condense creates a timestamped backup at `{dataDir}/backups/{tool}-{epoch}{ext}`. If backup creation fails, the original file is left untouched.
+
+---
+
+## Dated Agent Compatibility & Deprecation Matrix (September 2026)
+
+| Agent Host | Protocol / Hook Type | Supported OS | Tested Client Version | Deprecation Date / Status | Notes |
+|---|---|---|---|---|---|
+| **Claude Code** | `PreToolUse` (JSON stdin/stdout) | macOS, Linux, Windows | v1.0.24+ | Active (Tested Sep 2026) | Bash tool matcher; parallel hook resolution |
+| **Cursor** | `beforeShellExecution` | macOS, Linux, Windows | v0.45.x+ | Active (Tested Sep 2026) | Deny + suggestion; exits with continue: false |
+| **GitHub Copilot CLI** | `preToolUse` (JSON stdin/stdout) | macOS, Linux, Windows | v1.0.12+ | Active (Tested Sep 2026) | Shell hook via bash/powershell scripts |
+| **Gemini CLI** | `BeforeTool` (JSON stdin/stdout) | macOS, Linux, Windows | v0.18.x+ | Active (Tested Sep 2026) | Requires paid API key as of Jun 2026 |
+| **Windsurf** | `pre_run_command` (exit code 2) | macOS, Linux, Windows | v1.4.x+ | Beta (Cascade Hooks) | Exit code 2 cascade redirect |
+| **Cline** | `PreToolUse` (executable script) | macOS, Linux | v3.2.x+ | Active (Tested Sep 2026) | Single script hook; Windows unsupported by Cline |
+| **Codex** | `PreToolUse` (JSON stdin/stdout) | macOS, Linux, Windows | v2.1.x+ | Active (Tested Sep 2026) | Deny/ask policy; user must trust hook |
+| **OpenCode** | Node Plugin + hooks.json | macOS, Linux, Windows | v1.2.x+ | Active (Tested Sep 2026) | Intercepts shell tools via JavaScript plugin |
+| **Kilo Code** | `PreToolUse` (JSON stdin/stdout) | macOS, Linux, Windows | v1.0.x+ | Active (Tested Sep 2026) | Intercepts Bash tool commands |
+| **Antigravity** | `PreToolUse` (JSON stdin/stdout) | macOS, Linux, Windows | v2.0+ | Active (Tested Sep 2026) | `run_command` deny/ask only |
+| **Hermes** | Authored plugin (`plugin.yaml` + Python) | macOS, Linux, Windows | v0.9.x+ | Active (Tested Sep 2026) | Plugin cancel with errorMessage |
+| **Pi** | Authored TypeScript extension | macOS, Linux, Windows | v0.8.x+ | Active (Tested Sep 2026) | TypeScript hook function returning deny decision |
+| **Generic Bash** | Execution Wrapper (`exec condense`) | Linux, macOS, WSL | Any Bash 4+ | Active (Standard) | Transparent execution wrapper |
 
 ---
 

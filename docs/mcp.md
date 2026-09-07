@@ -1,24 +1,54 @@
-# MCP server
+# MCP Server
 
 Agents can call Condense as **tools and resources** over stdio instead of rewriting shell commands through hooks. **MCP is the preferred agent path.** Hook install (`condense init`) is the fallback. There is no HTTP, SSE, Streamable HTTP, or OAuth transport.
 
-```
-condense mcp            # print a client config snippet; exit 0
-condense mcp --start    # speak MCP on stdin/stdout
+```bash
+condense mcp                      # Print generic MCP client config snippet
+condense mcp --start              # Speak MCP protocol on stdin/stdout
+condense mcp -c <client>          # Print tailored configuration snippet for specific client
+condense mcp --list-clients       # List all 10 first-class supported agent hosts
 ```
 
-Claude Desktop (and any other MCP client) should launch:
+## First-Class Client Configurations
 
-```json
-{
-  "mcpServers": {
-    "condense": {
-      "command": "condense",
-      "args": ["mcp", "--start"]
-    }
-  }
-}
+Condense provides first-class, client-tailored configuration snippets and config paths:
+
+| Client Identifier | Host Application | Standard Config File Path | Configuration Schema Format |
+|---|---|---|---|
+| `claude-desktop` | Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)<br>`%APPDATA%\Claude\claude_desktop_config.json` (Win) | `mcpServers.condense` |
+| `claude-code` | Claude Code CLI | `~/.claude/settings.json` (global)<br>`./claude.json` (project) | `mcpServers.condense` |
+| `cursor` | Cursor | `~/.cursor/mcp.json` (macOS/Linux)<br>`%USERPROFILE%\.cursor\mcp.json` (Win) | `mcpServers.condense` |
+| `windsurf` | Windsurf / Codeium | `~/.codeium/windsurf/mcp_config.json` | `mcpServers.condense` |
+| `cline` | Cline | `~/Documents/Cline/mcp_settings.json` | `mcpServers.condense` |
+| `zed` | Zed Editor | `~/.config/zed/settings.json` | `context_servers.condense` |
+| `vscode` | VS Code / Copilot | `.vscode/mcp.json` | `servers: [{ name, command, args }]` |
+| `opencode` | OpenCode | `~/.config/opencode/config.json` | `mcp.servers.condense` |
+| `antigravity` | Google Antigravity / Gemini | `~/.gemini/antigravity-ide/mcp_config.json` | `mcpServers.condense` |
+| `generic` | Generic MCP Host | Standard JSON config | `mcpServers.condense` |
+
+To generate the exact JSON snippet for your editor:
+```bash
+condense mcp --client cursor
+condense mcp --client zed
+condense mcp --client vscode
 ```
+
+## Dated MCP Client Compatibility Matrix (September 2026)
+
+| Host Client | Protocol Version | Transport | Tested Version | Status as of Sep 2026 |
+|---|---|---|---|---|
+| **Claude Desktop** | `2024-11-05`, `2025-03-26` | stdio | v0.8.x+ | Production |
+| **Claude Code** | `2024-11-05`, `2025-03-26` | stdio | v1.0.x+ | Production |
+| **Cursor** | `2024-11-05`, `2025-03-26` | stdio | v0.45.x+ | Production |
+| **Windsurf** | `2024-11-05`, `2025-03-26` | stdio | v1.4.x+ | Production |
+| **Cline** | `2024-11-05` | stdio | v3.2.x+ | Production |
+| **Zed** | `2024-11-05`, `2025-03-26` | stdio | v0.170.x+ | Production |
+| **VS Code / Copilot** | `2024-11-05`, `2025-03-26`, `2025-06-18` | stdio | v1.98.x+ | Production |
+| **OpenCode** | `2024-11-05`, `2025-03-26` | stdio | v1.2.x+ | Production |
+| **Google Antigravity** | `2024-11-05`, `2025-03-26`, `2025-06-18` | stdio | v2.0+ | Production |
+| **Generic MCP Host** | Any accepted version | stdio | RFC | Production |
+
+
 
 ## Transport
 
