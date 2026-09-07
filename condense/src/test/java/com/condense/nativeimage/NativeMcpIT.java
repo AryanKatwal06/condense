@@ -64,7 +64,11 @@ class NativeMcpIT {
         NativeBinarySupport.CliResult result = NativeBinarySupport.run(
             configDir(), dataDir(), "mcp", "-c", "cursor");
         assertThat(result.exitCode()).isZero();
-        JsonNode root = JSON.readTree(result.stdout());
+        String stdout = result.stdout();
+        assertThat(stdout).contains("Client: Cursor");
+        int jsonStart = stdout.indexOf('{');
+        assertThat(jsonStart).isGreaterThanOrEqualTo(0);
+        JsonNode root = JSON.readTree(stdout.substring(jsonStart));
         assertThat(root.has("mcpServers")).isTrue();
         JsonNode server = root.path("mcpServers").path("condense");
         assertThat(server.path("command").asText()).isEqualTo("condense");
