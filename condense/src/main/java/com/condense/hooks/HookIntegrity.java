@@ -33,20 +33,16 @@ public final class HookIntegrity {
         }
         try {
             String content = Files.readString(script);
-            if (!HookTemplate.isManagedByCondense(content)) {
-                return UNMANAGED;
-            }
             String actual = TrustStore.sha256Hex(content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            if (tracking == null) {
-                return UNMANAGED;
+            if (tracking != null) {
+                TrackingRepository.HookBaseline baseline = tracking.findHookBaseline(tool.name());
+                if (baseline != null) {
+                    return baseline.sha256().equals(actual) ? OK : TAMPERED;
+                }
             }
-            TrackingRepository.HookBaseline baseline = tracking.findHookBaseline(tool.name());
-            if (baseline == null) {
-                return UNMANAGED;
-            }
-            return baseline.sha256().equals(actual) ? OK : TAMPERED;
+            return HookTemplate.isManagedByCondense(content) ? OK : UNMANAGED;
         } catch (IOException e) {
-            return MISSING;
+            return Files.exists(script, LinkOption.NOFOLLOW_LINKS) ? TAMPERED : MISSING;
         }
     }
 

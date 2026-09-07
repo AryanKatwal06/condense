@@ -35,7 +35,7 @@ import java.util.List;
         "Hooks can be removed at any time with `condense init --remove`."
     }
 )
-public class InitCommand implements Runnable {
+public class InitCommand implements java.util.concurrent.Callable<Integer>, Runnable {
 
     @Option(names = {"-g", "--global"},
         description = "Install hooks for all supported AI tools.")
@@ -49,8 +49,16 @@ public class InitCommand implements Runnable {
         description = "Remove all Condense-managed hooks.")
     boolean remove;
 
+    @Option(names = {"-n", "--dry-run"},
+        description = "Simulate hook installation or update actions without modifying files.")
+    boolean dryRun;
+
+    @Option(names = "--update",
+        description = "Update installed hooks to latest templates and repair tampered hooks.")
+    boolean update;
+
     @Option(names = "--tool",
-        description = "Install hook for a specific tool only. " +
+        description = "Target a specific tool only. " +
                       "Values: claude-code, cursor, gemini, windsurf, copilot, cline, " +
                       "codex, opencode, kilo, antigravity, hermes, pi",
         paramLabel = "TOOL")
@@ -61,24 +69,82 @@ public class InitCommand implements Runnable {
 
     @Override
     public void run() {
-        if (show) {
-            runShow();
+        call();
+    }
+
+    @Override
+    public Integer call() {
+        if (dryRun) {
+            return runDryRun();
+        } else if (update) {
+            return runUpdate();
+        } else if (show) {
+            return runShow();
         } else if (remove) {
-            runRemove();
+            return runRemove();
         } else if (tool != null) {
-            runInstallSingle();
+            return runInstallSingle();
         } else if (global) {
-            runInstallAll();
+            return runInstallAll();
         } else {
             // No flag: show help guidance
             System.out.println("Usage: condense init -g        # install all hooks");
             System.out.println("       condense init --show    # show installed hooks");
+            System.out.println("       condense init --update  # update installed hooks");
+            System.out.println("       condense init -n        # preview actions without writing");
             System.out.println("       condense init --remove  # remove all hooks");
             System.out.println("       condense init --help    # full help");
+            return 0;
         }
     }
 
-    private void runInstallAll() {
+    private Integer runDryRun() {
+        System.out.println("Condense Hook Dry Run (no disk modifications)\n");
+        if (tool != null) {
+            HookTool target = parseTool(tool);
+            if (target == null) return 1;
+            HookInstaller.PlanResult plan = installer.plan(target);
+            printPlan(plan);
+        } else {
+            List<HookInstaller.PlanResult> plans = installer.planAll();
+            plans.forEach(this::printPlan);
+        }
+        return 0;
+    }
+
+    private void printPlan(HookInstaller.PlanResult p) {
+        System.out.printf("  • %-20s  Action: %-10s  Backup: %-5s%n      Target: %s%n      Script: %s%n      Detail: %s%n%n",
+            p.tool().displayName,
+            p.action(),
+            p.willBackup() ? "YES" : "NO",
+            p.targetPath(),
+            p.scriptPath(),
+            p.description());
+    }
+
+    private Integer runUpdate() {
+        System.out.println("Updating Condense hooks...\n");
+        if (tool != null) {
+            HookTool target = parseTool(tool);
+            if (target == null) return 1;
+            HookInstaller.InstallResult result = installer.update(target);
+            System.out.println(result.message());
+            return result.success() ? 0 : 1;
+        } else {
+            List<HookInstaller.InstallResult> results = installer.updateAll();
+            if (results.isEmpty()) {
+                System.out.println("No installed hooks found to update. Run 'condense init -g' to install hooks.");
+                return 0;
+            } else {
+                results.forEach(r -> System.out.println(r.message()));
+                long updated = results.stream().filter(HookInstaller.InstallResult::success).count();
+                System.out.println("\n" + updated + "/" + results.size() + " installed hooks updated.");
+                return updated == results.size() ? 0 : 1;
+            }
+        }
+    }
+
+    private Integer runInstallAll() {
         System.out.println("Installing Condense hooks for all supported AI tools...\n");
         List<HookInstaller.InstallResult> results = installer.installAll();
         results.forEach(r -> System.out.println(r.message()));
@@ -88,43 +154,68 @@ public class InitCommand implements Runnable {
             System.out.println("Failed hooks are usually because the tool is not installed.");
             System.out.println("This is expected — only install hooks for tools you use.");
         }
+        return succeeded > 0 ? 0 : 1;
     }
 
-    private void runShow() {
+    private Integer runShow() {
         System.out.println("Condense Hook Status\n");
         System.out.printf("  %-20s  %-14s  %-12s  %s%n", "Tool", "Status", "Integrity", "Path");
         System.out.println("  " + "─".repeat(80));
-        installer.showAll().forEach(r ->
+        List<HookInstaller.StatusResult> statuses = installer.showAll();
+        boolean hasTampered = false;
+        for (HookInstaller.StatusResult r : statuses) {
             System.out.printf("  %-20s  %-14s  %-12s  %s%n",
                 r.tool().displayName,
                 r.installed() ? "installed" : "not installed",
                 r.integrity() == null ? "-" : r.integrity(),
-                r.hookFile()));
-    }
-
-    private void runRemove() {
-        System.out.println("Removing Condense-managed hooks...\n");
-        installer.removeAll().forEach(r -> System.out.println(r.message()));
-    }
-
-    private void runInstallSingle() {
-        HookTool target = null;
-        for (HookTool t : HookTool.values()) {
-            if (t.name().equalsIgnoreCase(tool.replace("-", "_"))
-                    || t.displayName.equalsIgnoreCase(tool)) {
-                target = t;
-                break;
+                r.hookFile());
+            if (r.installed() && HookIntegrity.TAMPERED.equals(r.integrity())) {
+                hasTampered = true;
             }
         }
-        if (target == null) {
-            System.err.println("condense init: unknown tool '" + tool + "'");
-            System.err.println("Valid values: " +
-                java.util.Arrays.stream(HookTool.values())
-                    .map(t -> t.name().toLowerCase().replace("_", "-"))
-                    .collect(java.util.stream.Collectors.joining(", ")));
-            return;
+        if (hasTampered) {
+            System.out.println("\nWarning: One or more hooks have been modified or tampered with.");
+            System.out.println("Run 'condense init --update' to restore them to baseline.");
+            return 1;
         }
+        return 0;
+    }
+
+    private Integer runRemove() {
+        if (tool != null) {
+            HookTool target = parseTool(tool);
+            if (target == null) return 1;
+            System.out.println("Removing Condense hook for " + target.displayName + "...\n");
+            HookInstaller.RemoveResult result = installer.remove(target);
+            System.out.println(result.message());
+            return result.removed() ? 0 : 1;
+        } else {
+            System.out.println("Removing Condense-managed hooks...\n");
+            installer.removeAll().forEach(r -> System.out.println(r.message()));
+            return 0;
+        }
+    }
+
+    private Integer runInstallSingle() {
+        HookTool target = parseTool(tool);
+        if (target == null) return 1;
         HookInstaller.InstallResult result = installer.install(target);
         System.out.println(result.message());
+        return result.success() ? 0 : 1;
+    }
+
+    private HookTool parseTool(String name) {
+        for (HookTool t : HookTool.values()) {
+            if (t.name().equalsIgnoreCase(name.replace("-", "_"))
+                    || t.displayName.equalsIgnoreCase(name)) {
+                return t;
+            }
+        }
+        System.err.println("condense init: unknown tool '" + name + "'");
+        System.err.println("Valid values: " +
+            java.util.Arrays.stream(HookTool.values())
+                .map(t -> t.name().toLowerCase().replace("_", "-"))
+                .collect(java.util.stream.Collectors.joining(", ")));
+        return null;
     }
 }

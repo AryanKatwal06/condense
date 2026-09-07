@@ -111,7 +111,86 @@ public class HookInstaller {
         return results;
     }
 
+    /**
+     * Removes hook for a single tool.
+     */
+    public RemoveResult remove(HookTool tool) {
+        return remove(tool, home());
+    }
 
+    /**
+     * Updates an installed hook or repairs a tampered hook idempotently.
+     */
+    public InstallResult update(HookTool tool) {
+        Path home = home();
+        StatusResult st = status(tool, home);
+        if (!st.installed()) {
+            return new InstallResult(tool, false,
+                "• " + tool.displayName + ": not installed — run 'condense init -g' to install");
+        }
+        CondenseConfig config = configLoader.load();
+        InstallResult result = install(tool, home, config.hooks().excludeCommands());
+        if (result.success()) {
+            return new InstallResult(tool, true,
+                "✓ Updated hook for " + tool.displayName + " → " + tool.hookFile(home));
+        }
+        return result;
+    }
+
+    /**
+     * Updates all installed hooks idempotently.
+     */
+    public List<InstallResult> updateAll() {
+        Path home = home();
+        List<InstallResult> results = new ArrayList<>();
+        for (HookTool tool : HookTool.values()) {
+            StatusResult st = status(tool, home);
+            if (st.installed()) {
+                results.add(update(tool));
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Computes planned hook installation or update actions without modifying disk.
+     */
+    public PlanResult plan(HookTool tool) {
+        Path home = home();
+        StatusResult st = decorateIntegrity(status(tool, home), home);
+        Path targetPath = tool.hookFile(home);
+        Path scriptPath = tool.ownedScript(home);
+        boolean exists = Files.exists(targetPath);
+        boolean willBackup = exists && Files.isRegularFile(targetPath);
+
+        String action;
+        String desc;
+        if (st.installed()) {
+            if (HookIntegrity.TAMPERED.equals(st.integrity())) {
+                action = "RESTORE";
+                desc = "Tampered hook detected (" + targetPath + "); update/install will heal the script and restore baseline integrity.";
+            } else {
+                action = "UPDATE";
+                desc = "Already installed (" + targetPath + "); update will refresh script and preserve custom configuration.";
+            }
+        } else {
+            action = "INSTALL";
+            desc = "Not installed; install will write script to " + scriptPath + " and configure " + targetPath + ".";
+        }
+
+        return new PlanResult(tool, st.installed(), action, targetPath, scriptPath, willBackup, desc);
+    }
+
+    /**
+     * Computes planned actions for all tools without modifying disk.
+     */
+    public List<PlanResult> planAll() {
+        List<PlanResult> plans = new ArrayList<>();
+        for (HookTool tool : HookTool.values()) {
+            plans.add(plan(tool));
+        }
+        return plans;
+    }
 
     public record InstallResult(HookTool tool, boolean success, String message) {}
     public record StatusResult(HookTool tool, boolean installed, Path hookFile, String integrity) {
@@ -120,6 +199,15 @@ public class HookInstaller {
         }
     }
     public record RemoveResult(HookTool tool, boolean removed, String message) {}
+    public record PlanResult(
+        HookTool tool,
+        boolean installed,
+        String action,
+        Path targetPath,
+        Path scriptPath,
+        boolean willBackup,
+        String description
+    ) {}
 
     private String rendered(HookTool tool, String template, List<String> excluded) {
         return HookTemplate.apply(tool, template, excluded, strategyRegistry);
