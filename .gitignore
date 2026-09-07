@@ -88,3 +88,5 @@ Test*.class
 !condense/src/main/resources/hooks/**/*.py
 temp_*.md
 temp_*.txt
+__pycache__/
+*.pyc
