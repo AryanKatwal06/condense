@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Fixed
+- `NativeCatalogMatrixIT` Unix stubs print the fixture with `/bin/cat` (or a read loop), not bare `cat`. A stub named `cat` used to recurse on PATH until `Cannot fork`.
 - `NativeCatalogMatrixIT` requires `condense[filtered]` only when the tee-stripped body differs from the fixture. Intentional passthrough (`git push` rejected) stays unstamped; the proxy always appends `[raw output saved to: ...]`.
 - Durable writes (trust, config, tee, propose, hook third-party JSON, write-failure ledger) go through `AtomicFile`. An injected disk-full, readonly, or rename failure leaves the previous valid destination bytes unchanged. Third-party agent configs are no longer truncated in place.
 - `WriteFailureLedger` keeps the last-good count in memory when `write-failures.json` is unreadable, and does not reset to 0. An unwritable data dir is fail-open on the proxy path; doctor reports `ledger_unwritable`.

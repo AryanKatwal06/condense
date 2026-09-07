@@ -51,7 +51,7 @@ class NativeCatalogMatrixIT {
                 Path script = stubDir.resolve(firstToken);
                 Files.writeString(
                     script,
-                    "#!/bin/sh\ncat \"$(dirname \"$0\")/fixture.txt\"\nexit " + row.exitCode() + "\n",
+                    NativeCatalogMatrixSupport.unixFixtureStubScript(row.exitCode()),
                     StandardCharsets.UTF_8
                 );
                 try {

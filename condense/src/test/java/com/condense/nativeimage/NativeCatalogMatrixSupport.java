@@ -88,6 +88,28 @@ final class NativeCatalogMatrixSupport {
         return normalized;
     }
 
+    /**
+     * Unix PATH stub that prints {@code fixture.txt} next to the script.
+     * Must not invoke bare {@code cat} — when the stub itself is named
+     * {@code cat}, a PATH lookup recurses until the runner reports
+     * {@code Cannot fork}.
+     */
+    static String unixFixtureStubScript(int exitCode) {
+        return """
+            #!/bin/sh
+            fixture="$(dirname "$0")/fixture.txt"
+            if [ -x /bin/cat ]; then
+              /bin/cat "$fixture"
+            elif [ -x /usr/bin/cat ]; then
+              /usr/bin/cat "$fixture"
+            else
+              while IFS= read -r line || [ -n "$line" ]; do
+                printf '%s\\n' "$line"
+              done < "$fixture"
+            fi
+            """ + "exit " + exitCode + "\n";
+    }
+
     static boolean compressedRequiresStamp(String fixtureText, String stdout) {
         String fixture = fixtureText == null
             ? ""

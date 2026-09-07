@@ -42,6 +42,14 @@ class NativeCatalogMatrixCoverageTest {
     }
 
     @Test
+    void unixFixtureStubDoesNotCallBareCat() {
+        String script = NativeCatalogMatrixSupport.unixFixtureStubScript(0);
+        assertThat(script).doesNotContain("\ncat ");
+        assertThat(script).contains("/bin/cat");
+        assertThat(script).contains("exit 0");
+    }
+
+    @Test
     void compressedBodyRequiresStampEvenWithTeeFooter() {
         String fixture = "lots of noise\nfailed\nmore noise\n";
         String stamped = "condense[filtered]\nfailed\n[raw output saved to: /tmp/tee.txt]\n";
