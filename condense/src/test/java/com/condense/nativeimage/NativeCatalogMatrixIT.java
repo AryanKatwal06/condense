@@ -71,9 +71,8 @@ class NativeCatalogMatrixIT {
             assertThat(result.stdout())
                 .as("%s must keep a critical signal: stdout=%s", row.definition(), result.stdout())
                 .contains(row.mustContain().get(0));
-            String fixtureText = new String(fixture, StandardCharsets.UTF_8).replace("\r\n", "\n");
-            String stdoutText = result.stdout() == null ? "" : result.stdout().replace("\r\n", "\n");
-            if (!stdoutText.equals(fixtureText)) {
+            if (NativeCatalogMatrixSupport.compressedRequiresStamp(
+                    new String(fixture, StandardCharsets.UTF_8), result.stdout())) {
                 assertThat(result.stdout())
                     .as("%s compressed output must carry the filtered stamp: stdout=%s",
                         row.definition(), result.stdout())

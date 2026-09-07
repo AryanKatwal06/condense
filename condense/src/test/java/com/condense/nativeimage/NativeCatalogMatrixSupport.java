@@ -70,6 +70,31 @@ final class NativeCatalogMatrixSupport {
         return BuiltinDefinitionCatalog.standalone().findByCommand(command);
     }
 
+    /**
+     * Drop the proxy tee footer so passthrough rows can be compared to the
+     * fixture. {@code ProxyService} always appends
+     * {@code [raw output saved to: ...]} after a trailing newline.
+     */
+    static String stripTeeFooter(String stdout) {
+        if (stdout == null || stdout.isEmpty()) {
+            return stdout == null ? "" : stdout;
+        }
+        String normalized = stdout.replace("\r\n", "\n").replace('\r', '\n').stripTrailing();
+        int lastNl = normalized.lastIndexOf('\n');
+        String lastLine = lastNl < 0 ? normalized : normalized.substring(lastNl + 1);
+        if (lastLine.startsWith("[raw output saved to:")) {
+            return lastNl < 0 ? "" : normalized.substring(0, lastNl).stripTrailing();
+        }
+        return normalized;
+    }
+
+    static boolean compressedRequiresStamp(String fixtureText, String stdout) {
+        String fixture = fixtureText == null
+            ? ""
+            : fixtureText.replace("\r\n", "\n").replace('\r', '\n').stripTrailing();
+        return !stripTeeFooter(stdout).equals(fixture);
+    }
+
     static List<Row> firstCorpusRowPerDefinition() throws Exception {
         List<Row> rows = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();

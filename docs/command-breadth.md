@@ -48,7 +48,7 @@ Unrecognized variants and parse uncertainty passthrough. Stage exceptions contin
 
 ## Native matrix
 
-`NativeCatalogMatrixIT` PATH-stubs every `filters/index.toml` definition using `inventory/native-catalog-matrix.json`. `NativeCatalogMatrixCoverageTest` fails if an index name is missing from that matrix. A missing native binary fails the IT; it does not skip.
+`NativeCatalogMatrixIT` PATH-stubs every `filters/index.toml` definition using `inventory/native-catalog-matrix.json`. Compressed rows must carry `condense[filtered]`. Passthrough rows (`git push` rejected) stay unstamped; the tee footer is stripped before that comparison. `NativeCatalogMatrixCoverageTest` fails if an index name is missing from that matrix. A missing native binary fails the IT; it does not skip.
 
 ## Zap-internal exclusions
 
