@@ -216,17 +216,27 @@ public class CommandExecutor {
         if (process == null) {
             return;
         }
-        process.descendants().forEach(ProcessHandle::destroy);
+        List<ProcessHandle> descendants = process.descendants().toList();
+        descendants.forEach(ProcessHandle::destroy);
         process.destroy();
         try {
             if (!process.waitFor(2, TimeUnit.SECONDS)) {
-                process.descendants().forEach(ProcessHandle::destroyForcibly);
+                descendants.forEach(ProcessHandle::destroyForcibly);
                 process.destroyForcibly();
             }
         } catch (InterruptedException ignored) {
-            process.descendants().forEach(ProcessHandle::destroyForcibly);
+            descendants.forEach(ProcessHandle::destroyForcibly);
             process.destroyForcibly();
             Thread.currentThread().interrupt();
+        }
+        for (ProcessHandle d : descendants) {
+            if (d.isAlive()) {
+                try {
+                    d.onExit().get(2, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    d.destroyForcibly();
+                }
+            }
         }
     }
 

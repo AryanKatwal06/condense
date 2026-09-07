@@ -58,7 +58,7 @@ class CommandExecutorShutdownTest {
         }, "condense-shutdown-grandchild-test");
         worker.start();
         Process child = awaitActive(executor);
-        List<ProcessHandle> descendants = child.descendants().toList();
+        List<ProcessHandle> descendants = awaitDescendants(child);
         executor.onStop(null);
         worker.join(15_000);
         assertThat(worker.isAlive()).isFalse();
@@ -67,8 +67,26 @@ class CommandExecutorShutdownTest {
         assertThat(holder.get().termination()).isEqualTo(TerminationReason.DESTROYED);
         assertThat(child.isAlive()).isFalse();
         for (ProcessHandle descendant : descendants) {
+            if (descendant.isAlive()) {
+                try {
+                    descendant.onExit().get(5, TimeUnit.SECONDS);
+                } catch (Exception ignored) {
+                }
+            }
             assertThat(descendant.isAlive()).isFalse();
         }
+    }
+
+    private static List<ProcessHandle> awaitDescendants(Process process) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (System.nanoTime() < deadline) {
+            List<ProcessHandle> descendants = process.descendants().toList();
+            if (!descendants.isEmpty()) {
+                return descendants;
+            }
+            Thread.sleep(20);
+        }
+        return process.descendants().toList();
     }
 
     private static Process awaitActive(CommandExecutor executor) throws InterruptedException {
