@@ -49,7 +49,8 @@ $Arch = $env:PROCESSOR_ARCHITECTURE
 if ($Arch -eq "AMD64") {
     $Platform = "windows-x64"
 } elseif ($Arch -eq "ARM64") {
-    $Platform = "windows-aarch64"
+    Write-Error "Windows ARM64 pre-built binaries are not available.`nPlease build from source: https://github.com/$Repo#building-from-source"
+    exit 1
 } else {
     Write-Error "Unsupported architecture: $Arch"
     exit 1

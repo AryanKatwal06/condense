@@ -10,10 +10,5 @@ Installers:
     InstallerType: portable
     Commands:
       - condense
-  - Architecture: arm64
-    InstallerUrl: https://github.com/AryanKatwal06/condense/releases/download/v1.0.1/condense-windows-aarch64.exe
-    InstallerType: portable
-    Commands:
-      - condense
 ManifestType: singleton
 ManifestVersion: 1.2.0
