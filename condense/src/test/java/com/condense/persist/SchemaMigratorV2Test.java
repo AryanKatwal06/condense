@@ -26,7 +26,7 @@ class SchemaMigratorV2Test {
         TrackingRepository repo = new TrackingRepository(new IsolatedPlatformDirs(tempDir.resolve("config"), data));
         try {
             repo.insert("git status", "abc", "/tmp", 4, 1, 1L);
-            assertThat(repo.schemaVersion()).isEqualTo(2);
+            assertThat(repo.schemaVersion()).isGreaterThanOrEqualTo(2);
             assertThat(tableExists(data.resolve("condense.db"), "hook_events")).isTrue();
             assertThat(tableExists(data.resolve("condense.db"), "hook_baselines")).isTrue();
             repo.insertHookEvent("CURSOR", "install", "/tmp/hook.sh", "abc", true, null);
@@ -47,7 +47,7 @@ class SchemaMigratorV2Test {
         TrackingRepository repo = new TrackingRepository(new IsolatedPlatformDirs(tempDir.resolve("config"), data));
         try {
             assertThat(repo.countAll()).isEqualTo(1);
-            assertThat(repo.schemaVersion()).isEqualTo(2);
+            assertThat(repo.schemaVersion()).isGreaterThanOrEqualTo(2);
             assertThat(tableExists(db, "hook_events")).isTrue();
             assertThat(tableExists(db, "hook_baselines")).isTrue();
             assertThat(repo.queryRecent(1, null).get(0).command()).isEqualTo(LegacyDatabase.SEED_COMMAND);

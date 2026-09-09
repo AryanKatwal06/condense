@@ -53,5 +53,39 @@ class NativeAnalyticsIT {
         assertThat(estimator.get("reference").asText()).isEqualTo(Utf8WeightedTokenEstimator.REFERENCE_TOKENIZER);
         assertThat(estimator.get("p95_rel_error").asDouble())
             .isEqualTo(Utf8WeightedTokenEstimator.PUBLISHED_P95_REL_ERROR);
+
+        // Native pricing catalog and cost estimation
+        JsonNode cost = report.get("cost");
+        assertThat(cost)
+            .as("gain JSON must include default cost estimate in native image: %s", gain.stdout())
+            .isNotNull();
+        assertThat(cost.get("model").asText()).isEqualTo("claude-3-5-sonnet-20241022");
+        assertThat(cost.get("currency").asText()).isEqualTo("USD");
+
+        // Native --model override
+        NativeBinarySupport.CliResult gainGpt = NativeBinarySupport.run(
+            configDir, dataDir, "gain", "--format", "json", "--model", "gpt-4o"
+        );
+        assertThat(gainGpt.exitCode()).isZero();
+        JsonNode gptReport = JSON.readTree(gainGpt.stdout());
+        assertThat(gptReport.get("cost").get("model").asText()).isEqualTo("gpt-4o-2024-11-20");
+        assertThat(gptReport.get("cost").get("provider").asText()).isEqualTo("OpenAI");
+
+        // Native --list-models
+        NativeBinarySupport.CliResult listModels = NativeBinarySupport.run(
+            configDir, dataDir, "gain", "--list-models"
+        );
+        assertThat(listModels.exitCode()).isZero();
+        assertThat(listModels.stdout()).contains("Supported LLM Models for Cost Estimation");
+        assertThat(listModels.stdout()).contains("claude-3-5-sonnet-20241022");
+        assertThat(listModels.stdout()).contains("Default model: claude-3-5-sonnet-20241022");
+
+        // Native CSV export includes cost fields
+        NativeBinarySupport.CliResult gainCsv = NativeBinarySupport.run(
+            configDir, dataDir, "gain", "--format", "csv"
+        );
+        assertThat(gainCsv.exitCode()).isZero();
+        assertThat(gainCsv.stdout()).contains("cost_model,claude-3-5-sonnet-20241022");
+        assertThat(gainCsv.stdout()).contains("estimated_usd_saved,");
     }
 }

@@ -236,9 +236,9 @@ java.sql.Driver driver = new org.sqlite.JDBC();
 connection = driver.connect(url, new java.util.Properties());
 ```
 
-Every open applies `PRAGMA busy_timeout=5000`, `PRAGMA journal_mode=WAL` (fail-open), `PRAGMA integrity_check`, then `SchemaMigrator` (`PRAGMA user_version`, target **2**). Version 1 keeps `commands` unchanged and adds `filter_outcomes`. Version 2 adds `hook_events` and `hook_baselines`. Newer-than-us schemas skip migrations. Retention is 90 days for both tables and a bounded tee sweep (256 unlinks, no symlink follow). Writes stay synchronous and fail-open. Spec: [docs/persistence.md](docs/persistence.md) and [docs/schema-lifecycle.md](docs/schema-lifecycle.md).
+Every open applies `PRAGMA busy_timeout=5000`, `PRAGMA journal_mode=WAL` (fail-open), `PRAGMA integrity_check`, then `SchemaMigrator` (`PRAGMA user_version`, target **3**). Version 1 keeps `commands` unchanged and adds `filter_outcomes`. Version 2 adds `hook_events` and `hook_baselines`. Version 3 adds `estimator` and `schema_version` to `commands`. Newer-than-us schemas skip migrations. Retention is 90 days for both tables and a bounded tee sweep (256 unlinks, no symlink follow). Writes stay synchronous and fail-open. Spec: [docs/persistence.md](docs/persistence.md) and [docs/schema-lifecycle.md](docs/schema-lifecycle.md).
 
-`gain` (`analytics/`) supports the default summary, `--graph`, `--history [N]`, `--daily`, `--weekly`, `--top N`, `--format json`, `--since DAYS` (default 30), `--all`, and project-vs-global scope. Degraded persistence prints `⚠ analytics unavailable — persistence failed, see logs` to stderr. An empty healthy store prints `No tracking data yet. Run condense doctor to see why.` `condense doctor` (text / `--format json`) names `empty_tracking_reason`.
+`gain` (`analytics/`) supports the default summary, `--model <model-id|alias>`, `--list-models`, `--graph`, `--history [N]`, `--daily`, `--weekly`, `--top N`, `--format json`, `--format csv`, `--since DAYS` (default 30), `--all`, and project-vs-global scope. Reports auditable dollar estimates based on `pricing/models.json` with explicit ±37% estimator uncertainty disclosure. Degraded persistence prints `⚠ analytics unavailable — persistence failed, see logs` to stderr. An empty healthy store prints `No tracking data yet. Run condense doctor to see why.` `condense doctor` (text / `--format json`) names `empty_tracking_reason`. Spec: [docs/pricing-models.md](docs/pricing-models.md).
 
 ### 4.10 Platform directories (`core/PlatformDirs.java`)
 
@@ -463,7 +463,8 @@ Planning plus Phase 1 through Phase 17 code, then an independent audit of Phases
 | Superiority Phase 6 | **LANDED** | 50 leftover command families; `zap-families.json` pin at `d9498bb`; `CompetitiveInventoryTest`; `LeftoverBreadthFixtureTest`; `NativeCatalogMatrixIT` for every index name; quarterly zap freshness workflow. No new Java stage. Filter/IR stay at 1. SQLite stays at 2. |
 | Superiority Phase 7 | **LANDED** | Conservative finite-state compound-command analyzer; MCP 10-client configs and paths; hook dry-run simulation, idempotent healing, mid-run tampering defense; failure-contract catalog rows; NativeHookIT + NativeMcpIT. |
 | Superiority Phase 8 | **LANDED** | Complete structured output IR (git + build documents), flag-position pre-parsing with `--` child argument isolation, accessibility policy (NO_COLOR, CLICOLOR, --plain, --ascii, severity markers), CSV tabular analytics, JSON reporting (init show, config validate), synchronized man page & completions, failure-contract rows; NativeIrIT + NativeCliIT. |
-| This handoff | **CURRENT** | Corrected 9 Sep 2026 so §4 / §13 match superiority Phase 8. |
+| Superiority Phase 9 | **LANDED** | Auditable model-aware cost analytics, versioned offline pricing catalog (`pricing/models.json`), `--model` overrides, `--list-models`, SQLite schema version 3 (`estimator`, `schema_version`), mixed-history detection, expanded calibration corpus (code, logs, diffs, multilingual) with `TokenCalibrationTest` and `PricingCatalogFreshnessTest`, quarterly review workflow; NativeAnalyticsIT + NativeCliIT. |
+| This handoff | **CURRENT** | Corrected 9 Sep 2026 so §4 / §13 match superiority Phase 9. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p17` are marked `completed`. **That file is untracked and local-only (see §3).**
 
@@ -1043,9 +1044,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Superiority **Phase 8** (complete structured output, CLI ergonomics, and accessibility) has landed. First-class `git` and `build` IR documents expand structured envelope coverage across all git and build stages with zero reflection drift; `CliPreParser` strictly separates Condense-owned options from child arguments and supports the `--` delimiter; `AccessibilityPolicy` enforces `NO_COLOR`, `CLICOLOR`, `CLICOLOR_FORCE`, `--plain` / `--ascii` modes, and textual severity markers; `condense gain --format csv` exports RFC-4180 CSV tables across all modes; `condense init --show --format json` and `condense config validate --format json` emit structured diagnostics; `packaging/man/condense.1` and shell completion scripts (Bash, Zsh, Fish) are fully synchronized and tested via `CliMetadataConsistencyTest`; failure contract catalog has new rows; native proof is `NativeIrIT` and `NativeCliIT`. Filter/IR schema stays at **1**; SQLite schema stays at **2**. Superiority **Phase 9 is not started**.
+**Where we are.** Superiority **Phase 9** (auditable model-aware cost analytics and recurring calibration) has landed. Versioned local pricing catalog (`pricing/models.json`) covers 11 flagship LLMs across Anthropic, OpenAI, Google, and DeepSeek with zero runtime network calls; `condense gain` supports `--model <id|alias>`, `--list-models`, persistent `[analytics] model` config, and explicit ±37% estimator uncertainty disclosure across text summary, JSON, and CSV exports; SQLite analytics schema advanced to version 3 with `estimator` and `schema_version` columns and mixed-history detection; expanded calibration corpus in `token-corpus/` verified by deterministic `TokenCalibrationTest` and `PricingCatalogFreshnessTest`; quarterly automated GitHub Actions review workflow in `.github/workflows/calibration-and-pricing-review.yml`; native reflection and resource registration in `reflect-config.json` and `resource-config.json`; native proof in `NativeAnalyticsIT` and `NativeCliIT`. Filter/IR schema stays at **1**; SQLite schema is at **3**. Superiority **Phase 10 is not started**.
 
-**Do not plan or implement superiority Phase 9** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
+**Do not plan or implement superiority Phase 10** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
 
 ---
 
@@ -1066,7 +1067,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Superiority Phase 7 has landed. Confirm `mvn test` is green, `FailureContractCatalogTest`, `HookDryRunAndUpdateTest`, `HookTamperingRaceTest`, `HookTemplateAnalyzerTest`, `CompoundCommandAnalyzerTest`, and `McpClientSnippetTest` are green, and `NativeHookIT` and `NativeMcpIT` are on the Failsafe `*IT.java` path. Do not start superiority Phase 8 from this stop point unless the user explicitly asks.
+8. Superiority Phase 8 and Phase 9 have landed. Confirm `mvn test` is green, `PricingCatalogTest`, `PricingCatalogFreshnessTest`, `CostEstimateTest`, `TokenCalibrationTest`, `GainCommandCostTest`, `GainCsvFormatTest`, and `AsciiGraphRendererCostTest` are green, and `NativeAnalyticsIT` and `NativeCliIT` are on the Failsafe `*IT.java` path. Do not start superiority Phase 10 from this stop point unless the user explicitly asks.
 9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
 10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 

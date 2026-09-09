@@ -8,6 +8,7 @@
       { "pattern": "hooks/.*" },
       { "pattern": "META-INF/condense/.*" },
       { "pattern": "application\\.properties" },
+      { "pattern": "pricing/.*\\.json" },
       { "pattern": "org/sqlite/native/.*" }
     ]
   }

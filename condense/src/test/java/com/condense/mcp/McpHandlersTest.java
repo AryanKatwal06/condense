@@ -287,10 +287,12 @@ class McpHandlersTest {
 
     private static Path workspaceFile(String name) throws Exception {
         Path dir = Path.of(System.getProperty("user.dir", "."))
-            .resolve("target")
-            .resolve("mcp-handlers-" + UUID.randomUUID());
+            .resolve(".tmp-mcp-handlers-" + UUID.randomUUID());
         Files.createDirectories(dir);
-        return dir.resolve(name);
+        dir.toFile().deleteOnExit();
+        Path file = dir.resolve(name);
+        file.toFile().deleteOnExit();
+        return file;
     }
 
     private JsonNode callTool(String name, String argumentsJson) throws Exception {

@@ -24,6 +24,12 @@
     "allDeclaredFields": true
   },
   {
+    "name": "com.condense.core.CondenseConfig$AnalyticsConfig",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
     "name": "com.condense.core.TeeMode",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
@@ -42,6 +48,30 @@
   },
   {
     "name": "com.condense.analytics.EstimatorInfo",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.condense.analytics.ModelPricing",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.condense.analytics.CostEstimate",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.condense.analytics.PricingCatalog",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.condense.analytics.PricingCatalog$PricingCatalogWire",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true

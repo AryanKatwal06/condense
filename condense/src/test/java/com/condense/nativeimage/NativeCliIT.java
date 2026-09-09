@@ -65,6 +65,14 @@ class NativeCliIT {
         assertThat(result.stdout()).contains("git version");
     }
 
+    @Test
+    void gainListModelsExitsZeroWithModelCatalog() throws Exception {
+        NativeBinarySupport.CliResult result = run("gain", "--list-models");
+        assertThat(result.exitCode()).isEqualTo(0);
+        assertThat(result.stdout()).contains("Supported LLM Models for Cost Estimation");
+        assertThat(result.stdout()).contains("claude-3-5-sonnet-20241022");
+    }
+
     private NativeBinarySupport.CliResult run(String... args) throws Exception {
         return NativeBinarySupport.run(configDir(), dataDir(), args);
     }

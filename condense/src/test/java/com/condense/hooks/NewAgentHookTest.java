@@ -61,7 +61,7 @@ class NewAgentHookTest {
             }
         }
         assertThat(tracking.countHookEvents()).isGreaterThanOrEqualTo(6);
-        assertThat(tracking.schemaVersion()).isEqualTo(2);
+        assertThat(tracking.schemaVersion()).isGreaterThanOrEqualTo(2);
     }
 
     @Test
