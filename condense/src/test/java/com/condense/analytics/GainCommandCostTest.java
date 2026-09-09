@@ -2,7 +2,7 @@ package com.condense.analytics;
 
 import com.condense.core.CondenseConfig;
 import com.condense.core.ConfigLoader;
-import com.condense.core.IsolatedPlatformDirs;
+import com.condense.core.PlatformDirs;
 import com.condense.core.TrackingRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -30,10 +31,16 @@ class GainCommandCostTest {
 
     @BeforeEach
     void setUp() {
-        tracking = new TrackingRepository(new IsolatedPlatformDirs(
-            tempDir.resolve("config"),
-            tempDir.resolve("data")
-        ));
+        tracking = new TrackingRepository(new PlatformDirs() {
+            @Override public Path resolveConfigDir() { return tempDir.resolve("config"); }
+            @Override public Path resolveDataDir() { return tempDir.resolve("data"); }
+            @Override public Path getConfigDir() { return ensure(tempDir.resolve("config")); }
+            @Override public Path getDataDir() { return ensure(tempDir.resolve("data")); }
+            private Path ensure(Path p) {
+                try { Files.createDirectories(p); } catch (Exception ignored) {}
+                return p;
+            }
+        });
         gainRepo = new GainRepository(tracking);
         tracking.insert("git status", "proj123", "/tmp/proj", 100_000, 20_000, 40L);
 

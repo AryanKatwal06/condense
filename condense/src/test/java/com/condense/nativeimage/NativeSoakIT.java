@@ -73,9 +73,8 @@ class NativeSoakIT {
         Set<Path> leakedFiles = new HashSet<>(finalTempFiles);
         leakedFiles.removeAll(initialTempFiles);
 
-        // Allow JVM finalizers, cleaners, and OS background handle cleanup to settle before sampling
+        // Allow JVM cleaners and OS background handle cleanup to settle before sampling
         System.gc();
-        System.runFinalization();
         try {
             Thread.sleep(100);
         } catch (InterruptedException ignored) {}

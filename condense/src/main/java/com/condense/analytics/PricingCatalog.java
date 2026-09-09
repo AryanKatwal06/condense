@@ -7,7 +7,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.jboss.logging.Logger;
 
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 

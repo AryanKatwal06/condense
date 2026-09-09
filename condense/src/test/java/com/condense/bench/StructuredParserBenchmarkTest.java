@@ -2,7 +2,6 @@ package com.condense.bench;
 
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.StageResult;
-import com.condense.filter.strategy.FormatReportStage;
 import com.condense.filter.strategy.GitStatusStage;
 import com.condense.filter.strategy.MachineUiStage;
 import com.condense.filter.strategy.ResourceGraphStage;

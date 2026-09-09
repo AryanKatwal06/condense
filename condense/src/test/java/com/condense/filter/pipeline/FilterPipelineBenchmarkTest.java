@@ -173,7 +173,7 @@ class FilterPipelineBenchmarkTest {
         double p95PipeUs = BenchStats.percentile(pipeNanos, 95.0) / 1_000.0;
 
         String directStr = String.format("%.2f ± %.1f", meanDirectUs, stdDirectUs);
-        String pipeStr = String.format("%.2f ± %.1f (p95=%.1f)", meanPipeUs, stdPipeUs, p95PipeUs);
+        String pipeStr = String.format("%.2f ± %.1f (p50=%.1f, p95=%.1f)", meanPipeUs, stdPipeUs, p50PipeUs, p95PipeUs);
 
         System.out.printf("%-32s | %18s | %24s | %+10.2f µs | %+6.1f%%%n",
             label, directStr, pipeStr, diffUs, overheadPct);

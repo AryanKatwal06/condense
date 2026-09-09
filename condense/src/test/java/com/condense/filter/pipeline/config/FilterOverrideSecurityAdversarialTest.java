@@ -2,8 +2,6 @@ package com.condense.filter.pipeline.config;
 
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.StageResult;
-import com.condense.filter.strategy.RegexTimeoutException;
-import com.condense.filter.strategy.TimeoutCharSequence;
 import com.condense.trust.TrustTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

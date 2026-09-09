@@ -8,7 +8,6 @@ import com.condense.filter.stage.GradleSummaryStage;
 import com.condense.filter.stage.MakeSummaryStage;
 import com.condense.filter.stage.MvnSummaryStage;
 import com.condense.filter.strategy.GitStatusStage;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import java.io.UncheckedIOException;

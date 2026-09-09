@@ -199,6 +199,7 @@ public class ConfigTrustCommand implements Callable<Integer> {
         if (System.console() != null) {
             line = System.console().readLine();
         } else {
+            @SuppressWarnings("resource")
             Scanner scanner = new Scanner(System.in);
             if (scanner.hasNextLine()) {
                 line = scanner.nextLine();

@@ -188,6 +188,7 @@ public final class StreamingProxy {
         private final PrintStream out;
         private final Utf8LineDecoder stdout;
         private final Utf8LineDecoder stderr;
+        @SuppressWarnings("unused")
         private volatile boolean capped;
 
         RawSession(PrintStream out) {
@@ -234,6 +235,7 @@ public final class StreamingProxy {
         private FilterContext context;
         private boolean stamped;
         private boolean emittedAny;
+        @SuppressWarnings("unused")
         private volatile boolean capped;
 
         LiveSession(

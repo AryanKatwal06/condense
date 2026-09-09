@@ -56,6 +56,7 @@ class BenchStatsTest {
         long bytes = BenchStats.currentThreadAllocatedBytes();
         if (bytes >= 0) {
             byte[] dummy = new byte[10_000];
+            assertThat(dummy.length).isEqualTo(10_000);
             long after = BenchStats.currentThreadAllocatedBytes();
             assertThat(after).isGreaterThanOrEqualTo(bytes);
         }

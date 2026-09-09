@@ -63,7 +63,6 @@ public final class ProposeWriter {
         }
         Map<String, List<FilterOverrideConfig.StageDef>> filters = service.readyFilters(report);
         byte[] bytes = ProposeToml.document(filters).getBytes(StandardCharsets.UTF_8);
-        Path parent = destination.getParent();
         atomic.write(destination, containedBy, bytes, ".condense-propose-", ".tmp");
         return destination;
     }
