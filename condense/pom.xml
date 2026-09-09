@@ -16,7 +16,7 @@
         <quarkus.platform.version>3.11.0</quarkus.platform.version>
         <skipITs>true</skipITs>
         <condense.soak.runs>20</condense.soak.runs>
-        <surefire-plugin.version>3.5.6</surefire-plugin.version>
+        <surefire-plugin.version>3.6.0</surefire-plugin.version>
         <sqlite.native.exclude>none</sqlite.native.exclude>
     </properties>
 
