@@ -65,6 +65,14 @@ class FlagPositionSemanticsTest {
 
         CliPreParser.PreParseResult doctor = CliPreParser.parse("doctor");
         assertThat(doctor.isSubcommand()).isTrue();
+
+        CliPreParser.PreParseResult session = CliPreParser.parse("session", "analyze");
+        assertThat(session.isSubcommand()).isTrue();
+        assertThat(session.condenseArgs()).containsExactly("session", "analyze");
+
+        CliPreParser.PreParseResult report = CliPreParser.parse("report", "--preview");
+        assertThat(report.isSubcommand()).isTrue();
+        assertThat(report.condenseArgs()).containsExactly("report", "--preview");
     }
 
     @Test

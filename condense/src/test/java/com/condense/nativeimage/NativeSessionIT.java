@@ -38,7 +38,9 @@ class NativeSessionIT {
         NativeBinarySupport.CliResult result = NativeBinarySupport.run(
             configDir, dataDir, "session", "--help"
         );
-        assertThat(result.exitCode()).isZero();
+        assertThat(result.exitCode())
+            .as("stdout=%s stderr=%s", result.stdout(), result.stderr())
+            .isZero();
         assertThat(result.stdout()).containsIgnoringCase("session");
         assertThat(result.stdout()).contains("analyze");
     }
@@ -51,7 +53,9 @@ class NativeSessionIT {
         NativeBinarySupport.CliResult result = NativeBinarySupport.run(
             configDir, dataDir, "session", "analyze", "--path", emptySessionDir.toString(), "--format", "json"
         );
-        assertThat(result.exitCode()).isZero();
+        assertThat(result.exitCode())
+            .as("stdout=%s stderr=%s", result.stdout(), result.stderr())
+            .isZero();
 
         JsonNode json = JSON.readTree(result.stdout());
         assertThat(json.has("total_sessions")).isTrue();
@@ -63,7 +67,9 @@ class NativeSessionIT {
         NativeBinarySupport.CliResult result = NativeBinarySupport.run(
             configDir, dataDir, "report", "--help"
         );
-        assertThat(result.exitCode()).isZero();
+        assertThat(result.exitCode())
+            .as("stdout=%s stderr=%s", result.stdout(), result.stderr())
+            .isZero();
         assertThat(result.stdout()).contains("--preview");
         assertThat(result.stdout()).contains("--opt-in");
         assertThat(result.stdout()).contains("--opt-out");
@@ -75,7 +81,9 @@ class NativeSessionIT {
         NativeBinarySupport.CliResult result = NativeBinarySupport.run(
             configDir, dataDir, "report", "--preview"
         );
-        assertThat(result.exitCode()).isZero();
+        assertThat(result.exitCode())
+            .as("stdout=%s stderr=%s", result.stdout(), result.stderr())
+            .isZero();
 
         JsonNode json = JSON.readTree(result.stdout());
         assertThat(json.has("schema_version")).isTrue();

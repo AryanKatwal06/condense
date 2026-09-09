@@ -19,7 +19,9 @@ public final class CliPreParser {
         "completion",
         "update",
         "mcp",
-        "uninstall"
+        "uninstall",
+        "session",
+        "report"
     );
 
     public record PreParseResult(
