@@ -1,0 +1,19 @@
+diff --git a/src/main/java/com/condense/core/Pipeline.java b/src/main/java/com/condense/core/Pipeline.java
+index 9a8b1c2..e3f4d5a 100644
+--- a/src/main/java/com/condense/core/Pipeline.java
++++ b/src/main/java/com/condense/core/Pipeline.java
+@@ -42,8 +42,12 @@ public final class Pipeline {
+     public ExecutionSummary process(InputStream in, OutputStream out) {
+-        byte[] buffer = in.readAllBytes();
+-        String text = new String(buffer, StandardCharsets.UTF_8);
++        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
++            StringBuilder builder = new StringBuilder();
++            String line;
++            while ((line = reader.readLine()) != null) {
++                builder.append(line).append('\n');
++            }
++            return executeStages(builder.toString(), out);
++        }
+     }
+-    int rawEstimate = buffer.length / 4;
++    int rawEstimate = Utf8WeightedTokenEstimator.INSTANCE.count(text);

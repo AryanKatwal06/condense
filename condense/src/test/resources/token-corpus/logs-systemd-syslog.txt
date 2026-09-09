@@ -1,0 +1,6 @@
+Sep 09 10:15:30 srv-app-01 systemd[1]: Starting Condense Token Aggregation Daemon...
+Sep 09 10:15:30 srv-app-01 systemd[1]: Started Condense Token Aggregation Daemon.
+Sep 09 10:15:31 srv-app-01 dockerd[1420]: time="2026-09-09T10:15:31.042189312Z" level=info msg="ignoring event" container=7f82e1c79a module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"
+Sep 09 10:15:32 srv-app-01 kernel: [ 4821.991204] audit: type=1300 audit(1725876932.108:84): arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=7fff8921 a2=0 a3=0 items=1 ppid=1280 pid=4091 comm="condense"
+Sep 09 10:15:33 srv-app-01 sshd[9014]: Accepted publickey for deployer from 10.0.12.44 port 54228 ssh2: RSA SHA256:4+F3nKx0Y
+Sep 09 10:15:35 srv-app-01 systemd[1]: condense-cleanup.service: Deactivated successfully.

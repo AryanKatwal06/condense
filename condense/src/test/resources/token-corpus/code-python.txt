@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""
+Condense CLI runner and cache manager.
+Demonstrates representative Python code with imports, type hints, decorators, and docstrings.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import logging
+import os
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+logger = logging.getLogger("condense.cache")
+
+
+@dataclass(frozen=True)
+class CacheEntry:
+    key: str
+    command: str
+    tokens_saved: int
+    created_at: float
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def is_expired(self, ttl_seconds: float) -> bool:
+        import time
+        return (time.time() - self.created_at) > ttl_seconds
+
+    def to_json(self) -> str:
+        return json.dumps({
+            "key": self.key,
+            "command": self.command,
+            "tokens_saved": self.tokens_saved,
+            "created_at": self.created_at,
+            "metadata": self.metadata,
+        }, indent=2)
+
+
+def timed_execution(func: Callable[..., Any]) -> Callable[..., Any]:
+    """Decorator to measure and log execution duration of critical steps."""
+    import functools
+    import time
+
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        start_ns = time.perf_counter_ns()
+        try:
+            result = func(*args, **kwargs)
+            duration_ms = (time.perf_counter_ns() - start_ns) / 1_000_000.0
+            logger.debug("%s completed in %.2f ms", func.__name__, duration_ms)
+            return result
+        except Exception as exc:
+            duration_ms = (time.perf_counter_ns() - start_ns) / 1_000_000.0
+            logger.error("%s failed after %.2f ms: %s", func.__name__, duration_ms, exc)
+            raise
+    return wrapper
+
+
+class PipelineExecutor:
+    def __init__(self, cache_dir: Path, max_entries: int = 10_000) -> None:
+        self.cache_dir = cache_dir
+        self.max_entries = max_entries
+        self._memory_cache: Dict[str, CacheEntry] = {}
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+    @timed_execution
+    def execute_stage(self, stage_name: str, payload: str, context: Dict[str, Any]) -> Tuple[int, str]:
+        if not payload:
+            return 0, ""
+        hasher = hashlib.sha256(payload.encode("utf-8"))
+        hasher.update(stage_name.encode("utf-8"))
+        cache_key = hasher.hexdigest()
+
+        if cache_key in self._memory_cache:
+            entry = self._memory_cache[cache_key]
+            logger.info("Cache hit for stage %s: saved %d tokens", stage_name, entry.tokens_saved)
+            return entry.tokens_saved, payload
+
+        lines = [line.strip() for line in payload.splitlines() if line.strip()]
+        filtered = "\n".join(lines)
+        saved = max(0, len(payload) - len(filtered))
+
+        entry = CacheEntry(
+            key=cache_key,
+            command=stage_name,
+            tokens_saved=saved // 4,
+            created_at=1700000000.0,
+            metadata={"lines_before": len(payload.splitlines()), "lines_after": len(lines)}
+        )
+        self._memory_cache[cache_key] = entry
+        return entry.tokens_saved, filtered
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Test runner for cache pipeline")
+    parser.add_argument("--dir", type=Path, default=Path("/tmp/condense"))
+    parser.add_argument("--verbose", "-v", action="store_true")
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    executor = PipelineExecutor(args.dir)
+    sample_text = " line one \n line two \n\n line three \n"
+    saved, result = executor.execute_stage("strip-blanks", sample_text, {})
+    print(f"Tokens saved: {saved}\nResult:\n{result}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

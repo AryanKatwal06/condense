@@ -1,0 +1,76 @@
+package com.condense.pipeline;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+/**
+ * High-throughput token condensing pipeline for stream processing.
+ */
+public record PipelineJob(
+    String jobId,
+    Instant submittedAt,
+    Duration timeout,
+    Map<String, String> properties,
+    List<StageDescriptor> stages
+) {
+
+    public record StageDescriptor(
+        String stageId,
+        int priority,
+        boolean failOpen,
+        Map<String, Object> configuration
+    ) {
+        public StageDescriptor {
+            Objects.requireNonNull(stageId, "stageId must not be null");
+            configuration = Collections.unmodifiableMap(configuration);
+        }
+    }
+
+    public static PipelineJob create(String id, List<StageDescriptor> descriptors) {
+        return new PipelineJob(id, Instant.now(), Duration.ofSeconds(30), Map.of("env", "prod"), descriptors);
+    }
+
+    public CompletableFuture<JobExecutionResult> processAsync(InputStream source) {
+        return CompletableFuture.supplyAsync(() -> {
+            Instant start = Instant.now();
+            List<String> lines = new ArrayList<>();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(source, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (!line.isBlank()) {
+                        lines.add(line.stripTrailing());
+                    }
+                }
+            } catch (IOException e) {
+                return new JobExecutionResult(jobId, -1, 0, Duration.between(start, Instant.now()), false, e.getMessage());
+            }
+
+            int rawTokenEst = lines.stream().mapToInt(String::length).sum() / 4;
+            int condensedCount = (int) lines.stream().filter(l -> !l.startsWith("#")).count();
+            return new JobExecutionResult(jobId, rawTokenEst, condensedCount, Duration.between(start, Instant.now()), true, null);
+        });
+    }
+
+    public record JobExecutionResult(
+        String jobId,
+        int rawTokens,
+        int condensedTokens,
+        Duration elapsed,
+        boolean success,
+        String errorDescription
+    ) {}
+}

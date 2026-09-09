@@ -1,0 +1,79 @@
+import { FC, useState, useEffect, useMemo, useCallback } from "react";
+
+export interface AnalyticsProps {
+  initialRangeDays?: number;
+  onExportCsv?: (data: TokenMetrics[]) => Promise<void>;
+  enableRealtimeStream?: boolean;
+}
+
+export interface TokenMetrics {
+  timestamp: string;
+  commandName: string;
+  rawTokens: number;
+  condensedTokens: number;
+  ratio: number;
+  durationMs: number;
+}
+
+export const TokenDashboard: FC<AnalyticsProps> = ({
+  initialRangeDays = 30,
+  onExportCsv,
+  enableRealtimeStream = false,
+}) => {
+  const [metrics, setMetrics] = useState<TokenMetrics[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    async function fetchMetrics(): Promise<void> {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/v1/metrics?days=${initialRangeDays}`, {
+          signal: abortController.signal,
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+        }
+        const data: TokenMetrics[] = await res.json();
+        setMetrics(data);
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          setError((err as Error).message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMetrics();
+    return () => abortController.abort();
+  }, [initialRangeDays]);
+
+  const totalSaved = useMemo(() => {
+    return metrics.reduce((acc, curr) => acc + (curr.rawTokens - curr.condensedTokens), 0);
+  }, [metrics]);
+
+  const handleDownload = useCallback(async () => {
+    if (onExportCsv) {
+      await onExportCsv(metrics);
+    }
+  }, [metrics, onExportCsv]);
+
+  if (loading) return <div className="spinner">Loading metrics...</div>;
+  if (error) return <div className="error-banner">{error}</div>;
+
+  return (
+    <div className="dashboard-container">
+      <header className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Analytics Overview</h1>
+        <button onClick={handleDownload} className="btn-primary">Export CSV</button>
+      </header>
+      <div className="card stat-card">
+        <span className="label">Total Tokens Saved</span>
+        <span className="value">{totalSaved.toLocaleString()}</span>
+      </div>
+    </div>
+  );
+};

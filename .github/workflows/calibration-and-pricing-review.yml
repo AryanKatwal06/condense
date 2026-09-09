@@ -1,0 +1,73 @@
+name: Calibration and pricing review
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 1 1,4,7,10 *"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@8df10395026330b699a77607b11ebf64432dce7c # v4.3.0
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Run calibration and pricing freshness tests
+        run: |
+          mvn -B test -Dtest=TokenCalibrationTest,PricingCatalogFreshnessTest,TokenEstimatorAccuracyTest
+        working-directory: condense
+
+      - name: Audit pricing catalog ages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import sys
+          from datetime import datetime, date
+
+          with open("condense/src/main/resources/pricing/models.json", encoding="utf-8") as f:
+              catalog = json.load(f)
+
+          today = date.today()
+          overdue = []
+
+          for m in catalog.get("models", []):
+              eff_str = m.get("effective_date", "")
+              if eff_str:
+                  eff = datetime.strptime(eff_str, "%Y-%m-%d").date()
+                  age_days = (today - eff).days
+                  if age_days > 180:
+                      overdue.append((m["id"], m["provider"], eff_str, age_days, m.get("source_url", "")))
+
+          print(f"Catalog version: {catalog.get('version')}, effective: {catalog.get('effective_date')}")
+          if overdue:
+              print(f"Found {len(overdue)} models with pricing older than 180 days:")
+              for mid, prov, eff, age, src in overdue:
+                  print(f"  - {mid} ({prov}): effective {eff} ({age} days old) -> {src}")
+              with open("overdue-pricing.txt", "w", encoding="utf-8") as out:
+                  for mid, prov, eff, age, src in overdue:
+                      out.write(f"- `{mid}` ({prov}): effective {eff} ({age} days ago) — [Pricing Source]({src})\n")
+          else:
+              print("All catalog model prices are within the 180-day freshness window.")
+          PY
+
+          if [ -f overdue-pricing.txt ] && [ -n "${GH_TOKEN:-}" ]; then
+            BODY=$(printf 'Quarterly pricing catalog review found models with pricing older than 180 days:\n\n%s\n\nPlease check vendor pricing pages and update `pricing/models.json` if rates have changed.' "$(cat overdue-pricing.txt)")
+            EXISTING=$(gh issue list --search "Quarterly pricing catalog review" --json number --jq '.[0].number' || true)
+            if [ -n "$EXISTING" ]; then
+              gh issue comment "$EXISTING" --body "$BODY"
+            else
+              gh issue create --title "Quarterly pricing catalog review overdue" --body "$BODY"
+            fi
+          fi

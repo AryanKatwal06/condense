@@ -1,0 +1,6 @@
+Condense optimise les flux d'instructions et les résultats d'exécution pour les modèles de langage.
+Il supprime les séquences d'échappement ANSI inutiles, les barres de progression et les lignes répétitives.
+Die Lösung ermöglicht eine deutliche Reduzierung der Tokenkosten bei Entwicklern und CI/CD-Pipelines.
+Durch die native Kompilierung mit GraalVM startet das Dienstprogramm in wenigen Millisekunden ohne Laufzeit-Overhead.
+El sistema incluye métricas detalladas de ahorro monetario basadas en catálogos de precios actualizados trimestralmente.
+Además, respeta la privacidad del usuario sin enviar telemetría ni realizar conexiones de red ocultas.
