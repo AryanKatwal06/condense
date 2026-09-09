@@ -7,7 +7,9 @@ import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.BoundedRegex;
+import com.condense.ir.Document;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,17 +24,38 @@ public final class GitPushSummaryStage implements FilterStage {
 
     @Override
     public StageResult process(String raw, FilterContext context) {
+        String output;
         if (BoundedRegex.find(UP_TO_DATE, raw)) {
-            return StageResult.continueWith("✓ up-to-date (nothing pushed)");
+            output = "✓ up-to-date (nothing pushed)";
+        } else {
+            Matcher m = BoundedRegex.matcher(BRANCH_PATTERN, raw);
+            if (m.find()) {
+                output = "✓ pushed → " + m.group(2).trim();
+            } else {
+                ExecutionResult result = context != null ? context.result() : null;
+                if (result != null && result.succeeded()) {
+                    output = "✓ pushed";
+                } else {
+                    output = result != null ? result.combined() : raw;
+                }
+            }
         }
-        Matcher m = BoundedRegex.matcher(BRANCH_PATTERN, raw);
-        if (m.find()) {
-            return StageResult.continueWith("✓ pushed → " + m.group(2).trim());
+
+        if (context != null && context.documentBuilder() != null) {
+            context.documentBuilder().git(new Document.GitDocument(
+                "",
+                true,
+                List.of(),
+                List.of(),
+                List.of(),
+                null,
+                null,
+                output,
+                "push",
+                List.of()
+            ));
         }
-        ExecutionResult result = context.result();
-        if (result != null && result.succeeded()) {
-            return StageResult.continueWith("✓ pushed");
-        }
-        return StageResult.continueWith(result != null ? result.combined() : raw);
+
+        return StageResult.continueWith(output);
     }
 }

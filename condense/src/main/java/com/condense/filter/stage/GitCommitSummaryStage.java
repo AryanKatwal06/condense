@@ -6,7 +6,9 @@ import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.BoundedRegex;
+import com.condense.ir.Document;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,15 +23,34 @@ public final class GitCommitSummaryStage implements FilterStage {
     @Override
     public StageResult process(String raw, FilterContext context) {
         Matcher m = BoundedRegex.matcher(COMMIT_LINE, raw);
+        String branch = "";
+        String out;
         if (m.find()) {
-            String branch = m.group(1).trim();
+            branch = m.group(1).trim();
             String hash = m.group(2).substring(0, Math.min(8, m.group(2).length()));
             String message = m.group(3).trim();
-            String out = context.ultraCompact()
+            out = (context != null && context.ultraCompact())
                 ? "[" + branch + "] " + hash + " " + message
                 : "✓ committed [" + branch + "] " + hash + " — " + message;
-            return StageResult.continueWith(out);
+        } else {
+            out = "✓ committed";
         }
-        return StageResult.continueWith("✓ committed");
+
+        if (context != null && context.documentBuilder() != null) {
+            context.documentBuilder().git(new Document.GitDocument(
+                branch,
+                true,
+                List.of(),
+                List.of(),
+                List.of(),
+                null,
+                null,
+                out,
+                "commit",
+                List.of()
+            ));
+        }
+
+        return StageResult.continueWith(out);
     }
 }

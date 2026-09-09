@@ -481,6 +481,8 @@
   { "name": "com.condense.ir.Document$DependencyDocument", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.ir.Document$ResourceDocument", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.ir.Document$ResourceRow", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.ir.Document$GitDocument", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.ir.Document$BuildDocument", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.ir.Document$OpaqueDocument", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.ir.DocumentBuilder", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.ir.TextRenderer", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },

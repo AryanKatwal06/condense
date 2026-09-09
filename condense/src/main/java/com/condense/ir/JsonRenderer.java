@@ -69,6 +69,8 @@ public final class JsonRenderer {
             case DIAGNOSTIC -> STRICT.treeToValue(node, Document.DiagnosticDocument.class);
             case DEPENDENCY -> STRICT.treeToValue(node, Document.DependencyDocument.class);
             case RESOURCE -> STRICT.treeToValue(node, Document.ResourceDocument.class);
+            case GIT -> STRICT.treeToValue(node, Document.GitDocument.class);
+            case BUILD -> STRICT.treeToValue(node, Document.BuildDocument.class);
             case OPAQUE -> STRICT.treeToValue(node, Document.OpaqueDocument.class);
         };
     }

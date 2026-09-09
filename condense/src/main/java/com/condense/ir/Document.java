@@ -29,6 +29,8 @@ import java.util.Locale;
     Document.DependencyDocument.class,
     Document.ResourceDocument.class,
     Document.ResourceRow.class,
+    Document.GitDocument.class,
+    Document.BuildDocument.class,
     Document.OpaqueDocument.class,
     TerminationReason.class
 })
@@ -121,6 +123,8 @@ public record Document(
         DIAGNOSTIC("diagnostic"),
         DEPENDENCY("dependency"),
         RESOURCE("resource"),
+        GIT("git"),
+        BUILD("build"),
         OPAQUE("opaque");
 
         private final String wire;
@@ -340,6 +344,62 @@ public record Document(
 
         public static ResourceRow infra(String address, String action, String reason, String resourceType) {
             return new ResourceRow("", "", "", "", "", address, action, reason, resourceType);
+        }
+    }
+
+    @RegisterForReflection
+    public record GitDocument(
+        String branch,
+        boolean clean,
+        List<String> staged,
+        List<String> modified,
+        List<String> untracked,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer ahead,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Integer behind,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String summary,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String subcommand,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        List<String> lines
+    ) {
+        public GitDocument {
+            branch = branch == null ? "" : branch;
+            staged = copy(staged);
+            modified = copy(modified);
+            untracked = copy(untracked);
+            summary = summary == null ? "" : summary;
+            subcommand = subcommand == null || subcommand.isBlank() ? "status" : subcommand;
+            lines = copy(lines);
+        }
+
+        public GitDocument(String branch, boolean clean, List<String> staged, List<String> modified, List<String> untracked) {
+            this(branch, clean, staged, modified, untracked, null, null, null, "status", List.of());
+        }
+    }
+
+    @RegisterForReflection
+    public record BuildDocument(
+        String tool,
+        String status,
+        int errors,
+        int warnings,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        Long durationMs,
+        List<String> failedTasks,
+        List<String> summaryLines
+    ) {
+        public BuildDocument {
+            tool = tool == null ? "" : tool;
+            status = status == null ? "" : status;
+            failedTasks = copy(failedTasks);
+            summaryLines = copy(summaryLines);
+        }
+
+        public BuildDocument(String tool, String status, int errors, int warnings) {
+            this(tool, status, errors, warnings, null, List.of(), List.of());
         }
     }
 

@@ -35,6 +35,14 @@ public final class DocumentBuilder {
         set(Document.DocumentKind.RESOURCE, document);
     }
 
+    public void git(Document.GitDocument document) {
+        set(Document.DocumentKind.GIT, document);
+    }
+
+    public void build(Document.BuildDocument document) {
+        set(Document.DocumentKind.BUILD, document);
+    }
+
     public void opaque(Document.OpaqueDocument document) {
         set(Document.DocumentKind.OPAQUE, document);
     }

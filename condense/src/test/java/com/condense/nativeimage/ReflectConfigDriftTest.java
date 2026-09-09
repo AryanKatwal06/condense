@@ -131,6 +131,8 @@ class ReflectConfigDriftTest {
             com.condense.ir.Document.DependencyDocument.class.getName(),
             com.condense.ir.Document.ResourceDocument.class.getName(),
             com.condense.ir.Document.ResourceRow.class.getName(),
+            com.condense.ir.Document.GitDocument.class.getName(),
+            com.condense.ir.Document.BuildDocument.class.getName(),
             com.condense.ir.Document.OpaqueDocument.class.getName(),
             com.condense.ir.DocumentBuilder.class.getName(),
             com.condense.ir.TextRenderer.class.getName(),

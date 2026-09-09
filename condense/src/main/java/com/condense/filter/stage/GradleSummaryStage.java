@@ -6,6 +6,7 @@ import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.BoundedRegex;
+import com.condense.ir.Document;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -21,19 +22,39 @@ public final class GradleSummaryStage implements FilterStage {
 
     @Override
     public StageResult process(String raw, FilterContext context) {
-        if (BoundedRegex.find(BUILD_SUCCESSFUL, raw)) {
+        String output;
+        boolean isSuccess = BoundedRegex.find(BUILD_SUCCESSFUL, raw);
+        boolean isFailure = BoundedRegex.find(BUILD_FAILED, raw);
+        List<String> details = List.of();
+        if (isSuccess) {
             String duration = raw.lines()
                 .filter(l -> l.contains("BUILD SUCCESSFUL"))
                 .findFirst().map(String::trim).orElse("BUILD SUCCESSFUL");
-            return StageResult.continueWith("✓ " + duration);
-        }
-        if (BoundedRegex.find(BUILD_FAILED, raw)) {
-            List<String> details = raw.lines()
+            output = "✓ " + duration;
+        } else if (isFailure) {
+            details = raw.lines()
                 .filter(l -> BoundedRegex.find(FAILURE_DETAIL, l) || l.startsWith("FAILURE:"))
                 .limit(15)
                 .toList();
-            return StageResult.continueWith("✗ BUILD FAILED\n" + String.join("\n", details));
+            output = "✗ BUILD FAILED\n" + String.join("\n", details);
+        } else {
+            output = context.result() != null ? context.result().combined() : raw;
         }
-        return StageResult.continueWith(context.result() != null ? context.result().combined() : raw);
+
+        if (context != null && context.documentBuilder() != null) {
+            String status = isSuccess ? "SUCCESS" : (isFailure ? "FAILED" : "UNKNOWN");
+            List<String> summaryLines = output != null ? output.lines().toList() : List.of();
+            context.documentBuilder().build(new Document.BuildDocument(
+                "gradle",
+                status,
+                isFailure ? Math.max(1, details.size()) : 0,
+                0,
+                null,
+                List.of(),
+                summaryLines
+            ));
+        }
+
+        return StageResult.continueWith(output);
     }
 }

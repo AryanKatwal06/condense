@@ -25,9 +25,11 @@ class IrJsonRoundTripTest {
         Document diagnostic = typed("eslint/typical", Document.DocumentKind.DIAGNOSTIC);
         Document dependency = typed("npm-install/typical", Document.DocumentKind.DEPENDENCY);
         Document resource = typed("docker-ps/typical", Document.DocumentKind.RESOURCE);
-        Document opaque = typed("git-status/clean", Document.DocumentKind.OPAQUE);
+        Document git = typed("git-status/clean", Document.DocumentKind.GIT);
+        Document build = typed("mvn/success", Document.DocumentKind.BUILD);
+        Document opaque = typed("grep/typical", Document.DocumentKind.OPAQUE);
 
-        for (Document document : List.of(test, diagnostic, dependency, resource, opaque)) {
+        for (Document document : List.of(test, diagnostic, dependency, resource, git, build, opaque)) {
             String json = JsonRenderer.render(document);
             JsonNode tree = com.condense.core.Mappers.JSON.readTree(json);
             assertThat(tree.get("schema_version").asInt()).isEqualTo(Document.SCHEMA_VERSION);
@@ -49,12 +51,12 @@ class IrJsonRoundTripTest {
     }
 
     @Test
-    void gitStatusTypicalIsOpaque() throws Exception {
+    void gitStatusTypicalIsGitDocument() throws Exception {
         FilterResult applied = CorpusRunner.apply(entry("git-status/clean"));
-        assertThat(applied.document().kind()).isEqualTo(Document.DocumentKind.OPAQUE);
-        Document.OpaqueDocument payload = (Document.OpaqueDocument) applied.document().document();
-        assertThat(payload.body()).isNotBlank();
-        assertThat(payload.body()).doesNotStartWith("condense[filtered]");
+        assertThat(applied.document().kind()).isEqualTo(Document.DocumentKind.GIT);
+        Document.GitDocument payload = (Document.GitDocument) applied.document().document();
+        assertThat(payload.clean()).isTrue();
+        assertThat(payload.summary()).contains("clean");
     }
 
     @Test

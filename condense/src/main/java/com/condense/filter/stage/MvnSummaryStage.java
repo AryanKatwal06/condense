@@ -8,6 +8,7 @@ import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.BoundedRegex;
+import com.condense.ir.Document;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +46,10 @@ public final class MvnSummaryStage implements FilterStage {
             }
         }
 
+        String output;
+        String status = "UNKNOWN";
         if (isSuccess) {
+            status = "SUCCESS";
             String tl = testLine.trim();
             CondenseConfig config = context.config();
             if (!tl.isBlank() && config != null
@@ -53,15 +57,29 @@ public final class MvnSummaryStage implements FilterStage {
                 && tl.contains(", Time elapsed:")) {
                 tl = tl.substring(0, tl.indexOf(", Time elapsed:")).trim();
             }
-            return StageResult.continueWith("✓ BUILD SUCCESS" + (tl.isBlank() ? "" : " — " + tl));
-        }
-
-        if (isFailure) {
+            output = "✓ BUILD SUCCESS" + (tl.isBlank() ? "" : " — " + tl);
+        } else if (isFailure) {
+            status = "FAILURE";
             errors = errors.subList(0, Math.min(20, errors.size()));
-            return StageResult.continueWith("✗ BUILD FAILURE\n" + String.join("\n", errors));
+            output = "✗ BUILD FAILURE\n" + String.join("\n", errors);
+        } else {
+            ExecutionResult result = context.result();
+            output = result != null ? result.combined() : raw;
         }
 
-        ExecutionResult result = context.result();
-        return StageResult.continueWith(result != null ? result.combined() : raw);
+        if (context != null && context.documentBuilder() != null) {
+            List<String> summaryLines = output != null ? output.lines().toList() : List.of();
+            context.documentBuilder().build(new Document.BuildDocument(
+                "mvn",
+                status,
+                errors.size(),
+                0,
+                null,
+                List.of(),
+                summaryLines
+            ));
+        }
+
+        return StageResult.continueWith(output);
     }
 }

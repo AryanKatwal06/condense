@@ -5,6 +5,7 @@ import com.condense.annotation.DeclarativeStage;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.ir.Document;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +28,9 @@ public final class GitStatusStage implements FilterStage {
     public StageResult process(String input, FilterContext context) {
         String raw = input != null ? input : "";
         if (isPorcelainFormat(raw)) {
-            return StageResult.continueWith(parsePorcelain(raw, context.verbose(), context.ultraCompact()));
+            return StageResult.continueWith(parsePorcelain(raw, context));
         }
-        return StageResult.continueWith(parseHuman(raw, context.verbose(), context.ultraCompact()));
+        return StageResult.continueWith(parseHuman(raw, context));
     }
 
     static boolean isPorcelainFormat(String raw) {
@@ -41,11 +42,16 @@ public final class GitStatusStage implements FilterStage {
         );
     }
 
-    private static String parsePorcelain(String raw, int verbose, boolean ultraCompact) {
+    private static String parsePorcelain(String raw, FilterContext context) {
+        int verbose = context != null ? context.verbose() : 0;
+        boolean ultraCompact = context != null && context.ultraCompact();
         int staged = 0;
         int modified = 0;
         int untracked = 0;
         List<String> changedFiles = new ArrayList<>();
+        List<String> stagedFiles = new ArrayList<>();
+        List<String> modifiedFiles = new ArrayList<>();
+        List<String> untrackedFiles = new ArrayList<>();
 
         for (String line : raw.lines().toList()) {
             if (line.length() < 3) {
@@ -57,38 +63,67 @@ public final class GitStatusStage implements FilterStage {
 
             if (index == '?' && work == '?') {
                 untracked++;
+                untrackedFiles.add(path);
                 changedFiles.add("? " + path);
             } else {
                 if (index != ' ' && index != '?') {
                     staged++;
+                    stagedFiles.add(path);
                     changedFiles.add("S " + path);
                 }
                 if (work != ' ' && work != '?') {
                     modified++;
+                    modifiedFiles.add(path);
                     changedFiles.add("M " + path);
                 }
             }
         }
 
-        if (staged == 0 && modified == 0 && untracked == 0) {
-            return "✓ clean";
+        boolean clean = staged == 0 && modified == 0 && untracked == 0;
+        String text;
+        if (clean) {
+            text = "✓ clean";
+        } else {
+            String summary = buildSummary("", staged, modified, untracked, ultraCompact);
+            if (verbose >= 2 && !changedFiles.isEmpty()) {
+                StringBuilder sb = new StringBuilder(summary).append('\n');
+                changedFiles.forEach(f -> sb.append("  ").append(f).append('\n'));
+                text = sb.toString().stripTrailing();
+            } else {
+                text = summary;
+            }
         }
-        String summary = buildSummary("", staged, modified, untracked, ultraCompact);
-        if (verbose >= 2 && !changedFiles.isEmpty()) {
-            StringBuilder sb = new StringBuilder(summary).append('\n');
-            changedFiles.forEach(f -> sb.append("  ").append(f).append('\n'));
-            return sb.toString().stripTrailing();
+
+        if (context != null && context.documentBuilder() != null) {
+            context.documentBuilder().git(new Document.GitDocument(
+                "",
+                clean,
+                stagedFiles,
+                modifiedFiles,
+                untrackedFiles,
+                null,
+                null,
+                text,
+                "status",
+                changedFiles
+            ));
         }
-        return summary;
+
+        return text;
     }
 
-    private static String parseHuman(String raw, int verbose, boolean ultraCompact) {
+    private static String parseHuman(String raw, FilterContext context) {
+        int verbose = context != null ? context.verbose() : 0;
+        boolean ultraCompact = context != null && context.ultraCompact();
         String branch = null;
         boolean isClean = false;
         int staged = 0;
         int modified = 0;
         int untracked = 0;
         List<String> changedFiles = new ArrayList<>();
+        List<String> stagedFiles = new ArrayList<>();
+        List<String> modifiedFiles = new ArrayList<>();
+        List<String> untrackedFiles = new ArrayList<>();
 
         enum Section { NONE, STAGED, UNSTAGED, UNTRACKED }
         Section currentSection = Section.NONE;
@@ -121,32 +156,56 @@ public final class GitStatusStage implements FilterStage {
 
             if (line.startsWith("\t")) {
                 String fileLine = line.substring(1).trim();
+                String filePath = extractFilePath(fileLine);
                 if (currentSection == Section.STAGED) {
                     staged++;
+                    stagedFiles.add(filePath);
                     changedFiles.add("S " + fileLine);
                 } else if (currentSection == Section.UNSTAGED) {
                     modified++;
+                    modifiedFiles.add(filePath);
                     changedFiles.add("M " + fileLine);
                 } else if (currentSection == Section.UNTRACKED) {
                     untracked++;
+                    untrackedFiles.add(filePath);
                     changedFiles.add("? " + fileLine);
                 }
             }
         }
 
         String prefix = branch != null ? "[" + branch + "] " : "";
+        String text;
         if (isClean) {
-            return prefix + "✓ clean";
-        }
-        String summary = buildSummary(prefix, staged, modified, untracked, ultraCompact);
-        if (verbose >= 2 && !changedFiles.isEmpty()) {
-            StringBuilder sb = new StringBuilder(summary).append('\n');
-            for (String file : changedFiles) {
-                sb.append("  ").append(file).append('\n');
+            text = prefix + "✓ clean";
+        } else {
+            String summary = buildSummary(prefix, staged, modified, untracked, ultraCompact);
+            if (verbose >= 2 && !changedFiles.isEmpty()) {
+                StringBuilder sb = new StringBuilder(summary).append('\n');
+                for (String file : changedFiles) {
+                    sb.append("  ").append(file).append('\n');
+                }
+                text = sb.toString().stripTrailing();
+            } else {
+                text = summary;
             }
-            return sb.toString().stripTrailing();
         }
-        return summary;
+
+        if (context != null && context.documentBuilder() != null) {
+            context.documentBuilder().git(new Document.GitDocument(
+                branch != null ? branch : "",
+                isClean,
+                stagedFiles,
+                modifiedFiles,
+                untrackedFiles,
+                null,
+                null,
+                text,
+                "status",
+                changedFiles
+            ));
+        }
+
+        return text;
     }
 
     private static String buildSummary(String prefix, int staged, int modified,
@@ -177,5 +236,16 @@ public final class GitStatusStage implements FilterStage {
             parts.add("untracked: " + untracked);
         }
         return parts.isEmpty() ? prefix + "✓ clean" : prefix + String.join(" | ", parts);
+    }
+
+    private static String extractFilePath(String fileLine) {
+        if (fileLine == null) {
+            return "";
+        }
+        int idx = fileLine.indexOf(':');
+        if (idx >= 0 && idx + 1 < fileLine.length()) {
+            return fileLine.substring(idx + 1).trim();
+        }
+        return fileLine.trim();
     }
 }

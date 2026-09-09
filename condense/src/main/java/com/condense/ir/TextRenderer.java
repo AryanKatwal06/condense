@@ -26,6 +26,8 @@ public final class TextRenderer {
             case DIAGNOSTIC -> renderDiagnostic(cast(document.document(), Document.DiagnosticDocument.class));
             case DEPENDENCY -> renderDependency(cast(document.document(), Document.DependencyDocument.class));
             case RESOURCE -> renderResource(cast(document.document(), Document.ResourceDocument.class));
+            case GIT -> renderGit(cast(document.document(), Document.GitDocument.class));
+            case BUILD -> renderBuild(cast(document.document(), Document.BuildDocument.class));
             case OPAQUE -> renderOpaque(cast(document.document(), Document.OpaqueDocument.class));
         };
     }
@@ -193,6 +195,53 @@ public final class TextRenderer {
 
     public static String renderOpaque(Document.OpaqueDocument payload) {
         return payload == null || payload.body() == null ? "" : payload.body();
+    }
+
+    public static String renderGit(Document.GitDocument payload) {
+        if (payload == null) {
+            return "";
+        }
+        if (payload.summary() != null && !payload.summary().isBlank()) {
+            return payload.summary();
+        }
+        String prefix = payload.branch() != null && !payload.branch().isBlank()
+            ? "[" + payload.branch() + "] "
+            : "";
+        if (payload.clean()) {
+            return prefix + "✓ clean";
+        }
+        List<String> parts = new java.util.ArrayList<>(3);
+        if (payload.staged() != null && !payload.staged().isEmpty()) {
+            parts.add("staged: " + payload.staged().size());
+        }
+        if (payload.modified() != null && !payload.modified().isEmpty()) {
+            parts.add("modified: " + payload.modified().size());
+        }
+        if (payload.untracked() != null && !payload.untracked().isEmpty()) {
+            parts.add("untracked: " + payload.untracked().size());
+        }
+        return parts.isEmpty() ? prefix + "✓ clean" : prefix + String.join(" | ", parts);
+    }
+
+    public static String renderBuild(Document.BuildDocument payload) {
+        if (payload == null) {
+            return "";
+        }
+        if (payload.summaryLines() != null && !payload.summaryLines().isEmpty()) {
+            return String.join("\n", payload.summaryLines());
+        }
+        String prefix = payload.tool() != null && !payload.tool().isBlank()
+            ? payload.tool() + ": "
+            : "";
+        StringBuilder sb = new StringBuilder(prefix).append(payload.status());
+        if (payload.errors() > 0 || payload.warnings() > 0) {
+            sb.append(" (").append(payload.errors()).append(" error(s), ")
+              .append(payload.warnings()).append(" warning(s))");
+        }
+        if (payload.failedTasks() != null && !payload.failedTasks().isEmpty()) {
+            sb.append("\nFailed tasks: ").append(String.join(", ", payload.failedTasks()));
+        }
+        return sb.toString();
     }
 
     private static String formatGroups(Document.DiagnosticDocument payload) {
