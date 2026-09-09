@@ -119,7 +119,7 @@ class NativeIrIT {
     }
 
     @Test
-    void stubbedGitStatusJsonIsOpaque() throws Exception {
+    void stubbedGitStatusJsonIsGitDocument() throws Exception {
         Path stubDir = tempDir.resolve("git-bin");
         Files.createDirectories(stubDir);
         Files.write(stubDir.resolve("fixture.txt"), loadClasspathFixture("/fixtures/git-status/mixed.txt"));
@@ -128,8 +128,24 @@ class NativeIrIT {
             configDir(), dataDir(), stubDir, "--format", "json", "git", "status");
         assertThat(result.exitCode()).isZero();
         JsonNode document = JSON.readTree(result.stdout());
-        assertThat(document.get("kind").asText()).isEqualTo("opaque");
-        assertThat(document.get("document").get("body").asText()).isNotBlank();
+        assertThat(document.get("schema_version").asInt()).isEqualTo(1);
+        assertThat(document.get("kind").asText()).isEqualTo("git");
+        assertThat(document.get("document").has("branch")).isTrue();
+    }
+
+    @Test
+    void stubbedMvnJsonIsBuildDocument() throws Exception {
+        Path stubDir = tempDir.resolve("mvn-bin");
+        Files.createDirectories(stubDir);
+        Files.write(stubDir.resolve("fixture.txt"), loadClasspathFixture("/fixtures/mvn/success.txt"));
+        writeStub(stubDir, "mvn", 0);
+        NativeBinarySupport.CliResult result = NativeBinarySupport.run(
+            configDir(), dataDir(), stubDir, "--format", "json", "mvn", "compile");
+        assertThat(result.exitCode()).isZero();
+        JsonNode document = JSON.readTree(result.stdout());
+        assertThat(document.get("schema_version").asInt()).isEqualTo(1);
+        assertThat(document.get("kind").asText()).isEqualTo("build");
+        assertThat(document.get("document").get("tool").asText()).isEqualTo("mvn");
     }
 
     @Test

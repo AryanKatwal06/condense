@@ -15,7 +15,7 @@ _condense_completion() {
   local proxy_commands="git cargo pytest go npm npx docker kubectl aws ls grep rg find cat make mvn gradle vitest jest eslint tsc ruff pip golangci-lint python python3 mypy dotnet bundle rspec rubocop terraform helm gh glab curl wget psql pnpm next prisma playwright prettier"
 
   # Top-level options
-  local global_opts="-v --verbose -u --ultra-compact --format --version --help"
+  local global_opts="-v --verbose -u --ultra-compact --format --plain --ascii --version --help"
 
   case "$prev" in
     condense)
@@ -47,11 +47,11 @@ _condense_completion() {
       return 0
       ;;
     init)
-      COMPREPLY=($(compgen -W "-g --global --show --remove --tool --help" -- "$cur"))
+      COMPREPLY=($(compgen -W "-g --global --show --remove --tool --format --help" -- "$cur"))
       return 0
       ;;
     config)
-      COMPREPLY=($(compgen -W "--list --get --set --reset --help" -- "$cur"))
+      COMPREPLY=($(compgen -W "--list --get --set --reset --validate --format validate trust --help" -- "$cur"))
       return 0
       ;;
     mcp)

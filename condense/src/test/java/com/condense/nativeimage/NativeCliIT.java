@@ -41,6 +41,30 @@ class NativeCliIT {
         assertThat(result.stdout()).contains("(not present)");
     }
 
+    @Test
+    void plainModeAndNoColorSuppressAnsi() throws Exception {
+        NativeBinarySupport.CliResult result = NativeBinarySupport.run(
+            configDir(), dataDir(), null, null, java.util.Map.of("NO_COLOR", "1"), "--plain", "--help"
+        );
+        assertThat(result.exitCode()).isEqualTo(0);
+        assertThat(result.stdout()).doesNotContain("\u001B[");
+    }
+
+    @Test
+    void gainFormatCsvOutputsMetricValue() throws Exception {
+        NativeBinarySupport.CliResult result = run("gain", "--format", "csv");
+        assertThat(result.exitCode()).isEqualTo(0);
+        assertThat(result.stdout()).contains("metric,value");
+        assertThat(result.stdout()).contains("total_commands,");
+    }
+
+    @Test
+    void doubleDashPreservesChildArguments() throws Exception {
+        NativeBinarySupport.CliResult result = run("--format", "text", "--", "git", "--version");
+        assertThat(result.exitCode()).isEqualTo(0);
+        assertThat(result.stdout()).contains("git version");
+    }
+
     private NativeBinarySupport.CliResult run(String... args) throws Exception {
         return NativeBinarySupport.run(configDir(), dataDir(), args);
     }

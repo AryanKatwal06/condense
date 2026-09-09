@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 7 September 2026 (superiority Phase 7 agent integration security).
+**Written:** 4 September 2026. **Revised:** 9 September 2026 (superiority Phase 8 structured output, CLI ergonomics, and accessibility).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -462,7 +462,8 @@ Planning plus Phase 1 through Phase 17 code, then an independent audit of Phases
 | Superiority Phase 5 | **LANDED** | Collision-safe `-bl:` / `--report` injection; leftover TRX / MSBuild binlog / format-report stages; `dotnet-format` and `msbuild` catalogs; additive optional test IR fields; `DotnetInventoryTest`; `NativeDotnetIT`. Filter/IR stay at 1. SQLite stays at 2. No TRX-logger injection. No embedded binlog zip. |
 | Superiority Phase 6 | **LANDED** | 50 leftover command families; `zap-families.json` pin at `d9498bb`; `CompetitiveInventoryTest`; `LeftoverBreadthFixtureTest`; `NativeCatalogMatrixIT` for every index name; quarterly zap freshness workflow. No new Java stage. Filter/IR stay at 1. SQLite stays at 2. |
 | Superiority Phase 7 | **LANDED** | Conservative finite-state compound-command analyzer; MCP 10-client configs and paths; hook dry-run simulation, idempotent healing, mid-run tampering defense; failure-contract catalog rows; NativeHookIT + NativeMcpIT. |
-| This handoff | **CURRENT** | Corrected 7 Sep 2026 so §4 / §13 match superiority Phase 7. |
+| Superiority Phase 8 | **LANDED** | Complete structured output IR (git + build documents), flag-position pre-parsing with `--` child argument isolation, accessibility policy (NO_COLOR, CLICOLOR, --plain, --ascii, severity markers), CSV tabular analytics, JSON reporting (init show, config validate), synchronized man page & completions, failure-contract rows; NativeIrIT + NativeCliIT. |
+| This handoff | **CURRENT** | Corrected 9 Sep 2026 so §4 / §13 match superiority Phase 8. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p17` are marked `completed`. **That file is untracked and local-only (see §3).**
 
@@ -1042,9 +1043,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Superiority **Phase 7** (agent integration security and verification) has landed. Conservative finite-state compound command analyzer eliminates bypasses without rewriting commands; hook templates across 12 targets embed the finite-state tokenizer and default ambiguity to deny; `condense mcp -c/--client` and `--list-clients` provide first-class configs for 10 agent clients; `condense init` provides `-n/--dry-run` simulation, `--update` idempotent healing, and mid-run tampering detection; failure contract has 5 new catalog rows; native proof is `NativeHookIT` and `NativeMcpIT`. Filter/IR stay at **1**; SQLite stays at **2**. Superiority **Phase 8 is not started**. Round 2 **R25** (semantic savings) stays deferred.
+**Where we are.** Superiority **Phase 8** (complete structured output, CLI ergonomics, and accessibility) has landed. First-class `git` and `build` IR documents expand structured envelope coverage across all git and build stages with zero reflection drift; `CliPreParser` strictly separates Condense-owned options from child arguments and supports the `--` delimiter; `AccessibilityPolicy` enforces `NO_COLOR`, `CLICOLOR`, `CLICOLOR_FORCE`, `--plain` / `--ascii` modes, and textual severity markers; `condense gain --format csv` exports RFC-4180 CSV tables across all modes; `condense init --show --format json` and `condense config validate --format json` emit structured diagnostics; `packaging/man/condense.1` and shell completion scripts (Bash, Zsh, Fish) are fully synchronized and tested via `CliMetadataConsistencyTest`; failure contract catalog has new rows; native proof is `NativeIrIT` and `NativeCliIT`. Filter/IR schema stays at **1**; SQLite schema stays at **2**. Superiority **Phase 9 is not started**.
 
-**Do not plan or implement superiority Phase 8** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
+**Do not plan or implement superiority Phase 9** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
 
 ---
 

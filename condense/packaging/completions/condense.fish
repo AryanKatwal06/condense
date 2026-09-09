@@ -7,6 +7,8 @@ complete -c condense -f
 complete -c condense -s v -l verbose       -d 'Increase verbosity'
 complete -c condense -s u -l ultra-compact -d 'Maximum compression mode'
 complete -c condense -l format             -d 'Output format' -r -a 'text json'
+complete -c condense -l plain              -d 'Force plain text and ASCII glyphs'
+complete -c condense -l ascii              -d 'Force plain text and ASCII glyphs'
 complete -c condense -l version            -d 'Show version'
 complete -c condense -l help               -d 'Show help'
 
@@ -35,7 +37,7 @@ complete -c condense -n '__fish_seen_subcommand_from gain' -l weekly  -d 'Per-we
 complete -c condense -n '__fish_seen_subcommand_from gain' -l top     -d 'Top N commands' -r
 complete -c condense -n '__fish_seen_subcommand_from gain' -l since   -d 'Last N days' -r
 complete -c condense -n '__fish_seen_subcommand_from gain' -l all     -d 'All-time data'
-complete -c condense -n '__fish_seen_subcommand_from gain' -l format  -d 'Output format' -r -a 'text json'
+complete -c condense -n '__fish_seen_subcommand_from gain' -l format  -d 'Output format' -r -a 'text json csv'
 
 complete -c condense -n '__fish_seen_subcommand_from doctor' -l format -d 'Output format' -r -a 'text json'
 
@@ -64,6 +66,7 @@ complete -c condense -n '__fish_seen_subcommand_from read' -s u -l ultra-compact
 complete -c condense -n '__fish_seen_subcommand_from init' -s g -l global  -d 'Install all hooks'
 complete -c condense -n '__fish_seen_subcommand_from init' -l show         -d 'Show hook status'
 complete -c condense -n '__fish_seen_subcommand_from init' -l remove       -d 'Remove all hooks'
+complete -c condense -n '__fish_seen_subcommand_from init' -l format       -d 'Output format' -r -a 'text json'
 complete -c condense -n '__fish_seen_subcommand_from init' -l tool         -d 'Specific tool' -r \
   -a 'claude-code cursor gemini windsurf copilot cline codex opencode kilo antigravity hermes pi'
 
@@ -73,5 +76,7 @@ complete -c condense -n '__fish_seen_subcommand_from config' -l get   -d 'Get ke
   -a 'tee.enabled tee.mode hooks.exclude_commands'
 complete -c condense -n '__fish_seen_subcommand_from config' -l set   -d 'Set key=value' -r
 complete -c condense -n '__fish_seen_subcommand_from config' -l reset -d 'Reset to defaults'
+complete -c condense -n '__fish_seen_subcommand_from config' -l validate -d 'Validate filter override files'
+complete -c condense -n '__fish_seen_subcommand_from config' -l format -d 'Output format' -r -a 'text json'
 
 complete -c condense -n '__fish_seen_subcommand_from mcp' -l start -d 'Start the MCP server on stdin/stdout'

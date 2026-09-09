@@ -46,11 +46,22 @@ Increase verbosity. \fB\-v\fR shows normal summary with more detail,
 .BR \-u ", " \-\-ultra\-compact
 Maximum compression: single\-line ASCII icon output.
 .TP
+.BR \-\-plain ", " \-\-ascii
+Force plain text and ASCII output glyphs ([OK], [ERROR], *, -), strip ANSI colors,
+and clamp rendering to ASCII characters. Also activated when the \fBNO_COLOR\fR
+environment variable is present or \fBCLICOLOR=0\fR.
+.TP
+.BR \-\-
+Explicitly demarcates Condense-owned options from child command arguments. Any flags
+or arguments after \fB\-\-\fR are passed verbatim to the target command and never parsed
+or altered by Condense.
+.TP
 .BR \-\-format " " \fIFORMAT\fR
 Output format for a proxied command: \fBtext\fR (default) or \fBjson\fR.
-Must come before the proxied command
+Must come before the proxied command or before \fB\-\-\fR
 (\fBcondense \-\-format json pytest\fR).
 JSON waits until the child exits and prints one schema\-1 document.
+In \fBgain\fR, \fBcsv\fR is also supported for tabular exports.
 .TP
 .BR \-\-version
 Print version information and exit.
@@ -63,7 +74,7 @@ Print help text and exit.
 Show token savings analytics. See
 .BR "condense gain \-\-help"
 for options including \fB\-\-graph\fR, \fB\-\-history\fR, \fB\-\-top N\fR,
-\fB\-\-scope project\fR, and \fB\-\-format json\fR.
+\fB\-\-scope project\fR, \fB\-\-format json\fR, and \fB\-\-format csv\fR.
 .TP
 .B condense doctor
 Diagnose persistence, hooks, and empty analytics. Use
@@ -94,16 +105,17 @@ Unknown languages stay verbatim. JSON is never treated as C.
 .TP
 .B condense init
 Install AI tool hooks (fallback; MCP is preferred). Use \fBcondense init \-g\fR
-to install for all supported tools, \fBcondense init \-\-show\fR to check status
-and integrity, \fBcondense init \-\-remove\fR to uninstall. Tools include
-Claude Code, Cursor, Gemini, Windsurf, Copilot, Cline, Codex, OpenCode,
-Kilo, Antigravity, Hermes, and Pi. Matched commands are denied with a retry
-message; they are never rewritten and auto-allowed.
+to install for all supported tools, \fBcondense init \-\-show\fR (supporting
+\fB\-\-format json\fR) to check status and integrity, \fBcondense init \-\-remove\fR
+to uninstall. Tools include Claude Code, Cursor, Gemini, Windsurf, Copilot, Cline,
+Codex, OpenCode, Kilo, Antigravity, Hermes, and Pi. Matched commands are denied
+with a retry message; they are never rewritten and auto-allowed.
 .TP
 .B condense config
 Read and write Condense configuration. Use \fBcondense config \-\-list\fR,
 \fBcondense config \-\-get KEY\fR, \fBcondense config \-\-set KEY=VALUE\fR,
-or \fBcondense config \-\-reset\fR.
+\fBcondense config \-\-reset\fR, or validate overrides with
+\fBcondense config validate\fR (supporting \fB\-\-format json\fR).
 .TP
 .B condense mcp
 Print an MCP client snippet, or start the stdio JSON-RPC server with

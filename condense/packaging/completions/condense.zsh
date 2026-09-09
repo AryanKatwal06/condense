@@ -62,6 +62,8 @@ _condense() {
     '(-v --verbose)'{-v,--verbose}'[Increase verbosity]' \
     '(-u --ultra-compact)'{-u,--ultra-compact}'[Maximum compression mode]' \
     '--format=[Output format]:format:(text json)' \
+    '--plain[Force plain text and ASCII glyphs]' \
+    '--ascii[Force plain text and ASCII glyphs]' \
     '--version[Show version]' \
     '--help[Show help]' \
     '1: :->cmd' \
@@ -84,7 +86,7 @@ _condense() {
             '--top=[Top N commands]:N:(5 10 20)' \
             '--since=[Last N days]:N:(7 14 30 90)' \
             '--all[All-time data]' \
-            '--format=[Output format]:format:(text json)'
+            '--format=[Output format]:format:(text json csv)'
           ;;
         doctor)
           _arguments \
@@ -99,24 +101,24 @@ _condense() {
           _arguments \
             '--format=[Output format]:format:(text json)' \
             '--root=[Narrow workspace root]:dir:_files -/' \
-            '--write[Write filters.toml.proposed only]'
+            '--write[Write proposed override file]'
           ;;
         explain)
           _arguments \
             '--format=[Output format]:format:(text json)' \
-            '--input=[Captured stdout file]:file:_files' \
-            '--stdin[Read captured stdout from stdin]' \
-            '--exit-code=[Exit code for --input or --stdin]:N:' \
-            '--dropped-limit=[Dropped line sample cap]:N:'
+            '--input=[Analyze captured output file]:file:_files' \
+            '--stdin[Analyze output from stdin]' \
+            '--exit-code=[Exit code of analyzed output]:code:(0 1 2)' \
+            '--dropped-limit=[Cap on dropped lines listed]:limit:(10 50 100)'
           ;;
         read)
           _arguments \
-            '--level=[Compression level]:level:(verbatim comments outline)' \
-            '--lang=[Language name]:name:' \
+            '--level=[Read level]:level:(verbatim comments outline)' \
+            '--lang=[Override language detection]:lang:(java python rust go c cpp js ts toml yaml json)' \
             '--root=[Narrow workspace root]:dir:_files -/' \
-            '--max-bytes=[Read cap]:N:' \
+            '--max-bytes=[Cap file read in bytes]:bytes:(1048576 5242880)' \
             '--format=[Output format]:format:(text json)' \
-            '--stdin[Read from standard input]' \
+            '--stdin[Read source from standard input]' \
             '(-u --ultra-compact)'{-u,--ultra-compact}'[Same as --level outline]'
           ;;
         init)
@@ -124,14 +126,17 @@ _condense() {
             '(-g --global)'{-g,--global}'[Install for all tools]' \
             '--show[Show hook status]' \
             '--remove[Remove all hooks]' \
-            '--tool=[Specific tool]:tool:(claude-code cursor gemini windsurf copilot cline codex opencode kilo antigravity hermes pi)'
+            '--tool=[Specific tool]:tool:(claude-code cursor gemini windsurf copilot cline codex opencode kilo antigravity hermes pi)' \
+            '--format=[Output format]:format:(text json)'
           ;;
         config)
           _arguments \
             '--list[Print full config]' \
             '--get=[Get key value]:key:(tee.enabled tee.mode hooks.exclude_commands)' \
             '--set=[Set key=value]:keyval:()' \
-            '--reset[Reset to defaults]'
+            '--reset[Reset to defaults]' \
+            '--validate[Validate filter override files]' \
+            '--format=[Output format]:format:(text json)'
           ;;
         mcp)
           _arguments \

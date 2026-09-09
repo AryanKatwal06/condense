@@ -234,6 +234,33 @@
       "output_retention": "none",
       "diagnostic": "unknown client",
       "native_it": false
+    },
+    {
+      "id": "flag_position_ambiguity_demarcation",
+      "mode": "cli_flag_parsing",
+      "test": "com.condense.FlagPositionSemanticsTest#doubleDashExplicitlyDemarcatesChildCommand",
+      "exit_policy": "child",
+      "output_retention": "none",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "accessibility_no_color_fallback",
+      "mode": "accessibility",
+      "test": "com.condense.core.PlainModeAndAccessibilityTest#noColorDisablesColorAndStripsAnsi",
+      "exit_policy": "child",
+      "output_retention": "none",
+      "diagnostic": "",
+      "native_it": false
+    },
+    {
+      "id": "analytics_csv_format_output",
+      "mode": "analytics_export",
+      "test": "com.condense.analytics.GainCsvFormatTest#testSummaryCsv",
+      "exit_policy": "zero",
+      "output_retention": "none",
+      "diagnostic": "",
+      "native_it": false
     }
   ]
 }
