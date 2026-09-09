@@ -17,6 +17,8 @@ public class CondenseMain implements QuarkusApplication {
 
     @Override
     public int run(String... args) {
+        CliPreParser.PreParseResult preParsed = CliPreParser.parse(args);
+
         CommandLine cmd = new CommandLine(rootCommand, factory)
             .setExecutionExceptionHandler((ex, c, parseResult) -> {
                 c.getErr().println("condense: error: " + ex.getMessage());
@@ -26,7 +28,17 @@ public class CondenseMain implements QuarkusApplication {
             .setUnmatchedArgumentsAllowed(true)
             .setStopAtPositional(true);
 
-        int exitCode = cmd.execute(args);
+        int exitCode;
+        if (preParsed.isSubcommand()) {
+            exitCode = cmd.execute(args);
+        } else {
+            rootCommand.setExplicitChildArgs(preParsed.childArgs());
+            try {
+                exitCode = cmd.execute(preParsed.condenseArgs().toArray(new String[0]));
+            } finally {
+                rootCommand.setExplicitChildArgs(null);
+            }
+        }
 
         // If the root command stored a passthrough exit code, use that instead
         Object result = cmd.getExecutionResult();

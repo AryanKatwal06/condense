@@ -96,20 +96,41 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
     )
     String format;
 
+    @Option(
+        names = {"--plain", "--ascii"},
+        description = "Plain accessibility mode: disable ANSI colors, suppress Unicode symbols."
+    )
+    boolean plain;
+
     @picocli.CommandLine.Unmatched
     List<String> remainder;
 
+    private List<String> explicitChildArgs;
+
+    public void setExplicitChildArgs(List<String> args) {
+        this.explicitChildArgs = args == null ? null : List.copyOf(args);
+    }
+
+    public boolean isPlain() {
+        return plain;
+    }
+
     @Override
     public Integer call() {
-        if ((passthroughArgs == null || passthroughArgs.length == 0) && (remainder == null || remainder.isEmpty())) {
+        List<String> argList = new java.util.ArrayList<>();
+        if (explicitChildArgs != null && !explicitChildArgs.isEmpty()) {
+            argList.addAll(explicitChildArgs);
+        } else {
+            if (passthroughArgs != null) argList.addAll(Arrays.asList(passthroughArgs));
+            if (remainder != null) argList.addAll(remainder);
+        }
+
+        if (argList.isEmpty()) {
             spec.commandLine().usage(System.out);
             return 0;
         }
 
         try {
-            List<String> argList = new java.util.ArrayList<>();
-            if (passthroughArgs != null) argList.addAll(Arrays.asList(passthroughArgs));
-            if (remainder != null) argList.addAll(remainder);
             boolean json = "json".equalsIgnoreCase(format);
             ProxyService.Outcome outcome = proxy.run(
                 argList, verbosityLevel(), ultraCompact, json, System.out, System.err);
