@@ -130,9 +130,10 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
             return 0;
         }
 
+        ProxyService.Outcome outcome = null;
         try {
             boolean json = "json".equalsIgnoreCase(format);
-            ProxyService.Outcome outcome = proxy.run(
+            outcome = proxy.run(
                 argList, verbosityLevel(), ultraCompact, json, plain, System.out, System.err);
             return outcome.result().exitCode();
         } catch (IllegalStateException e) {
@@ -142,6 +143,9 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
             System.err.println("condense: error executing command: " + e.getMessage());
             return 1;
         } finally {
+            if (outcome != null && outcome.result() != null) {
+                outcome.result().cleanup();
+            }
             tracking.close();
         }
     }

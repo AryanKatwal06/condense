@@ -132,4 +132,17 @@ public record ExecutionResult(
         if (err.isBlank()) return out;
         return out + "\n" + err;
     }
+
+    public void cleanup() {
+        if (stdoutFile != null) {
+            try {
+                Files.deleteIfExists(stdoutFile);
+            } catch (Exception ignored) {}
+        }
+        if (stderrFile != null) {
+            try {
+                Files.deleteIfExists(stderrFile);
+            } catch (Exception ignored) {}
+        }
+    }
 }

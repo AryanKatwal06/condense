@@ -282,4 +282,53 @@ public final class NativeBinarySupport {
             }
         }
     }
+
+    public static List<Path> findOrphanedTempFiles() {
+        try {
+            Path tmp = Path.of(System.getProperty("java.io.tmpdir", "."));
+            try (java.util.stream.Stream<Path> stream = java.nio.file.Files.list(tmp)) {
+                return stream
+                    .filter(p -> {
+                        String name = p.getFileName().toString();
+                        return name.startsWith("condense-stream-") || name.startsWith("condense-test");
+                    })
+                    .toList();
+            }
+        } catch (Exception ignored) {
+            return List.of();
+        }
+    }
+
+    public static long getOpenFileDescriptorOrHandleCount() {
+        try {
+            java.lang.management.OperatingSystemMXBean osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+            if (osBean instanceof com.sun.management.UnixOperatingSystemMXBean unixBean) {
+                return unixBean.getOpenFileDescriptorCount();
+            }
+        } catch (Throwable ignored) {}
+        if (isWindows()) {
+            try {
+                long pid = ProcessHandle.current().pid();
+                Process p = new ProcessBuilder("powershell", "-NoProfile", "-Command",
+                    "(Get-Process -Id " + pid + ").HandleCount").start();
+                String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+                p.waitFor(3, TimeUnit.SECONDS);
+                return Long.parseLong(out);
+            } catch (Throwable ignored) {}
+        }
+        return -1L;
+    }
+
+    public static long getCommittedMemoryBytes() {
+        try {
+            java.lang.management.OperatingSystemMXBean osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+            if (osBean instanceof com.sun.management.OperatingSystemMXBean sunBean) {
+                long mem = sunBean.getCommittedVirtualMemorySize();
+                if (mem > 0) {
+                    return mem;
+                }
+            }
+        } catch (Throwable ignored) {}
+        return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+    }
 }
