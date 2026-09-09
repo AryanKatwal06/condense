@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "effective_date": "2026-09-01",
+  "default_model": "claude-3-5-sonnet-20241022",
+  "models": [
+    {
+      "id": "claude-3-5-sonnet-20241022",
+      "aliases": ["claude-3-5-sonnet", "sonnet-3-5", "claude-sonnet", "sonnet"],
+      "name": "Claude 3.5 Sonnet",
+      "provider": "Anthropic",
+      "input_cost_per_million": 3.00,
+      "output_cost_per_million": 15.00,
+      "cache_read_cost_per_million": 0.30,
+      "cache_write_cost_per_million": 3.75,
+      "effective_date": "2024-10-22",
+      "source_url": "https://www.anthropic.com/pricing"
+    },
+    {
+      "id": "claude-3-5-haiku-20241022",
+      "aliases": ["claude-3-5-haiku", "haiku-3-5", "claude-haiku", "haiku"],
+      "name": "Claude 3.5 Haiku",
+      "provider": "Anthropic",
+      "input_cost_per_million": 0.80,
+      "output_cost_per_million": 4.00,
+      "cache_read_cost_per_million": 0.08,
+      "cache_write_cost_per_million": 1.00,
+      "effective_date": "2024-11-04",
+      "source_url": "https://www.anthropic.com/pricing"
+    },
+    {
+      "id": "claude-3-opus-20240229",
+      "aliases": ["claude-3-opus", "opus"],
+      "name": "Claude 3 Opus",
+      "provider": "Anthropic",
+      "input_cost_per_million": 15.00,
+      "output_cost_per_million": 75.00,
+      "cache_read_cost_per_million": 1.50,
+      "cache_write_cost_per_million": 18.75,
+      "effective_date": "2024-03-01",
+      "source_url": "https://www.anthropic.com/pricing"
+    },
+    {
+      "id": "gpt-4o-2024-11-20",
+      "aliases": ["gpt-4o", "4o"],
+      "name": "GPT-4o",
+      "provider": "OpenAI",
+      "input_cost_per_million": 2.50,
+      "output_cost_per_million": 10.00,
+      "cache_read_cost_per_million": 1.25,
+      "cache_write_cost_per_million": 2.50,
+      "effective_date": "2024-11-20",
+      "source_url": "https://openai.com/api/pricing"
+    },
+    {
+      "id": "gpt-4o-mini-2024-07-18",
+      "aliases": ["gpt-4o-mini", "4o-mini"],
+      "name": "GPT-4o mini",
+      "provider": "OpenAI",
+      "input_cost_per_million": 0.15,
+      "output_cost_per_million": 0.60,
+      "cache_read_cost_per_million": 0.075,
+      "cache_write_cost_per_million": 0.15,
+      "effective_date": "2024-07-18",
+      "source_url": "https://openai.com/api/pricing"
+    },
+    {
+      "id": "o1-2024-12-17",
+      "aliases": ["o1"],
+      "name": "OpenAI o1",
+      "provider": "OpenAI",
+      "input_cost_per_million": 15.00,
+      "output_cost_per_million": 60.00,
+      "cache_read_cost_per_million": 7.50,
+      "cache_write_cost_per_million": 15.00,
+      "effective_date": "2024-12-17",
+      "source_url": "https://openai.com/api/pricing"
+    },
+    {
+      "id": "o1-mini-2024-09-12",
+      "aliases": ["o1-mini"],
+      "name": "OpenAI o1-mini",
+      "provider": "OpenAI",
+      "input_cost_per_million": 1.10,
+      "output_cost_per_million": 4.40,
+      "cache_read_cost_per_million": 0.55,
+      "cache_write_cost_per_million": 1.10,
+      "effective_date": "2024-09-12",
+      "source_url": "https://openai.com/api/pricing"
+    },
+    {
+      "id": "gemini-1.5-pro-002",
+      "aliases": ["gemini-1.5-pro", "gemini-pro"],
+      "name": "Gemini 1.5 Pro",
+      "provider": "Google",
+      "input_cost_per_million": 1.25,
+      "output_cost_per_million": 5.00,
+      "cache_read_cost_per_million": 0.3125,
+      "cache_write_cost_per_million": 1.25,
+      "effective_date": "2024-09-24",
+      "source_url": "https://ai.google.dev/pricing"
+    },
+    {
+      "id": "gemini-1.5-flash-002",
+      "aliases": ["gemini-1.5-flash", "gemini-flash"],
+      "name": "Gemini 1.5 Flash",
+      "provider": "Google",
+      "input_cost_per_million": 0.075,
+      "output_cost_per_million": 0.30,
+      "cache_read_cost_per_million": 0.01875,
+      "cache_write_cost_per_million": 0.075,
+      "effective_date": "2024-09-24",
+      "source_url": "https://ai.google.dev/pricing"
+    },
+    {
+      "id": "deepseek-chat",
+      "aliases": ["deepseek-v3", "deepseek"],
+      "name": "DeepSeek-V3",
+      "provider": "DeepSeek",
+      "input_cost_per_million": 0.14,
+      "output_cost_per_million": 0.28,
+      "cache_read_cost_per_million": 0.014,
+      "cache_write_cost_per_million": 0.14,
+      "effective_date": "2024-12-26",
+      "source_url": "https://api-docs.deepseek.com/quick_start/pricing"
+    },
+    {
+      "id": "deepseek-reasoner",
+      "aliases": ["deepseek-r1", "r1"],
+      "name": "DeepSeek-R1",
+      "provider": "DeepSeek",
+      "input_cost_per_million": 0.55,
+      "output_cost_per_million": 2.19,
+      "cache_read_cost_per_million": 0.14,
+      "cache_write_cost_per_million": 0.55,
+      "effective_date": "2025-01-20",
+      "source_url": "https://api-docs.deepseek.com/quick_start/pricing"
+    }
+  ]
+}
