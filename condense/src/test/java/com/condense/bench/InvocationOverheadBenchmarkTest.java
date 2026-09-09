@@ -61,22 +61,33 @@ class InvocationOverheadBenchmarkTest {
 
         double meanEmptyUs = BenchStats.mean(emptyNanos) / 1_000.0;
         double stdEmptyUs = BenchStats.stdDev(emptyNanos, BenchStats.mean(emptyNanos)) / 1_000.0;
+        double p50EmptyUs = BenchStats.percentile(emptyNanos, 50.0) / 1_000.0;
+        double p95EmptyUs = BenchStats.percentile(emptyNanos, 95.0) / 1_000.0;
+
         double meanIdentityUs = BenchStats.mean(identityNanos) / 1_000.0;
         double stdIdentityUs = BenchStats.stdDev(identityNanos, BenchStats.mean(identityNanos)) / 1_000.0;
+        double p50IdentityUs = BenchStats.percentile(identityNanos, 50.0) / 1_000.0;
+        double p95IdentityUs = BenchStats.percentile(identityNanos, 95.0) / 1_000.0;
+
         double ratio = BenchStats.ratio(meanIdentityUs, meanEmptyUs);
 
         System.out.println("==========================================================================");
         System.out.println("INVOCATION OVERHEAD BASELINE (empty pipeline vs identity stage)");
-        System.out.printf("Empty pipeline:    %.2f ± %.2f µs%n", meanEmptyUs, stdEmptyUs);
-        System.out.printf("Identity stage:    %.2f ± %.2f µs%n", meanIdentityUs, stdIdentityUs);
+        System.out.printf("Empty pipeline:    mean=%.2f ± %.2f µs | p50=%.2f µs | p95=%.2f µs%n",
+            meanEmptyUs, stdEmptyUs, p50EmptyUs, p95EmptyUs);
+        System.out.printf("Identity stage:    mean=%.2f ± %.2f µs | p50=%.2f µs | p95=%.2f µs%n",
+            meanIdentityUs, stdIdentityUs, p50IdentityUs, p95IdentityUs);
         System.out.printf("Relative overhead: %.1fx (gate: < %.0fx)%n",
-            ratio, BenchStats.MAX_RELATIVE_OVERHEAD);
+            ratio, BenchStats.TIGHT_RELATIVE_OVERHEAD);
         System.out.println("Absolute times are informational. The relative bound is the CI gate.");
         System.out.println("==========================================================================");
 
         assertThat(ratio)
-            .as("identity-stage mean should stay within a generous multiple of the empty pipeline")
-            .isLessThan(BenchStats.MAX_RELATIVE_OVERHEAD);
+            .as("identity-stage mean should stay within tightened multiple of empty pipeline")
+            .isLessThan(BenchStats.TIGHT_RELATIVE_OVERHEAD);
+        assertThat(p95IdentityUs)
+            .as("identity-stage p95 should remain bounded")
+            .isLessThan(5_000.0); // Under 5ms p95 even on noisy runners
         assertThat(identity.execute(SAMPLE)).isEqualTo(SAMPLE);
     }
 }

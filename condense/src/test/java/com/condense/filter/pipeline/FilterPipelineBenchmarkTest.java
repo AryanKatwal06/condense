@@ -169,16 +169,22 @@ class FilterPipelineBenchmarkTest {
         double overheadPct = meanDirectUs > 0 ? (diffUs / meanDirectUs) * 100.0 : 0.0;
         double ratio = BenchStats.ratio(meanPipeUs, meanDirectUs);
 
-        String directStr = String.format("%.2f ± %.1f", meanDirectUs, stdDirectUs);
-        String pipeStr = String.format("%.2f ± %.1f", meanPipeUs, stdPipeUs);
+        double p50PipeUs = BenchStats.percentile(pipeNanos, 50.0) / 1_000.0;
+        double p95PipeUs = BenchStats.percentile(pipeNanos, 95.0) / 1_000.0;
 
-        System.out.printf("%-32s | %18s | %18s | %+10.2f µs | %+6.1f%%%n",
+        String directStr = String.format("%.2f ± %.1f", meanDirectUs, stdDirectUs);
+        String pipeStr = String.format("%.2f ± %.1f (p95=%.1f)", meanPipeUs, stdPipeUs, p95PipeUs);
+
+        System.out.printf("%-32s | %18s | %24s | %+10.2f µs | %+6.1f%%%n",
             label, directStr, pipeStr, diffUs, overheadPct);
 
         assertThat(ratio)
             .as("%s pipeline mean should stay within %.0fx of the direct strategy",
-                label, BenchStats.MAX_RELATIVE_OVERHEAD)
-            .isLessThan(BenchStats.MAX_RELATIVE_OVERHEAD);
+                label, BenchStats.TIGHT_RELATIVE_OVERHEAD)
+            .isLessThan(BenchStats.TIGHT_RELATIVE_OVERHEAD);
+        assertThat(p95PipeUs)
+            .as("%s p95 should remain bounded", label)
+            .isLessThan(1_000_000.0);
     }
 
     private String directNpm(String raw) {

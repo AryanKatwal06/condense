@@ -156,16 +156,20 @@ class FilterOverrideBenchmarkTest {
         double speedup = meanCachedUs > 0 ? (meanUncachedUs / meanCachedUs) : 1.0;
         double slowerRatio = BenchStats.ratio(meanCachedUs, meanUncachedUs);
 
+        double p95CachedUs = BenchStats.percentile(cachedNanos, 95.0) / 1_000.0;
         String uncachedStr = String.format("%.2f +/- %.1f", meanUncachedUs, stdUncachedUs);
-        String cachedStr = String.format("%.2f +/- %.1f", meanCachedUs, stdCachedUs);
+        String cachedStr = String.format("%.2f +/- %.1f (p95=%.1f)", meanCachedUs, stdCachedUs, p95CachedUs);
 
-        System.out.printf("%-40s | %20s | %20s | %+10.2f us | %8.1fx%n",
+        System.out.printf("%-40s | %20s | %26s | %+10.2f us | %8.1fx%n",
             label, uncachedStr, cachedStr, diffUs, speedup);
 
         assertThat(slowerRatio)
             .as("%s cached resolve must not be %.0fx slower than uncached",
-                label, BenchStats.MAX_RELATIVE_OVERHEAD)
-            .isLessThan(BenchStats.MAX_RELATIVE_OVERHEAD);
+                label, BenchStats.TIGHT_RELATIVE_OVERHEAD)
+            .isLessThan(BenchStats.TIGHT_RELATIVE_OVERHEAD);
+        assertThat(p95CachedUs)
+            .as("%s cached resolve p95 should remain bounded", label)
+            .isLessThan(5_000.0);
     }
 
     private void runThroughputBenchmark(String label, Runnable baselineTask, Runnable targetTask) {
@@ -215,15 +219,19 @@ class FilterOverrideBenchmarkTest {
         double diffUs = meanTargetUs - meanBaseUs;
         double ratio = BenchStats.ratio(meanTargetUs, meanBaseUs);
 
+        double p95TargetUs = BenchStats.percentile(targetNanos, 95.0) / 1_000.0;
         String baseStr = String.format("%.2f +/- %.1f", meanBaseUs, stdBaseUs);
-        String targetStr = String.format("%.2f +/- %.1f", meanTargetUs, stdTargetUs);
+        String targetStr = String.format("%.2f +/- %.1f (p95=%.1f)", meanTargetUs, stdTargetUs, p95TargetUs);
 
-        System.out.printf("%-40s | %20s | %20s | %+10.2f us | %8.2fx%n",
+        System.out.printf("%-40s | %20s | %26s | %+10.2f us | %8.2fx%n",
             label, baseStr, targetStr, diffUs, ratio);
 
         assertThat(ratio)
             .as("%s override pipeline must stay within %.0fx of the default pipeline",
-                label, BenchStats.MAX_RELATIVE_OVERHEAD)
-            .isLessThan(BenchStats.MAX_RELATIVE_OVERHEAD);
+                label, BenchStats.TIGHT_RELATIVE_OVERHEAD)
+            .isLessThan(BenchStats.TIGHT_RELATIVE_OVERHEAD);
+        assertThat(p95TargetUs)
+            .as("%s override target p95 should remain bounded", label)
+            .isLessThan(25_000.0);
     }
 }
