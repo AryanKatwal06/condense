@@ -86,9 +86,19 @@ class McpHandlersTest {
     }
 
     @Test
-    void runGitStatusTypicalIsOpaque() throws Exception {
+    void runGitStatusTypicalIsGitDocument() throws Exception {
         JsonNode result = callTool("run", """
             {"command":["git","status"]}
+            """);
+        assertThat(result.path("isError").asBoolean(false)).isFalse();
+        Document document = JsonRenderer.parse(result.get("content").get(0).get("text").asText());
+        assertThat(document.kind()).isEqualTo(Document.DocumentKind.GIT);
+    }
+
+    @Test
+    void runPassthroughIsOpaque() throws Exception {
+        JsonNode result = callTool("run", """
+            {"command":["unknown-command"]}
             """);
         assertThat(result.path("isError").asBoolean(false)).isFalse();
         Document document = JsonRenderer.parse(result.get("content").get(0).get("text").asText());
