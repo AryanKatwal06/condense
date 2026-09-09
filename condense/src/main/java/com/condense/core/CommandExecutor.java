@@ -29,11 +29,39 @@ public class CommandExecutor {
 
     public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
     public static final String TIMEOUT_ENV = "CONDENSE_COMMAND_TIMEOUT_SEC";
+    public static final String VIRTUAL_THREADS_ENV = "CONDENSE_VIRTUAL_THREADS";
+    public static final String VIRTUAL_THREADS_PROP = "condense.concurrency.virtual.threads";
 
     public static final int MAX_STREAM_BYTES = 10 * 1024 * 1024;
 
     public static final String STDOUT_DRAIN_FAILED = "condense: stdout drain failed";
     public static final String STDERR_DRAIN_FAILED = "condense: stderr drain failed";
+
+    public static boolean useVirtualThreads() {
+        String prop = System.getProperty(VIRTUAL_THREADS_PROP);
+        if (prop != null) {
+            return Boolean.parseBoolean(prop.trim());
+        }
+        String env = System.getenv(VIRTUAL_THREADS_ENV);
+        if (env != null) {
+            return Boolean.parseBoolean(env.trim());
+        }
+        return false;
+    }
+
+    static Thread startDrainThread(String name, Runnable runnable) {
+        if (useVirtualThreads()) {
+            try {
+                return Thread.ofVirtual().name(name).start(runnable);
+            } catch (Throwable ignored) {
+                // Fallback to platform thread if virtual threads are unavailable
+            }
+        }
+        Thread t = new Thread(runnable, name);
+        t.setDaemon(true);
+        t.start();
+        return t;
+    }
 
     /**
      * Process-visible stand-in for in-process exit {@code -1}. QuarkusApplication
@@ -116,10 +144,8 @@ public class CommandExecutor {
             var stdoutCapture = new StreamCapture(io, listener, true);
             var stderrCapture = new StreamCapture(io, listener, false);
 
-            Thread stdoutThread = new Thread(() -> stdoutCapture.drain(io.stdoutOf(process)), "condense-stdout");
-            stdoutThread.start();
-            Thread stderrThread = new Thread(() -> stderrCapture.drain(io.stderrOf(process)), "condense-stderr");
-            stderrThread.start();
+            Thread stdoutThread = startDrainThread("condense-stdout", () -> stdoutCapture.drain(io.stdoutOf(process)));
+            Thread stderrThread = startDrainThread("condense-stderr", () -> stderrCapture.drain(io.stderrOf(process)));
 
             boolean finished = waitFor(process, timeout);
             TerminationReason reason = TerminationReason.CHILD_EXIT;
