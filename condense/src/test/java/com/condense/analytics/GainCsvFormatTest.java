@@ -49,7 +49,7 @@ class GainCsvFormatTest {
     }
 
     @Test
-    @DisplayName("Summary mode emits RFC-4180 CSV with metric,value header")
+    @DisplayName("Summary mode emits RFC-4180 CSV with metric,value header and cost fields")
     void testSummaryCsv() {
         GainCommand cmd = new GainCommand();
         cmd.gainRepo = gainRepo;
@@ -65,10 +65,17 @@ class GainCsvFormatTest {
         assertThat(output).contains("output_tokens,510");
         assertThat(output).contains("tokens_saved,6440");
         assertThat(output).contains("savings_pct,92");
+        assertThat(output).contains("cost_model,claude-3-5-sonnet-20241022");
+        assertThat(output).contains("cost_provider,Anthropic");
+        assertThat(output).contains("cost_currency,USD");
+        assertThat(output).contains("cost_input_rate_per_m,3.00");
+        assertThat(output).contains("cost_output_rate_per_m,15.00");
+        assertThat(output).contains("estimated_usd_saved,0.019320");
+        assertThat(output).contains("history_status,homogeneous");
     }
 
     @Test
-    @DisplayName("Daily mode emits date,raw_tokens,filtered_tokens,saved_tokens,commands header")
+    @DisplayName("Daily mode emits date,raw_tokens,filtered_tokens,saved_tokens,est_usd_saved,commands header")
     void testDailyCsv() {
         GainCommand cmd = new GainCommand();
         cmd.gainRepo = gainRepo;
@@ -79,13 +86,13 @@ class GainCsvFormatTest {
         String output = outStream.toString().trim();
         List<String> lines = output.lines().toList();
 
-        assertThat(lines.get(0)).isEqualTo("date,raw_tokens,filtered_tokens,saved_tokens,commands");
+        assertThat(lines.get(0)).isEqualTo("date,raw_tokens,filtered_tokens,saved_tokens,est_usd_saved,commands");
         assertThat(lines.size()).isGreaterThan(1);
-        assertThat(lines.get(1)).contains(",6950,510,6440,4");
+        assertThat(lines.get(1)).contains(",6950,510,6440,0.019320,4");
     }
 
     @Test
-    @DisplayName("Weekly mode emits week,raw_tokens,filtered_tokens,saved_tokens,commands header")
+    @DisplayName("Weekly mode emits week,raw_tokens,filtered_tokens,saved_tokens,est_usd_saved,commands header")
     void testWeeklyCsv() {
         GainCommand cmd = new GainCommand();
         cmd.gainRepo = gainRepo;
@@ -96,13 +103,13 @@ class GainCsvFormatTest {
         String output = outStream.toString().trim();
         List<String> lines = output.lines().toList();
 
-        assertThat(lines.get(0)).isEqualTo("week,raw_tokens,filtered_tokens,saved_tokens,commands");
+        assertThat(lines.get(0)).isEqualTo("week,raw_tokens,filtered_tokens,saved_tokens,est_usd_saved,commands");
         assertThat(lines.size()).isGreaterThan(1);
-        assertThat(lines.get(1)).contains(",6950,510,6440,4");
+        assertThat(lines.get(1)).contains(",6950,510,6440,0.019320,4");
     }
 
     @Test
-    @DisplayName("Top mode emits command,raw_tokens,filtered_tokens,saved_tokens,count header")
+    @DisplayName("Top mode emits command,raw_tokens,filtered_tokens,saved_tokens,est_usd_saved,count header")
     void testTopCsv() {
         GainCommand cmd = new GainCommand();
         cmd.gainRepo = gainRepo;
@@ -113,14 +120,14 @@ class GainCsvFormatTest {
         String output = outStream.toString().trim();
         List<String> lines = output.lines().toList();
 
-        assertThat(lines.get(0)).isEqualTo("command,raw_tokens,filtered_tokens,saved_tokens,count");
-        assertThat(output).contains("cargo test,5000,400,4600,1");
+        assertThat(lines.get(0)).isEqualTo("command,raw_tokens,filtered_tokens,saved_tokens,est_usd_saved,count");
+        assertThat(output).contains("cargo test,5000,400,4600,0.013800,1");
         // Check escaping of command with comma and quotes
-        assertThat(output).contains("\"git commit -m \"\"fix, typo\"\"\",150,10,140,1");
+        assertThat(output).contains("\"git commit -m \"\"fix, typo\"\"\",150,10,140,0.000420,1");
     }
 
     @Test
-    @DisplayName("History mode emits timestamp,command,project,raw_tokens,filtered_tokens,saved_tokens,duration_ms")
+    @DisplayName("History mode emits timestamp,command,project,raw_tokens,filtered_tokens,saved_tokens,est_usd_saved,duration_ms")
     void testHistoryCsv() {
         GainCommand cmd = new GainCommand();
         cmd.gainRepo = gainRepo;
@@ -131,8 +138,8 @@ class GainCsvFormatTest {
         String output = outStream.toString().trim();
         List<String> lines = output.lines().toList();
 
-        assertThat(lines.get(0)).isEqualTo("timestamp,command,project,raw_tokens,filtered_tokens,saved_tokens,duration_ms");
+        assertThat(lines.get(0)).isEqualTo("timestamp,command,project,raw_tokens,filtered_tokens,saved_tokens,est_usd_saved,duration_ms");
         assertThat(output).contains("\"git commit -m \"\"fix, typo\"\"\"");
-        assertThat(output).contains(",150,10,140,15");
+        assertThat(output).contains(",150,10,140,0.000420,15");
     }
 }

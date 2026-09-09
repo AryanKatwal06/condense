@@ -62,18 +62,46 @@ public final class AsciiGraphRenderer {
         String meter = efficiencyMeter(report.savingsPct());
         double pct = report.savingsPct();
 
-        return title + "\n" +
-               DIVIDER + "\n\n" +
-               line("Total commands",       fmt(report.totalCommands())) +
-               line("Input tokens (est.)",  fmt(report.inputTokens())) +
-               line("Output tokens (est.)", fmt(report.outputTokens())) +
-               line("Tokens saved (est.)",  fmt(report.tokensSaved())
-                   + " (" + String.format("%.1f", pct) + "%)") +
-               line("Total exec time", report.totalExecMs() + "ms"
-                   + " (avg " + report.avgExecMs() + "ms)") +
-               "Efficiency meter: " + meter + " "
-                   + String.format("%.1f", pct) + "%\n" +
-               line("Estimator", formatEstimator(report.estimator()));
+        StringBuilder out = new StringBuilder();
+        out.append(title).append("\n");
+        out.append(DIVIDER).append("\n\n");
+        out.append(line("Total commands",       fmt(report.totalCommands())));
+        out.append(line("Input tokens (est.)",  fmt(report.inputTokens())));
+        out.append(line("Output tokens (est.)", fmt(report.outputTokens())));
+        out.append(line("Tokens saved (est.)",  fmt(report.tokensSaved())
+            + " (" + String.format(Locale.ROOT, "%.1f", pct) + "%)"));
+        out.append(line("Total exec time", report.totalExecMs() + "ms"
+            + " (avg " + report.avgExecMs() + "ms)"));
+        out.append("Efficiency meter:      ").append(meter).append(" ")
+            .append(String.format(Locale.ROOT, "%.1f", pct)).append("%\n");
+
+        if (report.cost() != null) {
+            CostEstimate cost = report.cost();
+            String savedStr = formatUsd(cost.estimatedUsdSaved());
+            out.append(line("Est. cost savings", "~$" + savedStr + " USD (" + cost.model() + " @ $" + String.format(Locale.ROOT, "%.2f", cost.inputRatePerM()) + "/M in)"));
+            out.append(line("Cost basis", "$" + String.format(Locale.ROOT, "%.2f", cost.inputRatePerM()) + "/M in, $" + String.format(Locale.ROOT, "%.2f", cost.outputRatePerM()) + "/M out (effective " + cost.pricingEffectiveDate() + ")"));
+        } else {
+            out.append(line("Est. cost savings", "(pricing unavailable - see --list-models)"));
+        }
+
+        out.append(line("Estimator", formatEstimator(report.estimator())));
+        out.append(line("Uncertainty note", "Dollar figures inherit ±37% token estimation uncertainty"));
+
+        if ("mixed_estimators".equals(report.historyStatus())) {
+            out.append(line("History note", "Query window spans multiple estimator versions"));
+        }
+
+        return out.toString();
+    }
+
+    private static String formatUsd(double val) {
+        if (val <= 0.0) {
+            return "0.00";
+        }
+        if (val < 0.01) {
+            return String.format(Locale.ROOT, "%.4f", val);
+        }
+        return String.format(Locale.ROOT, "%.2f", val);
     }
 
 
