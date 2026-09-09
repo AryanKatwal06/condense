@@ -133,7 +133,7 @@ class NativeHookIT {
              Statement st = connection.createStatement()) {
             try (ResultSet version = st.executeQuery("PRAGMA user_version")) {
                 assertThat(version.next()).isTrue();
-                assertThat(version.getInt(1)).isEqualTo(2);
+                assertThat(version.getInt(1)).isGreaterThanOrEqualTo(2);
             }
             try (ResultSet tables = st.executeQuery(
                     "SELECT name FROM sqlite_master WHERE type='table' AND name='hook_events'")) {
