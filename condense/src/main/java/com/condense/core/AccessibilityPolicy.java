@@ -122,6 +122,7 @@ public final class AccessibilityPolicy {
         return text
             .replace("✓", "[OK]")
             .replace("✗", "[ERROR]")
+            .replace("○", "[NONE]")
             .replace("─", "-")
             .replace("═", "=")
             .replace("↑", "^")

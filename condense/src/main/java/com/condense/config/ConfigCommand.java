@@ -70,6 +70,12 @@ public class ConfigCommand implements Runnable {
         description = "Validate declarative filter override files.")
     boolean validate;
 
+    @Option(names = "--format",
+        description = "Output format: 'text' (default) or 'json'.",
+        defaultValue = "text",
+        paramLabel = "FORMAT")
+    String format = "text";
+
     @Inject
     ConfigWriter configWriter;
 
@@ -112,6 +118,7 @@ public class ConfigCommand implements Runnable {
                 if (validateCommand == null) {
                     validateCommand = new ConfigValidateCommand();
                 }
+                validateCommand.format = format;
                 validateCommand.call();
                 return;
             }

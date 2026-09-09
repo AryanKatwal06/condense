@@ -64,6 +64,11 @@ public class InitCommand implements java.util.concurrent.Callable<Integer>, Runn
         paramLabel = "TOOL")
     String tool;
 
+    @Option(names = "--format",
+        description = "Output format: 'text' (default) or 'json'.",
+        defaultValue = "text", paramLabel = "FORMAT")
+    String format;
+
     @Inject
     HookInstaller installer;
 
@@ -158,20 +163,45 @@ public class InitCommand implements java.util.concurrent.Callable<Integer>, Runn
     }
 
     private Integer runShow() {
+        List<HookInstaller.StatusResult> statuses = installer.showAll();
+        boolean hasTampered = false;
+        for (HookInstaller.StatusResult r : statuses) {
+            if (r.installed() && HookIntegrity.TAMPERED.equals(r.integrity())) {
+                hasTampered = true;
+            }
+        }
+
+        if ("json".equalsIgnoreCase(format)) {
+            java.util.Map<String, Object> output = new java.util.LinkedHashMap<>();
+            java.util.List<java.util.Map<String, Object>> hookList = new java.util.ArrayList<>();
+            for (HookInstaller.StatusResult r : statuses) {
+                java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+                map.put("tool", r.tool().name().toLowerCase().replace("_", "-"));
+                map.put("display_name", r.tool().displayName);
+                map.put("installed", r.installed());
+                map.put("integrity", r.integrity() == null ? "none" : r.integrity());
+                map.put("hook_file", r.hookFile() == null ? null : r.hookFile().toString());
+                hookList.add(map);
+            }
+            output.put("hooks", hookList);
+            output.put("tampered", hasTampered);
+            try {
+                System.out.println(com.condense.core.Mappers.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(output));
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to serialize hook status to JSON", e);
+            }
+            return hasTampered ? 1 : 0;
+        }
+
         System.out.println("Condense Hook Status\n");
         System.out.printf("  %-20s  %-14s  %-12s  %s%n", "Tool", "Status", "Integrity", "Path");
         System.out.println("  " + "─".repeat(80));
-        List<HookInstaller.StatusResult> statuses = installer.showAll();
-        boolean hasTampered = false;
         for (HookInstaller.StatusResult r : statuses) {
             System.out.printf("  %-20s  %-14s  %-12s  %s%n",
                 r.tool().displayName,
                 r.installed() ? "installed" : "not installed",
                 r.integrity() == null ? "-" : r.integrity(),
                 r.hookFile());
-            if (r.installed() && HookIntegrity.TAMPERED.equals(r.integrity())) {
-                hasTampered = true;
-            }
         }
         if (hasTampered) {
             System.out.println("\nWarning: One or more hooks have been modified or tampered with.");

@@ -68,29 +68,29 @@ public class GainCommand implements Runnable {
     boolean all;
 
     @Option(names = "--format",
-        description = "Output format: 'text' (default) or 'json'.",
+        description = "Output format: 'text' (default), 'json', or 'csv'.",
         defaultValue = "text", paramLabel = "FORMAT")
     String format;
-
-
 
     @Inject
     GainRepository gainRepo;
 
-
-
     private static final ObjectMapper JSON = com.condense.core.Mappers.JSON;
-
-
 
     @Override
     public void run() {
         int effectiveSince = all ? 0 : since;
         boolean isJson = "json".equalsIgnoreCase(format);
+        boolean isCsv = "csv".equalsIgnoreCase(format);
 
         try {
             if (isJson) {
                 renderJson(effectiveSince);
+                return;
+            }
+
+            if (isCsv) {
+                renderCsv(effectiveSince);
                 return;
             }
 
@@ -141,8 +141,6 @@ public class GainCommand implements Runnable {
         }
     }
 
-
-
     boolean topRequested() {
         return topFlag != null;
     }
@@ -154,5 +152,81 @@ public class GainCommand implements Runnable {
     private void renderJson(int effectiveSince) throws Exception {
         GainReport report = gainRepo.buildReport(scope, effectiveSince, topN());
         System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+    }
+
+    private void renderCsv(int effectiveSince) {
+        if (daily) {
+            renderDailyCsv(gainRepo.dailyStats(effectiveSince == 0 ? 90 : effectiveSince, scope));
+        } else if (weekly) {
+            int weeks = effectiveSince == 0 ? 12 : (effectiveSince / 7 + 1);
+            renderWeeklyCsv(gainRepo.weeklyStats(weeks, scope));
+        } else if (historyFlag != null) {
+            renderHistoryCsv(gainRepo.recentCommands(historyFlag, scope));
+        } else if (topFlag != null) {
+            renderTopCsv(gainRepo.topCommands(topFlag, effectiveSince, scope));
+        } else {
+            GainReport report = gainRepo.buildReport(scope, effectiveSince, 5);
+            renderSummaryCsv(report);
+        }
+    }
+
+    private void renderDailyCsv(List<DailyStat> stats) {
+        System.out.println("date,raw_tokens,filtered_tokens,saved_tokens,commands");
+        if (stats != null) {
+            for (DailyStat s : stats) {
+                System.out.println(String.format(java.util.Locale.ROOT, "%s,%d,%d,%d,%d",
+                    escapeCsv(s.day()), s.sumRaw(), s.sumOut(), s.saved(), s.count()));
+            }
+        }
+    }
+
+    private void renderWeeklyCsv(List<WeeklyStat> stats) {
+        System.out.println("week,raw_tokens,filtered_tokens,saved_tokens,commands");
+        if (stats != null) {
+            for (WeeklyStat s : stats) {
+                System.out.println(String.format(java.util.Locale.ROOT, "%s,%d,%d,%d,%d",
+                    escapeCsv(s.week()), s.sumRaw(), s.sumOut(), s.saved(), s.count()));
+            }
+        }
+    }
+
+    private void renderTopCsv(List<TopCommand> stats) {
+        System.out.println("command,raw_tokens,filtered_tokens,saved_tokens,count");
+        if (stats != null) {
+            for (TopCommand s : stats) {
+                System.out.println(String.format(java.util.Locale.ROOT, "%s,%d,%d,%d,%d",
+                    escapeCsv(s.command()), s.sumRaw(), s.sumOut(), s.saved(), s.uses()));
+            }
+        }
+    }
+
+    private void renderHistoryCsv(List<RecentCommand> commands) {
+        System.out.println("timestamp,command,project,raw_tokens,filtered_tokens,saved_tokens,duration_ms");
+        if (commands != null) {
+            for (RecentCommand c : commands) {
+                System.out.println(String.format(java.util.Locale.ROOT, "%d,%s,%s,%d,%d,%d,%d",
+                    c.ts(), escapeCsv(c.command()), escapeCsv(scope != null ? scope : ""),
+                    c.rawTokens(), c.outTokens(), (c.rawTokens() - c.outTokens()), c.execMs()));
+            }
+        }
+    }
+
+    private void renderSummaryCsv(GainReport report) {
+        System.out.println("metric,value");
+        System.out.println("total_commands," + report.totalCommands());
+        System.out.println("input_tokens," + report.inputTokens());
+        System.out.println("output_tokens," + report.outputTokens());
+        System.out.println("tokens_saved," + report.tokensSaved());
+        System.out.println("savings_pct," + report.savingsPct());
+        System.out.println("total_exec_time_ms," + report.totalExecMs());
+        System.out.println("avg_exec_time_ms," + report.avgExecMs());
+    }
+
+    private static String escapeCsv(String val) {
+        if (val == null) return "";
+        if (val.contains(",") || val.contains("\"") || val.contains("\n") || val.contains("\r")) {
+            return "\"" + val.replace("\"", "\"\"") + "\"";
+        }
+        return val;
     }
 }

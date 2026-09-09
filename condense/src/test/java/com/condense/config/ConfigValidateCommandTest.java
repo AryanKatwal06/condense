@@ -105,4 +105,86 @@ class ConfigValidateCommandTest {
             System.setErr(originalErr);
         }
     }
+
+    @Test
+    @DisplayName("ConfigValidateCommand --format json outputs JSON array with valid status")
+    void testValidateJsonFormatValid() throws Exception {
+        Path validToml = tempDir.resolve("valid-filters.toml");
+        String toml = """
+            schema_version = 1
+            [filters."ls"]
+            stages = [
+              { strategy = "tree_compression" }
+            ]
+            """;
+        Files.writeString(validToml, toml);
+
+        ConfigValidateCommand cmd = new ConfigValidateCommand();
+        cmd.explicitFile = validToml;
+        cmd.format = "json";
+
+        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        try {
+            System.setOut(new PrintStream(outBytes));
+            int exitCode = cmd.call();
+            assertThat(exitCode).isEqualTo(0);
+
+            com.fasterxml.jackson.databind.JsonNode root =
+                com.condense.core.Mappers.JSON.readTree(outBytes.toString().trim());
+
+            assertThat(root.isArray()).isTrue();
+            assertThat(root.size()).isEqualTo(1);
+            com.fasterxml.jackson.databind.JsonNode first = root.get(0);
+            assertThat(first.get("scope").asText()).isEqualTo("file");
+            assertThat(first.get("status").asText()).isEqualTo("valid");
+            assertThat(first.get("valid").asBoolean()).isTrue();
+            assertThat(first.get("filter_count").asInt()).isEqualTo(1);
+            assertThat(first.get("errors").isArray()).isTrue();
+            assertThat(first.get("errors").isEmpty()).isTrue();
+        } finally {
+            System.setOut(originalOut);
+        }
+    }
+
+    @Test
+    @DisplayName("ConfigValidateCommand --format json outputs JSON array with semantic errors on failure")
+    void testValidateJsonFormatInvalid() throws Exception {
+        Path invalidToml = tempDir.resolve("invalid-filters.toml");
+        String toml = """
+            schema_version = 1
+            [filters."bad-cmd"]
+            stages = [
+              { strategy = "unknown_strategy_name" }
+            ]
+            """;
+        Files.writeString(invalidToml, toml);
+
+        ConfigValidateCommand cmd = new ConfigValidateCommand();
+        cmd.explicitFile = invalidToml;
+        cmd.format = "json";
+
+        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        try {
+            System.setOut(new PrintStream(outBytes));
+            int exitCode = cmd.call();
+            assertThat(exitCode).isEqualTo(1);
+
+            com.fasterxml.jackson.databind.JsonNode root =
+                com.condense.core.Mappers.JSON.readTree(outBytes.toString().trim());
+
+            assertThat(root.isArray()).isTrue();
+            assertThat(root.size()).isEqualTo(1);
+            com.fasterxml.jackson.databind.JsonNode first = root.get(0);
+            assertThat(first.get("scope").asText()).isEqualTo("file");
+            assertThat(first.get("status").asText()).isEqualTo("semantic_error");
+            assertThat(first.get("valid").asBoolean()).isFalse();
+            assertThat(first.get("errors").isArray()).isTrue();
+            assertThat(first.get("errors").size()).isGreaterThan(0);
+            assertThat(first.get("errors").get(0).asText()).contains("Unknown strategy");
+        } finally {
+            System.setOut(originalOut);
+        }
+    }
 }
