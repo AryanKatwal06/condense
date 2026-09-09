@@ -225,14 +225,20 @@ public final class NativeBinarySupport {
         }
 
         public CliResult await() throws Exception {
-            boolean finished = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            if (!finished) {
-                process.destroyForcibly();
-                fail("Native binary timed out after " + TIMEOUT_SECONDS + "s: " + command);
+            try {
+                boolean finished = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                if (!finished) {
+                    process.destroyForcibly();
+                    fail("Native binary timed out after " + TIMEOUT_SECONDS + "s: " + command);
+                }
+                stdout.join();
+                stderr.join();
+                return new CliResult(process.exitValue(), stdout.text(), stderr.text());
+            } finally {
+                try { process.getInputStream().close(); } catch (Throwable ignored) {}
+                try { process.getErrorStream().close(); } catch (Throwable ignored) {}
+                try { process.getOutputStream().close(); } catch (Throwable ignored) {}
             }
-            stdout.join();
-            stderr.join();
-            return new CliResult(process.exitValue(), stdout.text(), stderr.text());
         }
     }
 
@@ -256,7 +262,7 @@ public final class NativeBinarySupport {
 
         @Override
         public void run() {
-            try {
+            try (in) {
                 byte[] chunk = new byte[4096];
                 int read;
                 while ((read = in.read(chunk)) != -1) {
@@ -311,9 +317,16 @@ public final class NativeBinarySupport {
                 long pid = ProcessHandle.current().pid();
                 Process p = new ProcessBuilder("powershell", "-NoProfile", "-Command",
                     "(Get-Process -Id " + pid + ").HandleCount").start();
-                String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-                p.waitFor(3, TimeUnit.SECONDS);
-                return Long.parseLong(out);
+                try {
+                    String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+                    p.waitFor(3, TimeUnit.SECONDS);
+                    return Long.parseLong(out);
+                } finally {
+                    try { p.getInputStream().close(); } catch (Throwable ignored) {}
+                    try { p.getErrorStream().close(); } catch (Throwable ignored) {}
+                    try { p.getOutputStream().close(); } catch (Throwable ignored) {}
+                    p.destroy();
+                }
             } catch (Throwable ignored) {}
         }
         return -1L;

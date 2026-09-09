@@ -53,7 +53,7 @@ An empirical A/B benchmark (`VirtualThreadsBenchmarkTest`) was executed across c
 - **Duration Leak Ratio**: Ratio of the last 10-run window mean to the first 10-run window mean (enforced ceiling: $< 5.0\times$).
 - **Duration Linear Slope**: Measured via linear regression across all $N$ runs.
 - **Memory (RSS / Working Set) Slope**: Measured across run sequence to detect monotonic memory growth.
-- **File Descriptors & OS Handles**: Monitored via Unix MXBean (`getOpenFileDescriptorCount`) on Linux/macOS and process handle counts on Windows. Asserts zero monotonic handle leakage ($\Delta < 100$ handles across the entire soak).
+- **File Descriptors & OS Handles**: Monitored via Unix MXBean (`getOpenFileDescriptorCount`) on Linux/macOS and process handle counts on Windows. Asserts zero monotonic handle leakage ($\Delta < 250$ handles on 20–300 runs, with $\le 0.5$ handles/run ceiling on large runs).
 - **Temporary File Cleanup**: Verifies that `condense-stream-*.log` and `condense-test*.tmp` files created during execution are immediately deleted via `ExecutionResult.cleanup()`. **Zero orphaned files permitted.**
 
 ### Telemetry JSON Output
