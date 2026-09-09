@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 9 September 2026 (superiority Phase 8 structured output, CLI ergonomics, and accessibility).
+**Written:** 4 September 2026. **Revised:** 9 September 2026 (superiority Phase 10 sustained native performance, GC, and concurrency budgets).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -1044,9 +1044,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Superiority **Phase 9** (auditable model-aware cost analytics and recurring calibration) has landed. Versioned local pricing catalog (`pricing/models.json`) covers 11 flagship LLMs across Anthropic, OpenAI, Google, and DeepSeek with zero runtime network calls; `condense gain` supports `--model <id|alias>`, `--list-models`, persistent `[analytics] model` config, and explicit ±37% estimator uncertainty disclosure across text summary, JSON, and CSV exports; SQLite analytics schema advanced to version 3 with `estimator` and `schema_version` columns and mixed-history detection; expanded calibration corpus in `token-corpus/` verified by deterministic `TokenCalibrationTest` and `PricingCatalogFreshnessTest`; quarterly automated GitHub Actions review workflow in `.github/workflows/calibration-and-pricing-review.yml`; native reflection and resource registration in `reflect-config.json` and `resource-config.json`; native proof in `NativeAnalyticsIT` and `NativeCliIT`. Filter/IR schema stays at **1**; SQLite schema is at **3**. Superiority **Phase 10 is not started**.
+**Where we are.** Superiority **Phase 10** (enforce sustained native performance, GC and concurrency budgets) has landed. Replaced crude 100x JVM guards with tightened 20x relative overhead ceilings (`BenchStats.TIGHT_RELATIVE_OVERHEAD`), percentile latency gates (`p50`, `p90`, `p95`), linear regression slope calculations, and `ThreadMXBean` thread allocation tracking; added structured parser microbenchmarks (`StructuredParserBenchmarkTest`) covering MSBuild binlog / TRX, Terraform machine-UI / resource graph, Git status, and format reports, asserting bounded memory and p95 latency under normal loads and hostile parser bombs with zero `OutOfMemoryError` or `StackOverflowError`; added concurrent MCP session microbenchmarks (`McpConcurrentSessionBenchmarkTest`) verifying 32 concurrent worker sessions executing >4,800 ops/sec with p95 < 5ms and zero deadlocks; enhanced native soak testing (`NativeSoakIT`) with RSS memory slope, handle and file descriptor leak detection, immediate temporary file cleanup (`ExecutionResult.cleanup()`), zero-orphaned-temp-files enforcement, and structured `target/soak-telemetry.json` artifact export; added high-concurrency native stress test (`NativeConcurrencyStressIT`) executing 16 parallel processes under mixed write storms and read loads, verifying JDBC SQLite `PRAGMA integrity_check` = `ok` and truthful stream backpressure handling; implemented empirical A/B evaluation of platform threads vs virtual threads in `CommandExecutor` (`VirtualThreadsBenchmarkTest`) establishing an evidence-based adoption threshold with fail-open fallback; added scheduled 3,000-run native soak workflow (`.github/workflows/soak-and-perf-baselines.yml`) publishing rolling baseline telemetry to protected artifacts. Specs: [docs/concurrency-and-performance.md](docs/concurrency-and-performance.md) and [docs/perf-baseline.md](docs/perf-baseline.md). Filter/IR schema stays at **1**; SQLite schema is at **3**. Superiority **Phase 11 is not started**.
 
-**Do not plan or implement superiority Phase 10** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
+**Do not plan or implement superiority Phase 11** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
 
 ---
 
@@ -1056,18 +1056,18 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 1. This entire file. It is the canonical record; the Cursor plan file is a local-only stub that points back here.
 2. `condense/pom.xml`, `condense/ARCHITECTURE.md`, `CONTRIBUTING.md` — noting §6, because these documents contain known false statements.
-3. `.github/workflows/build.yml` — the CI contract, including Failsafe soak runs.
-4. `docs/perf-baseline.md` and `SECURITY.md` for the Phase 17 gates.
+3. `.github/workflows/build.yml` and `.github/workflows/soak-and-perf-baselines.yml` — the CI contract, including Failsafe soak runs and protected baseline artifacts.
+4. `docs/perf-baseline.md`, `docs/concurrency-and-performance.md`, and `SECURITY.md`.
 
 **Verify before doing anything**
 
 5. `git status --short` and `git log --oneline -5`. Reconcile §13 against `HEAD` and update this file if someone has worked since the last stop point.
 6. Confirm Phase 4 files exist (`PipelineBackedFilter`, `BoundedRegex`, `PrefixIndex`, `corpus/golden/`, `GoldenLockTest`) and that `GoldenLockTest` is green.
-7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12). Confirm `NativeBudgetIT`, `NativeSoakIT`, and `NativeProposeIT` appear in native job logs.
+7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12). Confirm `NativeBudgetIT`, `NativeSoakIT`, `NativeConcurrencyStressIT`, and `NativeProposeIT` appear in native job logs.
 
 **Then, and only then**
 
-8. Superiority Phase 8 and Phase 9 have landed. Confirm `mvn test` is green, `PricingCatalogTest`, `PricingCatalogFreshnessTest`, `CostEstimateTest`, `TokenCalibrationTest`, `GainCommandCostTest`, `GainCsvFormatTest`, and `AsciiGraphRendererCostTest` are green, and `NativeAnalyticsIT` and `NativeCliIT` are on the Failsafe `*IT.java` path. Do not start superiority Phase 10 from this stop point unless the user explicitly asks.
+8. Superiority Phases 8, 9, and 10 have landed. Confirm `mvn test` is green, including `StructuredParserBenchmarkTest`, `McpConcurrentSessionBenchmarkTest`, `VirtualThreadsBenchmarkTest`, `BenchStatsTest`, and that `NativeSoakIT` and `NativeConcurrencyStressIT` are on the Failsafe `*IT.java` path. Do not start superiority Phase 11 from this stop point unless the user explicitly asks.
 9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
 10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 

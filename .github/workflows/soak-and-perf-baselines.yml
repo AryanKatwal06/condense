@@ -1,0 +1,53 @@
+name: Soak and Performance Baselines
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * 0" # Weekly on Sunday at 02:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  soak-and-bench:
+    name: Native 3,000-run soak and performance baselines
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up GraalVM JDK 21
+        uses: graalvm/setup-graalvm@1758c0c45731994e4604e3c9235d97e743acb5e8 # v1.2.3
+        with:
+          java-version: 21
+          distribution: graalvm-community
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: maven
+
+      - name: Build native image
+        working-directory: condense
+        run: mvn package -Pnative -DskipTests -Dquarkus.native.native-image-xmx=5g --no-transfer-progress -B
+
+      - name: Execute 3,000-run native soak test
+        working-directory: condense
+        run: |
+          mvn failsafe:integration-test failsafe:verify \
+            -DskipITs=false \
+            -Dnative.image.path="${PWD}/target/condense-runner" \
+            -Dcondense.soak.runs=3000 \
+            --no-transfer-progress -B
+
+      - name: Execute JVM microbenchmark baselines
+        working-directory: condense
+        run: |
+          mvn test \
+            -Dtest=StructuredParserBenchmarkTest,McpConcurrentSessionBenchmarkTest,VirtualThreadsBenchmarkTest,InvocationOverheadBenchmarkTest,FilterPipelineBenchmarkTest,FilterOverrideBenchmarkTest \
+            --no-transfer-progress -B
+
+      - name: Upload rolling soak and benchmark artifacts
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: rolling-performance-baselines
+          path: |
+            condense/target/soak-telemetry.json
+            condense/target/surefire-reports/*.txt
+          retention-days: 90

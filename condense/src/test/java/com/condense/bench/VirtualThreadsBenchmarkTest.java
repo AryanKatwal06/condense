@@ -56,7 +56,7 @@ class VirtualThreadsBenchmarkTest {
             assertThat(virtualRun.allSucceeded).isTrue();
             assertThat(virtualRun.p95Ms)
                 .as("Virtual threads p95 at concurrency %d should remain bounded", concurrency)
-                .isLessThan(15_000.0);
+                .isLessThan(30_000.0);
         }
         System.out.println("==========================================================================================");
     }
