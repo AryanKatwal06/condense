@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 9 September 2026 (superiority Phase 10 sustained native performance, GC, and concurrency budgets).
+**Written:** 4 September 2026. **Revised:** 9 September 2026 (superiority Phase 11 complete security, dependency, licensing, and release assurance).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -1044,9 +1044,9 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
 
-**Where we are.** Superiority **Phase 10** (enforce sustained native performance, GC and concurrency budgets) has landed. Replaced crude 100x JVM guards with tightened 20x relative overhead ceilings (`BenchStats.TIGHT_RELATIVE_OVERHEAD`), percentile latency gates (`p50`, `p90`, `p95`), linear regression slope calculations, and `ThreadMXBean` thread allocation tracking; added structured parser microbenchmarks (`StructuredParserBenchmarkTest`) covering MSBuild binlog / TRX, Terraform machine-UI / resource graph, Git status, and format reports, asserting bounded memory and p95 latency under normal loads and hostile parser bombs with zero `OutOfMemoryError` or `StackOverflowError`; added concurrent MCP session microbenchmarks (`McpConcurrentSessionBenchmarkTest`) verifying 32 concurrent worker sessions executing >4,800 ops/sec with p95 < 5ms and zero deadlocks; enhanced native soak testing (`NativeSoakIT`) with RSS memory slope, handle and file descriptor leak detection, immediate temporary file cleanup (`ExecutionResult.cleanup()`), zero-orphaned-temp-files enforcement, and structured `target/soak-telemetry.json` artifact export; added high-concurrency native stress test (`NativeConcurrencyStressIT`) executing 16 parallel processes under mixed write storms and read loads, verifying JDBC SQLite `PRAGMA integrity_check` = `ok` and truthful stream backpressure handling; implemented empirical A/B evaluation of platform threads vs virtual threads in `CommandExecutor` (`VirtualThreadsBenchmarkTest`) establishing an evidence-based adoption threshold with fail-open fallback; added scheduled 3,000-run native soak workflow (`.github/workflows/soak-and-perf-baselines.yml`) publishing rolling baseline telemetry to protected artifacts. Specs: [docs/concurrency-and-performance.md](docs/concurrency-and-performance.md) and [docs/perf-baseline.md](docs/perf-baseline.md). Filter/IR schema stays at **1**; SQLite schema is at **3**. Superiority **Phase 11 is not started**.
+**Where we are.** Superiority **Phase 11** (complete security, dependency, licensing and release assurance) has landed. Authored code-specific threat model (`docs/threat-model.md`) mapping 7 security boundaries (child process execution, hook system, MCP server, structured parsers, configuration overrides, local persistence, supply-chain and release channels) directly to implementation and verifying tests; formalized backward compatibility policy (SemVer 2.0.0, schema versions, deprecation cycles) and security response SLAs (24h critical triage, 7d critical patch, 48h/14d high, 72h/30d medium/low) in `docs/backward-compatibility-sla.md` and `SECURITY.md`; implemented adversarial security suite (`AdversarialSecurityTest.java`) testing XML external entity (XXE) injection, Billion Laughs entity expansion bombs, malformed binlog gzip framing, safe path traversal escapes, and compound-command bypass prevention; established automated dependency license allowlist audit (`LicensePolicyTest.java`) restricting runtime distributions to non-reciprocal permissive licenses (Apache-2.0, MIT, BSD, ISC, Public Domain) and forbidding copyleft (GPL, AGPL, LGPL); generated comprehensive third-party license notices (`THIRD_PARTY_LICENSES.md`) verified by `ThirdPartyNoticeTest.java`; added CycloneDX SBOM runtime coordinate coverage test (`SbomCompletenessTest.java`); reconciled packaging manifests across .deb, RPM, Homebrew, Scoop, and WinGet, removing dangling unbuilt arm64 declarations (§404 compliance), added standalone RPM packaging script (`packaging/rpm/build-rpm.sh`), updated Windows installer (`install.ps1`) to provide clean unsupported messaging for Windows ARM64, and added cross-channel packaging consistency verification (`PackagingManifestConsistencyTest.java`); automated security policy validation via `SecurityPolicyVerificationTest.java`. Filter/IR schema stays at **1**; SQLite schema is at **3**. Superiority **Phase 12 is not started**.
 
-**Do not plan or implement superiority Phase 11** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
+**Do not plan or implement superiority Phase 12** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
 
 ---
 
@@ -1057,7 +1057,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 1. This entire file. It is the canonical record; the Cursor plan file is a local-only stub that points back here.
 2. `condense/pom.xml`, `condense/ARCHITECTURE.md`, `CONTRIBUTING.md` — noting §6, because these documents contain known false statements.
 3. `.github/workflows/build.yml` and `.github/workflows/soak-and-perf-baselines.yml` — the CI contract, including Failsafe soak runs and protected baseline artifacts.
-4. `docs/perf-baseline.md`, `docs/concurrency-and-performance.md`, and `SECURITY.md`.
+4. `docs/perf-baseline.md`, `docs/concurrency-and-performance.md`, `docs/threat-model.md`, `docs/backward-compatibility-sla.md`, and `SECURITY.md`.
 
 **Verify before doing anything**
 
@@ -1067,7 +1067,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 **Then, and only then**
 
-8. Superiority Phases 8, 9, and 10 have landed. Confirm `mvn test` is green, including `StructuredParserBenchmarkTest`, `McpConcurrentSessionBenchmarkTest`, `VirtualThreadsBenchmarkTest`, `BenchStatsTest`, and that `NativeSoakIT` and `NativeConcurrencyStressIT` are on the Failsafe `*IT.java` path. Do not start superiority Phase 11 from this stop point unless the user explicitly asks.
+8. Superiority Phases 8, 9, 10, and 11 have landed. Confirm `mvn test` is green, including `AdversarialSecurityTest`, `LicensePolicyTest`, `ThirdPartyNoticeTest`, `SbomCompletenessTest`, `PackagingManifestConsistencyTest`, `SecurityPolicyVerificationTest`, `StructuredParserBenchmarkTest`, `McpConcurrentSessionBenchmarkTest`, `VirtualThreadsBenchmarkTest`, `BenchStatsTest`, and that `NativeSoakIT` and `NativeConcurrencyStressIT` are on the Failsafe `*IT.java` path. Do not start superiority Phase 12 from this stop point unless the user explicitly asks.
 9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
 10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 
