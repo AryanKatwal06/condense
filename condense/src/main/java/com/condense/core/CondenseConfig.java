@@ -32,7 +32,10 @@ public record CondenseConfig(
     TeeConfig tee,
 
     @JsonProperty("commands")
-    java.util.Map<String, CommandConfig> commands
+    java.util.Map<String, CommandConfig> commands,
+
+    @JsonProperty("analytics")
+    AnalyticsConfig analytics
 
 ) {
 
@@ -41,8 +44,22 @@ public record CondenseConfig(
         return new CondenseConfig(
             new HooksConfig(List.of()),
             new TeeConfig(true, TeeMode.FAILURES),
-            java.util.Map.of()
+            java.util.Map.of(),
+            new AnalyticsConfig("claude-3-5-sonnet-20241022")
         );
+    }
+
+    public CondenseConfig(
+        HooksConfig hooks,
+        TeeConfig tee,
+        java.util.Map<String, CommandConfig> commands
+    ) {
+        this(hooks, tee, commands, new AnalyticsConfig("claude-3-5-sonnet-20241022"));
+    }
+
+    @Override
+    public AnalyticsConfig analytics() {
+        return analytics != null ? analytics : new AnalyticsConfig();
     }
 
     public CommandConfig commandConfig(String command) {
@@ -126,6 +143,21 @@ public record CondenseConfig(
         }
         public int maxLines(int defaultValue) {
             return maxLines != null ? maxLines : defaultValue;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record AnalyticsConfig(
+        @JsonProperty("model")
+        String model
+    ) {
+        public AnalyticsConfig() {
+            this("claude-3-5-sonnet-20241022");
+        }
+
+        @Override
+        public String model() {
+            return model != null && !model.isBlank() ? model : "claude-3-5-sonnet-20241022";
         }
     }
 }

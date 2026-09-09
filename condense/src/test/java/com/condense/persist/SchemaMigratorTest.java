@@ -107,6 +107,48 @@ class SchemaMigratorTest {
         }
     }
 
+    @Test
+    void v3MigrationAddsEstimatorAndSchemaVersionColumns() throws Exception {
+        Path data = tempDir.resolve("v3test");
+        Path db = data.resolve("condense.db");
+        LegacyDatabase.writeV0(db);
+
+        TrackingRepository repo = new TrackingRepository(new IsolatedPlatformDirs(tempDir.resolve("config"), data));
+        try {
+            assertThat(repo.schemaVersion()).isEqualTo(3);
+            repo.insert("git status", "proj1", "/tmp", 100, 20, 5L);
+
+            Driver driver = new org.sqlite.JDBC();
+            try (Connection conn = driver.connect("jdbc:sqlite:" + db.toAbsolutePath(), new Properties());
+                 Statement st = conn.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT estimator, schema_version FROM commands WHERE command = 'git status'")) {
+                assertThat(rs.next()).isTrue();
+                assertThat(rs.getString("estimator")).isEqualTo("utf8_weighted_v1");
+                assertThat(rs.getInt("schema_version")).isEqualTo(1);
+            }
+
+            // Older seeded row from v0 has default values
+            try (Connection conn = driver.connect("jdbc:sqlite:" + db.toAbsolutePath(), new Properties());
+                 Statement st = conn.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT estimator, schema_version FROM commands WHERE command = '" + LegacyDatabase.SEED_COMMAND + "'")) {
+                assertThat(rs.next()).isTrue();
+                assertThat(rs.getString("estimator")).isEqualTo("utf8_weighted_v1");
+                assertThat(rs.getInt("schema_version")).isEqualTo(1);
+            }
+
+            // Test mixed estimators detection
+            assertThat(repo.hasMixedEstimators(0L, null)).isFalse();
+
+            // Insert row with different estimator
+            repo.insertAt(System.currentTimeMillis() / 1000L, "npm test", "proj1", "/tmp", 200, 50, 10L, "legacy_v0", 1);
+            assertThat(repo.hasMixedEstimators(0L, null)).isTrue();
+            assertThat(repo.hasMixedEstimators(0L, "proj1")).isTrue();
+            assertThat(repo.hasMixedEstimators(0L, "other_project")).isFalse();
+        } finally {
+            repo.close();
+        }
+    }
+
     private static boolean tableExists(Path db, String table) throws Exception {
         Driver driver = new org.sqlite.JDBC();
         try (Connection connection = driver.connect("jdbc:sqlite:" + db.toAbsolutePath(), new Properties());

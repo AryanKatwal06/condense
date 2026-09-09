@@ -18,7 +18,7 @@ import java.sql.Statement;
  */
 public final class SchemaMigrator {
 
-    public static final int TARGET_VERSION = 2;
+    public static final int TARGET_VERSION = 3;
 
     private static final Logger log = Logger.getLogger(SchemaMigrator.class);
 
@@ -62,6 +62,9 @@ public final class SchemaMigrator {
                 }
                 if (current < 2) {
                     applyV2(st);
+                }
+                if (current < 3) {
+                    applyV3(st);
                 }
                 st.executeUpdate("PRAGMA user_version = " + TARGET_VERSION);
             }
@@ -133,5 +136,27 @@ public final class SchemaMigrator {
                 installed_ts INTEGER NOT NULL
             )
             """);
+    }
+
+    private static void applyV3(Statement st) throws SQLException {
+        try {
+            st.executeUpdate("ALTER TABLE commands ADD COLUMN estimator TEXT DEFAULT 'utf8_weighted_v1'");
+        } catch (SQLException e) {
+            if (!isDuplicateColumn(e)) {
+                throw e;
+            }
+        }
+        try {
+            st.executeUpdate("ALTER TABLE commands ADD COLUMN schema_version INTEGER DEFAULT 1");
+        } catch (SQLException e) {
+            if (!isDuplicateColumn(e)) {
+                throw e;
+            }
+        }
+    }
+
+    private static boolean isDuplicateColumn(SQLException e) {
+        String msg = e.getMessage();
+        return msg != null && (msg.contains("duplicate column") || msg.contains("duplicate name"));
     }
 }

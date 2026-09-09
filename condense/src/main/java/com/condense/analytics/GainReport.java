@@ -17,6 +17,9 @@ import java.util.List;
 @RegisterForReflection(targets = {
     GainReport.class,
     EstimatorInfo.class,
+    CostEstimate.class,
+    ModelPricing.class,
+    PricingCatalog.class,
     TrackingRepository.AggregateStats.class,
     TrackingRepository.DailyStat.class,
     TrackingRepository.WeeklyStat.class,
@@ -59,12 +62,56 @@ public record GainReport(
     List<DailyStat> daily,
 
     @JsonProperty("estimator")
-    EstimatorInfo estimator
+    EstimatorInfo estimator,
+
+    @JsonProperty("cost")
+    CostEstimate cost,
+
+    @JsonProperty("history_status")
+    String historyStatus
 
 ) {
     public GainReport {
         if (estimator == null) {
             estimator = EstimatorInfo.current();
         }
+        if (historyStatus == null) {
+            historyStatus = "homogeneous";
+        }
+    }
+
+    /**
+     * Backward-compatible 12-argument constructor defaulting cost to null and history to homogeneous.
+     */
+    public GainReport(
+        String scope,
+        int sinceDays,
+        long totalCommands,
+        long inputTokens,
+        long outputTokens,
+        long tokensSaved,
+        int savingsPct,
+        long totalExecMs,
+        long avgExecMs,
+        List<TopCommand> topCommands,
+        List<DailyStat> daily,
+        EstimatorInfo estimator
+    ) {
+        this(
+            scope,
+            sinceDays,
+            totalCommands,
+            inputTokens,
+            outputTokens,
+            tokensSaved,
+            savingsPct,
+            totalExecMs,
+            avgExecMs,
+            topCommands,
+            daily,
+            estimator,
+            null,
+            "homogeneous"
+        );
     }
 }

@@ -33,7 +33,12 @@ public class TrackingRepository {
     static final int SQLITE_LOCKED = 6;
     private static final int INSERT_BUSY_RETRIES = 2;
 
-    private static final String INSERT = """
+    private static final String INSERT_V3 = """
+        INSERT INTO commands(ts, command, project, cwd, raw_tokens, out_tokens, exec_ms, estimator, schema_version)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+    private static final String INSERT_LEGACY = """
         INSERT INTO commands(ts, command, project, cwd, raw_tokens, out_tokens, exec_ms)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
@@ -135,18 +140,42 @@ public class TrackingRepository {
     /** Tests plant expired or future rows against {@link CondenseClock}. */
     public void insertAt(long ts, String command, String project, String cwd,
                   int rawTokens, int outTokens, long execMs) {
+        insertAt(ts, command, project, cwd, rawTokens, outTokens, execMs, Utf8WeightedTokenEstimator.NAME, 1);
+    }
+
+    public void insertAt(long ts, String command, String project, String cwd,
+                  int rawTokens, int outTokens, long execMs, String estimator, int schemaVersion) {
         SQLException last = null;
         for (int attempt = 0; attempt <= INSERT_BUSY_RETRIES; attempt++) {
             try {
-                try (PreparedStatement ps = connection().prepareStatement(INSERT)) {
-                    ps.setLong(1, ts);
-                    ps.setString(2, command);
-                    ps.setString(3, project);
-                    ps.setString(4, cwd);
-                    ps.setInt(5, rawTokens);
-                    ps.setInt(6, outTokens);
-                    ps.setLong(7, execMs);
-                    ps.executeUpdate();
+                try {
+                    try (PreparedStatement ps = connection().prepareStatement(INSERT_V3)) {
+                        ps.setLong(1, ts);
+                        ps.setString(2, command);
+                        ps.setString(3, project);
+                        ps.setString(4, cwd);
+                        ps.setInt(5, rawTokens);
+                        ps.setInt(6, outTokens);
+                        ps.setLong(7, execMs);
+                        ps.setString(8, estimator != null ? estimator : Utf8WeightedTokenEstimator.NAME);
+                        ps.setInt(9, schemaVersion > 0 ? schemaVersion : 1);
+                        ps.executeUpdate();
+                    }
+                } catch (SQLException e) {
+                    if (e.getMessage() != null && e.getMessage().contains("no such column")) {
+                        try (PreparedStatement ps = connection().prepareStatement(INSERT_LEGACY)) {
+                            ps.setLong(1, ts);
+                            ps.setString(2, command);
+                            ps.setString(3, project);
+                            ps.setString(4, cwd);
+                            ps.setInt(5, rawTokens);
+                            ps.setInt(6, outTokens);
+                            ps.setLong(7, execMs);
+                            ps.executeUpdate();
+                        }
+                    } else {
+                        throw e;
+                    }
                 }
                 return;
             } catch (SQLException e) {
@@ -165,6 +194,34 @@ public class TrackingRepository {
             this.degraded = true;
             WriteFailureLedger.record(platformDirs.resolveDataDir(), last.getMessage());
         }
+    }
+
+    /**
+     * Checks if the queried window contains rows tagged with different estimator names
+     * or a mix of tagged and legacy untagged rows.
+     */
+    public boolean hasMixedEstimators(long sinceEpoch, String projectHash) {
+        String sql = projectHash == null
+            ? "SELECT DISTINCT estimator FROM commands WHERE ts >= ?"
+            : "SELECT DISTINCT estimator FROM commands WHERE ts >= ? AND project = ?";
+        try (PreparedStatement ps = connection().prepareStatement(sql)) {
+            ps.setLong(1, sinceEpoch);
+            if (projectHash != null) {
+                ps.setString(2, projectHash);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    if (count > 1) {
+                        return true;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            log.debugf("Failed to query distinct estimators: %s", e.getMessage());
+        }
+        return false;
     }
 
     static boolean isBusyOrLocked(SQLException e) {

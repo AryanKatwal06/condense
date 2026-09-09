@@ -34,12 +34,33 @@ public class GainRepository {
      * @return assembled report; never null
      */
     public GainReport buildReport(String scope, int sinceDays, int topN) {
+        return buildReport(scope, sinceDays, topN, PricingCatalog.get().defaultModel());
+    }
+
+    /**
+     * Builds a {@link GainReport} for the given scope, time window, and model pricing.
+     *
+     * @param scope     "global" or "project"
+     * @param sinceDays number of past days to include; 0 = all time
+     * @param topN      number of top commands to include in the report
+     * @param pricing   model pricing metadata for cost estimation; null to suppress cost
+     * @return assembled report; never null
+     */
+    public GainReport buildReport(String scope, int sinceDays, int topN, ModelPricing pricing) {
         String projectHash = resolveProjectHash(scope);
         long sinceEpoch = sinceEpoch(sinceDays);
 
         AggregateStats agg = tracking.queryAggregate(sinceEpoch, projectHash);
         List<TopCommand> top = tracking.queryTopCommands(topN, sinceEpoch, projectHash);
         List<DailyStat> daily = tracking.queryDaily(sinceDays == 0 ? 30 : sinceDays, projectHash);
+        EstimatorInfo estimator = EstimatorInfo.current();
+
+        CostEstimate cost = pricing != null
+            ? CostEstimate.calculate(pricing, agg.sumRaw(), agg.sumOut(), estimator)
+            : null;
+
+        boolean mixed = tracking.hasMixedEstimators(sinceEpoch, projectHash);
+        String historyStatus = mixed ? "mixed_estimators" : "homogeneous";
 
         return new GainReport(
             scope,
@@ -53,7 +74,9 @@ public class GainRepository {
             agg.avgExecMs(),
             top,
             daily,
-            EstimatorInfo.current()
+            estimator,
+            cost,
+            historyStatus
         );
     }
 

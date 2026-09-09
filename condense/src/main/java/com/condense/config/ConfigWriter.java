@@ -107,9 +107,10 @@ public class ConfigWriter {
             case "tee.enabled"              -> String.valueOf(config.tee().enabled());
             case "tee.mode"                 -> config.tee().mode().toValue();
             case "hooks.exclude_commands"   -> String.join(",", config.hooks().excludeCommands());
+            case "analytics.model"          -> config.analytics().model();
             default -> throw new IllegalArgumentException(
                 "Unknown config key: '" + keyPath + "'. " +
-                "Valid keys: tee.enabled, tee.mode, hooks.exclude_commands");
+                "Valid keys: tee.enabled, tee.mode, hooks.exclude_commands, analytics.model");
         };
     }
 
@@ -122,14 +123,16 @@ public class ConfigWriter {
                 new CondenseConfig.TeeConfig(
                     Boolean.parseBoolean(value.trim()),
                     config.tee().mode()),
-                config.commands());
+                config.commands(),
+                config.analytics());
 
             case "tee.mode" -> new CondenseConfig(
                 config.hooks(),
                 new CondenseConfig.TeeConfig(
                     config.tee().enabled(),
                     TeeMode.fromString(value)),
-                config.commands());
+                config.commands(),
+                config.analytics());
 
             case "hooks.exclude_commands" -> {
                 List<String> cmds = value.isBlank()
@@ -141,12 +144,19 @@ public class ConfigWriter {
                 yield new CondenseConfig(
                     new CondenseConfig.HooksConfig(cmds),
                     config.tee(),
-                    config.commands());
+                    config.commands(),
+                    config.analytics());
             }
+
+            case "analytics.model" -> new CondenseConfig(
+                config.hooks(),
+                config.tee(),
+                config.commands(),
+                new CondenseConfig.AnalyticsConfig(value.trim()));
 
             default -> throw new IllegalArgumentException(
                 "Unknown config key: '" + keyPath + "'. " +
-                "Valid keys: tee.enabled, tee.mode, hooks.exclude_commands");
+                "Valid keys: tee.enabled, tee.mode, hooks.exclude_commands, analytics.model");
         };
     }
 

@@ -116,8 +116,8 @@ class SchemaCompatibilityTest {
     }
 
     @Test
-    void sqliteTargetStaysTwo() {
-        assertThat(SchemaMigrator.TARGET_VERSION).isEqualTo(2);
+    void sqliteTargetIsThree() {
+        assertThat(SchemaMigrator.TARGET_VERSION).isEqualTo(3);
     }
 
     private FilterPipeline resolve(Path projectDir, FilterPipeline fallback) throws Exception {
