@@ -162,7 +162,17 @@ class ReflectConfigDriftTest {
             com.condense.mcp.McpMessages.ToolContent.class.getName(),
             com.condense.mcp.McpMessages.ToolResult.class.getName(),
             com.condense.mcp.McpMessages.ResourceContents.class.getName(),
-            com.condense.mcp.McpMessages.ResourceReadResult.class.getName()
+            com.condense.mcp.McpMessages.ResourceReadResult.class.getName(),
+            com.condense.session.SessionCommand.class.getName(),
+            com.condense.session.SessionCommand.AnalyzeCommand.class.getName(),
+            com.condense.session.SessionIntelligenceReport.class.getName(),
+            com.condense.session.SessionIntelligenceReport.UnsupportedCommandSummary.class.getName(),
+            com.condense.session.SessionIntelligenceReport.FailurePatternSummary.class.getName(),
+            com.condense.session.FilterProposal.class.getName(),
+            com.condense.session.CorrectionCandidate.class.getName(),
+            com.condense.session.ReportCommand.class.getName(),
+            com.condense.session.FailureReportPayload.class.getName(),
+            com.condense.session.TelemetryConsentManager.ConsentState.class.getName()
         );
 
         assertThat(com.condense.discover.DiscoverCommand.class.isAnnotationPresent(
@@ -193,6 +203,16 @@ class ReflectConfigDriftTest {
         assertThat(com.condense.commands.McpCommand.class.isAnnotationPresent(
                 io.quarkus.arc.Unremovable.class))
             .as("McpCommand is created only via Picocli programmatic lookup; "
+                + "without @Unremovable Quarkus strips it from the native image")
+            .isTrue();
+        assertThat(com.condense.session.SessionCommand.class.isAnnotationPresent(
+                io.quarkus.arc.Unremovable.class))
+            .as("SessionCommand is created only via Picocli programmatic lookup; "
+                + "without @Unremovable Quarkus strips it from the native image")
+            .isTrue();
+        assertThat(com.condense.session.ReportCommand.class.isAnnotationPresent(
+                io.quarkus.arc.Unremovable.class))
+            .as("ReportCommand is created only via Picocli programmatic lookup; "
                 + "without @Unremovable Quarkus strips it from the native image")
             .isTrue();
     }

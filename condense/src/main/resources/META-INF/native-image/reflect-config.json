@@ -538,5 +538,15 @@
   { "name": "com.condense.mcp.McpMessages$ToolContent", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.mcp.McpMessages$ToolResult", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.mcp.McpMessages$ResourceContents", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
-  { "name": "com.condense.mcp.McpMessages$ResourceReadResult", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
+  { "name": "com.condense.mcp.McpMessages$ResourceReadResult", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.SessionCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.SessionCommand$AnalyzeCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.SessionIntelligenceReport", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.SessionIntelligenceReport$UnsupportedCommandSummary", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.SessionIntelligenceReport$FailurePatternSummary", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.FilterProposal", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.CorrectionCandidate", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.ReportCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.FailureReportPayload", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.TelemetryConsentManager$ConsentState", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
 ]

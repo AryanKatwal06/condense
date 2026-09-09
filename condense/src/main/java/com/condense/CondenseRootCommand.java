@@ -27,7 +27,9 @@ import java.util.List;
         com.condense.CompletionCommand.class,
         com.condense.update.UpdateCommand.class,
         com.condense.commands.McpCommand.class,
-        com.condense.uninstall.UninstallCommand.class
+        com.condense.uninstall.UninstallCommand.class,
+        com.condense.session.SessionCommand.class,
+        com.condense.session.ReportCommand.class
     },
     description = {
         "High-performance CLI proxy that filters command output to save 60-90%% AI tokens.",
@@ -56,6 +58,8 @@ import java.util.List;
         "  condense explain pytest      # Which stages dropped which lines",
         "  condense read Src.java       # Comment-stripped source with original line numbers",
         "  condense mcp --start         # MCP server on stdio",
+        "  condense session analyze     # Privacy-preserving session intelligence",
+        "  condense report --preview    # Inspect sanitized failure diagnostics",
         "  condense init -g             # Install AI tool hooks"
     }
 )

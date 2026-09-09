@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 9 September 2026 (superiority Phase 11 complete security, dependency, licensing, and release assurance).
+**Written:** 4 September 2026. **Revised:** 9 September 2026 (superiority Phase 12 complete privacy-preserving session intelligence and opt-in failure visibility).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -1043,31 +1043,31 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 ---
 
 ## 13. Exact stop point
-
-**Where we are.** Superiority **Phase 11** (complete security, dependency, licensing and release assurance) has landed. Authored code-specific threat model (`docs/threat-model.md`) mapping 7 security boundaries (child process execution, hook system, MCP server, structured parsers, configuration overrides, local persistence, supply-chain and release channels) directly to implementation and verifying tests; formalized backward compatibility policy (SemVer 2.0.0, schema versions, deprecation cycles) and security response SLAs (24h critical triage, 7d critical patch, 48h/14d high, 72h/30d medium/low) in `docs/backward-compatibility-sla.md` and `SECURITY.md`; implemented adversarial security suite (`AdversarialSecurityTest.java`) testing XML external entity (XXE) injection, Billion Laughs entity expansion bombs, malformed binlog gzip framing, safe path traversal escapes, and compound-command bypass prevention; established automated dependency license allowlist audit (`LicensePolicyTest.java`) restricting runtime distributions to non-reciprocal permissive licenses (Apache-2.0, MIT, BSD, ISC, Public Domain) and forbidding copyleft (GPL, AGPL, LGPL); generated comprehensive third-party license notices (`THIRD_PARTY_LICENSES.md`) verified by `ThirdPartyNoticeTest.java`; added CycloneDX SBOM runtime coordinate coverage test (`SbomCompletenessTest.java`); reconciled packaging manifests across .deb, RPM, Homebrew, Scoop, and WinGet, removing dangling unbuilt arm64 declarations (§404 compliance), added standalone RPM packaging script (`packaging/rpm/build-rpm.sh`), updated Windows installer (`install.ps1`) to provide clean unsupported messaging for Windows ARM64, and added cross-channel packaging consistency verification (`PackagingManifestConsistencyTest.java`); automated security policy validation via `SecurityPolicyVerificationTest.java`. Filter/IR schema stays at **1**; SQLite schema is at **3**. Superiority **Phase 12 is not started**.
-
-**Do not plan or implement superiority Phase 12** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
-
+ 
+**Where we are.** Superiority **Phase 12** (privacy-preserving session intelligence and opt-in failure visibility) has landed. Implemented pluggable, static session transcript readers for Claude Code, Cursor, and Windsurf (`SessionReaderRegistry`, `ClaudeCodeSessionReader`, `CursorSessionReader`, `WindsurfSessionReader`) using zero reflection to preserve native GraalVM compatibility; enforced strict intra-session isolation with bounded directory traversal, file counts, byte caps, and age filters, guaranteeing that errors in one session can never pair with commands in another (`CorrectionCandidateDetector`, `CrossSessionNonPairingTest`); developed high-assurance secret redaction engine (`SecretRedactor`) with pre-guards and non-backtracking regexes covering API keys (Anthropic, OpenAI, Google, GitHub, AWS, Slack), JWT tokens, bearer headers, CLI flags, and database connection URIs; built session intelligence service (`SessionIntelligenceService`) discovering unsupported commands, computing token savings, classifying failure categories, and deriving deterministic candidate proposals without ever mutating `filters.toml`; added `condense session analyze` CLI command supporting text, JSON, and summary outputs; designed opt-in failure reporting architecture around an explicit zero-knowledge privacy threat model (`docs/telemetry-and-failure-visibility.md`) featuring sanitized wire schema (`FailureReportPayload`), persistent opt-in consent manager (`TelemetryConsentManager`), compile-time kill switch (`-Dcondense.telemetry.disabled=true`), endpoint pinning, rate limits (10/day), local state purge, and `condense report` CLI command; registered all Phase 12 CLI and DTO classes in `reflect-config.json` and verified with `ReflectConfigDriftTest`; added native integration test `NativeSessionIT`. All 43 Phase 12 tests green. Filter/IR schema stays at **1**; SQLite schema is at **3**. Superiority **Phase 13 is not started**.
+ 
+**Do not plan or implement superiority Phase 13** until the user explicitly asks. Do not implement R25 unless the user explicitly asks.
+ 
 ---
-
+ 
 ## 14. NEXT AGENT INSTRUCTIONS
-
+ 
 **Read first, in this order**
-
+ 
 1. This entire file. It is the canonical record; the Cursor plan file is a local-only stub that points back here.
 2. `condense/pom.xml`, `condense/ARCHITECTURE.md`, `CONTRIBUTING.md` — noting §6, because these documents contain known false statements.
 3. `.github/workflows/build.yml` and `.github/workflows/soak-and-perf-baselines.yml` — the CI contract, including Failsafe soak runs and protected baseline artifacts.
-4. `docs/perf-baseline.md`, `docs/concurrency-and-performance.md`, `docs/threat-model.md`, `docs/backward-compatibility-sla.md`, and `SECURITY.md`.
-
+4. `docs/perf-baseline.md`, `docs/concurrency-and-performance.md`, `docs/threat-model.md`, `docs/backward-compatibility-sla.md`, `docs/telemetry-and-failure-visibility.md`, and `SECURITY.md`.
+ 
 **Verify before doing anything**
-
+ 
 5. `git status --short` and `git log --oneline -5`. Reconcile §13 against `HEAD` and update this file if someone has worked since the last stop point.
 6. Confirm Phase 4 files exist (`PipelineBackedFilter`, `BoundedRegex`, `PrefixIndex`, `corpus/golden/`, `GoldenLockTest`) and that `GoldenLockTest` is green.
-7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12). Confirm `NativeBudgetIT`, `NativeSoakIT`, `NativeConcurrencyStressIT`, and `NativeProposeIT` appear in native job logs.
-
+7. Check the most recent GitHub Actions run. Do not assume native builds are currently green (§12). Confirm `NativeBudgetIT`, `NativeSoakIT`, `NativeConcurrencyStressIT`, `NativeProposeIT`, and `NativeSessionIT` appear in native job logs.
+ 
 **Then, and only then**
-
-8. Superiority Phases 8, 9, 10, and 11 have landed. Confirm `mvn test` is green, including `AdversarialSecurityTest`, `LicensePolicyTest`, `ThirdPartyNoticeTest`, `SbomCompletenessTest`, `PackagingManifestConsistencyTest`, `SecurityPolicyVerificationTest`, `StructuredParserBenchmarkTest`, `McpConcurrentSessionBenchmarkTest`, `VirtualThreadsBenchmarkTest`, `BenchStatsTest`, and that `NativeSoakIT` and `NativeConcurrencyStressIT` are on the Failsafe `*IT.java` path. Do not start superiority Phase 12 from this stop point unless the user explicitly asks.
+ 
+8. Superiority Phases 8, 9, 10, 11, and 12 have landed. Confirm `mvn test` is green, including `AdversarialSecurityTest`, `LicensePolicyTest`, `ThirdPartyNoticeTest`, `SbomCompletenessTest`, `PackagingManifestConsistencyTest`, `SecurityPolicyVerificationTest`, `StructuredParserBenchmarkTest`, `McpConcurrentSessionBenchmarkTest`, `VirtualThreadsBenchmarkTest`, `BenchStatsTest`, `SecretRedactionTest`, `TranscriptResilienceTest`, `CrossSessionNonPairingTest`, `SessionBoundsTest`, `DeterministicProposalTest`, `SessionCommandTest`, `FailureVisibilityPrivacyTest`, `ReflectConfigDriftTest`, and that `NativeSoakIT`, `NativeConcurrencyStressIT`, and `NativeSessionIT` are on the Failsafe `*IT.java` path. Do not start superiority Phase 13 from this stop point unless the user explicitly asks.
 9. Round 2 R13–R24 and R26 have landed. Do not implement R25 from this stop point unless the user explicitly asks.
 10. There is no Phase 18. Post-roadmap work needs its own plan-then-approve cycle.
 
