@@ -18,10 +18,14 @@ public final class TextRenderer {
     private TextRenderer() {}
 
     public static String render(Document document) {
+        return render(document, null);
+    }
+
+    public static String render(Document document, com.condense.core.AccessibilityPolicy policy) {
         if (document == null || document.document() == null) {
             return "";
         }
-        return switch (document.kind()) {
+        String rendered = switch (document.kind()) {
             case TEST -> renderTest(cast(document.document(), Document.TestDocument.class));
             case DIAGNOSTIC -> renderDiagnostic(cast(document.document(), Document.DiagnosticDocument.class));
             case DEPENDENCY -> renderDependency(cast(document.document(), Document.DependencyDocument.class));
@@ -30,6 +34,7 @@ public final class TextRenderer {
             case BUILD -> renderBuild(cast(document.document(), Document.BuildDocument.class));
             case OPAQUE -> renderOpaque(cast(document.document(), Document.OpaqueDocument.class));
         };
+        return policy != null ? policy.format(rendered) : rendered;
     }
 
     public static String renderTest(Document.TestDocument payload) {

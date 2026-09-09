@@ -133,7 +133,7 @@ public class CondenseRootCommand implements java.util.concurrent.Callable<Intege
         try {
             boolean json = "json".equalsIgnoreCase(format);
             ProxyService.Outcome outcome = proxy.run(
-                argList, verbosityLevel(), ultraCompact, json, System.out, System.err);
+                argList, verbosityLevel(), ultraCompact, json, plain, System.out, System.err);
             return outcome.result().exitCode();
         } catch (IllegalStateException e) {
             System.err.println(e.getMessage());

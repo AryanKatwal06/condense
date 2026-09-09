@@ -67,6 +67,18 @@ public class ProxyService {
             PrintStream out,
             PrintStream err
     ) throws Exception {
+        return run(args, verbose, ultraCompact, json, false, out, err);
+    }
+
+    public Outcome run(
+            List<String> args,
+            int verbose,
+            boolean ultraCompact,
+            boolean json,
+            boolean plain,
+            PrintStream out,
+            PrintStream err
+    ) throws Exception {
         if (args == null || args.isEmpty()) {
             throw new IllegalArgumentException("command is required");
         }
@@ -116,6 +128,8 @@ public class ProxyService {
                 commandStr, strategy.getClass().getSimpleName(), result, filtered));
         }
 
+        AccessibilityPolicy accessibility = AccessibilityPolicy.of(plain);
+
         if (out != null && !out.checkError()) {
             if (json) {
                 String jsonText = JsonRenderer.render(filtered.document());
@@ -125,8 +139,9 @@ public class ProxyService {
                 }
                 filtered = filtered.withRenderedOutput(jsonText);
             } else if (!alreadyPrinted) {
-                out.print(filtered.output());
-                if (!filtered.output().endsWith("\n")) {
+                String rendered = accessibility.format(filtered.output());
+                out.print(rendered);
+                if (!rendered.endsWith("\n")) {
                     out.println();
                 }
             }
