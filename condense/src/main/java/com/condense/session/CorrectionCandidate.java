@@ -1,11 +1,13 @@
 package com.condense.session;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.Objects;
 
 /**
  * A detected correction pattern where a failed command was subsequently followed
  * by a successful command within the same isolated session.
  */
+@RegisterForReflection
 public record CorrectionCandidate(
     String sessionId,
     String failedCommand,

@@ -215,6 +215,27 @@ class ReflectConfigDriftTest {
             .as("ReportCommand is created only via Picocli programmatic lookup; "
                 + "without @Unremovable Quarkus strips it from the native image")
             .isTrue();
+
+        assertThat(com.condense.session.SessionIntelligenceReport.class.isAnnotationPresent(
+                io.quarkus.runtime.annotations.RegisterForReflection.class))
+            .as("SessionIntelligenceReport must be annotated with @RegisterForReflection")
+            .isTrue();
+        assertThat(com.condense.session.FailureReportPayload.class.isAnnotationPresent(
+                io.quarkus.runtime.annotations.RegisterForReflection.class))
+            .as("FailureReportPayload must be annotated with @RegisterForReflection")
+            .isTrue();
+        assertThat(com.condense.session.FilterProposal.class.isAnnotationPresent(
+                io.quarkus.runtime.annotations.RegisterForReflection.class))
+            .as("FilterProposal must be annotated with @RegisterForReflection")
+            .isTrue();
+        assertThat(com.condense.session.CorrectionCandidate.class.isAnnotationPresent(
+                io.quarkus.runtime.annotations.RegisterForReflection.class))
+            .as("CorrectionCandidate must be annotated with @RegisterForReflection")
+            .isTrue();
+        assertThat(com.condense.session.TelemetryConsentManager.ConsentState.class.isAnnotationPresent(
+                io.quarkus.runtime.annotations.RegisterForReflection.class))
+            .as("ConsentState must be annotated with @RegisterForReflection")
+            .isTrue();
     }
 
     private static List<String> registeredNames() throws Exception {

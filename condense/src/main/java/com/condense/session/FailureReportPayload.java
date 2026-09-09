@@ -1,5 +1,6 @@
 package com.condense.session;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -8,6 +9,7 @@ import java.util.UUID;
  * Strictly guarantees ZERO raw command lines, file paths, repository names, or credentials.
  * Uses bucketed values to prevent statistical re-identification.
  */
+@RegisterForReflection
 public record FailureReportPayload(
     int schemaVersion,
     String reportId,

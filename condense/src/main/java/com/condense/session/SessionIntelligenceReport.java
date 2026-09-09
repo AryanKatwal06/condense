@@ -1,11 +1,13 @@
 package com.condense.session;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.List;
 
 /**
  * Aggregated session intelligence report containing failure metrics, unsupported command
  * discovery, and candidate proposals for human review.
  */
+@RegisterForReflection
 public record SessionIntelligenceReport(
     int totalSessions,
     int totalCommands,
@@ -19,6 +21,7 @@ public record SessionIntelligenceReport(
     List<CorrectionCandidate> candidates,
     List<FilterProposal> proposals
 ) {
+    @RegisterForReflection
     public record UnsupportedCommandSummary(
         String commandPrefix,
         int executionCount,
@@ -26,6 +29,7 @@ public record SessionIntelligenceReport(
         long estimatedTokens
     ) {}
 
+    @RegisterForReflection
     public record FailurePatternSummary(
         String failureCategory,
         int count,

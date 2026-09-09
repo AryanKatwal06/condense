@@ -1,9 +1,12 @@
 package com.condense.session;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
 /**
  * Reviewable candidate filter proposal deterministically derived from session intelligence.
  * Condense presents these to the user for human review and never auto-modifies filters.toml.
  */
+@RegisterForReflection
 public record FilterProposal(
     String id,
     String name,

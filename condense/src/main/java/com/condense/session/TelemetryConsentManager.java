@@ -2,6 +2,7 @@ package com.condense.session;
 
 import com.condense.core.Mappers;
 import com.condense.core.PlatformDirs;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,6 +29,7 @@ public final class TelemetryConsentManager {
         this.consentFile = consentFile;
     }
 
+    @RegisterForReflection
     public record ConsentState(
         boolean optedIn,
         String consentTimestamp,
