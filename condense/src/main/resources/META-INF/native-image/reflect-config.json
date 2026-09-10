@@ -548,5 +548,7 @@
   { "name": "com.condense.session.CorrectionCandidate", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.session.ReportCommand", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
   { "name": "com.condense.session.FailureReportPayload", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
-  { "name": "com.condense.session.TelemetryConsentManager$ConsentState", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
+  { "name": "com.condense.session.TelemetryConsentManager$ConsentState", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.FailureExportAnalyzer", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true },
+  { "name": "com.condense.session.FailureExportAnalyzer$AnalysisSummary", "allDeclaredConstructors": true, "allDeclaredMethods": true, "allDeclaredFields": true }
 ]

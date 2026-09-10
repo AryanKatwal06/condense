@@ -172,7 +172,9 @@ class ReflectConfigDriftTest {
             com.condense.session.CorrectionCandidate.class.getName(),
             com.condense.session.ReportCommand.class.getName(),
             com.condense.session.FailureReportPayload.class.getName(),
-            com.condense.session.TelemetryConsentManager.ConsentState.class.getName()
+            com.condense.session.TelemetryConsentManager.ConsentState.class.getName(),
+            com.condense.session.FailureExportAnalyzer.class.getName(),
+            com.condense.session.FailureExportAnalyzer.AnalysisSummary.class.getName()
         );
 
         assertThat(com.condense.discover.DiscoverCommand.class.isAnnotationPresent(

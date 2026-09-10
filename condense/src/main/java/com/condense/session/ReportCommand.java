@@ -36,6 +36,9 @@ public class ReportCommand implements Callable<Integer> {
     @Option(names = "--export", description = "Export the sanitized failure report to a local file.", paramLabel = "PATH")
     Path exportPath;
 
+    @Option(names = "--analyze", description = "Analyze an offline directory or file of exported failure reports.", paramLabel = "PATH")
+    Path analyzePath;
+
     @Option(names = "--purge", description = "Purge all locally stored telemetry and consent data.")
     boolean purge;
 
@@ -102,6 +105,13 @@ public class ReportCommand implements Callable<Integer> {
 
             if (preview) {
                 out.println(service.previewReport(samplePayload));
+                return 0;
+            }
+
+            if (analyzePath != null) {
+                FailureExportAnalyzer analyzer = new FailureExportAnalyzer();
+                FailureExportAnalyzer.AnalysisSummary summary = analyzer.analyze(analyzePath);
+                out.println(summary.renderText());
                 return 0;
             }
 
