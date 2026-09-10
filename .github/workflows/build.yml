@@ -101,8 +101,8 @@ jobs:
       - name: Install musl toolchain and zlib (linux-x64 only)
         if: matrix.install-musl
         run: |
-          sudo rm -f /etc/apt/sources.list.d/google-chrome.list
-          sudo apt-get update -qq
+          sudo rm -f /etc/apt/sources.list.d/*chrome* /etc/apt/sources.list.d/*google*
+          sudo apt-get update -qq || true
           sudo apt-get install -y musl-tools
           curl -L -o zlib.tar.gz https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
           mkdir zlib && tar -xzf zlib.tar.gz -C zlib --strip-components 1
