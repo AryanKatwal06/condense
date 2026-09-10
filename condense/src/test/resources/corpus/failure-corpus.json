@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "pin_zap_commit": "d9498bb",
+  "pin_condense_version": "1.0.1",
+  "entries": [
+    {
+      "id": "pytest/assertion_failure",
+      "command": "pytest",
+      "exit_code": 1,
+      "category": "TEST_FAILURE",
+      "raw_snippet": "============================= test session starts ==============================\nrootdir: /workspace/project\ncollected 4 items\n\ntests/test_math.py ..F.\n\n=================================== FAILURES ===================================\n___________________________________ test_div ___________________________________\n\n    def test_div():\n>       assert 1 / 0 == 0\nE       ZeroDivisionError: division by zero\n\ntests/test_math.py:12: ZeroDivisionError\n=========================== short test summary info ============================\nFAILED tests/test_math.py::test_div - ZeroDivisionError: division by zero\n========================= 1 failed, 3 passed in 0.14s ==========================\n",
+      "critical_signals": [
+        "ZeroDivisionError: division by zero",
+        "FAILED tests/test_math.py::test_div"
+      ],
+      "zap_status": "line_filtered",
+      "condense_advantage": "Structured TestDocument IR with failing test name, exception type, and frame"
+    },
+    {
+      "id": "mvn/compile_failure",
+      "command": "mvn compile",
+      "exit_code": 1,
+      "category": "COMPILATION_ERROR",
+      "raw_snippet": "[INFO] Scanning for projects...\n[INFO] Building my-app 1.0.0\n[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ my-app ---\n[INFO] Changes detected - recompiling the module!\n[ERROR] /workspace/src/main/java/com/example/App.java:[24,31] cannot find symbol\n  symbol:   variable unknownSymbol\n  location: class com.example.App\n[INFO] 1 error\n[INFO] ------------------------------------------------------------------------\n[INFO] BUILD FAILURE\n[INFO] ------------------------------------------------------------------------\n",
+      "critical_signals": [
+        "/workspace/src/main/java/com/example/App.java:[24,31]",
+        "cannot find symbol",
+        "BUILD FAILURE"
+      ],
+      "zap_status": "regex_only",
+      "condense_advantage": "DiagnosticDocument IR grouping diagnostics with file coordinates and severity markers"
+    },
+    {
+      "id": "cargo/borrow_checker_failure",
+      "command": "cargo test",
+      "exit_code": 101,
+      "category": "COMPILATION_ERROR",
+      "raw_snippet": "   Compiling app v0.1.0 (/workspace/app)\nerror[E0382]: use of moved value: `s`\n  --> src/main.rs:18:20\n   |\n16 |     let s = String::from(\"hello\");\n   |         - move occurs because `s` has type `String`\n17 |     drop(s);\n   |          - value moved here\n18 |     println!(\"{}\", s);\n   |                    ^ value borrowed here after move\n\nFor more information about this error, try `rustc --explain E0382`.\nerror: could not compile `app` (bin \"app\") due to 1 previous error\n",
+      "critical_signals": [
+        "error[E0382]: use of moved value: `s`",
+        "src/main.rs:18:20"
+      ],
+      "zap_status": "unmodified_or_line_dropped",
+      "condense_advantage": "ANSI strip plus clean error code preservation and explanation link retention"
+    },
+    {
+      "id": "dotnet/msbuild_failure",
+      "command": "dotnet build",
+      "exit_code": 1,
+      "category": "BUILD_FAILURE",
+      "raw_snippet": "Microsoft (R) Build Engine version 17.8.3+195e4f5a3 for .NET\n  Determining projects to restore...\n  Restored /workspace/Service.csproj (in 120 ms).\n/workspace/Program.cs(42,15): error CS0103: The name 'UnresolvedName' does not exist in the current context [/workspace/Service.csproj]\n\nBuild FAILED.\n       /workspace/Program.cs(42,15): error CS0103: The name 'UnresolvedName' does not exist in the current context [/workspace/Service.csproj]\n    0 Warning(s)\n    1 Error(s)\nTime Elapsed 00:00:01.45\n",
+      "critical_signals": [
+        "/workspace/Program.cs(42,15)",
+        "error CS0103",
+        "Build FAILED"
+      ],
+      "zap_status": "regex_only",
+      "condense_advantage": "Bounded binary MSBuild binlog and TRX XML structured parser depth"
+    },
+    {
+      "id": "terraform/plan_validation_error",
+      "command": "terraform plan",
+      "exit_code": 1,
+      "category": "INFRA_FAILURE",
+      "raw_snippet": "\u001b[31m│\u001b[0m \u001b[1m\u001b[31mError: \u001b[0m\u001b[1mInvalid reference\u001b[0m\n\u001b[31m│\u001b[0m \n\u001b[31m│\u001b[0m   on main.tf line 44, in resource \"aws_s3_bucket\" \"b\":\n\u001b[31m│\u001b[0m   44:   bucket = var.non_existent_var\n\u001b[31m│\u001b[0m \nA reference to an undeclared input variable \"non_existent_var\" was used.\n",
+      "critical_signals": [
+        "Error: Invalid reference"
+      ],
+      "zap_status": "no_structural_parser",
+      "condense_advantage": "Terraform machine-readable JSON structure parsing with resource aggregation"
+    },
+    {
+      "id": "eslint/syntax_error",
+      "command": "eslint",
+      "exit_code": 1,
+      "category": "LINTER_ERROR",
+      "raw_snippet": "\n/workspace/src/index.js\n  14:5  error  Parsing error: Unexpected token (  no-unreachable\n  22:1  error  'foo' is not defined             no-undef\n\n✖ 2 problems (2 errors, 0 warnings)\n",
+      "critical_signals": [
+        "eslint: 2 error(s), 0 warning(s)",
+        "no-undef",
+        "no-unreachable"
+      ],
+      "zap_status": "line_regex",
+      "condense_advantage": "EsLintJsonStage typed DiagnosticDocument with exact rule IDs"
+    },
+    {
+      "id": "git/merge_conflict",
+      "command": "git merge feature",
+      "exit_code": 1,
+      "category": "VCS_ERROR",
+      "raw_snippet": "Auto-merging src/app.py\nCONFLICT (content): Merge conflict in src/app.py\nAutomatic merge failed; fix conflicts and then commit the result.\n",
+      "critical_signals": [
+        "CONFLICT (content): Merge conflict in src/app.py",
+        "Automatic merge failed"
+      ],
+      "zap_status": "opaque",
+      "condense_advantage": "GitDocument typed IR surfacing conflicting paths and unresolved markers"
+    },
+    {
+      "id": "generic/permission_denied",
+      "command": "cat /etc/shadow",
+      "exit_code": 1,
+      "category": "PERMISSION_DENIED",
+      "raw_snippet": "cat: /etc/shadow: Permission denied\n",
+      "critical_signals": [
+        "cat: /etc/shadow: Permission denied"
+      ],
+      "zap_status": "passthrough",
+      "condense_advantage": "Fail-open preserving exit 1, no stdout/stderr evidence lost"
+    }
+  ]
+}
