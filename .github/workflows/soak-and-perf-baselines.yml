@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set up GraalVM JDK 21
-        uses: graalvm/setup-graalvm@1758c0c45731994e4604e3c9235d97e743acb5e8 # v1.2.3
+        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.2.3
         with:
           java-version: 21
           distribution: graalvm-community
