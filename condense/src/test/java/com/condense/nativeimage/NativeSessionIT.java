@@ -74,6 +74,7 @@ class NativeSessionIT {
         assertThat(result.stdout()).contains("--opt-in");
         assertThat(result.stdout()).contains("--opt-out");
         assertThat(result.stdout()).contains("--export");
+        assertThat(result.stdout()).contains("--analyze");
     }
 
     @Test
@@ -90,5 +91,20 @@ class NativeSessionIT {
         assertThat(json.get("schema_version").asInt()).isEqualTo(1);
         assertThat(json.has("duration_bucket")).isTrue();
         assertThat(json.has("output_length_bucket")).isTrue();
+    }
+
+    @Test
+    void reportAnalyzeEmptyDirectory() throws Exception {
+        Path emptyDir = tempDir.resolve("empty-reports");
+        Files.createDirectories(emptyDir);
+
+        NativeBinarySupport.CliResult result = NativeBinarySupport.run(
+            configDir, dataDir, "report", "--analyze", emptyDir.toString()
+        );
+        assertThat(result.exitCode())
+            .as("stdout=%s stderr=%s", result.stdout(), result.stderr())
+            .isZero();
+        assertThat(result.stdout()).contains("=== Condense Failure Export Analysis ===");
+        assertThat(result.stdout()).contains("Total Reports Analyzed: 0");
     }
 }
