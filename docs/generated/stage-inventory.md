@@ -40,6 +40,7 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `mvn_summary` | `mvn_summary` | RESHAPE | `com.condense.filter.stage.MvnSummaryStage` |
 | `npm_install_summary` | `npm_install_summary` | RESHAPE | `com.condense.filter.stage.NpmInstallSummaryStage` |
 | `pip_install_summary` | `pip_install_summary` | RESHAPE | `com.condense.filter.stage.PipInstallSummaryStage` |
+| `playwright_summary` | `playwright_summary` | RESHAPE | `com.condense.filter.stage.PlaywrightSummaryStage` |
 | `pytest_summary` | `pytest_summary` | RESHAPE | `com.condense.filter.stage.PytestSummaryStage` |
 | `regex_capture` | `regex_capture`, `regex-capture` | REWRITE | `com.condense.filter.strategy.RegexCaptureStage` |
 | `resource_graph` | `resource_graph`, `resource-graph` | RESHAPE | `com.condense.filter.strategy.ResourceGraphStage` |

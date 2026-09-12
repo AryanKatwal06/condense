@@ -6,11 +6,16 @@ commands = ["playwright test", "npx playwright"]
 strategy = "ansi_strip"
 
 [[stages]]
-strategy = "grouping"
-pattern = "^(.*(✘|[0-9]+ failed|  [0-9]+\\) ).*)$"
-include_other = false
+strategy = "playwright_summary"
 
 [[tests]]
 id = "failed-title"
-input = "  ✓ login\n  1) invoice.spec.ts:12:5 › invoice total\n"
-expected = "  1) invoice.spec.ts:12:5 › invoice total : 1"
+input = """
+  ✓ login
+  1) invoice.spec.ts:12:5 › invoice total
+    Error: expect(received).toBe(100)
+    Expected: 100
+    Received: 50
+  1 failed
+"""
+expected = "  1) invoice.spec.ts:12:5 › invoice total\n    Error: expect(received).toBe(100)\n    Expected: 100\n    Received: 50\n  1 failed"
