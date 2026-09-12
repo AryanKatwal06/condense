@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 10 September 2026 (superiority Phase 13 complete: prove permanence, reproducible superiority comparison, offline failure analysis, disaster recovery runbooks, and documentation drift prevention).
+**Written:** 4 September 2026. **Revised:** 12 September 2026 (Phase 1 complete: virtual threads default-on and documentation audit/purge).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -1045,6 +1045,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 | Phase 13 Offline Failure Export Analyzer | `FailureExportAnalyzerTest` validates zero-network aggregation, `condense report --analyze` |
 | Phase 13 Disaster Recovery & Rollback Drill | `DatabaseRollbackDrillTest` proves forward/backward schema compatibility and data integrity |
 | Phase 13 Documentation Drift & Link Integrity | `DocumentationDriftTest` enforces 0 broken links and CLI subcommand synchronization |
+| Phase 1 Virtual Threads & Doc Purge | `CommandExecutorTest` verifies default-on virtual threads and override behavior; documentation purged of unverified competitor claims |
 
 **Not verified in this workspace (and why):** no native binary was built here (this is a Windows dev box without the GraalVM native toolchain). Native-image claims for the current tree come from GitHub Actions CI runs on Linux x64/aarch64, macOS aarch64, and Windows x64.
 
@@ -1052,7 +1053,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
  
-**Where we are.** Superiority **Phase 13** (prove permanence and keep documentation truthful) has landed. **All 13 master superiority phases** defined in `.cursor/plans/condense_permanent_superiority_6bc095ac.plan.md` are **COMPLETED AND MECHANICALLY VERIFIED**.
+**Where we are.** **Phase 1** (Virtual Threads Default-On and Documentation Purge) has landed. Virtual threads are now enabled by default for all process stream drains in `CommandExecutor`, with full test coverage for default activation and override behavior. All documentation claims have been audited and purged of unverified competitor assertions. All 13 master superiority phases and Phase 1 enhancements are **COMPLETED AND MECHANICALLY VERIFIED**.
  
 Condense stands with permanent, reproducible superiority over Zap across all 8 technical dimensions:
 1. **Structural IR Architecture**: Typed AST/JSON/XML parsing vs. Zap regex line dropping.
