@@ -57,6 +57,10 @@ public class GainCommand implements Runnable {
         description = "Show week-over-week token savings trend table.")
     boolean trend;
 
+    @Option(names = "--gaps",
+        description = "Detect commands with substantive output (>100 tokens) but <10% token savings.")
+    boolean gaps;
+
     @Option(names = "--top",
         description = "Show top N commands by tokens saved. Default: 10.",
         arity = "0..1", fallbackValue = "10", paramLabel = "N")
@@ -93,6 +97,9 @@ public class GainCommand implements Runnable {
 
     @Inject
     TrendAnalytics trendAnalytics;
+
+    @Inject
+    GapDetector gapDetector;
 
     private static final ObjectMapper JSON = com.condense.core.Mappers.JSON;
 
@@ -150,6 +157,14 @@ public class GainCommand implements Runnable {
             if (historyFlag != null) {
                 System.out.println(AsciiGraphRenderer.renderHistory(
                     gainRepo.recentCommands(historyFlag, scope)));
+                return;
+            }
+
+            if (gaps) {
+                int days = (effectiveSince == 0 && !all) ? 30 : effectiveSince;
+                GapDetector gd = resolveGapDetector();
+                List<GapDetector.GapCandidate> candidates = gd.findGaps(scope, days, topN());
+                System.out.println(AsciiGraphRenderer.renderGapTable(candidates));
                 return;
             }
 
@@ -237,6 +252,13 @@ public class GainCommand implements Runnable {
             System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(report));
             return;
         }
+        if (gaps) {
+            int days = (effectiveSince == 0 && !all) ? 30 : effectiveSince;
+            GapDetector gd = resolveGapDetector();
+            List<GapDetector.GapCandidate> candidates = gd.findGaps(scope, days, topN());
+            System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(candidates));
+            return;
+        }
         int days = (effectiveSince == 0 && !all) ? 30 : effectiveSince;
         GainReport report = gainRepo.buildReport(scope, days, topN(), pricing);
         System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(report));
@@ -247,6 +269,12 @@ public class GainCommand implements Runnable {
             int weeks = effectiveSince == 0 ? 8 : (effectiveSince / 7 + 1);
             TrendAnalytics ta = resolveTrendAnalytics();
             renderTrendCsv(ta.buildTrendReport(scope, weeks));
+            return;
+        }
+        if (gaps) {
+            int days = (effectiveSince == 0 && !all) ? 30 : effectiveSince;
+            GapDetector gd = resolveGapDetector();
+            renderGapCsv(gd.findGaps(scope, days, topN()));
             return;
         }
         if (daily) {
@@ -361,6 +389,28 @@ public class GainCommand implements Runnable {
             return trendAnalytics;
         }
         return new TrendAnalytics(gainRepo != null ? gainRepo.tracking() : null);
+    }
+
+    private void renderGapCsv(List<GapDetector.GapCandidate> candidates) {
+        System.out.println("command_prefix,invocations,raw_tokens,filtered_tokens,wasted_tokens,savings_pct");
+        if (candidates != null) {
+            for (GapDetector.GapCandidate c : candidates) {
+                System.out.println(String.format(java.util.Locale.ROOT, "%s,%d,%d,%d,%d,%.1f",
+                    escapeCsv(c.commandPrefix()),
+                    c.invocations(),
+                    c.totalRawTokens(),
+                    c.totalFilteredTokens(),
+                    c.wastedTokens(),
+                    c.savingsPct()));
+            }
+        }
+    }
+
+    private GapDetector resolveGapDetector() {
+        if (gapDetector != null) {
+            return gapDetector;
+        }
+        return new GapDetector(gainRepo != null ? gainRepo.tracking() : null);
     }
 
     private static String escapeCsv(String val) {

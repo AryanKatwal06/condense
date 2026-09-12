@@ -350,6 +350,29 @@ public final class AsciiGraphRenderer {
         return sb.toString();
     }
 
+    public static String renderGapTable(List<GapDetector.GapCandidate> candidates) {
+        if (candidates == null || candidates.isEmpty()) {
+            return "No gap candidates found. Commands are either filtering effectively (>10% savings) or output volume is small (<=100 tokens).";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Gap Candidates (Low Savings & High Volume)\n");
+        sb.append(DIVIDER).append("\n\n");
+        sb.append(String.format("  %-3s  %-20s  %-6s  %-12s  %-13s  %s%n",
+            "#", "Command Prefix", "Uses", "Raw Tokens", "Wasted Tokens", "Savings"));
+        sb.append("  " + "─".repeat(67) + "\n");
+        for (int i = 0; i < candidates.size(); i++) {
+            GapDetector.GapCandidate c = candidates.get(i);
+            sb.append(String.format(Locale.ROOT, "  %-3d  %-20s  %-6d  %-12s  %-13s  %5.1f%%%n",
+                i + 1,
+                truncate(c.commandPrefix(), 20),
+                c.invocations(),
+                fmt(c.totalRawTokens()),
+                fmt(c.wastedTokens()),
+                c.savingsPct()));
+        }
+        return sb.toString().stripTrailing();
+    }
+
 
 
     private static String formatEstimator(EstimatorInfo info) {
