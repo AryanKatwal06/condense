@@ -87,5 +87,24 @@ class NativeAnalyticsIT {
         assertThat(gainCsv.exitCode()).isZero();
         assertThat(gainCsv.stdout()).contains("cost_model,claude-3-5-sonnet-20241022");
         assertThat(gainCsv.stdout()).contains("estimated_usd_saved,");
+
+        // Native --trend text table output
+        NativeBinarySupport.CliResult gainTrend = NativeBinarySupport.run(
+            configDir, dataDir, "gain", "--trend"
+        );
+        assertThat(gainTrend.exitCode()).isZero();
+        assertThat(gainTrend.stdout()).contains("Week");
+        assertThat(gainTrend.stdout()).contains("Cmds");
+        assertThat(gainTrend.stdout()).contains("Total (8w)");
+
+        // Native --trend JSON output
+        NativeBinarySupport.CliResult gainTrendJson = NativeBinarySupport.run(
+            configDir, dataDir, "gain", "--trend", "--format", "json"
+        );
+        assertThat(gainTrendJson.exitCode()).isZero();
+        JsonNode trendReport = JSON.readTree(gainTrendJson.stdout());
+        assertThat(trendReport.get("weeks_requested").asInt()).isEqualTo(8);
+        assertThat(trendReport.get("weeks").isArray()).isTrue();
+        assertThat(trendReport.get("weeks")).hasSize(8);
     }
 }

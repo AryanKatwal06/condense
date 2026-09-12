@@ -29,6 +29,7 @@ public final class McpMessages {
     public static final int INTERNAL_ERROR = -32603;
 
     public static final String GAIN_URI = "condense://gain";
+    public static final String GAIN_TREND_URI = "condense://gain/trend";
     public static final String DOCTOR_URI = "condense://doctor";
 
     private McpMessages() {}

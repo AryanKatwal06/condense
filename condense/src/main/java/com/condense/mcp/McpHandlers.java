@@ -2,6 +2,7 @@ package com.condense.mcp;
 
 import com.condense.VersionProvider;
 import com.condense.analytics.GainRepository;
+import com.condense.analytics.TrendAnalytics;
 import com.condense.core.Mappers;
 import com.condense.core.ProjectFingerprint;
 import com.condense.core.ProxyService;
@@ -39,11 +40,23 @@ public class McpHandlers {
     private final GainRepository gain;
     private final DoctorService doctor;
     private final TrackingRepository tracking;
+    private final TrendAnalytics trendAnalytics;
     private final DiscoverService discover;
     private final ProposeService propose;
 
     public McpHandlers() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null);
+    }
+
+    public McpHandlers(
+            ProxyService proxy,
+            ExplainService explain,
+            ReadService read,
+            GainRepository gain,
+            DoctorService doctor,
+            TrackingRepository tracking
+    ) {
+        this(proxy, explain, read, gain, doctor, tracking, null);
     }
 
     @Inject
@@ -53,7 +66,8 @@ public class McpHandlers {
             ReadService read,
             GainRepository gain,
             DoctorService doctor,
-            TrackingRepository tracking
+            TrackingRepository tracking,
+            TrendAnalytics trendAnalytics
     ) {
         this.proxy = proxy;
         this.explain = explain;
@@ -61,6 +75,7 @@ public class McpHandlers {
         this.gain = gain;
         this.doctor = doctor;
         this.tracking = tracking;
+        this.trendAnalytics = trendAnalytics != null ? trendAnalytics : new TrendAnalytics(tracking);
         this.discover = new DiscoverService();
         this.propose = new ProposeService();
     }
@@ -122,6 +137,11 @@ public class McpHandlers {
                 "application/json",
                 "Token-savings summary, same JSON as condense gain --format json."),
             new McpMessages.ResourceSpec(
+                McpMessages.GAIN_TREND_URI,
+                "gain-trend",
+                "application/json",
+                "Week-over-week token savings trend, same JSON as condense gain --trend --format json."),
+            new McpMessages.ResourceSpec(
                 McpMessages.DOCTOR_URI,
                 "doctor",
                 "application/json",
@@ -156,6 +176,7 @@ public class McpHandlers {
         String uri = params.get("uri").asText();
         return switch (uri) {
             case McpMessages.GAIN_URI -> resourceJson(uri, compact(gain.buildReport("global", 30, 10)));
+            case McpMessages.GAIN_TREND_URI -> resourceJson(uri, compact(trendAnalytics.buildTrendReport("global", 8)));
             case McpMessages.DOCTOR_URI -> resourceJson(uri, compact(doctor.diagnose()));
             default -> throw new McpMessages.RpcException(
                 McpMessages.INVALID_PARAMS, "Unknown resource: " + uri);

@@ -285,6 +285,31 @@ class McpHandlersTest {
         assertThat(report.has("schema_version")).isTrue();
     }
 
+    @Test
+    void resourcesListIncludesGainTrend() throws Exception {
+        String response = server.handleLine("""
+            {"jsonrpc":"2.0","id":8,"method":"resources/list"}
+            """.trim());
+        JsonNode root = McpMessages.RPC.readTree(response);
+        String text = root.get("result").toString();
+        assertThat(text).contains("condense://gain/trend");
+    }
+
+    @Test
+    void gainTrendResourceRoundTripsExistingRecord() throws Exception {
+        tracking.insert("pytest", "proj", "/tmp", 100, 20, 5L);
+        String response = server.handleLine("""
+            {"jsonrpc":"2.0","id":9,"method":"resources/read","params":{"uri":"condense://gain/trend"}}
+            """.trim());
+        JsonNode root = McpMessages.RPC.readTree(response);
+        String text = root.get("result").get("contents").get(0).get("text").asText();
+        com.fasterxml.jackson.databind.JsonNode report = com.condense.core.Mappers.JSON.readTree(text);
+        assertThat(report.get("weeks_requested").asInt()).isEqualTo(8);
+        assertThat(report.get("total_commands").asInt()).isEqualTo(1);
+        assertThat(report.has("weeks")).isTrue();
+        assertThat(report.get("weeks")).hasSize(8);
+    }
+
     private static Path workspaceFile(String name) throws Exception {
         Path dir = Path.of(System.getProperty("user.dir", "."))
             .resolve(".tmp-mcp-handlers-" + UUID.randomUUID());
