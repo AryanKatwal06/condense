@@ -274,7 +274,7 @@ Top Commands by Tokens Saved:
 3. git status (115,000 saved)
 ...
 ```
-Other flags include `--trend` (8-week week-over-week trend table), `--daily`, `--weekly`, `--top 10`, `--scope project`, `--since 7`, `--format json`, and `--format csv`.
+Other flags include `--gaps` (detect low-savings commands on substantive output), `--trend` (8-week week-over-week trend table), `--daily`, `--weekly`, `--top 10`, `--scope project`, `--since 7`, `--format json`, and `--format csv`.
 
 If `gain` is empty, run `condense doctor` (or `condense doctor --format json`). It names why tracking is empty without changing any proxied command.
 
