@@ -1,11 +1,16 @@
 schema_version = 1
 name = "glab"
-commands = ["glab mr list", "glab issue list", "glab ci list"]
+commands = [
+  "glab mr list",
+  "glab mr view",
+  "glab issue list",
+  "glab issue view",
+  "glab ci list",
+  "glab ci view"
+]
 
 [[stages]]
-strategy = "head_tail"
-head = 6
-tail = 6
+strategy = "glab_summary"
 
 [[tests]]
 id = "omits-middle"
@@ -25,3 +30,13 @@ input = """
 13
 """
 expected = "1\n2\n3\n4\n5\n6\n... (1 lines omitted) ...\n8\n9\n10\n11\n12\n13"
+
+[[tests]]
+id = "ci-view-all-pass"
+input = """
+Pipeline #123
+Jobs:
+✓ build (passed)
+✓ test (passed)
+"""
+expected = "Pipeline #123\n\n✓ all jobs passed (2 jobs)"

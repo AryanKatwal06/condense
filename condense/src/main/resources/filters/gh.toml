@@ -1,11 +1,18 @@
 schema_version = 1
 name = "gh"
-commands = ["gh pr list", "gh issue list", "gh run list"]
+commands = [
+  "gh pr list",
+  "gh pr view",
+  "gh pr checks",
+  "gh pr diff",
+  "gh issue list",
+  "gh issue view",
+  "gh run list",
+  "gh run view"
+]
 
 [[stages]]
-strategy = "head_tail"
-head = 6
-tail = 6
+strategy = "gh_summary"
 
 [[tests]]
 id = "omits-middle"
@@ -25,3 +32,11 @@ input = """
 13
 """
 expected = "1\n2\n3\n4\n5\n6\n... (1 lines omitted) ...\n8\n9\n10\n11\n12\n13"
+
+[[tests]]
+id = "pr-checks-summary"
+input = """
+test-job\tpass\t1m\thttps://example.com/1\t
+lint-job\tpass\t30s\thttps://example.com/2\t
+"""
+expected = "✓ all checks passed (2 checks)"
