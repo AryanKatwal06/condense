@@ -326,6 +326,30 @@ public final class AsciiGraphRenderer {
         return sb.toString().stripTrailing();
     }
 
+    public static String renderTrendTable(TrendAnalytics.TrendReport report) {
+        if (report == null || report.weeks().isEmpty()) {
+            return "No weekly data recorded.";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("  %-10s  %-6s  %-10s  %-10s  %-10s  %-8s  %s%n",
+            "Week", "Cmds", "Raw", "Filtered", "Saved", "Savings", "Ratio"));
+        sb.append("  " + "─".repeat(70) + "\n");
+        for (TrendAnalytics.WeekSummary s : report.weeks()) {
+            sb.append(String.format(java.util.Locale.ROOT, "  %-10s  %-6d  %-10s  %-10s  %-10s  %5.1f%%    %.1fx%n",
+                s.week(), s.commands(), fmt(s.rawTokens()), fmt(s.filteredTokens()), fmt(s.tokensSaved()), s.savingsPct(), s.compressionRatio()));
+        }
+        sb.append("  " + "─".repeat(70) + "\n");
+        sb.append(String.format(java.util.Locale.ROOT, "  %-10s  %-6d  %-10s  %-10s  %-10s  %5.1f%%    %.1fx",
+            "Total (" + report.weeksRequested() + "w)",
+            report.totalCommands(),
+            fmt(report.totalRawTokens()),
+            fmt(report.totalFilteredTokens()),
+            fmt(report.totalTokensSaved()),
+            report.overallSavingsPct(),
+            report.overallCompressionRatio()));
+        return sb.toString();
+    }
+
 
 
     private static String formatEstimator(EstimatorInfo info) {

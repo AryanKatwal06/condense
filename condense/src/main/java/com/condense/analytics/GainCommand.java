@@ -53,6 +53,10 @@ public class GainCommand implements Runnable {
         description = "Show per-week breakdown table.")
     boolean weekly;
 
+    @Option(names = "--trend",
+        description = "Show week-over-week token savings trend table.")
+    boolean trend;
+
     @Option(names = "--top",
         description = "Show top N commands by tokens saved. Default: 10.",
         arity = "0..1", fallbackValue = "10", paramLabel = "N")
@@ -86,6 +90,9 @@ public class GainCommand implements Runnable {
 
     @Inject
     com.condense.core.ConfigLoader configLoader;
+
+    @Inject
+    TrendAnalytics trendAnalytics;
 
     private static final ObjectMapper JSON = com.condense.core.Mappers.JSON;
 
@@ -128,6 +135,14 @@ public class GainCommand implements Runnable {
                 int weeks = effectiveSince == 0 ? 12 : (effectiveSince / 7 + 1);
                 System.out.println(AsciiGraphRenderer.renderWeeklyTable(
                     gainRepo.weeklyStats(weeks, scope)));
+                return;
+            }
+
+            if (trend) {
+                int weeks = effectiveSince == 0 ? 8 : (effectiveSince / 7 + 1);
+                TrendAnalytics ta = resolveTrendAnalytics();
+                System.out.println(AsciiGraphRenderer.renderTrendTable(
+                    ta.buildTrendReport(scope, weeks)));
                 return;
             }
 
@@ -212,11 +227,24 @@ public class GainCommand implements Runnable {
     }
 
     private void renderJson(int effectiveSince, ModelPricing pricing) throws Exception {
+        if (trend) {
+            int weeks = effectiveSince == 0 ? 8 : (effectiveSince / 7 + 1);
+            TrendAnalytics ta = resolveTrendAnalytics();
+            TrendAnalytics.TrendReport report = ta.buildTrendReport(scope, weeks);
+            System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+            return;
+        }
         GainReport report = gainRepo.buildReport(scope, effectiveSince, topN(), pricing);
         System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(report));
     }
 
     private void renderCsv(int effectiveSince, ModelPricing pricing) {
+        if (trend) {
+            int weeks = effectiveSince == 0 ? 8 : (effectiveSince / 7 + 1);
+            TrendAnalytics ta = resolveTrendAnalytics();
+            renderTrendCsv(ta.buildTrendReport(scope, weeks));
+            return;
+        }
         if (daily) {
             renderDailyCsv(gainRepo.dailyStats(effectiveSince == 0 ? 90 : effectiveSince, scope), pricing);
         } else if (weekly) {
@@ -309,6 +337,23 @@ public class GainCommand implements Runnable {
             System.out.println("cost_uncertainty," + escapeCsv(c.uncertainty()));
         }
         System.out.println("history_status," + escapeCsv(report.historyStatus()));
+    }
+
+    private void renderTrendCsv(TrendAnalytics.TrendReport report) {
+        System.out.println("week,commands,raw_tokens,filtered_tokens,saved_tokens,savings_pct,compression_ratio");
+        if (report != null && report.weeks() != null) {
+            for (TrendAnalytics.WeekSummary s : report.weeks()) {
+                System.out.println(String.format(java.util.Locale.ROOT, "%s,%d,%d,%d,%d,%.1f,%.1f",
+                    escapeCsv(s.week()), s.commands(), s.rawTokens(), s.filteredTokens(), s.tokensSaved(), s.savingsPct(), s.compressionRatio()));
+            }
+        }
+    }
+
+    private TrendAnalytics resolveTrendAnalytics() {
+        if (trendAnalytics != null) {
+            return trendAnalytics;
+        }
+        return new TrendAnalytics(gainRepo != null ? gainRepo.tracking() : null);
     }
 
     private static String escapeCsv(String val) {

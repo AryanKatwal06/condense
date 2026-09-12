@@ -104,6 +104,10 @@ public class GainRepository {
         return tracking.countAll() == 0;
     }
 
+    public TrackingRepository tracking() {
+        return tracking;
+    }
+
     public void close() {
         tracking.close();
     }
