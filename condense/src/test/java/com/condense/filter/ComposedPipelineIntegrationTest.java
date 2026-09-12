@@ -8,6 +8,10 @@ import com.condense.filter.build.MakeFilter;
 import com.condense.filter.build.MvnFilter;
 import com.condense.filter.cargo.CargoClippyFilter;
 import com.condense.filter.cargo.CargoTestFilter;
+import com.condense.filter.cloud.DockerBuildFilter;
+import com.condense.filter.cloud.KubectlFilter;
+import com.condense.filter.git.GitDiffFilter;
+import com.condense.filter.git.GitStatusFilter;
 import com.condense.filter.golang.GoTestFilter;
 import com.condense.filter.golang.GolangciLintFilter;
 import com.condense.filter.node.ESLintFilter;
@@ -373,5 +377,256 @@ class ComposedPipelineIntegrationTest extends FilterTestSupport {
         // Critical compiler error signals
         assertThat(result.output()).containsAnyOf("error:", "Error");
         assertThat(result.output()).contains("src/network.c");
+    }
+
+    // =========================================================================
+    // GitHub & GitLab CLI Ecosystem
+    // =========================================================================
+
+    @Test
+    @DisplayName("GitHub CLI pr checks composed pipeline prioritizes failing checks and summarizes passes")
+    void testGhPrChecksComposedPipeline_prioritizesFailures() {
+        CatalogBackedFilter filter = new CatalogBackedFilter("gh");
+        String raw = """
+            JVM Tests (Java 21)\tpass\t3m29s\thttps://github.com/org/repo/actions/runs/1/job/101\t
+            Native Image (macos-15)\tpass\t4m27s\thttps://github.com/org/repo/actions/runs/1/job/102\t
+            Native Image (ubuntu-latest)\tfail\t3m19s\thttps://github.com/org/repo/actions/runs/1/job/103\t
+            Native Image (windows-latest)\tpass\t7m51s\thttps://github.com/org/repo/actions/runs/1/job/104\t
+            Lint and Format\tpass\t1m12s\thttps://github.com/org/repo/actions/runs/1/job/105\t
+            Security Audit\tpass\t45s\thttps://github.com/org/repo/actions/runs/1/job/106\t
+            License Check\tpass\t30s\thttps://github.com/org/repo/actions/runs/1/job/107\t
+            Integration Tests\tpass\t5m10s\thttps://github.com/org/repo/actions/runs/1/job/108\t
+            Documentation Drift\tpass\t20s\thttps://github.com/org/repo/actions/runs/1/job/109\t
+            Coverage Upload\tpass\t15s\thttps://github.com/org/repo/actions/runs/1/job/110\t
+            """;
+        ExecutionResult exec = new ExecutionResult(0, raw, "", 400L);
+
+        FilterResult result = filter.apply("gh pr checks", exec, config, 0, false);
+
+        assertThat(result.wasFiltered()).isTrue();
+        assertThat(result.output()).doesNotContain("condense: error");
+
+        // Critical failure signals
+        assertThat(result.output()).contains("1 of 10 checks failed");
+        assertThat(result.output()).contains("Native Image (ubuntu-latest)");
+        assertThat(result.output()).contains("9 checks passed");
+    }
+
+    @Test
+    @DisplayName("GitHub CLI composed pipeline strictly fails open on child command failure")
+    void testGhComposedPipeline_failOpenOnNonZeroExit() {
+        CatalogBackedFilter filter = new CatalogBackedFilter("gh");
+        String errorMsg = "gh: could not resolve to a Repository\nGraphQL error: not found";
+        ExecutionResult exec = new ExecutionResult(1, "", errorMsg, 150L);
+
+        FilterResult result = filter.apply("gh pr checks", exec, config, 0, false);
+
+        assertThat(result.output()).contains("GraphQL error: not found");
+    }
+
+    @Test
+    @DisplayName("GitHub CLI pr list composed pipeline compresses large PR table with balanced head and tail")
+    void testGhPrListComposedPipeline_compressesTable() throws Exception {
+        CatalogBackedFilter filter = new CatalogBackedFilter("gh");
+        String raw = fixture("gh", "typical");
+        ExecutionResult exec = new ExecutionResult(0, raw, "", 500L);
+
+        FilterResult result = filter.apply("gh pr list", exec, config, 0, false);
+
+        assertThat(result.wasFiltered()).isTrue();
+        assertCompressed(result);
+        assertThat(result.output()).doesNotContain("condense: error");
+        assertThat(result.output()).contains("#001");
+        assertThat(result.output()).contains("#040");
+    }
+
+    @Test
+    @DisplayName("GitHub CLI pr view composed pipeline preserves metadata and compresses large description")
+    void testGhPrViewComposedPipeline_keepsMetadataAndCompressesBody() {
+        CatalogBackedFilter filter = new CatalogBackedFilter("gh");
+        String raw = """
+            title:\tBump compiler plugin from 3.15.0 to 3.16.0
+            state:\tOPEN
+            author:\tdependabot
+            labels:\tdependencies, java
+            assignees:\t
+            reviewers:\t
+            projects:\t
+            milestone:\t
+            number:\t36
+            url:\thttps://github.com/org/repo/pull/36
+            --
+            Bumps compiler from 3.15.0 to 3.16.0.
+            <details>
+            <summary>Release notes</summary>
+            <ul>
+            <li>Release note 1</li>
+            <li>Release note 2</li>
+            <li>Release note 3</li>
+            <li>Release note 4</li>
+            <li>Release note 5</li>
+            <li>Release note 6</li>
+            <li>Release note 7</li>
+            <li>Release note 8</li>
+            <li>Release note 9</li>
+            <li>Release note 10</li>
+            <li>Release note 11</li>
+            <li>Release note 12</li>
+            <li>Release note 13</li>
+            <li>Release note 14</li>
+            </ul>
+            </details>
+            """;
+        ExecutionResult exec = new ExecutionResult(0, raw, "", 180L);
+
+        FilterResult result = filter.apply("gh pr view 36", exec, config, 0, false);
+
+        assertThat(result.wasFiltered()).isTrue();
+        assertCompressed(result);
+        assertThat(result.output()).doesNotContain("condense: error");
+
+        // Critical metadata
+        assertThat(result.output()).contains("Bump compiler plugin");
+        assertThat(result.output()).contains("OPEN");
+        assertThat(result.output()).contains("dependabot");
+        assertThat(result.output()).doesNotContain("<details>");
+        assertThat(result.output()).doesNotContain("assignees:\t");
+    }
+
+    @Test
+    @DisplayName("GitLab CLI mr view composed pipeline preserves metadata and condenses description")
+    void testGlabMrViewComposedPipeline_keepsMetadataAndCompressesBody() {
+        CatalogBackedFilter filter = new CatalogBackedFilter("glab");
+        String raw = """
+            title:\tAdd Postgres SSL mode configuration
+            state:\topened
+            author:\tjdoe
+            labels:\tdatabase, security
+            assignees:\t
+            milestone:\t
+            --
+            This merge request adds configurable SSL support.
+            <details>
+            <summary>Migration details</summary>
+            <ul>
+            <li>Step 1</li>
+            <li>Step 2</li>
+            <li>Step 3</li>
+            <li>Step 4</li>
+            <li>Step 5</li>
+            <li>Step 6</li>
+            <li>Step 7</li>
+            <li>Step 8</li>
+            <li>Step 9</li>
+            <li>Step 10</li>
+            <li>Step 11</li>
+            <li>Step 12</li>
+            <li>Step 13</li>
+            <li>Step 14</li>
+            </ul>
+            </details>
+            """;
+        ExecutionResult exec = new ExecutionResult(0, raw, "", 180L);
+
+        FilterResult result = filter.apply("glab mr view 42", exec, config, 0, false);
+
+        assertThat(result.wasFiltered()).isTrue();
+        assertCompressed(result);
+        assertThat(result.output()).doesNotContain("condense: error");
+
+        // Critical metadata
+        assertThat(result.output()).contains("Postgres SSL mode configuration");
+        assertThat(result.output()).contains("opened");
+        assertThat(result.output()).contains("jdoe");
+        assertThat(result.output()).doesNotContain("<details>");
+    }
+
+    // =========================================================================
+    // Containers & Cloud Ecosystem
+    // =========================================================================
+
+    @Test
+    @DisplayName("Docker build composed pipeline compresses intermediate layer transfer noise")
+    void testDockerBuildComposedPipeline_compressesBuildNoise() throws Exception {
+        DockerBuildFilter filter = new DockerBuildFilter();
+        String raw = fixture("docker-build", "typical");
+        ExecutionResult exec = new ExecutionResult(0, raw, "", 400L);
+
+        FilterResult result = filter.apply("docker build .", exec, config, 0, false);
+
+        assertThat(result.wasFiltered()).isTrue();
+        assertCompressed(result);
+        assertThat(result.output()).doesNotContain("condense: error");
+        assertThat(result.output()).containsAnyOf("Successfully", "myapp:latest");
+    }
+
+    @Test
+    @DisplayName("Kubectl composed pipeline surfaces unhealthy pods requiring attention")
+    void testKubectlComposedPipeline_surfacesUnhealthyPods() throws Exception {
+        KubectlFilter filter = new KubectlFilter();
+        String raw = fixture("kubectl", "pods-unhealthy");
+        ExecutionResult exec = new ExecutionResult(0, raw, "", 250L);
+
+        FilterResult result = filter.apply("kubectl get pods", exec, config, 0, false);
+
+        assertThat(result.wasFiltered()).isTrue();
+        assertThat(result.output()).doesNotContain("condense: error");
+
+        // Unhealthy pods retained under header
+        assertThat(result.output()).contains("UNHEALTHY PODS:");
+        assertThat(result.output()).containsAnyOf("CrashLoopBackOff", "Pending", "OOMKilled");
+    }
+
+    @Test
+    @DisplayName("Kubectl logs composed pipeline compresses verbose pod log stream to tail window")
+    void testKubectlLogsComposedPipeline_compressesTail() {
+        KubectlFilter filter = new KubectlFilter();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i <= 60; i++) {
+            sb.append("2026-09-12T10:00:").append(String.format("%02d", i % 60))
+              .append(" INFO Server listening on port 8080 request-id=").append(i).append("\n");
+        }
+        String raw = sb.toString();
+        ExecutionResult exec = new ExecutionResult(0, raw, "", 500L);
+
+        FilterResult result = filter.apply("kubectl logs pod/api-server", exec, config, 0, false);
+
+        assertThat(result.wasFiltered()).isTrue();
+        assertCompressed(result);
+        assertThat(result.output()).doesNotContain("condense: error");
+        assertThat(result.output()).contains("request-id=60");
+    }
+
+    // =========================================================================
+    // Git Ecosystem
+    // =========================================================================
+
+    @Test
+    @DisplayName("Git status composed pipeline condenses branch status and changed files")
+    void testGitStatusComposedPipeline_compressesStatus() throws Exception {
+        GitStatusFilter filter = new GitStatusFilter();
+        String raw = fixture("git-status", "mixed");
+        ExecutionResult exec = new ExecutionResult(0, raw, "", 200L);
+
+        FilterResult result = filter.apply("git status", exec, config, 0, false);
+
+        assertThat(result.wasFiltered()).isTrue();
+        assertCompressed(result);
+        assertThat(result.output()).doesNotContain("condense: error");
+        assertThat(result.output()).containsAnyOf("modified", "Untracked", "Changes");
+    }
+
+    @Test
+    @DisplayName("Git diff composed pipeline preserves hunks and file diffs with positive compression")
+    void testGitDiffComposedPipeline_compressesDiff() throws Exception {
+        GitDiffFilter filter = new GitDiffFilter();
+        String raw = fixture("git-diff", "typical");
+        ExecutionResult exec = new ExecutionResult(0, raw, "", 150L);
+
+        FilterResult result = filter.apply("git diff", exec, config, 0, false);
+
+        assertThat(result.wasFiltered()).isTrue();
+        assertCompressed(result);
+        assertThat(result.output()).doesNotContain("condense: error");
     }
 }
