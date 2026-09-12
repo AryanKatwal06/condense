@@ -1047,6 +1047,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 | Phase 13 Documentation Drift & Link Integrity | `DocumentationDriftTest` enforces 0 broken links and CLI subcommand synchronization |
 | Phase 1 Virtual Threads & Doc Purge | `CommandExecutorTest` verifies default-on virtual threads and override behavior; documentation purged of unverified competitor claims |
 | Phase 2 Deep gh and glab Semantic Filtering | `GhSummaryStageTest` and `GlabSummaryStageTest` verify semantic PR/issue view, checks, and workflow run condensation; golden lock byte integrity preserved |
+| Phase 3 Deep go test -json Structured Parsing | `GoTestSummaryStageTest`, `GoTestFilterTest`, `BuiltinDefinitionValidationTest`, and `GoldenLockTest` verify structured JSON event parsing, assertion diff retention, package build failure capture, and 100% golden lock byte compatibility |
 
 **Not verified in this workspace (and why):** no native binary was built here (this is a Windows dev box without the GraalVM native toolchain). Native-image claims for the current tree come from GitHub Actions CI runs on Linux x64/aarch64, macOS aarch64, and Windows x64.
 
@@ -1054,7 +1055,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
  
-**Where we are.** **Phase 2** (Deep gh and glab Semantic Filtering) has landed. GitHub CLI and GitLab CLI commands now feature dedicated semantic condensation stages (`GhSummaryStage` and `GlabSummaryStage`) covering PR/MR views, issue views, CI checks, and workflow run outputs while maintaining 100% byte-for-byte compatibility for existing table listings and golden locks. All 13 master superiority phases and Phases 1–2 enhancements are **COMPLETED AND MECHANICALLY VERIFIED**.
+**Where we are.** **Phase 3** (Deep `go test -json` Structured Parsing) has landed. Go test output filtering has been upgraded from shallow line-counting to deep structured parsing via `GoTestSummaryStage`. Failing tests now retain exact assertion diffs, error messages, and file:line references under the test name while eliminating all `=== RUN` and `--- PASS` noise from passing tests. Package build/compilation failures are preserved, and plain text `go test` fallback maintains clean failure extraction. `go-test.toml` is wired to `go_test_summary` with inline tests, and all golden locks maintain 100% byte compatibility. All 13 master superiority phases and Phases 1–3 enhancements are **COMPLETED AND MECHANICALLY VERIFIED**.
  
 Condense stands with permanent, reproducible superiority over Zap across all 8 technical dimensions:
 1. **Structural IR Architecture**: Typed AST/JSON/XML parsing vs. Zap regex line dropping.
