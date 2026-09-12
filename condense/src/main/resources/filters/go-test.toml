@@ -3,9 +3,28 @@ name = "go-test"
 commands = ["go test"]
 
 [[stages]]
-strategy = "json_lines"
+strategy = "go_test_summary"
 
 [[tests]]
 id = "plain-pass"
 input = "ok  \tpackage/foo\t0.01s\n"
 expected = "ok  \tpackage/foo\t0.01s\n"
+
+[[tests]]
+id = "json-pass"
+input = """
+{"Action":"run","Package":"p","Test":"TestA"}
+{"Action":"pass","Package":"p","Test":"TestA","Elapsed":0.01}
+"""
+expected = "passed: 1"
+
+[[tests]]
+id = "json-fail"
+input = """
+{"Action":"run","Package":"p","Test":"TestFail"}
+{"Action":"output","Package":"p","Test":"TestFail","Output":"=== RUN   TestFail\\n"}
+{"Action":"output","Package":"p","Test":"TestFail","Output":"    fail_test.go:10: assertion error\\n"}
+{"Action":"output","Package":"p","Test":"TestFail","Output":"--- FAIL: TestFail (0.01s)\\n"}
+{"Action":"fail","Package":"p","Test":"TestFail","Elapsed":0.01}
+"""
+expected = "go test: 1 failure(s)\n  FAIL: TestFail\n    fail_test.go:10: assertion error\npassed: 0 | failed: 1"
