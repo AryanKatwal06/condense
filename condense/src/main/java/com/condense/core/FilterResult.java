@@ -109,12 +109,17 @@ public record FilterResult(
             log.debugf("Token counting failed in of: %s", e.getMessage());
         }
 
-        String stamped = Provenance.stamp(filteredOutput);
+        boolean hasFailure = incidents != null && incidents.stream()
+            .anyMatch(i -> FilterIncident.KIND_STAGE_EXCEPTION.equals(i.kind())
+                || FilterIncident.KIND_APPLY_FALLBACK.equals(i.kind()));
+
+        boolean wasFiltered = !hasFailure;
+        String stamped = wasFiltered ? Provenance.stamp(filteredOutput) : Provenance.passthrough(filteredOutput);
         return new FilterResult(
             stamped,
             rawTokens,
             TokenCounter.count(stamped),
-            true,
+            wasFiltered,
             incidents
         );
     }

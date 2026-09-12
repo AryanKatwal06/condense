@@ -124,7 +124,7 @@ public class FilterPipeline {
             CollectingSink sink = new CollectingSink();
             try {
                 stage.openSession().acceptDocument(current, sink, ctx);
-            } catch (Exception e) {
+            } catch (Exception | StackOverflowError e) {
                 log.warnf("Stage %s threw an exception during pipeline execution: %s",
                     id, e.getMessage());
                 ctx.recordIncident(FilterIncident.stageException(id, e.getMessage()));
@@ -132,7 +132,10 @@ public class FilterPipeline {
                     traces.add(StageTrace.of(
                         id, StageTrace.EXCEPTION, stageInput, current, false, e.getMessage(), sampleLimit));
                 }
-                continue;
+                // Under fail-open Option (a), a stage failure compromises the transformation pipeline invariant.
+                // To guarantee that failing command diagnostics are never silently lost or corrupted,
+                // we abort execution immediately so PipelineBackedFilter can trigger full fallback to raw passthrough.
+                throw new PipelineExecutionException(id, e.getMessage(), stageInput, e);
             }
             current = sink.output();
             if (sink.isShortCircuited()) {

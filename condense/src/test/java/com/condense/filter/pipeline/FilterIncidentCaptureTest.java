@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FilterIncidentCaptureTest {
 
     @Test
-    void throwingStageKeepsPriorOutputAndRecordsIncident() {
+    void throwingStageAbortsAndRecordsIncident() {
         FilterContext context = FilterContext.of("pytest", null, CondenseConfig.defaults(), 0, false);
         FilterPipeline pipeline = FilterPipeline.of(
             (input, ctx) -> StageResult.continueWith("kept\n"),
@@ -19,8 +19,10 @@ class FilterIncidentCaptureTest {
             }
         );
 
-        String output = pipeline.execute("raw", context);
-        assertThat(output).isEqualTo("kept\n");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> pipeline.execute("raw", context))
+            .isInstanceOf(PipelineExecutionException.class)
+            .hasMessageContaining("stage died");
+
         assertThat(context.incidents()).hasSize(1);
         FilterIncident incident = context.incidents().get(0);
         assertThat(incident.kind()).isEqualTo(FilterIncident.KIND_STAGE_EXCEPTION);

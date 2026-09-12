@@ -39,7 +39,7 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
     }
 
     protected PipelineBackedFilter(FilterOverrideLoader overrideLoader) {
-        this(overrideLoader, null);
+        this(overrideLoader, (String) null);
     }
 
     /**
@@ -50,6 +50,12 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
         this.overrideLoader = overrideLoader != null ? overrideLoader : FilterOverrideLoader.standalone();
         this.catalogDefinitionName = catalogDefinitionName;
         this.defaultPipeline = Objects.requireNonNull(buildPipeline(), "buildPipeline must not return null");
+    }
+
+    PipelineBackedFilter(FilterOverrideLoader overrideLoader, FilterPipeline defaultPipeline) {
+        this.overrideLoader = overrideLoader != null ? overrideLoader : FilterOverrideLoader.standalone();
+        this.catalogDefinitionName = null;
+        this.defaultPipeline = Objects.requireNonNull(defaultPipeline, "defaultPipeline must not return null");
     }
 
     /**
@@ -97,7 +103,11 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
             int verbose,
             boolean ultraCompact) {
         String stdout = result.readStdout();
-        return stdout.isBlank() ? result.readStderr() : stdout;
+        String stderr = result.readStderr();
+        if (result.exitCode() != 0 && !stderr.isBlank() && !stdout.isBlank()) {
+            return stdoutThenStderr(result);
+        }
+        return stdout.isBlank() ? stderr : stdout;
     }
 
     /** Stderr first, then stdout — typical for npm/docker progress plus a result line. */
@@ -178,7 +188,7 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
                 .map(incident -> incident.withFilterName(filterName))
                 .toList();
             return FilterResult.of(result, filtered, incidents).withDocument(document);
-        } catch (Exception e) {
+        } catch (Exception | StackOverflowError e) {
             log.warnf("%s error: %s — falling back to passthrough",
                 filterName(), e.getMessage());
             return attachOpaque(
@@ -228,7 +238,7 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
             FilterResult filtered = FilterResult.of(result, trace.output(), incidents).withDocument(document);
             return new FilterExplainTrace(
                 filtered, false, null, null, decision, trace, name, definition, raw, false);
-        } catch (Exception e) {
+        } catch (Exception | StackOverflowError e) {
             log.warnf("%s error: %s — falling back to passthrough", name, e.getMessage());
             FilterResult fallback = attachOpaque(
                 FilterResult.fallbackPassthrough(result, name, e.getMessage()), command, result);

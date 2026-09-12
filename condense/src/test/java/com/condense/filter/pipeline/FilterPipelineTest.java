@@ -120,8 +120,8 @@ class FilterPipelineTest {
     }
 
     @Test
-    @DisplayName("Stage throwing an unchecked exception fails open and continues with previous output")
-    void stageThrowsException_failsOpenAndContinues() {
+    @DisplayName("Stage throwing an unchecked exception aborts pipeline immediately under Option A")
+    void stageThrowsException_abortsPipelineImmediately() {
         FilterStage stage1 = (input, ctx) -> StageResult.continueWith("stage1-clean");
         FilterStage throwingStage = (input, ctx) -> {
             throw new RuntimeException("Simulated parser failure");
@@ -129,9 +129,10 @@ class FilterPipelineTest {
         FilterStage stage3 = (input, ctx) -> StageResult.continueWith(input + "-stage3");
 
         FilterPipeline pipeline = FilterPipeline.of(stage1, throwingStage, stage3);
-        String result = pipeline.execute("start");
 
-        assertThat(result).isEqualTo("stage1-clean-stage3");
+        assertThatThrownBy(() -> pipeline.execute("start"))
+            .isInstanceOf(PipelineExecutionException.class)
+            .hasMessageContaining("Simulated parser failure");
     }
 
     @Test
