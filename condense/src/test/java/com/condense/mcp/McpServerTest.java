@@ -113,7 +113,7 @@ class McpServerTest {
         JsonNode resources = McpMessages.RPC.readTree(response).get("result").get("resources");
         List<String> uris = new ArrayList<>();
         resources.forEach(node -> uris.add(node.get("uri").asText()));
-        assertThat(uris).containsExactly("condense://gain", "condense://doctor");
+        assertThat(uris).containsExactly("condense://gain", "condense://gain/trend", "condense://doctor");
     }
 
     @Test

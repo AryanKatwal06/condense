@@ -91,7 +91,7 @@ public class McpCommand implements Callable<Integer> {
         System.out.println("Condense MCP Server");
         System.out.println("===================");
         System.out.println("Tools: run, explain, read, discover, propose");
-        System.out.println("Resources: condense://gain, condense://doctor");
+        System.out.println("Resources: condense://gain, condense://gain/trend, condense://doctor");
         System.out.println();
         System.out.println("Supported clients: claude-desktop, claude-code, cursor, windsurf,");
         System.out.println("                   cline, zed, vscode, opencode, antigravity, generic");

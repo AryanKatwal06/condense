@@ -166,7 +166,7 @@ Registered subcommands: `gain`, `doctor`, `explain`, `read`, `init`, `config` (w
 
 Root options: `-v`/`--verbose` (repeatable, 0–3), `-u`/`--ultra-compact`, plus standard help/version.
 
-`mcp` is real. Bare `condense mcp` prints a client snippet and exits 0. `condense mcp --start` speaks newline-delimited JSON-RPC on stdio. Tools are `run`, `explain`, `read`, `discover`, and `propose`; resources are `condense://gain` and `condense://doctor`. Bare `condense mcp` lists the same five tools. Missing JSON-RPC `id` on a non-notification request is `-32600`. `discover.root` and `propose.root` use `ReadPathGate.resolveNarrowRoot` (not `openFile`).
+`mcp` is real. Bare `condense mcp` prints a client snippet and exits 0. `condense mcp --start` speaks newline-delimited JSON-RPC on stdio. Tools are `run`, `explain`, `read`, `discover`, and `propose`; resources are `condense://gain`, `condense://gain/trend`, and `condense://doctor`. Bare `condense mcp` lists the same five tools. Missing JSON-RPC `id` on a non-notification request is `-32600`. `discover.root` and `propose.root` use `ReadPathGate.resolveNarrowRoot` (not `openFile`).
 
 ### 4.6 Filters — exact counts (verified)
 
@@ -841,7 +841,7 @@ Condense must instead use a small hand-written per-language **scanner** tracking
 
 **Status: LANDED** (5 Sep 2026)
 
-**Shipped.** Hand-rolled stdio JSON-RPC 2.0 (no MCP Java SDK). Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Tools `run` / `explain` / `read` / `discover` / `propose` reuse `ProxyService`, `ExplainService`, `ReadService`, `DiscoverService`, `ProposeService`. Resources `condense://gain` and `condense://doctor`. `run` returns the Phase 11 envelope; child exit ≠ 0 is not `isError`. `read` goes through `ReadPathGate.openFile`; `discover.root` and `propose.root` use `ReadPathGate.resolveNarrowRoot` (narrow-only, no byte-max). File probes use `SafePathValidator.contain`. Missing JSON-RPC `id` on non-notification requests is `-32600`. Bare `condense mcp` lists five tools. `McpCommand` is `@Unremovable`. Logs on stderr. Native proof is `NativeMcpIT`. Spec: [docs/mcp.md](docs/mcp.md).
+**Shipped.** Hand-rolled stdio JSON-RPC 2.0 (no MCP Java SDK). Closed methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`. Tools `run` / `explain` / `read` / `discover` / `propose` reuse `ProxyService`, `ExplainService`, `ReadService`, `DiscoverService`, `ProposeService`. Resources `condense://gain`, `condense://gain/trend`, and `condense://doctor`. `run` returns the Phase 11 envelope; child exit ≠ 0 is not `isError`. `read` goes through `ReadPathGate.openFile`; `discover.root` and `propose.root` use `ReadPathGate.resolveNarrowRoot` (narrow-only, no byte-max). File probes use `SafePathValidator.contain`. Missing JSON-RPC `id` on non-notification requests is `-32600`. Bare `condense mcp` lists five tools. `McpCommand` is `@Unremovable`. Logs on stderr. Native proof is `NativeMcpIT`. Spec: [docs/mcp.md](docs/mcp.md).
 
 **Goal.** Replace the `McpCommand` stub with a real stdio MCP server, so agents consume Condense as tools and resources rather than through brittle shell-hook command rewriting.
 

@@ -85,6 +85,7 @@ Every tool result is `content: [{ "type": "text", "text": "<compact JSON>" }]`. 
 | URI | Same JSON as |
 |---|---|
 | `condense://gain` | `condense gain --format json` |
+| `condense://gain/trend` | `condense gain --trend --format json` |
 | `condense://doctor` | `condense doctor --format json` |
 
 ## Path safety
