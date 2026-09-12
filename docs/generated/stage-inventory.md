@@ -24,6 +24,7 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `git_push_summary` | `git_push_summary` | RESHAPE | `com.condense.filter.stage.GitPushSummaryStage` |
 | `git_status` | `git_status`, `git-status` | RESHAPE | `com.condense.filter.strategy.GitStatusStage` |
 | `glab_summary` | `glab_summary` | RESHAPE | `com.condense.filter.stage.GlabSummaryStage` |
+| `go_test_summary` | `go_test_summary`, `go-test-summary` | RESHAPE | `com.condense.filter.stage.GoTestSummaryStage` |
 | `golangci_summary` | `golangci_summary` | RESHAPE | `com.condense.filter.stage.GolangciSummaryStage` |
 | `gradle_summary` | `gradle_summary` | RESHAPE | `com.condense.filter.stage.GradleSummaryStage` |
 | `grouping` | `grouping`, `group` | RESHAPE | `com.condense.filter.strategy.GroupingStrategy` |
