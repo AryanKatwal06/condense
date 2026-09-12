@@ -10,13 +10,13 @@ Both tools share a common mission: compressing shell command output before sendi
 
 | Evaluation Dimension | Zap (`d9498bb`) | Condense (`1.0.1`) | Condense Permanent Advantage |
 | :--- | :--- | :--- | :--- |
-| **1. Parsing Architecture** | Regular expression line matching & line stripping | Strongly-typed Intermediate Representation (IR) (`Document`, `TestDocument`, `DiagnosticDocument`, `GitDocument`) | Structural AST/JSON/XML parsing prevents false truncation of diagnostics and multiline traces. |
+| **1. Parsing Architecture** | Declarative line-oriented matching & line stripping | Strongly-typed Intermediate Representation (IR) (`Document`, `TestDocument`, `DiagnosticDocument`, `GitDocument`) | Structural AST/JSON/XML parsing prevents false truncation of diagnostics and multiline traces. |
 | **2. Language & Tool Breadth** | Narrow Unix focus; primary emphasis on Cargo, Git, Node | Full coverage of .NET (MSBuild, TRX, binlog), Java/JVM (Maven, Gradle), Go, Python (pytest, ruff), Rust, Node, Terraform, Docker, Ansible, Git | Native handling of complex enterprise ecosystems and structured tool protocols. |
 | **3. Session Intelligence** | Basic transcript parsing; opaque external cloud transmission | Privacy-first local session readers (Cursor, Claude, Antigravity, Aider, Windsurf) with zero network requirement | Completely air-gapped local intelligence; proposal generation without modifying active configuration. |
 | **4. Performance & Footprint** | Rust native compilation | GraalVM CE/EE `--no-fallback` AOT compiled native executable | Sub-15ms cold start, single standalone static executable, zero JVM runtime dependency. |
-| **5. Reliability & Fail-Open** | Unhandled panics/regex timeouts can truncate stderr | Guaranteed fail-open contract: child exit code never mutated; stderr and partial bytes always preserved | Machine-enforced failure contracts (`failure-contract.json`); zero data loss on crash or memory cap. |
+| **5. Reliability & Fail-Open** | Best-effort pass-through without machine-verified contracts | Guaranteed fail-open contract: child exit code never mutated; stderr and partial bytes always preserved | Machine-enforced failure contracts (`failure-contract.json`); zero data loss on crash or memory cap. |
 | **6. Platform & Shell Support** | Unix-first (macOS/Linux); Windows support is partial/secondary | First-class multi-platform support across Linux (x86_64, arm64), macOS (arm64, x86_64), and Windows (x64) | Native Windows resolver (`PATHEXT`, PowerShell, cmd), POSIX process groups, clean child tree reaping. |
-| **7. Privacy & Security** | Potential telemetry leakage without strict egress enforcement | Offline-by-default; cryptographic preview hashes; explicit double-opt-in consent for telemetry | Zero network sockets created during filtering; strict path traversal containment and secret redaction. |
+| **7. Privacy & Security** | Standard command proxy security model | Offline-by-default; cryptographic preview hashes; explicit double-opt-in consent for telemetry | Zero network sockets created during filtering; strict path traversal containment and secret redaction. |
 | **8. Supply Chain & Provenance** | Standard cargo build | SLSA-provenance workflows, SHA256 checksums, SBOM generation, signed artifacts | Auditable supply chain guarantees with mechanical dependency allowlists. |
 
 ---
@@ -24,7 +24,7 @@ Both tools share a common mission: compressing shell command output before sendi
 ## Detailed Evaluation Across 8 Dimensions
 
 ### 1. Structural IR vs. Line/Regex Dropping
-- **Zap**: Implements filtering largely through line-by-line regex discarding or simple capture rules. While fast, regex matching is brittle against multiline error cascades (e.g. C++ template errors, Rust borrow-checker notes, Java nested stack traces, or MSBuild diagnostic locations). Discarding lines that fail regex matches risks dropping the root cause of a failure.
+- **Zap**: Operates at declarative line-oriented granularity using regex pattern matching and line stripping. While fast, line-oriented filtering can struggle with multiline cascades (e.g. C++ template errors, Rust borrow-checker notes, Java nested stack traces, or MSBuild diagnostic locations) where error context spans multiple interrelated lines.
 - **Condense**: Translates raw command stdout and stderr into typed Intermediate Representations (`Document`, `TestDocument`, `DiagnosticDocument`, `GitDocument`). Diagnostics are parsed structurally into file paths, line/column coordinates, severity levels, and error codes. Traces are preserved as cohesive AST units rather than independent lines. Furthermore, outputs can be rendered into ultra-compact ASCII, human-readable text, or standard JSON (`--format json`).
 
 ### 2. Ecosystem & Tool Breadth
@@ -51,7 +51,7 @@ Both tools share a common mission: compressing shell command output before sendi
   - Zero requirement for an installed Java Runtime Environment (JRE).
 
 ### 5. Reliability & Fail-Open Safety Guarantee
-- **Zap**: Process crashes or parsing errors can lead to swallowed outputs or corrupted exit codes.
+- **Zap**: Provides standard command execution and exit-code propagation without machine-enforced fail-open contract suites.
 - **Condense**: Built on a strict fail-open house philosophy:
   - **Exit Code Invariance**: Condense guarantees that the proxied process exit code is returned verbatim to the invoking shell.
   - **Zero Evidence Loss**: If a filter, parser, or decoder encounters an unexpected format or I/O error, raw stderr and captured stdout are flushed to the terminal.
@@ -64,7 +64,7 @@ Both tools share a common mission: compressing shell command output before sendi
   - Reaps full child process process trees on timeout or abnormal termination, avoiding orphaned processes.
 
 ### 7. Security, Trust, and Air-Gapped Operation
-- **Zap**: May query remote registries or endpoints during certain discovery workflows.
+- **Zap**: Focuses primarily on shell integration and command-line execution.
 - **Condense**: Designed for air-gapped enterprise environments:
   - Zero outbound network calls during regular proxying and condensation.
   - Explicit double-opt-in consent required before any sanitized crash telemetry can be exported.

@@ -52,4 +52,4 @@ A successful read inserts a `commands` row (`read --level … path`). Persistenc
 
 ## Native proof
 
-`NativeReadIT` runs through the shipped binary with isolated config/data dirs. It checks the Zap-style `src/**/*` fixture, JSON `"packages/*"`, unknown-extension verbatim, path escape, and a `gain` row.
+`NativeReadIT` runs through the shipped binary with isolated config/data dirs. It checks the recursive glob `src/**/*` fixture, JSON `"packages/*"`, unknown-extension verbatim, path escape, and a `gain` row.
