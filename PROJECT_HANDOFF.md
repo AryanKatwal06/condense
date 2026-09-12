@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 12 September 2026 (Phase 6 complete: gap detection telemetry).
+**Written:** 4 September 2026. **Revised:** 12 September 2026 (Phase 7 complete: composed pipeline integration tests with real fixtures).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -474,7 +474,8 @@ Planning plus Phase 1 through Phase 17 code, then an independent audit of Phases
 | Enhancement Phase 4 | **LANDED** | Enhanced JS/TS test runner depth: `JestSummaryStage` (failure blocks, assertion diffs, bounded stack traces, passing suite elimination), `VitestSummaryStage` (diagnostic error messages and assertion details), and dedicated `PlaywrightSummaryStage` (browser action call log suppression, test location and assertion capture). |
 | Enhancement Phase 5 | **LANDED** | Week-over-week token savings trend analytics (`condense gain --trend`) across 8-week continuous timeline with empty-week gap filling, year boundary alignment, table/JSON/CSV formats, and MCP resource `condense://gain/trend`. |
 | Enhancement Phase 6 | **LANDED** | Gap detection telemetry (`condense gain --gaps`) for commands achieving <10% savings on >100 raw tokens, grouped by command prefix (first 2 tokens), ordered by wasted tokens descending, with terminal ASCII table, JSON array, and CSV formats. |
-| This handoff | **CURRENT** | Corrected 12 Sep 2026 to record completion of Enhancement Phase 6. |
+| Enhancement Phase 7 | **LANDED** | Composed pipeline integration test suite across all 8 ecosystems (JS/TS, Go, Rust, Python, JVM, CLI, Cloud, Git); 26 real-world scenarios validating assertion diffs, lint categories, compiler errors, log compression, fail-open semantics, and token savings. |
+| This handoff | **CURRENT** | Corrected 12 Sep 2026 to record completion of Enhancement Phase 7 and closure of all 7 enhancement phases. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p17` are marked `completed`. **That file is untracked and local-only (see §3).**
 
@@ -1057,6 +1058,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 | Phase 4 Enhanced JS/TS Test Runner Depth | `JestSummaryStageTest`, `VitestSummaryStageTest`, `PlaywrightSummaryStageTest`, `JestFilterTest`, `VitestFilterTest`, `GoldenLockTest`, and `FidelityCorpusTest` verify assertion diff and error preservation across Jest and Vitest, call log suppression in Playwright, and 100% golden lock and fidelity compliance |
 | Phase 5 Trend-Over-Time Analytics | `TrendAnalyticsTest`, `GainCommandTrendTest`, `GainCommandCostTest`, `GainCsvFormatTest`, and `McpHandlersTest` verify continuous 8-week timeline gap filling, ISO week boundaries, text/JSON/CSV export formats, empty database handling, and `condense://gain/trend` MCP resource read |
 | Phase 6 Gap Detection Telemetry | `GapDetectorTest`, `GainCommandGapsTest`, `ReflectConfigDriftTest`, and `NativeAnalyticsIT` verify <10% savings and >100 raw token identification, prefix grouping, wasted token calculation, `--top` limiting, `--since` windowing, ASCII/JSON/CSV output, and native binary execution |
+| Phase 7 Composed Pipeline Integration Tests | `ComposedPipelineIntegrationTest` executes 26 real-world scenarios across JS/TS (Jest, Vitest, Playwright, ESLint, tsc), Go (go test -json, golangci-lint), Rust (cargo test, cargo clippy), Python (pytest, ruff), JVM/Build (mvn, gradle, make), CLI (gh, glab), Cloud (docker, kubectl), and Git (status, diff) verifying full pipeline execution, fail-open invariance, and signal preservation |
 
 **Not verified in this workspace (and why):** no native binary was built here (this is a Windows dev box without the GraalVM native toolchain). Native-image claims for the current tree come from GitHub Actions CI runs on Linux x64/aarch64, macOS aarch64, and Windows x64.
 
@@ -1064,7 +1066,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
  
-**Where we are.** **Phase 6** (Gap Detection Telemetry) has landed. `condense gain --gaps` computes and displays commands with substantive output (>100 raw tokens) where compression achieved less than 10% savings, grouped by command prefix (first 2 tokens), aggregating total raw, filtered, and wasted tokens along with savings percentages. Reporting is supported across ASCII tables, JSON (`--format json`), and RFC-4180 CSV (`--format csv`) formats, respecting `--top <N>` (default 10), `--since <DAYS>` (default 30), and `--scope <global|project>`. All 13 master superiority phases and Phases 1–6 enhancements are **COMPLETED AND MECHANICALLY VERIFIED**.
+**Where we are.** **Phase 7** (Composed Pipeline Integration Tests with Real Fixtures) has landed. `ComposedPipelineIntegrationTest` validates full end-to-end multi-stage filter execution across all 8 major developer tool ecosystems (26 real fixtures), asserting failure signal retention, assertion diff extraction, lint issue grouping, log tail compression, fail-open safety on child exit codes, and token savings on clean runs. All 13 master superiority phases and all 7 post-superiority enhancement phases are **COMPLETED AND MECHANICALLY VERIFIED**.
  
 Condense stands with permanent, reproducible superiority over Zap across all 8 technical dimensions:
 1. **Structural IR Architecture**: Typed AST/JSON/XML parsing vs. Zap regex line dropping.
@@ -1097,7 +1099,7 @@ Filter/IR schema is at **1**; SQLite schema is at **3**; application version is 
  
 **Status of Roadmap**
  
-8. All 17 foundational phases and all 13 master superiority phases are complete.
+8. All 17 foundational phases, all 13 master superiority phases, and all 7 post-superiority enhancement phases are complete.
 9. Any future post-superiority feature additions, new command integrations, or release channel promotions must follow the canary deployment model and maintain zero documentation drift.
 
 **Standing rules while working**
