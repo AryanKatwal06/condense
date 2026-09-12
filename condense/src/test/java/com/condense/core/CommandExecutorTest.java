@@ -92,4 +92,74 @@ class CommandExecutorTest {
         assertThatThrownBy(() -> executor.execute((List<String>) null))
             .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void virtualThreadsEnabledByDefault() {
+        String prop = System.getProperty(CommandExecutor.VIRTUAL_THREADS_PROP);
+        try {
+            System.clearProperty(CommandExecutor.VIRTUAL_THREADS_PROP);
+            if (System.getenv(CommandExecutor.VIRTUAL_THREADS_ENV) == null) {
+                assertThat(CommandExecutor.useVirtualThreads())
+                    .as("useVirtualThreads() must default to true when no property or env var is set")
+                    .isTrue();
+            }
+        } finally {
+            if (prop != null) {
+                System.setProperty(CommandExecutor.VIRTUAL_THREADS_PROP, prop);
+            } else {
+                System.clearProperty(CommandExecutor.VIRTUAL_THREADS_PROP);
+            }
+        }
+    }
+
+    @Test
+    void virtualThreadsDisabledViaSystemPropertyOverride() {
+        String prop = System.getProperty(CommandExecutor.VIRTUAL_THREADS_PROP);
+        try {
+            System.setProperty(CommandExecutor.VIRTUAL_THREADS_PROP, "false");
+            assertThat(CommandExecutor.useVirtualThreads())
+                .as("useVirtualThreads() must return false when property is set to false")
+                .isFalse();
+
+            System.setProperty(CommandExecutor.VIRTUAL_THREADS_PROP, "true");
+            assertThat(CommandExecutor.useVirtualThreads())
+                .as("useVirtualThreads() must return true when property is set to true")
+                .isTrue();
+        } finally {
+            if (prop != null) {
+                System.setProperty(CommandExecutor.VIRTUAL_THREADS_PROP, prop);
+            } else {
+                System.clearProperty(CommandExecutor.VIRTUAL_THREADS_PROP);
+            }
+        }
+    }
+
+    @Test
+    void startDrainThreadCreatesThreadWithExpectedProperties() throws InterruptedException {
+        String prop = System.getProperty(CommandExecutor.VIRTUAL_THREADS_PROP);
+        try {
+            // Test with virtual threads enabled (default)
+            System.setProperty(CommandExecutor.VIRTUAL_THREADS_PROP, "true");
+            Thread vt = CommandExecutor.startDrainThread("vt-drain-test", () -> {});
+            assertThat(vt).isNotNull();
+            assertThat(vt.getName()).isEqualTo("vt-drain-test");
+            assertThat(vt.isVirtual()).isTrue();
+            vt.join(1000);
+
+            // Test with virtual threads disabled override
+            System.setProperty(CommandExecutor.VIRTUAL_THREADS_PROP, "false");
+            Thread pt = CommandExecutor.startDrainThread("pt-drain-test", () -> {});
+            assertThat(pt).isNotNull();
+            assertThat(pt.getName()).isEqualTo("pt-drain-test");
+            assertThat(pt.isVirtual()).isFalse();
+            assertThat(pt.isDaemon()).isTrue();
+            pt.join(1000);
+        } finally {
+            if (prop != null) {
+                System.setProperty(CommandExecutor.VIRTUAL_THREADS_PROP, prop);
+            } else {
+                System.clearProperty(CommandExecutor.VIRTUAL_THREADS_PROP);
+            }
+        }
+    }
 }

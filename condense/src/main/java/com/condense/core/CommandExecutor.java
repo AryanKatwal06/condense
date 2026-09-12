@@ -46,7 +46,7 @@ public class CommandExecutor {
         if (env != null) {
             return Boolean.parseBoolean(env.trim());
         }
-        return false;
+        return true;
     }
 
     static Thread startDrainThread(String name, Runnable runnable) {
