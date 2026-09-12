@@ -2,6 +2,7 @@ package com.condense.session;
 
 import com.condense.filter.pipeline.config.BuiltinDefinition;
 import com.condense.filter.pipeline.config.BuiltinDefinitionCatalog;
+import com.condense.hooks.CompoundCommandAnalyzer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Privacy-preserving session intelligence service.
@@ -96,6 +98,18 @@ public final class SessionIntelligenceService {
         List<CorrectionCandidate> allCandidates = new ArrayList<>();
         Map<String, CommandUsageAccumulator> unsupportedCommandMap = new LinkedHashMap<>();
         Map<String, FailureCategoryAccumulator> failureCategoryMap = new LinkedHashMap<>();
+        Set<String> knownCommands = new java.util.HashSet<>();
+        if (catalog != null) {
+            for (BuiltinDefinition def : catalog.all()) {
+                for (String cmd : def.commands()) {
+                    String[] words = cmd.trim().split("\\s+");
+                    if (words.length > 0 && !words[0].isBlank()) {
+                        knownCommands.add(words[0]);
+                    }
+                    knownCommands.add(cmd);
+                }
+            }
+        }
 
         for (SessionRecord session : sessions) {
             // Strictly detect corrections within this session boundary only
@@ -122,16 +136,46 @@ public final class SessionIntelligenceService {
                     classifyFailure(redactedCommand, redactedOutput, failureCategoryMap);
                 }
 
-                BuiltinDefinition match = catalog != null ? catalog.findByCommand(redactedCommand) : null;
-                if (match != null || event.filtered()) {
+                // Decompose chained commands across operators (&&, ||, ;, |) using CompoundCommandAnalyzer
+                CompoundCommandAnalyzer.AnalysisResult analysis =
+                    CompoundCommandAnalyzer.analyze(redactedCommand, knownCommands);
+
+                boolean hasSupportedSegment = false;
+                List<CompoundCommandAnalyzer.CommandSegment> segments = analysis.segments();
+                if (segments.isEmpty()) {
+                    BuiltinDefinition match = catalog != null ? catalog.findByCommand(redactedCommand) : null;
+                    hasSupportedSegment = (match != null);
+                } else {
+                    for (CompoundCommandAnalyzer.CommandSegment seg : segments) {
+                        BuiltinDefinition match = catalog != null ? catalog.findByCommand(seg.raw()) : null;
+                        if (match != null || seg.matchesCondense()) {
+                            hasSupportedSegment = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (hasSupportedSegment || event.filtered()) {
                     // Supported or filtered command: estimate savings (~75% reduction on noisy commands)
                     long saved = Math.round(tokens * 0.75);
                     estimatedSavedTokens += saved;
                 } else {
-                    // Unsupported command
-                    String prefix = extractCommandPrefix(redactedCommand);
-                    unsupportedCommandMap.computeIfAbsent(prefix, k -> new CommandUsageAccumulator(prefix))
-                            .record(outputChars, tokens, redactedCommand);
+                    // Unsupported command: track individual segments or raw prefix
+                    if (segments.isEmpty()) {
+                        String prefix = extractCommandPrefix(redactedCommand);
+                        unsupportedCommandMap.computeIfAbsent(prefix, k -> new CommandUsageAccumulator(prefix))
+                                .record(outputChars, tokens, redactedCommand);
+                    } else {
+                        for (CompoundCommandAnalyzer.CommandSegment seg : segments) {
+                            String segRaw = seg.raw().trim();
+                            if (segRaw.isEmpty()) {
+                                continue;
+                            }
+                            String prefix = extractCommandPrefix(segRaw);
+                            unsupportedCommandMap.computeIfAbsent(prefix, k -> new CommandUsageAccumulator(prefix))
+                                    .record(outputChars / segments.size(), tokens / segments.size(), segRaw);
+                        }
+                    }
                 }
             }
         }

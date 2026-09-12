@@ -29,7 +29,8 @@ Unknown keys fail on parse. `kind` is a closed set — renderers switch on it; t
 
 | `kind` | Producers | Payload |
 |---|---|---|
-| `test` | `pytest`; leftover TRX (`tool=trx`) | cases (`name`, `status`, `detail`) + counts; optional `file`, `durationMs`, `stack`, `skipped`, `total`, `tool` |
+| `test` | `jest`, `vitest`, `playwright`, `go test`, `cargo test`, `pytest`; leftover TRX (`tool=trx`) | cases (`name`, `status`, `detail`) + counts; optional `file`, `durationMs`, `stack`, `skipped`, `total`, `tool` |
+| `build` | `docker build`; `cargo test` (on compile error) | status, errors, warnings, durationMs, failedTasks, summaryLines |
 | `diagnostic` | `eslint` / `npx eslint`; leftover `terraform validate` / `tofu validate` JSON; leftover MSBuild binlog (`tool=msbuild`) and `dotnet format` report (`tool=dotnet-format`) | findings + grouped counts; optional `tool` (`validate` / `msbuild` / `dotnet-format` when set, else the text renderer still prints `eslint`) |
 | `dependency` | `npm install` / `npm ci` / `npm i` | added packages, vulnerability text, irrevocable warn/err lines (capped at 20) |
 | `resource` | `docker ps`; leftover Terraform/OpenTofu machine-UI and `state list` | docker columns when `format` is omitted; infra addresses/actions when `format=infra` |
