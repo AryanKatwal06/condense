@@ -601,6 +601,42 @@ public class TrackingRepository {
     }
 
     /**
+     * Queries commands that produced substantive output (>100 tokens) but achieved
+     * less than 10% token savings, for gap detection telemetry. Fail-open empty.
+     */
+    public List<RawCommandTokens> queryLowSavingsCommands(long sinceEpoch, String projectHash) {
+        String projectFilter = projectHash != null ? " AND project = ?" : "";
+        String sql = """
+            SELECT command, raw_tokens, out_tokens
+            FROM commands
+            WHERE ts >= ?
+            """ + projectFilter + """
+              AND raw_tokens > 100
+              AND ((raw_tokens - out_tokens) * 10 < raw_tokens)
+            ORDER BY raw_tokens DESC
+            """;
+        List<RawCommandTokens> result = new ArrayList<>();
+        try (PreparedStatement ps = connection().prepareStatement(sql)) {
+            int idx = 1;
+            ps.setLong(idx++, sinceEpoch);
+            if (projectHash != null) ps.setString(idx++, projectHash);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new RawCommandTokens(
+                        rs.getString("command"),
+                        rs.getInt("raw_tokens"),
+                        rs.getInt("out_tokens")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            this.degraded = true;
+            log.warnf(e, "queryLowSavingsCommands failed: %s", e.getMessage());
+        }
+        return result;
+    }
+
+    /**
      * Bounded recent command rows for {@code condense propose}. Fail-open empty.
      * Does not change schema.
      */
@@ -716,6 +752,9 @@ public class TrackingRepository {
 
     public record ProposeOutcomeRow(
         long ts, String command, String project, String kind) {}
+
+    public record RawCommandTokens(
+        String command, int rawTokens, int outTokens) {}
 
 
 
