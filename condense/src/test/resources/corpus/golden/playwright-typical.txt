@@ -1,4 +1,4 @@
 condense[filtered]
-  1) invoice.spec.ts:12:5 › invoice total  : 1
-  2 failed                                 : 1
-  2) session.spec.ts:8:1 › session expires : 1
+  1) invoice.spec.ts:12:5 › invoice total
+  2) session.spec.ts:8:1 › session expires
+  2 failed

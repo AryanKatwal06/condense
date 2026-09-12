@@ -1,12 +1,23 @@
 RUN  v1.0.0 /workspace/project
-❯ src/math.test.ts (3 tests | 1 failed)
+❯ src/math.test.ts (5 tests | 1 failed)
 ✓ adds numbers correctly 5ms
 ✓ subtracts numbers correctly 3ms
+✓ multiplies numbers correctly 2ms
+✓ calculates power correctly 4ms
 × divides by zero 2ms
 → Expected 0, received Infinity
-❯ src/utils.test.ts (2 tests | 1 failed)
+❯ src/utils.test.ts (5 tests | 1 failed)
 ✓ formats date correctly 1ms
+✓ capitalizes string correctly 1ms
+✓ parses url query correctly 2ms
+✓ deep clones object correctly 3ms
 × handles null input 2ms
 → Cannot read property 'length' of null
-Tests  2 failed | 3 passed (5)
+❯ src/api.test.ts (5 tests)
+✓ fetches user profile 10ms
+✓ updates user status 12ms
+✓ validates auth token 8ms
+✓ refreshes session 9ms
+✓ logs out cleanly 7ms
+Tests  2 failed | 13 passed (15)
 Duration  42ms

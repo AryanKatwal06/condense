@@ -76,3 +76,6 @@ reason here. Unexplained golden edits fail review.
 | jira/typical | Superiority Phase 6 leftover. Typical fixture lengthened so Linux LF token counts still meet the 60% floor at `head_tail` 8/8 |
 | yadm/typical | Superiority Phase 6 leftover. Typical fixture lengthened so Linux LF token counts still meet the 60% floor at `head_tail` 8/8 |
 | mix-format/typical | Superiority Phase 6 leftover. Typical fixture lengthened so Linux LF token counts still meet the 60% floor at `head_tail` 8/8 |
+| jest/typical | Phase 4 JS/TS runner depth: preserves failing test titles, error messages, and assertion diffs |
+| vitest/typical | Phase 4 JS/TS runner depth: preserves failing test diagnostic details and assertion diffs |
+| playwright/typical | Phase 4 JS/TS runner depth: dedicated PlaywrightSummaryStage replacing grouping |

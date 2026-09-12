@@ -1,4 +1,23 @@
 PASS src/utils/math.test.js
+PASS src/utils/string.test.js
+PASS src/utils/format.test.js
+PASS src/utils/date.test.js
+PASS src/utils/validator.test.js
+PASS src/utils/array.test.js
+PASS src/utils/object.test.js
+PASS src/utils/url.test.js
+PASS src/utils/crypto.test.js
+PASS src/utils/logger.test.js
+PASS src/components/Header.test.js
+PASS src/components/Footer.test.js
+PASS src/components/Sidebar.test.js
+PASS src/components/Modal.test.js
+PASS src/components/Card.test.js
+PASS src/components/Dropdown.test.js
+PASS src/components/Table.test.js
+PASS src/components/Badge.test.js
+PASS src/components/Tooltip.test.js
+PASS src/components/Alert.test.js
 FAIL src/components/Button.test.js
 ● Button › renders without crashing
 expect(received).toBeTruthy()
@@ -6,7 +25,7 @@ Received: false
 FAIL src/api/auth.test.js
 ● auth › should reject invalid token
 Error: timeout of 5000ms exceeded
-Test Suites: 2 failed, 1 passed, 3 total
-Tests:       2 failed, 8 passed, 10 total
+Test Suites: 2 failed, 20 passed, 22 total
+Tests:       2 failed, 48 passed, 50 total
 Snapshots:   0 total
 Time:        3.456 s
