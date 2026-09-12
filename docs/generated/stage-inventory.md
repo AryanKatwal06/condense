@@ -16,6 +16,7 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `eslint_json` | `eslint_json` | RESHAPE | `com.condense.filter.stage.EsLintJsonStage` |
 | `eslint_text` | `eslint_text` | RESHAPE | `com.condense.filter.stage.EsLintTextStage` |
 | `format_report` | `format_report`, `format-report` | RESHAPE | `com.condense.filter.strategy.FormatReportStage` |
+| `gh_summary` | `gh_summary` | RESHAPE | `com.condense.filter.stage.GhSummaryStage` |
 | `git_add_summary` | `git_add_summary` | RESHAPE | `com.condense.filter.stage.GitAddSummaryStage` |
 | `git_commit_summary` | `git_commit_summary` | RESHAPE | `com.condense.filter.stage.GitCommitSummaryStage` |
 | `git_diff_summary` | `git_diff_summary` | RESHAPE | `com.condense.filter.stage.GitDiffSummaryStage` |
