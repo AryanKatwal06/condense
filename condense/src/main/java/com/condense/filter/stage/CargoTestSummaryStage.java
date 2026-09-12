@@ -1,19 +1,25 @@
 package com.condense.filter.stage;
 
 import com.condense.annotation.DeclarativeStage;
-
 import com.condense.core.CondenseConfig;
 import com.condense.core.ExecutionResult;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.ir.Document;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @DeclarativeStage(aliases = {"cargo_test_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class CargoTestSummaryStage implements FilterStage {
     public static final CargoTestSummaryStage INSTANCE = new CargoTestSummaryStage();
+
+    private static final Pattern CARGO_PASSED = Pattern.compile("(\\d+)\\s+passed");
+    private static final Pattern CARGO_FAILED = Pattern.compile("(\\d+)\\s+failed");
+    private static final Pattern CARGO_IGNORED = Pattern.compile("(\\d+)\\s+ignored");
 
     private CargoTestSummaryStage() {}
 
@@ -43,6 +49,7 @@ public final class CargoTestSummaryStage implements FilterStage {
         CondenseConfig config = context.config();
         if (failures.isEmpty()) {
             if (result != null && result.exitCode() != 0 && hasCompile) {
+                publishIr(context, failures, resultLine, true, errors);
                 return StageResult.continueWith("cargo test: compile error\n" + String.join("\n", errors));
             }
             String summary = resultLine != null ? resultLine : "✓ all tests passed";
@@ -51,6 +58,7 @@ public final class CargoTestSummaryStage implements FilterStage {
                 && summary.contains("; finished in")) {
                 summary = summary.substring(0, summary.indexOf("; finished in")).trim();
             }
+            publishIr(context, failures, resultLine, false, errors);
             return StageResult.continueWith(summary);
         }
 
@@ -66,6 +74,72 @@ public final class CargoTestSummaryStage implements FilterStage {
             }
             sb.append(line);
         }
+
+        publishIr(context, failures, resultLine, false, errors);
         return StageResult.continueWith(sb.toString().stripTrailing());
+    }
+
+    private static void publishIr(FilterContext context, List<String> failures, String resultLine, boolean compileError, List<String> errors) {
+        if (context == null || context.documentBuilder() == null) {
+            return;
+        }
+        if (compileError) {
+            context.documentBuilder().build(new Document.BuildDocument(
+                "cargo test",
+                "FAILED",
+                Math.max(1, errors.size()),
+                0,
+                null,
+                List.of(),
+                errors
+            ));
+            return;
+        }
+
+        int passed = 0;
+        int failed = failures.size();
+        int ignored = 0;
+
+        if (resultLine != null) {
+            Matcher mp = CARGO_PASSED.matcher(resultLine);
+            if (mp.find()) {
+                passed = Integer.parseInt(mp.group(1));
+            }
+            Matcher mf = CARGO_FAILED.matcher(resultLine);
+            if (mf.find()) {
+                failed = Math.max(failed, Integer.parseInt(mf.group(1)));
+            }
+            Matcher mi = CARGO_IGNORED.matcher(resultLine);
+            if (mi.find()) {
+                ignored = Integer.parseInt(mi.group(1));
+            }
+        }
+        int total = passed + failed + ignored;
+
+        List<Document.TestCase> cases = new ArrayList<>();
+        for (String f : failures) {
+            String name = f.replaceFirst("^\\s*FAILED:\\s*", "").trim();
+            cases.add(new Document.TestCase(
+                name,
+                "FAILED",
+                f.trim(),
+                null,
+                null,
+                null
+            ));
+        }
+
+        List<String> summaryLines = resultLine != null ? List.of(resultLine) : List.of();
+        context.documentBuilder().test(new Document.TestDocument(
+            cases,
+            passed,
+            failed,
+            ignored,
+            summaryLines,
+            "",
+            0,
+            total,
+            "cargo test"
+        ));
     }
 }

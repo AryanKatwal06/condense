@@ -1,7 +1,6 @@
 package com.condense.filter.stage;
 
 import com.condense.annotation.DeclarativeStage;
-
 import com.condense.filter.pipeline.CollectingSink;
 import com.condense.filter.pipeline.EmissionSink;
 import com.condense.filter.pipeline.FilterContext;
@@ -10,7 +9,10 @@ import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.pipeline.StageSession;
 import com.condense.filter.pipeline.Streamability;
 import com.condense.filter.strategy.BoundedRegex;
+import com.condense.ir.Document;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,6 +80,7 @@ public final class DockerBuildSummaryStage implements FilterStage {
                 if (emittedAny) {
                     sink.emit("docker build failed");
                 }
+                publishIr(context, "FAILED", 1, imageId, tag);
                 return;
             }
             StringBuilder sb = new StringBuilder("✓ docker build");
@@ -88,6 +91,29 @@ public final class DockerBuildSummaryStage implements FilterStage {
                 sb.append(" → ").append(tag);
             }
             sink.emit(sb.toString());
+            publishIr(context, "SUCCESS", 0, imageId, tag);
+        }
+
+        private void publishIr(FilterContext context, String status, int errors, String imageId, String tag) {
+            if (context == null || context.documentBuilder() == null) {
+                return;
+            }
+            List<String> summaryLines = new ArrayList<>();
+            if (imageId != null) {
+                summaryLines.add("image: " + imageId);
+            }
+            if (tag != null) {
+                summaryLines.add("tag: " + tag);
+            }
+            context.documentBuilder().build(new Document.BuildDocument(
+                "docker build",
+                status,
+                errors,
+                0,
+                null,
+                List.of(),
+                summaryLines
+            ));
         }
     }
 }

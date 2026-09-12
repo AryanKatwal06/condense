@@ -6,9 +6,11 @@ import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.BoundedRegex;
+import com.condense.ir.Document;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -16,7 +18,7 @@ import java.util.regex.Pattern;
  * <p>
  * Preserves failing test indicators, test names, error messages, assertion diffs,
  * and bounded stack traces (capped at 5 lines per failure) while suppressing passing
- * test lines and runner progress noise.
+ * test lines and runner progress noise. Emits structured {@link Document.TestDocument} IR.
  */
 @DeclarativeStage(aliases = {"vitest_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class VitestSummaryStage implements FilterStage {
@@ -26,6 +28,11 @@ public final class VitestSummaryStage implements FilterStage {
     private static final Pattern FAIL_LINE = Pattern.compile("(?:^|\\s)(?:×|✗|FAIL)(?:\\s|$)", Pattern.UNICODE_CASE);
     private static final Pattern SUMMARY_LINE = Pattern.compile("^Tests\\s+\\d+.*$");
     private static final Pattern STACK_LINE = Pattern.compile("^\\s+at\\s+.*$");
+
+    private static final Pattern TESTS_FAILED = Pattern.compile("(\\d+)\\s+failed");
+    private static final Pattern TESTS_PASSED = Pattern.compile("(\\d+)\\s+passed");
+    private static final Pattern TESTS_SKIPPED = Pattern.compile("(\\d+)\\s+skipped");
+    private static final Pattern TESTS_TOTAL = Pattern.compile("\\((\\d+)\\)");
 
     private VitestSummaryStage() {}
 
@@ -106,12 +113,14 @@ public final class VitestSummaryStage implements FilterStage {
         ExecutionResult result = context != null ? context.result() : null;
         if (failures.isEmpty() && summary.isEmpty()) {
             if (result != null && result.succeeded()) {
+                publishIr(context, failures, summary);
                 return StageResult.continueWith("✓ all tests passed");
             }
             return StageResult.continueWith(result != null ? result.combined() : raw);
         }
 
         if (failures.isEmpty() && result != null && result.succeeded()) {
+            publishIr(context, failures, summary);
             return StageResult.continueWith(String.join("\n", summary));
         }
 
@@ -127,7 +136,74 @@ public final class VitestSummaryStage implements FilterStage {
         }
 
         summary.forEach(l -> sb.append(l).append('\n'));
+
+        publishIr(context, failures, summary);
         return StageResult.continueWith(sb.toString().stripTrailing());
+    }
+
+    private static void publishIr(FilterContext context, List<FailedTest> failures, List<String> summary) {
+        if (context == null || context.documentBuilder() == null) {
+            return;
+        }
+
+        int failedCount = failures.size();
+        int passedCount = 0;
+        int skippedCount = 0;
+        int totalCount = failedCount;
+
+        for (String s : summary) {
+            Matcher mFail = TESTS_FAILED.matcher(s);
+            if (mFail.find()) {
+                failedCount = Math.max(failedCount, Integer.parseInt(mFail.group(1)));
+            }
+            Matcher mPass = TESTS_PASSED.matcher(s);
+            if (mPass.find()) {
+                passedCount = Integer.parseInt(mPass.group(1));
+            }
+            Matcher mSkip = TESTS_SKIPPED.matcher(s);
+            if (mSkip.find()) {
+                skippedCount = Integer.parseInt(mSkip.group(1));
+            }
+            Matcher mTot = TESTS_TOTAL.matcher(s);
+            if (mTot.find()) {
+                totalCount = Integer.parseInt(mTot.group(1));
+            }
+        }
+        if (totalCount < failedCount + passedCount + skippedCount) {
+            totalCount = failedCount + passedCount + skippedCount;
+        }
+
+        List<Document.TestCase> cases = new ArrayList<>();
+        for (FailedTest f : failures) {
+            String stack = null;
+            List<String> stackLines = f.details().stream()
+                .filter(d -> d.trim().startsWith("at "))
+                .map(String::trim)
+                .toList();
+            if (!stackLines.isEmpty()) {
+                stack = String.join("\n", stackLines);
+            }
+            cases.add(new Document.TestCase(
+                f.testLine(),
+                "FAILED",
+                String.join("\n", f.details()),
+                null,
+                null,
+                stack
+            ));
+        }
+
+        context.documentBuilder().test(new Document.TestDocument(
+            cases,
+            passedCount,
+            failedCount,
+            skippedCount,
+            summary,
+            "",
+            0,
+            totalCount,
+            "vitest"
+        ));
     }
 
     private static List<String> cleanupDetails(List<String> rawDetails) {

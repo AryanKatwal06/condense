@@ -6,6 +6,7 @@ import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
 import com.condense.filter.strategy.BoundedRegex;
+import com.condense.ir.Document;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.regex.Pattern;
  * <p>
  * Extracts failing test blocks with test titles, assertion errors, expected/received diffs,
  * and stack traces while stripping verbose browser action call logs, screenshot attachment
- * paths, and voluminous passing test noise.
+ * paths, and voluminous passing test noise. Emits structured {@link Document.TestDocument} IR.
  */
 @DeclarativeStage(aliases = {"playwright_summary"}, capability = "RESHAPE", singleton = "INSTANCE")
 public final class PlaywrightSummaryStage implements FilterStage {
@@ -30,6 +31,10 @@ public final class PlaywrightSummaryStage implements FilterStage {
     private static final Pattern ATTACHMENT = Pattern.compile("^\\s*attachment\\s+#\\d+:.*$");
     private static final Pattern DIVIDER = Pattern.compile("^\\s*[─═-]{3,}\\s*$");
     private static final Pattern STACK_LINE = Pattern.compile("^\\s+at\\s+.*$");
+
+    private static final Pattern SUMMARY_FAILED = Pattern.compile("(\\d+)\\s+failed");
+    private static final Pattern SUMMARY_PASSED = Pattern.compile("(\\d+)\\s+passed");
+    private static final Pattern SUMMARY_SKIPPED = Pattern.compile("(\\d+)\\s+(?:skipped|flaky)");
 
     private PlaywrightSummaryStage() {}
 
@@ -144,12 +149,14 @@ public final class PlaywrightSummaryStage implements FilterStage {
         ExecutionResult result = context != null ? context.result() : null;
         if (failures.isEmpty() && summaryLines.isEmpty()) {
             if (result != null && result.succeeded()) {
+                publishIr(context, failures, summaryLines);
                 return StageResult.continueWith("✓ all tests passed");
             }
             return StageResult.continueWith(result != null ? result.combined() : raw);
         }
 
         if (failures.isEmpty() && result != null && result.succeeded()) {
+            publishIr(context, failures, summaryLines);
             return StageResult.continueWith(String.join("\n", summaryLines));
         }
 
@@ -163,7 +170,67 @@ public final class PlaywrightSummaryStage implements FilterStage {
         for (String summary : summaryLines) {
             sb.append(summary).append('\n');
         }
+
+        publishIr(context, failures, summaryLines);
         return StageResult.continueWith(sb.toString().stripTrailing());
+    }
+
+    private static void publishIr(FilterContext context, List<FailedBlock> failures, List<String> summaryLines) {
+        if (context == null || context.documentBuilder() == null) {
+            return;
+        }
+
+        int failedCount = failures.size();
+        int passedCount = 0;
+        int skippedCount = 0;
+
+        for (String line : summaryLines) {
+            Matcher mf = SUMMARY_FAILED.matcher(line);
+            if (mf.find()) {
+                failedCount = Math.max(failedCount, Integer.parseInt(mf.group(1)));
+            }
+            Matcher mp = SUMMARY_PASSED.matcher(line);
+            if (mp.find()) {
+                passedCount = Integer.parseInt(mp.group(1));
+            }
+            Matcher ms = SUMMARY_SKIPPED.matcher(line);
+            if (ms.find()) {
+                skippedCount += Integer.parseInt(ms.group(1));
+            }
+        }
+        int total = failedCount + passedCount + skippedCount;
+
+        List<Document.TestCase> cases = new ArrayList<>();
+        for (FailedBlock fb : failures) {
+            String stack = null;
+            List<String> stackLines = fb.details().stream()
+                .filter(d -> d.trim().startsWith("at "))
+                .map(String::trim)
+                .toList();
+            if (!stackLines.isEmpty()) {
+                stack = String.join("\n", stackLines);
+            }
+            cases.add(new Document.TestCase(
+                fb.title(),
+                "FAILED",
+                String.join("\n", fb.details()),
+                null,
+                null,
+                stack
+            ));
+        }
+
+        context.documentBuilder().test(new Document.TestDocument(
+            cases,
+            passedCount,
+            failedCount,
+            skippedCount,
+            summaryLines,
+            "",
+            0,
+            total,
+            "playwright"
+        ));
     }
 
     private static List<String> cleanupDetails(List<String> rawDetails) {
