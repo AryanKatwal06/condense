@@ -3,6 +3,9 @@ name = "jest"
 commands = ["jest"]
 
 [[stages]]
+strategy = "ansi_strip"
+
+[[stages]]
 strategy = "jest_summary"
 
 [[tests]]
