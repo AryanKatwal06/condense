@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 12 September 2026 (Phase 1 complete: virtual threads default-on and documentation audit/purge).
+**Written:** 4 September 2026. **Revised:** 12 September 2026 (Phase 2 complete: deep gh and glab semantic filtering).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -1046,6 +1046,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 | Phase 13 Disaster Recovery & Rollback Drill | `DatabaseRollbackDrillTest` proves forward/backward schema compatibility and data integrity |
 | Phase 13 Documentation Drift & Link Integrity | `DocumentationDriftTest` enforces 0 broken links and CLI subcommand synchronization |
 | Phase 1 Virtual Threads & Doc Purge | `CommandExecutorTest` verifies default-on virtual threads and override behavior; documentation purged of unverified competitor claims |
+| Phase 2 Deep gh and glab Semantic Filtering | `GhSummaryStageTest` and `GlabSummaryStageTest` verify semantic PR/issue view, checks, and workflow run condensation; golden lock byte integrity preserved |
 
 **Not verified in this workspace (and why):** no native binary was built here (this is a Windows dev box without the GraalVM native toolchain). Native-image claims for the current tree come from GitHub Actions CI runs on Linux x64/aarch64, macOS aarch64, and Windows x64.
 
@@ -1053,7 +1054,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
  
-**Where we are.** **Phase 1** (Virtual Threads Default-On and Documentation Purge) has landed. Virtual threads are now enabled by default for all process stream drains in `CommandExecutor`, with full test coverage for default activation and override behavior. All documentation claims have been audited and purged of unverified competitor assertions. All 13 master superiority phases and Phase 1 enhancements are **COMPLETED AND MECHANICALLY VERIFIED**.
+**Where we are.** **Phase 2** (Deep gh and glab Semantic Filtering) has landed. GitHub CLI and GitLab CLI commands now feature dedicated semantic condensation stages (`GhSummaryStage` and `GlabSummaryStage`) covering PR/MR views, issue views, CI checks, and workflow run outputs while maintaining 100% byte-for-byte compatibility for existing table listings and golden locks. All 13 master superiority phases and Phases 1–2 enhancements are **COMPLETED AND MECHANICALLY VERIFIED**.
  
 Condense stands with permanent, reproducible superiority over Zap across all 8 technical dimensions:
 1. **Structural IR Architecture**: Typed AST/JSON/XML parsing vs. Zap regex line dropping.
