@@ -1,7 +1,7 @@
 # Condense — Project Handoff
 
 **Audience:** the next coding agent (or engineer) taking over this repository.
-**Written:** 4 September 2026. **Revised:** 12 September 2026 (Phase 4 complete: enhanced JS/TS test runner depth).
+**Written:** 4 September 2026. **Revised:** 12 September 2026 (Phase 5 complete: trend-over-time analytics).
 **Upstream:** https://github.com/AryanKatwal06/condense
 **Local workspace:** `c:\Users\katwa\OneDrive\Desktop\code-condenser`
 **Branch at handoff:** `main` after Phase 17. R25 stays deferred. Confirm with `git log -1` and origin before any post-roadmap work.
@@ -472,7 +472,8 @@ Planning plus Phase 1 through Phase 17 code, then an independent audit of Phases
 | Enhancement Phase 2 | **LANDED** | Deep semantic filtering for GitHub (`gh`) and GitLab (`glab`) CLI output; dedicated `GhSummaryStage` and `GlabSummaryStage` with ANSI stripping and markdown link normalization. |
 | Enhancement Phase 3 | **LANDED** | Deep `go test -json` structured parsing via `GoTestSummaryStage`; assertion diff and error retention; build failure capture; plain text fallback. |
 | Enhancement Phase 4 | **LANDED** | Enhanced JS/TS test runner depth: `JestSummaryStage` (failure blocks, assertion diffs, bounded stack traces, passing suite elimination), `VitestSummaryStage` (diagnostic error messages and assertion details), and dedicated `PlaywrightSummaryStage` (browser action call log suppression, test location and assertion capture). |
-| This handoff | **CURRENT** | Corrected 12 Sep 2026 to record completion of Enhancement Phase 4. |
+| Enhancement Phase 5 | **LANDED** | Week-over-week token savings trend analytics (`condense gain --trend`) across 8-week continuous timeline with empty-week gap filling, year boundary alignment, table/JSON/CSV formats, and MCP resource `condense://gain/trend`. |
+| This handoff | **CURRENT** | Corrected 12 Sep 2026 to record completion of Enhancement Phase 5. |
 
 **Roadmap file:** `.cursor/plans/condense_master_roadmap_19b36738.plan.md` — YAML frontmatter with `p1`…`p17`; `p1`–`p17` are marked `completed`. **That file is untracked and local-only (see §3).**
 
@@ -1053,6 +1054,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 | Phase 2 Deep gh and glab Semantic Filtering | `GhSummaryStageTest` and `GlabSummaryStageTest` verify semantic PR/issue view, checks, and workflow run condensation; golden lock byte integrity preserved |
 | Phase 3 Deep go test -json Structured Parsing | `GoTestSummaryStageTest`, `GoTestFilterTest`, `BuiltinDefinitionValidationTest`, and `GoldenLockTest` verify structured JSON event parsing, assertion diff retention, package build failure capture, and 100% golden lock byte compatibility |
 | Phase 4 Enhanced JS/TS Test Runner Depth | `JestSummaryStageTest`, `VitestSummaryStageTest`, `PlaywrightSummaryStageTest`, `JestFilterTest`, `VitestFilterTest`, `GoldenLockTest`, and `FidelityCorpusTest` verify assertion diff and error preservation across Jest and Vitest, call log suppression in Playwright, and 100% golden lock and fidelity compliance |
+| Phase 5 Trend-Over-Time Analytics | `TrendAnalyticsTest`, `GainCommandTrendTest`, `GainCommandCostTest`, `GainCsvFormatTest`, and `McpHandlersTest` verify continuous 8-week timeline gap filling, ISO week boundaries, text/JSON/CSV export formats, empty database handling, and `condense://gain/trend` MCP resource read |
 
 **Not verified in this workspace (and why):** no native binary was built here (this is a Windows dev box without the GraalVM native toolchain). Native-image claims for the current tree come from GitHub Actions CI runs on Linux x64/aarch64, macOS aarch64, and Windows x64.
 
@@ -1060,7 +1062,7 @@ Every claim in §4–§6 was checked against the tree on the revision date. Meth
 
 ## 13. Exact stop point
  
-**Where we are.** **Phase 4** (Enhanced JS/TS Test Runner Depth) has landed. JS/TS test runner output filtering has been upgraded with deep diagnostic retention across Jest, Vitest, and Playwright. Jest (`JestSummaryStage`) now parses test failure blocks to preserve test titles, error messages, `Expected/Received` diffs, code frames, and bounded stack traces (max 5 frames) while dropping passing test suites. Vitest (`VitestSummaryStage`) now captures diagnostic error messages (`→ ...`), diff blocks, and stack frames under failed tests while eliminating passing test lines. Playwright has been upgraded from generic line grouping to a dedicated `PlaywrightSummaryStage` in `playwright.toml`, capturing test failure locations and assertion error details while discarding verbose 50+ line browser action call logs (`call log:`) and trace attachments. All golden locks and fidelity thresholds pass with 100% compliance, and all migration diffs are documented in `docs/pipeline-migration-diffs.md`. All 13 master superiority phases and Phases 1–4 enhancements are **COMPLETED AND MECHANICALLY VERIFIED**.
+**Where we are.** **Phase 5** (Trend-Over-Time Analytics) has landed. `condense gain --trend` computes and displays continuous week-over-week token savings analytics across an 8-week timeline, gap-filling empty weeks with explicit 0 counts, 0.0% savings, and 1.0x compression ratios. All calendar and year boundary transitions (`YYYY-Www`) align 100% with SQLite datetime grouping. Trend reporting is supported across ASCII tables, JSON (`--format json`), and CSV (`--format csv`) formats, and is exposed to AI coding agents via the `condense://gain/trend` MCP resource. All 13 master superiority phases and Phases 1–5 enhancements are **COMPLETED AND MECHANICALLY VERIFIED**.
  
 Condense stands with permanent, reproducible superiority over Zap across all 8 technical dimensions:
 1. **Structural IR Architecture**: Typed AST/JSON/XML parsing vs. Zap regex line dropping.

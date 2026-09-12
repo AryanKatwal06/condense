@@ -181,7 +181,7 @@ To verify hooks are working, run a few commands via your AI and then run `conden
 
 AI agents increasingly ship with their own context-saving mechanisms. Condense is designed to compose cleanly with them:
 
-*   **Claude Desktop (MCP)**: `condense mcp --start` speaks MCP on stdio. Tools are `run`, `explain`, `read`, and `discover`. Resources are `condense://gain` and `condense://doctor`. `run` returns the schema-1 IR envelope. See [docs/mcp.md](docs/mcp.md). Hooks remain the fallback path.
+*   **Claude Desktop (MCP)**: `condense mcp --start` speaks MCP on stdio. Tools are `run`, `explain`, `read`, and `discover`. Resources are `condense://gain`, `condense://gain/trend`, and `condense://doctor`. `run` returns the schema-1 IR envelope. See [docs/mcp.md](docs/mcp.md). Hooks remain the fallback path.
 *   **Claude Code (Compact Mode)**: Claude Code strips some whitespace automatically. Condense runs *first*, stripping entire irrelevant blocks (like passing tests), and then Claude compacts what's left. They stack multiplicatively.
 *   **Aider (Repo Map)**: Aider uses ctags to map codebases. Condense doesn't interfere with this; it focuses purely on transient shell output, which Aider's map doesn't cover.
 
@@ -202,7 +202,7 @@ JSON does not live-print fragments, even for STREAM commands such as `npm instal
 
 ## MCP
 
-`condense mcp --start` is a stdio JSON-RPC server. Tools `run`, `explain`, `read`, and `discover` reuse the CLI engines. `run` returns the same schema-1 document as `condense --format json`. `discover` recommends filter definition names from manifests; it does not filter. Resources `condense://gain` and `condense://doctor` return the existing JSON reports. See [docs/mcp.md](docs/mcp.md).
+`condense mcp --start` is a stdio JSON-RPC server. Tools `run`, `explain`, `read`, and `discover` reuse the CLI engines. `run` returns the same schema-1 document as `condense --format json`. `discover` recommends filter definition names from manifests; it does not filter. Resources `condense://gain`, `condense://gain/trend`, and `condense://doctor` return the existing JSON reports. See [docs/mcp.md](docs/mcp.md).
 
 ---
 
@@ -274,7 +274,7 @@ Top Commands by Tokens Saved:
 3. git status (115,000 saved)
 ...
 ```
-Other flags include `--daily`, `--weekly`, `--top 10`, `--scope project`, `--since 7`, and `--format json`.
+Other flags include `--trend` (8-week week-over-week trend table), `--daily`, `--weekly`, `--top 10`, `--scope project`, `--since 7`, `--format json`, and `--format csv`.
 
 If `gain` is empty, run `condense doctor` (or `condense doctor --format json`). It names why tracking is empty without changing any proxied command.
 
