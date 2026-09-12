@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FilterOverrideSecurityAdversarialTest {
 
@@ -255,14 +256,13 @@ class FilterOverrideSecurityAdversarialTest {
         String adversarialInput = "a".repeat(34) + "c";
 
         long start = System.nanoTime();
-        String output = resolved.execute(adversarialInput);
+        assertThatThrownBy(() -> resolved.execute(adversarialInput))
+            .isInstanceOf(com.condense.filter.pipeline.PipelineExecutionException.class)
+            .hasRootCauseInstanceOf(com.condense.filter.strategy.RegexTimeoutException.class);
         long elapsedMillis = (System.nanoTime() - start) / 1_000_000L;
 
         // Bounded time limit assertion: must abort cleanly around ~200ms and well under 2000ms
         assertThat(elapsedMillis).isGreaterThanOrEqualTo(100L).isLessThan(2000L);
-
-        // Fail-open guarantee: stage exception caught by pipeline, returning intermediate text
-        assertThat(output).isEqualTo(adversarialInput);
     }
 
     @Test
@@ -295,14 +295,13 @@ class FilterOverrideSecurityAdversarialTest {
         String adversarialInput = "a".repeat(34) + "c";
 
         long start = System.nanoTime();
-        String output = resolved.execute(adversarialInput);
+        assertThatThrownBy(() -> resolved.execute(adversarialInput))
+            .isInstanceOf(com.condense.filter.pipeline.PipelineExecutionException.class)
+            .hasRootCauseInstanceOf(com.condense.filter.strategy.RegexTimeoutException.class);
         long elapsedMillis = (System.nanoTime() - start) / 1_000_000L;
 
         // Bounded time limit assertion
         assertThat(elapsedMillis).isGreaterThanOrEqualTo(100L).isLessThan(2000L);
-
-        // Fail-open guarantee
-        assertThat(output).isEqualTo(adversarialInput);
     }
 
     @Test

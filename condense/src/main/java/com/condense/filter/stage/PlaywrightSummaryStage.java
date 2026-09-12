@@ -149,14 +149,14 @@ public final class PlaywrightSummaryStage implements FilterStage {
         ExecutionResult result = context != null ? context.result() : null;
         if (failures.isEmpty() && summaryLines.isEmpty()) {
             if (result != null && result.succeeded()) {
-                publishIr(context, failures, summaryLines);
+                publishIr(context, failures, summaryLines, List.of("✓ all tests passed"));
                 return StageResult.continueWith("✓ all tests passed");
             }
             return StageResult.continueWith(result != null ? result.combined() : raw);
         }
 
         if (failures.isEmpty() && result != null && result.succeeded()) {
-            publishIr(context, failures, summaryLines);
+            publishIr(context, failures, summaryLines, summaryLines);
             return StageResult.continueWith(String.join("\n", summaryLines));
         }
 
@@ -171,11 +171,12 @@ public final class PlaywrightSummaryStage implements FilterStage {
             sb.append(summary).append('\n');
         }
 
-        publishIr(context, failures, summaryLines);
-        return StageResult.continueWith(sb.toString().stripTrailing());
+        String output = sb.toString().stripTrailing();
+        publishIr(context, failures, summaryLines, output.lines().toList());
+        return StageResult.continueWith(output);
     }
 
-    private static void publishIr(FilterContext context, List<FailedBlock> failures, List<String> summaryLines) {
+    private static void publishIr(FilterContext context, List<FailedBlock> failures, List<String> summaryLines, List<String> outputLines) {
         if (context == null || context.documentBuilder() == null) {
             return;
         }
@@ -185,15 +186,15 @@ public final class PlaywrightSummaryStage implements FilterStage {
         int skippedCount = 0;
 
         for (String line : summaryLines) {
-            Matcher mf = SUMMARY_FAILED.matcher(line);
+            Matcher mf = BoundedRegex.matcher(SUMMARY_FAILED, line);
             if (mf.find()) {
                 failedCount = Math.max(failedCount, Integer.parseInt(mf.group(1)));
             }
-            Matcher mp = SUMMARY_PASSED.matcher(line);
+            Matcher mp = BoundedRegex.matcher(SUMMARY_PASSED, line);
             if (mp.find()) {
                 passedCount = Integer.parseInt(mp.group(1));
             }
-            Matcher ms = SUMMARY_SKIPPED.matcher(line);
+            Matcher ms = BoundedRegex.matcher(SUMMARY_SKIPPED, line);
             if (ms.find()) {
                 skippedCount += Integer.parseInt(ms.group(1));
             }
@@ -225,7 +226,7 @@ public final class PlaywrightSummaryStage implements FilterStage {
             passedCount,
             failedCount,
             skippedCount,
-            summaryLines,
+            outputLines,
             "",
             0,
             total,

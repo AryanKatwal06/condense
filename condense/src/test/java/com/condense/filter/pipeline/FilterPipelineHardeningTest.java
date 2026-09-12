@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FilterPipelineHardeningTest {
 
@@ -63,8 +64,8 @@ class FilterPipelineHardeningTest {
     }
 
     @Test
-    @DisplayName("Fail-open error handling preserves intermediate state when a middle stage crashes")
-    void failOpen_preservesIntermediateStateOnStageException() {
+    @DisplayName("Stage failure in pipeline aborts immediately with PipelineExecutionException")
+    void failOpen_abortsImmediatelyOnStageException() {
         FilterStage stage1 = (input, ctx) -> StageResult.continueWith(input.toUpperCase());
         FilterStage faultyStage = (input, ctx) -> {
             throw new IllegalStateException("Faulty regex parser failure");
@@ -72,10 +73,9 @@ class FilterPipelineHardeningTest {
         FilterStage stage3 = (input, ctx) -> StageResult.continueWith("[" + input + "]");
 
         FilterPipeline pipeline = FilterPipeline.of(stage1, faultyStage, stage3);
-        String output = pipeline.execute("hello world");
-
-        // stage1 produced "HELLO WORLD", faultyStage failed (logged warning), stage3 received "HELLO WORLD"
-        assertThat(output).isEqualTo("[HELLO WORLD]");
+        assertThatThrownBy(() -> pipeline.execute("hello world"))
+            .isInstanceOf(PipelineExecutionException.class)
+            .hasMessageContaining("Faulty regex parser failure");
     }
 
     @Test

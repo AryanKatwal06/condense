@@ -136,12 +136,14 @@ public final class JestSummaryStage implements FilterStage {
         ExecutionResult result = context != null ? context.result() : null;
         if (failedSuites.isEmpty() && summaryLines.isEmpty()) {
             if (result != null && result.succeeded()) {
+                publishIr(context, failedSuites, summaryLines, List.of("✓ all tests passed"));
                 return StageResult.continueWith("✓ all tests passed");
             }
             return StageResult.continueWith(result != null ? result.combined() : raw);
         }
 
         if (failedSuites.isEmpty() && result != null && result.succeeded()) {
+            publishIr(context, failedSuites, summaryLines, summaryLines);
             return StageResult.continueWith(String.join("\n", summaryLines));
         }
 
@@ -167,10 +169,12 @@ public final class JestSummaryStage implements FilterStage {
 
         summaryLines.forEach(l -> sb.append(l).append('\n'));
 
-        // Publish structured TestDocument IR
-        publishIr(context, failedSuites, summaryLines);
+        String output = sb.toString().stripTrailing();
 
-        return StageResult.continueWith(sb.toString().stripTrailing());
+        // Publish structured TestDocument IR
+        publishIr(context, failedSuites, summaryLines, output.lines().toList());
+
+        return StageResult.continueWith(output);
     }
 
     private static FailedSuite buildSuite(String suiteName, List<FailureBuilder> builders) {
@@ -184,7 +188,7 @@ public final class JestSummaryStage implements FilterStage {
         return new FailedSuite(suiteName, failures);
     }
 
-    private static void publishIr(FilterContext context, List<FailedSuite> failedSuites, List<String> summaryLines) {
+    private static void publishIr(FilterContext context, List<FailedSuite> failedSuites, List<String> summaryLines, List<String> outputLines) {
         if (context == null || context.documentBuilder() == null) {
             return;
         }
@@ -208,15 +212,15 @@ public final class JestSummaryStage implements FilterStage {
         int passedCount = 0;
         int totalCount = failedCount;
         for (String line : summaryLines) {
-            Matcher fm = TESTS_COUNT.matcher(line);
+            Matcher fm = BoundedRegex.matcher(TESTS_COUNT, line);
             if (fm.find()) {
                 failedCount = Math.max(failedCount, Integer.parseInt(fm.group(1)));
             }
-            Matcher pm = PASSED_COUNT.matcher(line);
+            Matcher pm = BoundedRegex.matcher(PASSED_COUNT, line);
             if (pm.find()) {
                 passedCount = Integer.parseInt(pm.group(1));
             }
-            Matcher tm = TOTAL_COUNT.matcher(line);
+            Matcher tm = BoundedRegex.matcher(TOTAL_COUNT, line);
             if (tm.find()) {
                 totalCount = Integer.parseInt(tm.group(1));
             }
@@ -227,7 +231,7 @@ public final class JestSummaryStage implements FilterStage {
             passedCount,
             failedCount,
             0,
-            summaryLines,
+            outputLines,
             "",
             0,
             totalCount,

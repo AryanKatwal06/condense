@@ -194,8 +194,9 @@ public final class GoTestSummaryStage implements FilterStage {
                     bsb.append("  ").append(d).append('\n');
                 }
             }
-            publishJsonIr(context, failedTests, packageFailures, passed, skipped);
-            return StageResult.continueWith(bsb.toString().stripTrailing());
+            String bsbOutput = bsb.toString().stripTrailing();
+            publishJsonIr(context, failedTests, packageFailures, passed, skipped, bsbOutput.lines().toList());
+            return StageResult.continueWith(bsbOutput);
         }
 
         StringBuilder sb = new StringBuilder();
@@ -223,8 +224,9 @@ public final class GoTestSummaryStage implements FilterStage {
             sb.append(" | failed: ").append(totalFailures);
         }
 
-        publishJsonIr(context, failedTests, packageFailures, passed, skipped);
-        return StageResult.continueWith(sb.toString().stripTrailing());
+        String output = sb.toString().stripTrailing();
+        publishJsonIr(context, failedTests, packageFailures, passed, skipped, output.lines().toList());
+        return StageResult.continueWith(output);
     }
 
     private static List<String> extractDiagnostics(List<String> rawLines) {
@@ -401,11 +403,12 @@ public final class GoTestSummaryStage implements FilterStage {
             }
         }
 
-        publishPlainIr(context, failures);
-        return StageResult.continueWith(sb.toString().stripTrailing());
+        String output = sb.toString().stripTrailing();
+        publishPlainIr(context, failures, output.lines().toList());
+        return StageResult.continueWith(output);
     }
 
-    private static void publishJsonIr(FilterContext context, List<FailedTest> failedTests, List<PackageFailure> packageFailures, int passed, int skipped) {
+    private static void publishJsonIr(FilterContext context, List<FailedTest> failedTests, List<PackageFailure> packageFailures, int passed, int skipped, List<String> outputLines) {
         if (context == null || context.documentBuilder() == null) {
             return;
         }
@@ -432,12 +435,13 @@ public final class GoTestSummaryStage implements FilterStage {
         }
         int totalFailed = failedTests.size() + packageFailures.size();
         int total = passed + skipped + totalFailed;
+        List<String> lines = outputLines != null ? outputLines : List.of("go test: " + totalFailed + " failure(s)");
         context.documentBuilder().test(new Document.TestDocument(
             cases,
             passed,
             totalFailed,
             skipped,
-            List.of("go test: " + totalFailed + " failure(s)"),
+            lines,
             "",
             0,
             total,
@@ -445,7 +449,7 @@ public final class GoTestSummaryStage implements FilterStage {
         ));
     }
 
-    private static void publishPlainIr(FilterContext context, List<PlainFailedTest> failures) {
+    private static void publishPlainIr(FilterContext context, List<PlainFailedTest> failures, List<String> outputLines) {
         if (context == null || context.documentBuilder() == null) {
             return;
         }
@@ -460,12 +464,13 @@ public final class GoTestSummaryStage implements FilterStage {
                 null
             ));
         }
+        List<String> lines = outputLines != null ? outputLines : List.of("go test: " + failures.size() + " failure(s)");
         context.documentBuilder().test(new Document.TestDocument(
             cases,
             0,
             failures.size(),
             0,
-            List.of("go test: " + failures.size() + " failure(s)"),
+            lines,
             "",
             0,
             failures.size(),

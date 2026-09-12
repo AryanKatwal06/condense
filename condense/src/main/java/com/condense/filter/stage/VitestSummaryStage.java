@@ -113,14 +113,14 @@ public final class VitestSummaryStage implements FilterStage {
         ExecutionResult result = context != null ? context.result() : null;
         if (failures.isEmpty() && summary.isEmpty()) {
             if (result != null && result.succeeded()) {
-                publishIr(context, failures, summary);
+                publishIr(context, failures, summary, List.of("✓ all tests passed"));
                 return StageResult.continueWith("✓ all tests passed");
             }
             return StageResult.continueWith(result != null ? result.combined() : raw);
         }
 
         if (failures.isEmpty() && result != null && result.succeeded()) {
-            publishIr(context, failures, summary);
+            publishIr(context, failures, summary, summary);
             return StageResult.continueWith(String.join("\n", summary));
         }
 
@@ -137,11 +137,12 @@ public final class VitestSummaryStage implements FilterStage {
 
         summary.forEach(l -> sb.append(l).append('\n'));
 
-        publishIr(context, failures, summary);
-        return StageResult.continueWith(sb.toString().stripTrailing());
+        String output = sb.toString().stripTrailing();
+        publishIr(context, failures, summary, output.lines().toList());
+        return StageResult.continueWith(output);
     }
 
-    private static void publishIr(FilterContext context, List<FailedTest> failures, List<String> summary) {
+    private static void publishIr(FilterContext context, List<FailedTest> failures, List<String> summary, List<String> outputLines) {
         if (context == null || context.documentBuilder() == null) {
             return;
         }
@@ -152,19 +153,19 @@ public final class VitestSummaryStage implements FilterStage {
         int totalCount = failedCount;
 
         for (String s : summary) {
-            Matcher mFail = TESTS_FAILED.matcher(s);
+            Matcher mFail = BoundedRegex.matcher(TESTS_FAILED, s);
             if (mFail.find()) {
                 failedCount = Math.max(failedCount, Integer.parseInt(mFail.group(1)));
             }
-            Matcher mPass = TESTS_PASSED.matcher(s);
+            Matcher mPass = BoundedRegex.matcher(TESTS_PASSED, s);
             if (mPass.find()) {
                 passedCount = Integer.parseInt(mPass.group(1));
             }
-            Matcher mSkip = TESTS_SKIPPED.matcher(s);
+            Matcher mSkip = BoundedRegex.matcher(TESTS_SKIPPED, s);
             if (mSkip.find()) {
                 skippedCount = Integer.parseInt(mSkip.group(1));
             }
-            Matcher mTot = TESTS_TOTAL.matcher(s);
+            Matcher mTot = BoundedRegex.matcher(TESTS_TOTAL, s);
             if (mTot.find()) {
                 totalCount = Integer.parseInt(mTot.group(1));
             }
@@ -198,7 +199,7 @@ public final class VitestSummaryStage implements FilterStage {
             passedCount,
             failedCount,
             skippedCount,
-            summary,
+            outputLines,
             "",
             0,
             totalCount,

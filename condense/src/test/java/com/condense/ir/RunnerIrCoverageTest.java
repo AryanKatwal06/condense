@@ -110,7 +110,7 @@ class RunnerIrCoverageTest {
         assertThat(buildDoc.tool()).isEqualTo("docker build");
         assertThat(buildDoc.status()).isEqualTo("SUCCESS");
         assertThat(buildDoc.errors()).isEqualTo(0);
-        assertThat(buildDoc.summaryLines()).contains("image: 7f8a9b0c1d2e");
-        assertThat(buildDoc.summaryLines()).contains("tag: my-app:latest");
+        assertThat(buildDoc.summaryLines()).anyMatch(l -> l.contains("7f8a9b0c1d2e"));
+        assertThat(buildDoc.summaryLines()).anyMatch(l -> l.contains("my-app:latest"));
     }
 }

@@ -51,16 +51,22 @@ public final class DockerBuildSummaryStage implements FilterStage {
         private String tag;
         private int doneCount;
         private boolean emittedAny;
+        private final List<String> emittedLines = new ArrayList<>();
+
+        private void emitLine(EmissionSink sink, String line) {
+            sink.emit(line);
+            emittedLines.add(line);
+        }
 
         @Override
         public void feedLine(String line, EmissionSink sink, FilterContext context) {
             String value = line != null ? line : "";
             if (BoundedRegex.matcher(STEP_DONE, value).find() && doneCount < MAX_DONE) {
-                sink.emit(value);
+                emitLine(sink, value);
                 doneCount++;
                 emittedAny = true;
             } else if (BoundedRegex.matcher(ERROR, value).find()) {
-                sink.emit(value);
+                emitLine(sink, value);
                 emittedAny = true;
             }
             Matcher id = BoundedRegex.matcher(IMAGE_ID, value);
@@ -78,9 +84,9 @@ public final class DockerBuildSummaryStage implements FilterStage {
             int exit = context != null && context.result() != null ? context.result().exitCode() : 0;
             if (exit != 0) {
                 if (emittedAny) {
-                    sink.emit("docker build failed");
+                    emitLine(sink, "docker build failed");
                 }
-                publishIr(context, "FAILED", 1, imageId, tag);
+                publishIr(context, "FAILED", 1);
                 return;
             }
             StringBuilder sb = new StringBuilder("✓ docker build");
@@ -90,20 +96,13 @@ public final class DockerBuildSummaryStage implements FilterStage {
             if (tag != null) {
                 sb.append(" → ").append(tag);
             }
-            sink.emit(sb.toString());
-            publishIr(context, "SUCCESS", 0, imageId, tag);
+            emitLine(sink, sb.toString());
+            publishIr(context, "SUCCESS", 0);
         }
 
-        private void publishIr(FilterContext context, String status, int errors, String imageId, String tag) {
+        private void publishIr(FilterContext context, String status, int errors) {
             if (context == null || context.documentBuilder() == null) {
                 return;
-            }
-            List<String> summaryLines = new ArrayList<>();
-            if (imageId != null) {
-                summaryLines.add("image: " + imageId);
-            }
-            if (tag != null) {
-                summaryLines.add("tag: " + tag);
             }
             context.documentBuilder().build(new Document.BuildDocument(
                 "docker build",
@@ -112,7 +111,7 @@ public final class DockerBuildSummaryStage implements FilterStage {
                 0,
                 null,
                 List.of(),
-                summaryLines
+                List.copyOf(emittedLines)
             ));
         }
     }

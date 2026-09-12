@@ -6,6 +6,7 @@ import com.condense.core.ExecutionResult;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.strategy.BoundedRegex;
 import com.condense.ir.Document;
 
 import java.util.ArrayList;
@@ -49,8 +50,9 @@ public final class CargoTestSummaryStage implements FilterStage {
         CondenseConfig config = context.config();
         if (failures.isEmpty()) {
             if (result != null && result.exitCode() != 0 && hasCompile) {
-                publishIr(context, failures, resultLine, true, errors);
-                return StageResult.continueWith("cargo test: compile error\n" + String.join("\n", errors));
+                String compileOutput = "cargo test: compile error\n" + String.join("\n", errors);
+                publishIr(context, failures, resultLine, true, errors, compileOutput.lines().toList());
+                return StageResult.continueWith(compileOutput);
             }
             String summary = resultLine != null ? resultLine : "✓ all tests passed";
             if (config != null
@@ -58,7 +60,7 @@ public final class CargoTestSummaryStage implements FilterStage {
                 && summary.contains("; finished in")) {
                 summary = summary.substring(0, summary.indexOf("; finished in")).trim();
             }
-            publishIr(context, failures, resultLine, false, errors);
+            publishIr(context, failures, resultLine, false, errors, List.of(summary));
             return StageResult.continueWith(summary);
         }
 
@@ -75,11 +77,12 @@ public final class CargoTestSummaryStage implements FilterStage {
             sb.append(line);
         }
 
-        publishIr(context, failures, resultLine, false, errors);
-        return StageResult.continueWith(sb.toString().stripTrailing());
+        String output = sb.toString().stripTrailing();
+        publishIr(context, failures, resultLine, false, errors, output.lines().toList());
+        return StageResult.continueWith(output);
     }
 
-    private static void publishIr(FilterContext context, List<String> failures, String resultLine, boolean compileError, List<String> errors) {
+    private static void publishIr(FilterContext context, List<String> failures, String resultLine, boolean compileError, List<String> errors, List<String> outputLines) {
         if (context == null || context.documentBuilder() == null) {
             return;
         }
@@ -101,15 +104,15 @@ public final class CargoTestSummaryStage implements FilterStage {
         int ignored = 0;
 
         if (resultLine != null) {
-            Matcher mp = CARGO_PASSED.matcher(resultLine);
+            Matcher mp = BoundedRegex.matcher(CARGO_PASSED, resultLine);
             if (mp.find()) {
                 passed = Integer.parseInt(mp.group(1));
             }
-            Matcher mf = CARGO_FAILED.matcher(resultLine);
+            Matcher mf = BoundedRegex.matcher(CARGO_FAILED, resultLine);
             if (mf.find()) {
                 failed = Math.max(failed, Integer.parseInt(mf.group(1)));
             }
-            Matcher mi = CARGO_IGNORED.matcher(resultLine);
+            Matcher mi = BoundedRegex.matcher(CARGO_IGNORED, resultLine);
             if (mi.find()) {
                 ignored = Integer.parseInt(mi.group(1));
             }
@@ -129,13 +132,12 @@ public final class CargoTestSummaryStage implements FilterStage {
             ));
         }
 
-        List<String> summaryLines = resultLine != null ? List.of(resultLine) : List.of();
         context.documentBuilder().test(new Document.TestDocument(
             cases,
             passed,
             failed,
             ignored,
-            summaryLines,
+            outputLines,
             "",
             0,
             total,

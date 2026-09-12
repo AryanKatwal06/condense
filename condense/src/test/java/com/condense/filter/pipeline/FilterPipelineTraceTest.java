@@ -4,6 +4,7 @@ import com.condense.core.CondenseConfig;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FilterPipelineTraceTest {
 
@@ -54,7 +55,7 @@ class FilterPipelineTraceTest {
     }
 
     @Test
-    void throwingStageRecordsExceptionAndContinues() {
+    void throwingStageAbortsAndRecordsIncident() {
         FilterContext ctx = FilterContext.of("pytest", null, CondenseConfig.defaults(), 0, false);
         FilterPipeline pipeline = FilterPipeline.of(
             NamedStage.wrap("keep", (input, c) -> StageResult.continueWith("kept\n")),
@@ -63,14 +64,11 @@ class FilterPipelineTraceTest {
             }),
             NamedStage.wrap("after", (input, c) -> StageResult.continueWith(input + "after"))
         );
-        PipelineTrace trace = pipeline.executeTraced("raw", ctx);
-        assertThat(trace.output()).isEqualTo("kept\nafter");
-        assertThat(trace.stages().get(1).status()).isEqualTo(StageTrace.EXCEPTION);
-        assertThat(trace.stages().get(1).detail()).contains("stage died");
+        assertThatThrownBy(() -> pipeline.executeTraced("raw", ctx))
+            .isInstanceOf(PipelineExecutionException.class)
+            .hasMessageContaining("stage died");
         assertThat(ctx.incidents()).hasSize(1);
         assertThat(ctx.incidents().get(0).stageName()).isEqualTo("boom");
-        assertThat(pipeline.execute("raw", FilterContext.of("pytest", null, CondenseConfig.defaults(), 0, false)))
-            .isEqualTo(trace.output());
     }
 
     @Test
