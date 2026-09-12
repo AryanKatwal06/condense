@@ -5,6 +5,7 @@ import com.condense.core.ExecutionResult;
 import com.condense.filter.pipeline.FilterContext;
 import com.condense.filter.pipeline.FilterStage;
 import com.condense.filter.pipeline.StageResult;
+import com.condense.filter.strategy.BoundedRegex;
 import com.condense.filter.strategy.HeadTailStage;
 
 import java.util.ArrayList;
@@ -155,9 +156,9 @@ public final class GhSummaryStage implements FilterStage {
                 }
                 continue;
             }
-            if (WRAPPER_TAG.matcher(trimmed).matches()
-                || PURE_TAG.matcher(trimmed).matches()
-                || BADGE_OR_COMMENT.matcher(trimmed).matches()) {
+            if (BoundedRegex.matcher(WRAPPER_TAG, trimmed).matches()
+                || BoundedRegex.matcher(PURE_TAG, trimmed).matches()
+                || BoundedRegex.matcher(BADGE_OR_COMMENT, trimmed).matches()) {
                 continue;
             }
 
