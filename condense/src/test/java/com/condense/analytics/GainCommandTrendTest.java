@@ -167,4 +167,30 @@ class GainCommandTrendTest {
         assertThat(root.get("weeks_requested").asInt()).isEqualTo(3); // 14 / 7 + 1 = 3
         assertThat(root.get("weeks")).hasSize(3);
     }
+
+    @Test
+    @DisplayName("Picocli command line parsing with --trend produces 8 weeks without --since")
+    void testPicocliTrendParsingProducesEightWeeks() {
+        GainCommand cmd = new GainCommand();
+        cmd.gainRepo = gainRepo;
+        cmd.trendAnalytics = trendAnalytics;
+        new CommandLine(cmd).parseArgs("--trend");
+        cmd.run();
+
+        String out = outStream.toString();
+        assertThat(out).contains("Total (8w)");
+    }
+
+    @Test
+    @DisplayName("Picocli command line parsing with --trend and --since adapts week count")
+    void testPicocliTrendParsingWithSince() {
+        GainCommand cmd = new GainCommand();
+        cmd.gainRepo = gainRepo;
+        cmd.trendAnalytics = trendAnalytics;
+        new CommandLine(cmd).parseArgs("--trend", "--since", "14");
+        cmd.run();
+
+        String out = outStream.toString();
+        assertThat(out).contains("Total (3w)");
+    }
 }

@@ -64,8 +64,8 @@ public class GainCommand implements Runnable {
 
     @Option(names = "--since",
         description = "Restrict to last N days. Default: 30.",
-        defaultValue = "30", paramLabel = "DAYS")
-    int since;
+        paramLabel = "DAYS")
+    Integer since;
 
     @Option(names = "--all",
         description = "Include all-time data, ignoring --since.")
@@ -103,7 +103,7 @@ public class GainCommand implements Runnable {
             return;
         }
 
-        int effectiveSince = all ? 0 : since;
+        int effectiveSince = all ? 0 : (since != null ? since : 0);
         boolean isJson = "json".equalsIgnoreCase(format);
         boolean isCsv = "csv".equalsIgnoreCase(format);
         ModelPricing pricing = resolvePricing();
@@ -120,8 +120,9 @@ public class GainCommand implements Runnable {
             }
 
             if (graph) {
-                List<DailyStat> stats = gainRepo.dailyStats(effectiveSince == 0 ? 30 : effectiveSince, scope);
-                System.out.println(AsciiGraphRenderer.renderGraph(stats, effectiveSince == 0 ? 30 : effectiveSince));
+                int days = effectiveSince == 0 ? 30 : effectiveSince;
+                List<DailyStat> stats = gainRepo.dailyStats(days, scope);
+                System.out.println(AsciiGraphRenderer.renderGraph(stats, days));
                 return;
             }
 
@@ -153,13 +154,15 @@ public class GainCommand implements Runnable {
             }
 
             if (topFlag != null) {
+                int days = (effectiveSince == 0 && !all) ? 30 : effectiveSince;
                 System.out.println(AsciiGraphRenderer.renderTopCommands(
-                    gainRepo.topCommands(topFlag, effectiveSince, scope)));
+                    gainRepo.topCommands(topFlag, days, scope)));
                 return;
             }
 
             // Default: full summary panel
-            GainReport report = gainRepo.buildReport(scope, effectiveSince, 5, pricing);
+            int days = (effectiveSince == 0 && !all) ? 30 : effectiveSince;
+            GainReport report = gainRepo.buildReport(scope, days, 5, pricing);
             System.out.println(AsciiGraphRenderer.renderSummary(report));
 
         } catch (Exception e) {
@@ -234,7 +237,8 @@ public class GainCommand implements Runnable {
             System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(report));
             return;
         }
-        GainReport report = gainRepo.buildReport(scope, effectiveSince, topN(), pricing);
+        int days = (effectiveSince == 0 && !all) ? 30 : effectiveSince;
+        GainReport report = gainRepo.buildReport(scope, days, topN(), pricing);
         System.out.println(JSON.writerWithDefaultPrettyPrinter().writeValueAsString(report));
     }
 
@@ -246,16 +250,19 @@ public class GainCommand implements Runnable {
             return;
         }
         if (daily) {
-            renderDailyCsv(gainRepo.dailyStats(effectiveSince == 0 ? 90 : effectiveSince, scope), pricing);
+            int days = effectiveSince == 0 ? 90 : effectiveSince;
+            renderDailyCsv(gainRepo.dailyStats(days, scope), pricing);
         } else if (weekly) {
             int weeks = effectiveSince == 0 ? 12 : (effectiveSince / 7 + 1);
             renderWeeklyCsv(gainRepo.weeklyStats(weeks, scope), pricing);
         } else if (historyFlag != null) {
             renderHistoryCsv(gainRepo.recentCommands(historyFlag, scope), pricing);
         } else if (topFlag != null) {
-            renderTopCsv(gainRepo.topCommands(topFlag, effectiveSince, scope), pricing);
+            int days = (effectiveSince == 0 && !all) ? 30 : effectiveSince;
+            renderTopCsv(gainRepo.topCommands(topFlag, days, scope), pricing);
         } else {
-            GainReport report = gainRepo.buildReport(scope, effectiveSince, 5, pricing);
+            int days = (effectiveSince == 0 && !all) ? 30 : effectiveSince;
+            GainReport report = gainRepo.buildReport(scope, days, 5, pricing);
             renderSummaryCsv(report);
         }
     }
