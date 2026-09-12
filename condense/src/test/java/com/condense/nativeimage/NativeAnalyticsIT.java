@@ -106,5 +106,28 @@ class NativeAnalyticsIT {
         assertThat(trendReport.get("weeks_requested").asInt()).isEqualTo(8);
         assertThat(trendReport.get("weeks").isArray()).isTrue();
         assertThat(trendReport.get("weeks")).hasSize(8);
+
+        // Native --gaps text output
+        NativeBinarySupport.CliResult gainGaps = NativeBinarySupport.run(
+            configDir, dataDir, "gain", "--gaps"
+        );
+        assertThat(gainGaps.exitCode()).isZero();
+        assertThat(gainGaps.stderr()).doesNotContain("analytics unavailable");
+        assertThat(gainGaps.stdout()).contains("No gap candidates found");
+
+        // Native --gaps JSON output
+        NativeBinarySupport.CliResult gainGapsJson = NativeBinarySupport.run(
+            configDir, dataDir, "gain", "--gaps", "--format", "json"
+        );
+        assertThat(gainGapsJson.exitCode()).isZero();
+        JsonNode gapsJson = JSON.readTree(gainGapsJson.stdout());
+        assertThat(gapsJson.isArray()).isTrue();
+
+        // Native --gaps CSV output
+        NativeBinarySupport.CliResult gainGapsCsv = NativeBinarySupport.run(
+            configDir, dataDir, "gain", "--gaps", "--format", "csv"
+        );
+        assertThat(gainGapsCsv.exitCode()).isZero();
+        assertThat(gainGapsCsv.stdout()).contains("command_prefix,invocations,raw_tokens,filtered_tokens,wasted_tokens,savings_pct");
     }
 }
