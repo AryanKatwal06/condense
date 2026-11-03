@@ -78,6 +78,19 @@ class CompoundCommandAnalyzerTest {
     }
 
     @Test
+    void envAssignmentParsingMatchesTheStrictIdentifierRegex() {
+        // A leading underscore is a valid shell identifier, so it is skipped.
+        var underscore = CompoundCommandAnalyzer.analyze("_FOO=1 cargo build", CONDENSE_COMMANDS);
+        assertThat(underscore.shouldDeny()).isTrue();
+        assertThat(underscore.matchedCommands()).containsExactly("cargo");
+
+        // A leading digit is not a valid identifier, so nothing is skipped and
+        // the wrapped command is not mistaken for a match.
+        var digitLeading = CompoundCommandAnalyzer.analyze("env 1FOO=bar cargo build", CONDENSE_COMMANDS);
+        assertThat(digitLeading.shouldDeny()).isFalse();
+    }
+
+    @Test
     void chainedCommandsWithOperatorsAreCaught() {
         var andRes = CompoundCommandAnalyzer.analyze("echo starting && git status", CONDENSE_COMMANDS);
         assertThat(andRes.shouldDeny()).isTrue();

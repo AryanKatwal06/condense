@@ -4,6 +4,15 @@
 
 import json
 import sys
+import re
+
+ENV_ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+
+def is_env_assignment(token):
+    s = str(token).strip()
+    if len(s) >= 2 and ((s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'"))):
+        s = s[1:-1]
+    return bool(ENV_ASSIGNMENT.match(s))
 
 CONDENSE_COMMANDS = set("{{CONDENSE_COMMANDS}}".split())
 
@@ -125,7 +134,7 @@ def analyze_command(cmd, condense_set):
                 if w in ("<", ">", ">>", "2>", "1>", "2>&1", "&>") and idx < len(words):
                     idx += 1
                 continue
-            if "=" in w and not w.startswith("="):
+            if is_env_assignment(w):
                 idx += 1
                 continue
             break
@@ -147,7 +156,7 @@ def analyze_command(cmd, condense_set):
                         idx += 1
                         if opt in ("-u", "-C", "-g") and idx < len(words) and not words[idx].startswith("-"):
                             idx += 1
-                    elif "=" in opt and not opt.startswith("="):
+                    elif is_env_assignment(opt):
                         idx += 1
                     else:
                         break
