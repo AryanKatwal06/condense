@@ -79,3 +79,4 @@ reason here. Unexplained golden edits fail review.
 | jest/typical | Phase 4 JS/TS runner depth: preserves failing test titles, error messages, and assertion diffs |
 | vitest/typical | Phase 4 JS/TS runner depth: preserves failing test diagnostic details and assertion diffs |
 | playwright/typical | Phase 4 JS/TS runner depth: dedicated PlaywrightSummaryStage replacing grouping |
+| git-diff/typical | Stage 2 P0-1: unified patches keep file headers, hunk headers, and bounded change lines instead of collapsing to a `+N / -M` count |

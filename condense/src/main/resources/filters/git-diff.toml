@@ -9,3 +9,18 @@ strategy = "git_diff_summary"
 id = "stat-summary"
 input = " 1 file changed, 3 insertions(+)"
 expected = "1 file changed, 3 insertions(+)"
+
+[[tests]]
+id = "unified-patch-keeps-structure"
+input = "diff --git a/a.rs b/a.rs\nindex 1111111..2222222 100644\n--- a/a.rs\n+++ b/a.rs\n@@ -1,2 +1,2 @@\n-old\n+new\n context\n"
+expected = "diff --git a/a.rs b/a.rs\n--- a/a.rs\n+++ b/a.rs\n@@ -1,2 +1,2 @@\n-old\n+new\n context"
+
+[[tests]]
+id = "numstat-keeps-rows"
+input = "2\t1\tsrc/main.rs\n1\t0\tdocs/readme.md\n"
+expected = "2\t1\tsrc/main.rs\n1\t0\tdocs/readme.md"
+
+[[tests]]
+id = "binary-keeps-notice"
+input = "diff --git a/logo.png b/logo.png\nindex 5555555..6666666 100644\nBinary files a/logo.png and b/logo.png differ\n"
+expected = "diff --git a/logo.png b/logo.png\nBinary files a/logo.png and b/logo.png differ"
