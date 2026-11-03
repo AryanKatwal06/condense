@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * <ul>
  *   <li>{@link #FAILURES} — save only when the command exits non-zero (default)</li>
  *   <li>{@link #ALWAYS} — always save raw output</li>
+ *   <li>{@link #OMISSIONS} — save on failure or whenever filtering dropped content</li>
  *   <li>{@link #NEVER} — never save raw output</li>
  * </ul>
  */
@@ -16,15 +17,17 @@ public enum TeeMode {
 
     FAILURES,
     ALWAYS,
+    OMISSIONS,
     NEVER;
 
     @JsonCreator
     public static TeeMode fromString(String value) {
         if (value == null || value.isBlank()) return FAILURES;
         return switch (value.trim().toUpperCase()) {
-            case "ALWAYS" -> ALWAYS;
-            case "NEVER"  -> NEVER;
-            default       -> FAILURES;
+            case "ALWAYS"   -> ALWAYS;
+            case "NEVER"    -> NEVER;
+            case "OMISSIONS" -> OMISSIONS;
+            default         -> FAILURES;
         };
     }
 

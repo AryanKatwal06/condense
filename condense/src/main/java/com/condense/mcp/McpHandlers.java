@@ -4,8 +4,10 @@ import com.condense.VersionProvider;
 import com.condense.analytics.GainRepository;
 import com.condense.analytics.TrendAnalytics;
 import com.condense.core.Mappers;
+import com.condense.core.PlatformDirs;
 import com.condense.core.ProjectFingerprint;
 import com.condense.core.ProxyService;
+import com.condense.core.SafePathValidator;
 import com.condense.core.TrackingRepository;
 import com.condense.doctor.DoctorService;
 import com.condense.explain.ExplainService;
@@ -24,6 +26,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +49,10 @@ public class McpHandlers {
     private final TrendAnalytics trendAnalytics;
     private final DiscoverService discover;
     private final ProposeService propose;
+    private final PlatformDirs platformDirs;
 
     public McpHandlers() {
-        this(null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null);
     }
 
     public McpHandlers(
@@ -56,7 +63,31 @@ public class McpHandlers {
             DoctorService doctor,
             TrackingRepository tracking
     ) {
-        this(proxy, explain, read, gain, doctor, tracking, null);
+        this(proxy, explain, read, gain, doctor, tracking, null, null);
+    }
+
+    public McpHandlers(
+            ProxyService proxy,
+            ExplainService explain,
+            ReadService read,
+            GainRepository gain,
+            DoctorService doctor,
+            TrackingRepository tracking,
+            TrendAnalytics trendAnalytics
+    ) {
+        this(proxy, explain, read, gain, doctor, tracking, trendAnalytics, null);
+    }
+
+    public McpHandlers(
+            ProxyService proxy,
+            ExplainService explain,
+            ReadService read,
+            GainRepository gain,
+            DoctorService doctor,
+            TrackingRepository tracking,
+            PlatformDirs platformDirs
+    ) {
+        this(proxy, explain, read, gain, doctor, tracking, null, platformDirs);
     }
 
     @Inject
@@ -67,7 +98,8 @@ public class McpHandlers {
             GainRepository gain,
             DoctorService doctor,
             TrackingRepository tracking,
-            TrendAnalytics trendAnalytics
+            TrendAnalytics trendAnalytics,
+            PlatformDirs platformDirs
     ) {
         this.proxy = proxy;
         this.explain = explain;
@@ -78,6 +110,7 @@ public class McpHandlers {
         this.trendAnalytics = trendAnalytics != null ? trendAnalytics : new TrendAnalytics(tracking);
         this.discover = new DiscoverService();
         this.propose = new ProposeService();
+        this.platformDirs = platformDirs;
     }
 
     public JsonNode dispatch(String method, JsonNode params) {
@@ -124,7 +157,11 @@ public class McpHandlers {
             new McpMessages.ToolSpec(
                 "propose",
                 "Propose reviewable project filter overrides. Does not write filters.toml.",
-                proposeSchema())
+                proposeSchema()),
+            new McpMessages.ToolSpec(
+                "expand",
+                "Read a 1-based line range from a raw-output tee file saved under {dataDir}/tee.",
+                expandSchema())
         );
         return McpMessages.RPC.valueToTree(new McpMessages.ToolsListResult(tools));
     }
@@ -165,6 +202,7 @@ public class McpHandlers {
             case "read" -> callRead(args);
             case "discover" -> callDiscover(args);
             case "propose" -> callPropose(args);
+            case "expand" -> callExpand(args);
             default -> value(McpMessages.ToolResult.error("Unknown tool: " + name));
         };
     }
@@ -307,6 +345,95 @@ public class McpHandlers {
         return value(McpMessages.ToolResult.ok(compact(report)));
     }
 
+    private static final int MAX_EXPAND_LINES = 500;
+    private static final int MAX_EXPAND_CONTENT_BYTES = 32 * 1024;
+
+    private JsonNode callExpand(JsonNode args) {
+        String teeFile = text(args, "tee_file");
+        if (teeFile == null) {
+            return value(McpMessages.ToolResult.error("expand.tee_file is required"));
+        }
+        Integer start = intArg(args, "start_line");
+        Integer end = intArg(args, "end_line");
+        if (start == null || end == null) {
+            if (!args.hasNonNull("start_line") || !args.hasNonNull("end_line")) {
+                return value(McpMessages.ToolResult.error(
+                    "expand.start_line and expand.end_line are required"));
+            }
+            return value(McpMessages.ToolResult.error(
+                "expand.start_line and expand.end_line must be integers"));
+        }
+        if (start < 1) {
+            return value(McpMessages.ToolResult.error("expand.start_line must be >= 1"));
+        }
+        if (end < start) {
+            return value(McpMessages.ToolResult.error("expand.end_line must be >= expand.start_line"));
+        }
+        if ((long) end - start + 1 > MAX_EXPAND_LINES) {
+            return value(McpMessages.ToolResult.error(
+                "expand window is limited to " + MAX_EXPAND_LINES + " lines"));
+        }
+        Path root = teeRoot();
+        SafePathValidator.ContainmentResult containment =
+            SafePathValidator.containReadable(Path.of(teeFile), root);
+        if (!containment.contained()) {
+            return value(McpMessages.ToolResult.error(
+                "expand.tee_file must resolve to a regular file inside the condense tee directory"));
+        }
+        Path file = containment.realFile();
+
+        StringBuilder content = new StringBuilder();
+        int total = 0;
+        int collected = 0;
+        int lastLine = start - 1;
+        boolean contentTruncated = false;
+        try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                total++;
+                if (total < start || total > end) {
+                    continue;
+                }
+                int extra = line.length() + 1;
+                if (content.length() + extra > MAX_EXPAND_CONTENT_BYTES) {
+                    contentTruncated = true;
+                    continue;
+                }
+                content.append(line).append('\n');
+                collected++;
+                lastLine = total;
+            }
+        } catch (IOException e) {
+            return value(McpMessages.ToolResult.error("expand failed to read tee file"));
+        }
+
+        ObjectNode report = McpMessages.RPC.createObjectNode();
+        report.put("tee_file", file.toString());
+        report.put("start_line", start);
+        report.put("end_line", lastLine);
+        report.put("total_lines", total);
+        report.put("lines_returned", collected);
+        report.put("truncated", contentTruncated);
+        report.put("content", content.toString());
+        return value(McpMessages.ToolResult.ok(compact(report)));
+    }
+
+    private Path teeRoot() {
+        PlatformDirs dirs = platformDirs;
+        if (dirs == null) {
+            dirs = new PlatformDirs();
+        }
+        return dirs.resolveDataDir().resolve("tee");
+    }
+
+    private static Integer intArg(JsonNode args, String field) {
+        JsonNode node = args.path(field);
+        if (!node.isIntegralNumber() || !node.canConvertToInt()) {
+            return null;
+        }
+        return node.intValue();
+    }
+
     private void recordRead(String path, ReadLevel level, ReadService.Outcome outcome, long startedNanos) {
         if (tracking == null || outcome == null || !outcome.ok()) {
             return;
@@ -428,6 +555,23 @@ public class McpHandlers {
         ObjectNode props = schema.putObject("properties");
         props.putObject("root").put("type", "string")
             .put("description", "Optional workspace root. May only narrow, not widen.");
+        schema.put("additionalProperties", false);
+        return schema;
+    }
+
+    private static JsonNode expandSchema() {
+        ObjectNode schema = McpMessages.RPC.createObjectNode();
+        schema.put("type", "object");
+        ObjectNode props = schema.putObject("properties");
+        props.putObject("tee_file").put("type", "string")
+            .put("description", "Path to a raw-output tee file inside the condense tee directory.");
+        props.putObject("start_line").put("type", "integer").put("minimum", 1)
+            .put("description", "First line to return, 1-based.");
+        props.putObject("end_line").put("type", "integer").put("minimum", 1)
+            .put("description", "Last line to return, inclusive.");
+        required(schema, "tee_file");
+        required(schema, "start_line");
+        required(schema, "end_line");
         schema.put("additionalProperties", false);
         return schema;
     }

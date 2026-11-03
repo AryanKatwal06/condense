@@ -15,6 +15,9 @@ class TeeModeTest {
         "Failures, FAILURES",
         "always,   ALWAYS",
         "ALWAYS,   ALWAYS",
+        "omissions, OMISSIONS",
+        "OMISSIONS, OMISSIONS",
+        "Omissions, OMISSIONS",
         "never,    NEVER",
         "NEVER,    NEVER",
         "garbage,  FAILURES",
@@ -28,6 +31,7 @@ class TeeModeTest {
     void toValueIsLowerCase() {
         assertThat(TeeMode.FAILURES.toValue()).isEqualTo("failures");
         assertThat(TeeMode.ALWAYS.toValue()).isEqualTo("always");
+        assertThat(TeeMode.OMISSIONS.toValue()).isEqualTo("omissions");
         assertThat(TeeMode.NEVER.toValue()).isEqualTo("never");
     }
 }

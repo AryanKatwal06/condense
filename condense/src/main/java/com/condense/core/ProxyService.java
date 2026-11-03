@@ -117,7 +117,7 @@ public class ProxyService {
         Path teePath = null;
         if (teeWriter != null) {
             try {
-                teePath = teeWriter.maybeDump(commandStr, result);
+                teePath = teeWriter.maybeDump(commandStr, result, filtered);
             } catch (RuntimeException ignored) {
                 // Fail-open. A tee fault must not change the child exit or filtered stdout.
             }
