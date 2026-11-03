@@ -1,5 +1,5 @@
 condense[filtered]
-... (showing last 8 of 30 lines)
+... (22 lines omitted: lines 1..22 of 30) ...
   Restored package Victor.1.0.0 (in 5 ms).
   Restored package Whiskey.1.0.0 (in 4 ms).
   Restored package Xray.1.0.0 (in 3 ms).

@@ -117,7 +117,7 @@ class GlabSummaryStageTest {
             .contains("Showing 20 merge requests on acme/app")
             .contains("!001")
             .contains("!005")
-            .contains("... (9 lines omitted) ...")
+            .contains("... (9 lines omitted: lines 7..15 of 21) ...")
             .contains("!020");
     }
 

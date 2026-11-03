@@ -82,3 +82,21 @@ reason here. Unexplained golden edits fail review.
 | git-diff/typical | Stage 2 P0-1: unified patches keep file headers, hunk headers, and bounded change lines instead of collapsing to a `+N / -M` count |
 | gradle/failure | Stage 2 P0-2 fidelity guard: dropping Java compiler diagnostics in favour of a build summary is a real loss, so the raw output is returned |
 | cargo-test/typical | Stage 2 P0-2 fidelity guard: dropping Rust panic payloads and source locations triggers raw passthrough |
+| cat/large | Stage 2 P0-4: fixture extended to 300 lines so the new 8000-byte gate and 200-line threshold apply; head/tail window widened to 120/60 and the omission marker now states the omitted 1-based line range `lines 121..240 of 300` |
+| cat/package-json | Stage 2 P0-4: new intact-manifest row. Small JSON (under 32 KiB) passes through byte-for-byte in normal mode instead of being reduced to a skeleton (exempt `too_small`) |
+| gh/typical | Stage 2 P0-4: `head_tail` omission marker now includes the omitted 1-based line range |
+| glab/typical | Stage 2 P0-4: `head_tail` omission marker now includes the omitted 1-based line range |
+| gt/typical | Stage 2 P0-4: `head_tail` omission marker now includes the omitted 1-based line range |
+| jj/typical | Stage 2 P0-4: `head_tail` omission marker now includes the omitted 1-based line range |
+| jira/typical | Stage 2 P0-4: `head_tail` omission marker now includes the omitted 1-based line range |
+| yadm/typical | Stage 2 P0-4: `head_tail` omission marker now includes the omitted 1-based line range |
+| mix-format/typical | Stage 2 P0-4: `head_tail` omission marker now includes the omitted 1-based line range |
+| ps/typical | Stage 2 P0-4: `head_tail` omission marker now includes the omitted 1-based line range |
+| psql/typical | Stage 2 P0-4: `head_tail` omission marker now includes the omitted 1-based line range |
+| bundle-install/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker; the longer marker on a small payload lowers max savings to 58%, so the entry floor is now 55 |
+| curl/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker |
+| docker-logs/long | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker (short fixture shows `0 lines omitted: showing all N lines`) |
+| dotnet-restore/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker |
+| du/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker |
+| helm/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker |
+| wget/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker |

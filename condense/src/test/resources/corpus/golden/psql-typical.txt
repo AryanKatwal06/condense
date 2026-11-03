@@ -3,7 +3,7 @@ condense[filtered]
 ----+----------------
   1 | row-name-nnnnnnnnnnnnnnnnnnnn
   2 | row-name-nnnnnnnnnnnnnnnnnnnn
-... (33 lines omitted) ...
+... (33 lines omitted: lines 5..37 of 43) ...
  36 | row-name-nnnnnnnnnnnnnnnnnnnn
  37 | row-name-nnnnnnnnnnnnnnnnnnnn
  38 | row-name-nnnnnnnnnnnnnnnnnnnn

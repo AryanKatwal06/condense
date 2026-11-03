@@ -312,7 +312,16 @@
       "exit_code": 0,
       "savings_floor": 27,
       "meets_contribution_bar": false,
-      "critical_signals": ["Data line 1 ", "lines omitted", "Data line 60 "]
+      "critical_signals": ["Data line 1 ", "lines omitted", "Data line 300 "]
+    },
+    {
+      "id": "cat/package-json",
+      "command": "cat",
+      "fixture": "fixtures/cat/package-json.txt",
+      "exit_code": 0,
+      "meets_contribution_bar": false,
+      "savings_exemption": "too_small",
+      "critical_signals": ["\"name\": \"condense-demo\"", "\"version\": \"1.2.3\"", "\"devDependencies\""]
     },
     {
       "id": "kubectl/pods-unhealthy",
@@ -476,7 +485,7 @@
       "command": "bundle install",
       "fixture": "fixtures/bundle-install/typical.txt",
       "exit_code": 1,
-      "savings_floor": 60,
+      "savings_floor": 55,
       "critical_signals": ["Bundler::GemNotFound"]
     },
     {

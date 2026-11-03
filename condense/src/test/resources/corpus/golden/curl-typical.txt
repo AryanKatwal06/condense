@@ -1,5 +1,5 @@
 condense[filtered]
-... (showing last 12 of 41 lines)
+... (29 lines omitted: lines 1..29 of 41) ...
    60  4096  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    62  4096  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    64  4096  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

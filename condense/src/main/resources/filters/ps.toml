@@ -38,7 +38,7 @@ input = """
 23
 24
 """
-expected = "1\n2\n3\n4\n5\n6\n7\n8\n... (8 lines omitted) ...\n17\n18\n19\n20\n21\n22\n23\n24"
+expected = "1\n2\n3\n4\n5\n6\n7\n8\n... (8 lines omitted: lines 9..16 of 24) ...\n17\n18\n19\n20\n21\n22\n23\n24"
 
 [[tests]]
 id = "garbage-falls-through"

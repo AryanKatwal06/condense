@@ -27,4 +27,4 @@ Fetching gem 11
 Fetching gem 12
 Bundler::GemNotFound: Could not find gem 'missing'
 """
-expected = "... (showing last 10 of 13 lines)\nFetching gem 4\nFetching gem 5\nFetching gem 6\nFetching gem 7\nFetching gem 8\nFetching gem 9\nFetching gem 10\nFetching gem 11\nFetching gem 12\nBundler::GemNotFound: Could not find gem 'missing'"
+expected = "... (3 lines omitted: lines 1..3 of 13) ...\nFetching gem 4\nFetching gem 5\nFetching gem 6\nFetching gem 7\nFetching gem 8\nFetching gem 9\nFetching gem 10\nFetching gem 11\nFetching gem 12\nBundler::GemNotFound: Could not find gem 'missing'"

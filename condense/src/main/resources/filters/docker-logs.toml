@@ -11,4 +11,4 @@ header_only_when_truncating = false
 [[tests]]
 id = "short-with-header"
 input = "line-a\nline-b\n"
-expected = "... (showing last 30 of 2 lines)\nline-a\nline-b"
+expected = "... (0 lines omitted: showing all 2 lines) ...\nline-a\nline-b"

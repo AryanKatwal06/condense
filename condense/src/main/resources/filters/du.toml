@@ -27,7 +27,7 @@ progress 11
 progress 12
 ERROR last
 """
-expected = "... (showing last 8 of 13 lines)\nprogress 6\nprogress 7\nprogress 8\nprogress 9\nprogress 10\nprogress 11\nprogress 12\nERROR last"
+expected = "... (5 lines omitted: lines 1..5 of 13) ...\nprogress 6\nprogress 7\nprogress 8\nprogress 9\nprogress 10\nprogress 11\nprogress 12\nERROR last"
 
 [[tests]]
 id = "garbage-falls-through"

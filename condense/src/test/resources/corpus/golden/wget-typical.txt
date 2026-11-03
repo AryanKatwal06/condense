@@ -1,5 +1,5 @@
 condense[filtered]
-... (showing last 10 of 42 lines)
+... (32 lines omitted: lines 1..32 of 42) ...
 --2026-09-05 12:00:00--  https://example.test/file33
 --2026-09-05 12:00:00--  https://example.test/file34
 --2026-09-05 12:00:00--  https://example.test/file35

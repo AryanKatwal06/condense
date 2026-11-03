@@ -1,5 +1,5 @@
 condense[filtered]
-... (showing last 10 of 32 lines)
+... (22 lines omitted: lines 1..22 of 32) ...
 Installing rails-html-sanitizer 1.6.0
 Fetching actionview 7.2.1
 Installing actionview 7.2.1

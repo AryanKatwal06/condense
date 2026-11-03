@@ -1,5 +1,5 @@
 condense[filtered]
-... (showing last 30 of 40 lines)
+... (10 lines omitted: lines 1..10 of 40) ...
 2026-09-01T12:00:11Z INFO worker tick 11 processed ok
 2026-09-01T12:00:12Z INFO worker tick 12 processed ok
 2026-09-01T12:00:13Z INFO worker tick 13 processed ok

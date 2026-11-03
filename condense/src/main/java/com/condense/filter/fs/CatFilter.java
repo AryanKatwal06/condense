@@ -13,7 +13,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class CatFilter extends PipelineBackedFilter {
 
-    private static final int CHAR_LIMIT_BEFORE_COMPRESS = 2000;
+    private static final int CHAR_LIMIT_BEFORE_COMPRESS = 8000;
 
     public CatFilter() {
         super();
@@ -42,7 +42,7 @@ public class CatFilter extends PipelineBackedFilter {
         } catch (java.io.IOException e) {
             return FilterResult.passthrough(result);
         }
-        if (size <= CHAR_LIMIT_BEFORE_COMPRESS || verbose >= 2) {
+        if ((size <= CHAR_LIMIT_BEFORE_COMPRESS && !ultraCompact) || verbose >= 2) {
             return FilterResult.passthrough(result);
         }
         return null;

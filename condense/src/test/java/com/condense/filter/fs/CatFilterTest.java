@@ -50,25 +50,35 @@ class CatFilterTest extends FilterTestSupport {
     }
 
     @Test
-    void apply_largeText_compressesFirstAndLast20() {
+    void apply_largeText_keepsFirstAndLastWindow() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 1; i <= 60; i++) {
+        for (int i = 1; i <= 300; i++) {
             sb.append("Data line ").append(i)
-              .append(" with additional padding characters to ensure total file size exceeds two thousand characters limit.\n");
+              .append(" with additional padding characters to ensure total file size exceeds eight thousand characters limit.\n");
         }
         ExecutionResult result = success(sb.toString());
 
         FilterResult filterResult = filter.apply("cat large.txt", result, config, 0, false);
         assertCompressed(filterResult);
         assertThat(filterResult.output()).contains("Data line 1 ");
-        assertThat(filterResult.output()).contains("Data line 20 ");
-        assertThat(filterResult.output()).contains("... (20 lines omitted) ...");
-        assertThat(filterResult.output()).contains("Data line 41 ");
-        assertThat(filterResult.output()).contains("Data line 60 ");
+        assertThat(filterResult.output()).contains("Data line 120 ");
+        assertThat(filterResult.output()).contains("... (120 lines omitted: lines 121..240 of 300) ...");
+        assertThat(filterResult.output()).contains("Data line 241 ");
+        assertThat(filterResult.output()).contains("Data line 300 ");
     }
 
     @Test
-    void apply_jsonOutput_returnsSkeleton() {
+    void apply_smallJson_passesThroughIntact() throws Exception {
+        String content = fixture("cat", "package-json");
+
+        FilterResult filterResult = filter.apply("cat package.json", success(content), config, 0, false);
+
+        assertPassthrough(filterResult);
+        assertThat(filterResult.output()).isEqualTo(content);
+    }
+
+    @Test
+    void apply_jsonOutput_returnsSkeletonInUltraCompactMode() {
         StringBuilder sb = new StringBuilder("[\n");
         for (int i = 1; i <= 50; i++) {
             sb.append("  {\"id\": ").append(i)
@@ -79,8 +89,9 @@ class CatFilterTest extends FilterTestSupport {
         sb.append("]\n");
         ExecutionResult result = success(sb.toString());
 
-        FilterResult filterResult = filter.apply("cat data.json", result, config, 0, false);
+        FilterResult filterResult = filter.apply("cat data.json", result, config, 0, true);
         assertCompressed(filterResult);
+        assertThat(filterResult.output()).contains("JSON skeleton");
         assertThat(filterResult.output()).contains("\"... +49 more\"");
         assertThat(filterResult.output()).contains("\"<string>\"");
     }

@@ -58,7 +58,10 @@ public final class TailLinesStage implements FilterStage {
         }
         int from = Math.max(0, lines.size() - maxLines);
         List<String> tail = lines.subList(from, lines.size());
-        String header = "... (showing last " + maxLines + " of " + lines.size() + " lines)\n";
+        String header = from == 0
+            ? "... (0 lines omitted: showing all " + lines.size() + " lines) ...\n"
+            : "... (" + from + " lines omitted: lines 1.." + from
+                + " of " + lines.size() + ") ...\n";
         return StageResult.continueWith(header + String.join("\n", tail));
     }
 }

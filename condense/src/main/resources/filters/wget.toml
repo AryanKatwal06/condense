@@ -26,4 +26,4 @@ input = """
 -- fetching k
 ERROR 404: Not Found.
 """
-expected = "... (showing last 10 of 12 lines)\n-- fetching c\n-- fetching d\n-- fetching e\n-- fetching f\n-- fetching g\n-- fetching h\n-- fetching i\n-- fetching j\n-- fetching k\nERROR 404: Not Found."
+expected = "... (2 lines omitted: lines 1..2 of 12) ...\n-- fetching c\n-- fetching d\n-- fetching e\n-- fetching f\n-- fetching g\n-- fetching h\n-- fetching i\n-- fetching j\n-- fetching k\nERROR 404: Not Found."

@@ -29,7 +29,7 @@ input = """
 error NU1102: Unable to find package Contoso.Missing
 Restore failed
 """
-expected = "... (showing last 8 of 12 lines)\n  Restored pkg.d\n  Restored pkg.e\n  Restored pkg.f\n  Restored pkg.g\n  Restored pkg.h\n  Restored pkg.i\nerror NU1102: Unable to find package Contoso.Missing\nRestore failed"
+expected = "... (4 lines omitted: lines 1..4 of 12) ...\n  Restored pkg.d\n  Restored pkg.e\n  Restored pkg.f\n  Restored pkg.g\n  Restored pkg.h\n  Restored pkg.i\nerror NU1102: Unable to find package Contoso.Missing\nRestore failed"
 
 [[tests]]
 id = "garbage-falls-through"

@@ -7,7 +7,7 @@ PID TTY TIME CMD
 1004 pts/0 00:00:00 worker-4
 1005 pts/0 00:00:00 worker-5
 1006 pts/0 00:00:00 worker-6
-... (46 lines omitted) ...
+... (46 lines omitted: lines 9..54 of 62) ...
 1053 pts/0 00:00:00 worker-53
 1054 pts/0 00:00:00 worker-54
 1055 pts/0 00:00:00 worker-55

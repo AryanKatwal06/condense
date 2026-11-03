@@ -1,5 +1,5 @@
 condense[filtered]
-... (showing last 8 of 41 lines)
+... (33 lines omitted: lines 1..33 of 41) ...
 967M	/var/lib/data33
 966M	/var/lib/data34
 965M	/var/lib/data35

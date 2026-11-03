@@ -24,4 +24,4 @@ input = """
  10 | j
 ERROR:  relation "missing" does not exist
 """
-expected = " id | name\n----+------\n  1 | a\n  2 | b\n... (3 lines omitted) ...\n  6 | f\n  7 | g\n  8 | h\n  9 | i\n 10 | j\nERROR:  relation \"missing\" does not exist"
+expected = " id | name\n----+------\n  1 | a\n  2 | b\n... (3 lines omitted: lines 5..7 of 13) ...\n  6 | f\n  7 | g\n  8 | h\n  9 | i\n 10 | j\nERROR:  relation \"missing\" does not exist"

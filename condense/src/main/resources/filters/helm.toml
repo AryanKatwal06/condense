@@ -27,4 +27,4 @@ status waiting
 status waiting
 Error: install failed
 """
-expected = "... (showing last 12 of 13 lines)\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nError: install failed"
+expected = "... (1 lines omitted: lines 1..1 of 13) ...\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nstatus waiting\nError: install failed"

@@ -5,7 +5,7 @@ Showing 40 merge requests on acme/app
 !003  chore: noise merge request 3  user3  2d
 !004  chore: noise merge request 4  user4  2d
 !005  chore: noise merge request 5  user5  2d
-... (29 lines omitted) ...
+... (29 lines omitted: lines 7..35 of 41) ...
 !035  chore: noise merge request 35  user35  2d
 !036  chore: noise merge request 36  user36  2d
 !037  chore: noise merge request 37  user37  2d

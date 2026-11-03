@@ -138,7 +138,7 @@ class StrategyStageTest {
     void tailLinesStage_truncatesWithHeader() {
         String input = "a\nb\nc\nd\ne";
         StageResult result = new TailLinesStage(2, false, true).process(input, FilterContext.empty());
-        assertThat(result.output()).isEqualTo("... (showing last 2 of 5 lines)\nd\ne");
+        assertThat(result.output()).isEqualTo("... (3 lines omitted: lines 1..3 of 5) ...\nd\ne");
     }
 
     @Test
@@ -148,7 +148,7 @@ class StrategyStageTest {
             .mapToObj(i -> "L" + i).toList());
         StageResult result = new HeadTailStage(2, 2).process(input, FilterContext.empty());
         assertThat(result.output()).startsWith("L1\nL2\n");
-        assertThat(result.output()).contains("... (6 lines omitted) ...");
+        assertThat(result.output()).contains("... (6 lines omitted: lines 3..8 of 10) ...");
         assertThat(result.output()).endsWith("L9\nL10");
     }
 

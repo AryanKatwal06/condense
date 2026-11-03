@@ -60,7 +60,9 @@ public final class HeadTailStage implements FilterStage {
         for (String line : first) {
             sb.append(line).append('\n');
         }
-        sb.append("... (").append(omit).append(" lines omitted) ...\n");
+        sb.append("... (").append(omit).append(" lines omitted: lines ")
+            .append(head + 1).append("..").append(lines.size() - tail)
+            .append(" of ").append(lines.size()).append(") ...\n");
         for (String line : last) {
             sb.append(line).append('\n');
         }
@@ -117,7 +119,8 @@ public final class HeadTailStage implements FilterStage {
                 }
                 return;
             }
-            sink.emit("... (" + omit + " lines omitted) ...");
+            sink.emit("... (" + omit + " lines omitted: lines " + (head + 1)
+                + ".." + (count - tail) + " of " + count + ") ...");
             for (String line : last) {
                 sink.emit(line);
             }

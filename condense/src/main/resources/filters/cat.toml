@@ -9,3 +9,8 @@ strategy = "cat_content"
 id = "short-passthrough"
 input = "hello\nworld\n"
 expected = "hello\nworld\n"
+
+[[tests]]
+id = "small-json-passthrough"
+input = "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
+expected = "{\"name\":\"demo\",\"version\":\"1.0.0\"}"
