@@ -19,6 +19,7 @@ import com.condense.filter.node.JestFilter;
 import com.condense.filter.node.TscFilter;
 import com.condense.filter.node.VitestFilter;
 import com.condense.filter.pipeline.CatalogBackedFilter;
+import com.condense.filter.pipeline.FilterIncident;
 import com.condense.filter.python.PytestFilter;
 import com.condense.filter.python.RuffFilter;
 import org.junit.jupiter.api.BeforeEach;
@@ -233,17 +234,21 @@ class ComposedPipelineIntegrationTest extends FilterTestSupport {
 
         FilterResult result = filter.apply("cargo test", exec, config, 0, false);
 
-        assertThat(result.wasFiltered()).isTrue();
-        assertCompressed(result);
+        // The fidelity guard refuses to drop Rust panic payloads, so the raw output
+        // is preserved verbatim and the fallback incident is recorded.
+        assertThat(result.wasFiltered()).isFalse();
+        assertThat(result.rawTokens()).isEqualTo(result.outTokens());
         assertThat(result.output()).doesNotContain("condense: error");
 
-        // Critical signals
-        assertThat(result.output()).contains("FAILED: tests::test_multiply");
-        assertThat(result.output()).contains("FAILED: tests::test_modulo");
-        assertThat(result.output()).contains("2 failure(s)");
+        // Critical signals from the untouched raw fixture
+        assertThat(result.output()).contains("test tests::test_multiply ... FAILED");
+        assertThat(result.output()).contains("panicked at 'division by zero'");
 
-        // Passing noise eliminated
-        assertThat(result.output()).doesNotContain("test tests::test_add ... ok");
+        // Raw passthrough keeps the passing noise rather than risking lost diagnostics
+        assertThat(result.output()).contains("test tests::test_add ... ok");
+
+        assertThat(result.incidents())
+            .anyMatch(i -> FilterIncident.KIND_APPLY_FALLBACK.equals(i.kind()));
     }
 
     @Test
@@ -351,14 +356,19 @@ class ComposedPipelineIntegrationTest extends FilterTestSupport {
 
         FilterResult result = filter.apply("gradle build", exec, config, 0, false);
 
-        assertThat(result.wasFiltered()).isTrue();
-        assertCompressed(result);
+        // The fidelity guard refuses to drop Java compiler diagnostics, so the raw
+        // output is preserved verbatim and the fallback incident is recorded.
+        assertThat(result.wasFiltered()).isFalse();
+        assertThat(result.rawTokens()).isEqualTo(result.outTokens());
         assertThat(result.output()).doesNotContain("condense: error");
 
         // Critical failure signals
         assertThat(result.output()).contains("BUILD FAILED");
         assertThat(result.output()).contains("compileTestJava FAILED");
         assertThat(result.output()).contains("FAILURE: Build failed with an exception.");
+
+        assertThat(result.incidents())
+            .anyMatch(i -> FilterIncident.KIND_APPLY_FALLBACK.equals(i.kind()));
     }
 
     @Test
