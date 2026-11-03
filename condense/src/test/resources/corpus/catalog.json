@@ -286,16 +286,18 @@
       "command": "grep",
       "fixture": "fixtures/grep/typical.txt",
       "exit_code": 0,
-      "savings_floor": 60,
-      "critical_signals": ["src/app.js", "match(es)"]
+      "meets_contribution_bar": false,
+      "savings_exemption": "too_small",
+      "critical_signals": ["src/app.js", "error foo9", "src/utils.js"]
     },
     {
       "id": "find/typical",
       "command": "find",
       "fixture": "fixtures/find/typical.txt",
       "exit_code": 0,
-      "savings_floor": 60,
-      "critical_signals": [".java", "result(s)"]
+      "meets_contribution_bar": false,
+      "savings_exemption": "too_small",
+      "critical_signals": ["src/main/java/com/example/File16.java", "File1Test.java"]
     },
     {
       "id": "ls/large",

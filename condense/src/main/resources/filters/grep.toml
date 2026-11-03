@@ -2,13 +2,15 @@ schema_version = 1
 name = "grep"
 commands = ["grep", "rg"]
 
+# Small results pass through verbatim from GrepFilter so matched lines stay
+# visible. Larger results prepend a count header and then use this bounded
+# head/tail window (60 + 20 lines) with an explicit line-range omission marker.
 [[stages]]
-strategy = "aggregate_by_key"
-key = "prefix_before_colon"
-header = "{lines} match(es) in {keys} file(s)"
-top_n = 10
+strategy = "head_tail"
+head = 60
+tail = 20
 
 [[tests]]
-id = "by-file"
+id = "small-result-keeps-matched-lines"
 input = "src/a.java: foo\nsrc/a.java: bar\nsrc/b.java: baz\n"
-expected = "3 match(es) in 2 file(s)\n  src/a.java: 2\n  src/b.java: 1"
+expected = "src/a.java: foo\nsrc/a.java: bar\nsrc/b.java: baz\n"

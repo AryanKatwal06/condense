@@ -100,3 +100,5 @@ reason here. Unexplained golden edits fail review.
 | du/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker |
 | helm/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker |
 | wget/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker |
+| grep/typical | Stage 2 P1-2: small search results now pass through as actual matched lines (previously a count-only summary); the fixture is below the 40-line compression threshold so the row is exempt `too_small` |
+| find/typical | Stage 2 P1-2: small find results now pass through as actual paths (previously an extension-count summary); the row is exempt `too_small`. Large results prepend a count header and use a bounded 60/20 head/tail window with the standard range omission marker |

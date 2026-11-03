@@ -2,13 +2,15 @@ schema_version = 1
 name = "find"
 commands = ["find"]
 
+# Small results pass through verbatim from FindFilter so the actual paths stay
+# visible. Larger results prepend a count header and then use this bounded
+# head/tail window (60 + 20 lines) with an explicit line-range omission marker.
 [[stages]]
-strategy = "aggregate_by_key"
-key = "file_extension"
-header = "{lines} result(s)"
-top_n = 10
+strategy = "head_tail"
+head = 60
+tail = 20
 
 [[tests]]
-id = "by-extension"
+id = "small-result-keeps-paths"
 input = "src/a.java\nsrc/b.java\nREADME\n"
-expected = "3 result(s)\n  .java: 2\n  (no extension): 1"
+expected = "src/a.java\nsrc/b.java\nREADME\n"
