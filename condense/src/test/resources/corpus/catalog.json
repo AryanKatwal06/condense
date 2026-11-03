@@ -154,7 +154,7 @@
       "command": "gradle",
       "fixture": "fixtures/gradle/failure.txt",
       "exit_code": 1,
-      "savings_floor": 60,
+      "savings_exemption": "failure_verbatim",
       "critical_signals": ["FAILED"]
     },
     {
@@ -394,8 +394,8 @@
       "command": "cargo test",
       "fixture": "fixtures/cargo-test/typical.txt",
       "exit_code": 101,
-      "savings_floor": 60,
-      "critical_signals": ["FAILED: tests::test_multiply", "FAILED: tests::test_modulo"]
+      "savings_exemption": "failure_verbatim",
+      "critical_signals": ["test tests::test_multiply ... FAILED", "panicked at 'assertion failed", "src/lib.rs:15:9"]
     },
     {
       "id": "cargo-test/passing",

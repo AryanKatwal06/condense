@@ -181,6 +181,19 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
             FilterContext context = FilterContext.of(command, result, config, verbose, ultraCompact);
             FilterPipeline active = overrideLoader.resolvePipeline(command, defaultPipeline);
             String filtered = active.execute(raw, context);
+            FidelityGuard.Verdict fidelity = FidelityGuard.INSTANCE.check(
+                command, result.exitCode(), raw, filtered);
+            if (!fidelity.passed()) {
+                log.warnf("%s fidelity check failed: %s — falling back to passthrough",
+                    filterName(), fidelity.detail());
+                FilterResult fallback = FilterResult.fallbackPassthrough(
+                    result, filterName(), fidelity.detail());
+                Document opaque = Document.opaque(
+                    command, filterName(), result.exitCode(), false,
+                    Documents.provenance(false), raw)
+                    .withTermination(result.termination());
+                return attachOpaque(fallback.withDocument(opaque), command, result);
+            }
             Document document = Documents.fromContext(
                 context, command, filterName(), result, true, filtered);
             String filterName = filterName();

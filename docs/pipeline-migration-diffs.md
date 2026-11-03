@@ -80,3 +80,5 @@ reason here. Unexplained golden edits fail review.
 | vitest/typical | Phase 4 JS/TS runner depth: preserves failing test diagnostic details and assertion diffs |
 | playwright/typical | Phase 4 JS/TS runner depth: dedicated PlaywrightSummaryStage replacing grouping |
 | git-diff/typical | Stage 2 P0-1: unified patches keep file headers, hunk headers, and bounded change lines instead of collapsing to a `+N / -M` count |
+| gradle/failure | Stage 2 P0-2 fidelity guard: dropping Java compiler diagnostics in favour of a build summary is a real loss, so the raw output is returned |
+| cargo-test/typical | Stage 2 P0-2 fidelity guard: dropping Rust panic payloads and source locations triggers raw passthrough |

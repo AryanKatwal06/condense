@@ -5,6 +5,7 @@ import com.condense.core.ExecutionResult;
 import com.condense.core.FilterResult;
 import com.condense.filter.pipeline.config.FilterOverrideLoader;
 import com.condense.filter.strategy.AnsiStripStrategy;
+import com.condense.ir.Document;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -108,6 +109,47 @@ class FailOpenGuaranteeTest {
             .isNotEmpty()
             .anyMatch(i -> i.kind().equals(FilterIncident.KIND_APPLY_FALLBACK)
                 || i.kind().equals(FilterIncident.KIND_STAGE_EXCEPTION));
+    }
+
+    @Test
+    @DisplayName("Fidelity guard restores raw unified diff when a stage collapses it to counts")
+    void fidelityGuard_restoresRawDiff_whenStageDropsPatchStructure() {
+        String patch = """
+            diff --git a/src/main.rs b/src/main.rs
+            index 8311ab3..70a0b23 100644
+            --- a/src/main.rs
+            +++ b/src/main.rs
+            @@ -1,2 +1,2 @@
+            -old
+            +use std::env;
+            """;
+        FilterStage collapsing = (input, ctx) -> StageResult.continueWith("+1 / -1 lines");
+        PipelineBackedFilter testFilter = new PipelineBackedFilter(
+            FilterOverrideLoader.standalone(), FilterPipeline.of(collapsing)) {
+            @Override
+            protected String definitionName() {
+                return "git-diff-test";
+            }
+        };
+
+        FilterResult result = testFilter.apply(
+            "git diff",
+            new ExecutionResult(0, patch, "", 10L),
+            CondenseConfig.defaults(),
+            0,
+            false
+        );
+
+        assertThat(result.wasFiltered()).isFalse();
+        assertThat(result.output())
+            .contains("diff --git a/src/main.rs b/src/main.rs")
+            .contains("+use std::env;");
+        assertThat(result.document()).isNotNull();
+        assertThat(result.document().document()).isInstanceOf(Document.OpaqueDocument.class);
+        assertThat(result.incidents())
+            .anyMatch(i -> FilterIncident.KIND_APPLY_FALLBACK.equals(i.kind())
+                && i.detail() != null
+                && i.detail().contains(FidelityGuard.INCIDENT_DETAIL_PREFIX));
     }
 
     @Test
