@@ -3,9 +3,11 @@ package com.condense.core;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,11 +28,14 @@ public class CommandExecutor {
     private final Set<Process> activeProcesses = ConcurrentHashMap.newKeySet();
     private final Set<Process> destroyedByShutdown = ConcurrentHashMap.newKeySet();
     private final ProcessIo io;
+    private final InputStream stdinSource;
 
     public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
     public static final String TIMEOUT_ENV = "CONDENSE_COMMAND_TIMEOUT_SEC";
     public static final String VIRTUAL_THREADS_ENV = "CONDENSE_VIRTUAL_THREADS";
     public static final String VIRTUAL_THREADS_PROP = "condense.concurrency.virtual.threads";
+
+    public static final int STDIN_CHUNK_BYTES = 8192;
 
     public static final int MAX_STREAM_BYTES = 10 * 1024 * 1024;
 
@@ -85,11 +90,16 @@ public class CommandExecutor {
     );
 
     public CommandExecutor() {
-        this(ProcessIo.SYSTEM);
+        this(ProcessIo.SYSTEM, System.in);
     }
 
     CommandExecutor(ProcessIo io) {
+        this(io, System.in);
+    }
+
+    CommandExecutor(ProcessIo io, InputStream stdinSource) {
         this.io = io == null ? ProcessIo.SYSTEM : io;
+        this.stdinSource = stdinSource == null ? System.in : stdinSource;
     }
 
     /**
@@ -137,7 +147,7 @@ public class CommandExecutor {
 
         long startMs = System.currentTimeMillis();
         Process process = io.start(pb);
-        process.getOutputStream().close();
+        forwardStdin(process);
         activeProcesses.add(process);
 
         try {
@@ -222,6 +232,66 @@ public class CommandExecutor {
             return true;
         }
         return process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Forward our stdin source to the child process stdin in {@value #STDIN_CHUNK_BYTES}-byte
+     * chunks and close the child stdin once the source reaches EOF, so piped and redirected
+     * input reaches commands that read it.
+     *
+     * <p>An interactive terminal session that has not buffered any keystrokes gets an immediate
+     * EOF instead so commands like {@code git add -p} cannot hang the proxy waiting for input
+     * nobody is sending.
+     */
+    private void forwardStdin(Process process) {
+        boolean interactiveEmptyConsole = shouldCloseStdinImmediately(
+            stdinSource, System.console() != null, stdinAvailable(stdinSource));
+        if (interactiveEmptyConsole) {
+            closeQuietly(process.getOutputStream());
+            return;
+        }
+        OutputStream sink = process.getOutputStream();
+        boolean ownedSource = stdinSource != System.in;
+        startDrainThread("condense-stdin", () -> {
+            try {
+                byte[] chunk = new byte[STDIN_CHUNK_BYTES];
+                int read;
+                while ((read = stdinSource.read(chunk)) != -1) {
+                    sink.write(chunk, 0, read);
+                }
+            } catch (IOException ignored) {
+                // The child may exit before consuming all stdin - a broken pipe is harmless.
+            } finally {
+                closeQuietly(sink);
+                if (ownedSource) {
+                    closeQuietly(stdinSource);
+                }
+            }
+        });
+    }
+
+    /**
+     * Whether an interactive TTY stdin without buffered keystrokes should be closed
+     * immediately so the child observes EOF rather than blocking for input.
+     */
+    static boolean shouldCloseStdinImmediately(InputStream source, boolean consolePresent, int available) {
+        return source == System.in && consolePresent && available == 0;
+    }
+
+    private static int stdinAvailable(InputStream source) {
+        try {
+            return source.available();
+        } catch (IOException e) {
+            return 0;
+        }
+    }
+
+    static void closeQuietly(Closeable resource) {
+        try {
+            resource.close();
+        } catch (IOException ignored) {
+            // Nothing useful to do for a failed close.
+        }
     }
 
     void onStop(@jakarta.enterprise.event.Observes io.quarkus.runtime.ShutdownEvent ev) {

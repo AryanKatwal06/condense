@@ -6,8 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import org.junit.jupiter.api.condition.EnabledOnOs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -161,5 +164,70 @@ class CommandExecutorTest {
                 System.clearProperty(CommandExecutor.VIRTUAL_THREADS_PROP);
             }
         }
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void forwardsPipedStdinToChildOnWindows() throws Exception {
+        CommandExecutor withStdin = executorWithStdin("hello pipe\n");
+
+        ExecutionResult r = withStdin.execute("cmd", "/c", "more");
+
+        assertThat(r.exitCode()).isZero();
+        assertThat(r.readStdout()).contains("hello pipe");
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS)
+    void forwardsPipedStdinToChild() throws Exception {
+        CommandExecutor withStdin = executorWithStdin("hello pipe\n");
+
+        ExecutionResult r = withStdin.execute("sh", "-c", "read line; echo \"got $line\"");
+
+        assertThat(r.exitCode()).isZero();
+        assertThat(r.readStdout().trim()).isEqualTo("got hello pipe");
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void toleratesWindowsChildThatExitsWithoutReadingStdin() throws Exception {
+        CommandExecutor withStdin = executorWithStdin("never read\n");
+
+        ExecutionResult r = withStdin.execute("cmd", "/c", "exit 0");
+
+        assertThat(r.exitCode()).isZero();
+        assertThat(r.succeeded()).isTrue();
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS)
+    void toleratesChildThatExitsWithoutReadingStdin() throws Exception {
+        CommandExecutor withStdin = executorWithStdin("never read\n");
+
+        ExecutionResult r = withStdin.execute("sh", "-c", "exit 0");
+
+        assertThat(r.exitCode()).isZero();
+        assertThat(r.succeeded()).isTrue();
+    }
+
+    @Test
+    void interactiveConsoleWithoutBufferedInputClosesStdinImmediately() {
+        assertThat(CommandExecutor.shouldCloseStdinImmediately(System.in, true, 0))
+            .as("interactive TTY with no keystrokes must see an immediate EOF")
+            .isTrue();
+        assertThat(CommandExecutor.shouldCloseStdinImmediately(new ByteArrayInputStream(new byte[0]), true, 0))
+            .as("custom test streams must still be forwarded")
+            .isFalse();
+        assertThat(CommandExecutor.shouldCloseStdinImmediately(System.in, false, 0))
+            .as("piped stdin must be forwarded even when nothing is buffered yet")
+            .isFalse();
+        assertThat(CommandExecutor.shouldCloseStdinImmediately(System.in, true, 5))
+            .as("interactive TTY with buffered keystrokes must be forwarded")
+            .isFalse();
+    }
+
+    private static CommandExecutor executorWithStdin(String content) {
+        ByteArrayInputStream stdin = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+        return new CommandExecutor(ProcessIo.SYSTEM, stdin);
     }
 }
