@@ -243,6 +243,18 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
             PipelineDecision decision = overrideLoader.resolveDecision(
                 command, defaultPipeline, dir, builtinSource);
             PipelineTrace trace = decision.pipeline().executeTraced(raw, context, droppedLimit);
+            FidelityGuard.Verdict fidelity = FidelityGuard.INSTANCE.check(
+                command, result.exitCode(), raw, trace.output());
+            if (!fidelity.passed()) {
+                // explain must show the same bytes apply() would print. apply()
+                // rejects a lossy compression at this point, so report the raw
+                // passthrough and surface the guard as a fired gate.
+                FilterResult fallback = attachOpaque(
+                    FilterResult.fallbackPassthrough(result, name, fidelity.detail()), command, result);
+                return new FilterExplainTrace(
+                    fallback, true, "fidelity_guard", fidelity.detail(), decision, trace,
+                    name, definition, raw, true);
+            }
             Document document = Documents.fromContext(
                 context, command, name, result, true, trace.output());
             List<FilterIncident> incidents = context.incidents().stream()

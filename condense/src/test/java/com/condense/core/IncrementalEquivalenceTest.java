@@ -3,7 +3,9 @@ package com.condense.core;
 import com.condense.corpus.CorpusCatalog;
 import com.condense.corpus.CorpusRunner;
 import com.condense.filter.node.NpmInstallFilter;
+import com.condense.filter.pipeline.FidelityGuard;
 import com.condense.filter.pipeline.FilterContext;
+import com.condense.filter.pipeline.FilterIncident;
 import com.condense.filter.pipeline.FilterPipeline;
 import com.condense.filter.pipeline.PipelineBackedFilter;
 import com.condense.filter.pipeline.PipelineMode;
@@ -92,11 +94,22 @@ class IncrementalEquivalenceTest {
             }
             String raw = selectedInput(execution);
             FilterContext ctx = FilterContext.of(entry.command(), execution, config, 0, false);
-            String expected;
-            if (wanted == PipelineMode.STREAM) {
-                expected = StreamingProxy.replay(pipeline, raw, ctx);
-            } else {
-                expected = Provenance.stamp(pipeline.execute(raw, ctx));
+            String pipelineOutput = pipeline.execute(raw, ctx);
+            String expected = wanted == PipelineMode.STREAM
+                ? StreamingProxy.replay(pipeline, raw, ctx)
+                : Provenance.stamp(pipelineOutput);
+            // apply() runs the fidelity guard after the pipeline. A rejected
+            // compression is replaced by the raw passthrough, so the capture
+            // path must model that fallback instead of comparing against the
+            // lossy bytes apply deliberately discards.
+            FidelityGuard.Verdict verdict = FidelityGuard.INSTANCE.check(
+                entry.command(), entry.exitCode(), raw, pipelineOutput);
+            if (!verdict.passed()) {
+                expected = Provenance.passthrough(execution.combined());
+                if (applied.incidents().stream()
+                    .noneMatch(i -> FilterIncident.KIND_APPLY_FALLBACK.equals(i.kind()))) {
+                    failures.add(entry.id() + " fidelity fallback missing apply_fallback incident");
+                }
             }
             compared++;
             if (!expected.equals(applied.output())) {

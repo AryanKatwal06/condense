@@ -59,18 +59,9 @@ public final class GitDiffSummaryStage implements FilterStage {
         }
 
         if (context != null && context.documentBuilder() != null) {
-            int added = 0;
-            int removed = 0;
-            for (String line : output.lines().toList()) {
-                if (line.startsWith("+") && !line.startsWith("+++")) {
-                    added++;
-                } else if (line.startsWith("-") && !line.startsWith("---")) {
-                    removed++;
-                }
-            }
-            String summary = unified
-                ? "+" + added + " / -" + removed + " lines"
-                : output;
+            // The summary is the rendered text, exactly as the status and add
+            // stages do it. A count-only summary here would make TextRenderer
+            // disagree with the preserved patch that apply() returns.
             context.documentBuilder().git(new Document.GitDocument(
                 "",
                 "no changes".equals(output),
@@ -79,7 +70,7 @@ public final class GitDiffSummaryStage implements FilterStage {
                 List.of(),
                 null,
                 null,
-                summary,
+                output,
                 "diff",
                 output.lines().toList()
             ));

@@ -1,5 +1,7 @@
 package com.condense.filter.pipeline;
 
+import com.condense.filter.strategy.BoundedRegex;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -149,8 +151,8 @@ public final class FidelityGuard {
     private void checkCompilerDiagnostics(String raw, String filtered, List<String> failures) {
         List<String> locations = new ArrayList<>();
         for (String line : raw.lines().toList()) {
-            Matcher matcher = COMPILER_ERROR.matcher(line);
-            if (matcher.matches() && COMPILED_SOURCE.matcher(matcher.group(1)).matches()) {
+            Matcher matcher = BoundedRegex.matcher(COMPILER_ERROR, line);
+            if (matcher.matches() && BoundedRegex.matcher(COMPILED_SOURCE, matcher.group(1)).matches()) {
                 locations.add(matcher.group(1) + ":" + matcher.group(2));
                 if (locations.size() >= 3) {
                     break;
@@ -182,7 +184,7 @@ public final class FidelityGuard {
                     return true;
                 }
             }
-            if (TEST_TALLY.matcher(trimmed).find()) {
+            if (BoundedRegex.find(TEST_TALLY, trimmed)) {
                 return true;
             }
         }
@@ -196,7 +198,7 @@ public final class FidelityGuard {
 
     private static boolean hasStackFrame(String text) {
         for (String line : text.lines().toList()) {
-            if (STACK_FRAME.matcher(line).matches()) {
+            if (BoundedRegex.matcher(STACK_FRAME, line).matches()) {
                 return true;
             }
         }
@@ -223,6 +225,6 @@ public final class FidelityGuard {
     }
 
     static boolean isLenient(String command) {
-        return command != null && LENIENT_COMMAND.matcher(command).find();
+        return command != null && BoundedRegex.find(LENIENT_COMMAND, command);
     }
 }
