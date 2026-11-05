@@ -167,6 +167,7 @@ class TrendAnalyticsTest {
     void testWeekFormattingMatchesSqlite() {
         LocalDate date = LocalDate.of(2026, 9, 12);
         long ts = date.atStartOfDay(ZoneOffset.UTC).toEpochSecond();
+        CondenseClock.install(Clock.fixed(Instant.ofEpochSecond(ts), ZoneOffset.UTC));
         tracking.insertAt(ts, "probe", "proj", "/tmp", 100, 10, 5L);
 
         List<TrackingRepository.WeeklyStat> stats = tracking.queryWeekly(2, null);
