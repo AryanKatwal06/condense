@@ -258,7 +258,9 @@
       "fixture": "fixtures/cargo-test/typical.txt",
       "exit_code": 101,
       "must_contain": [
-        "FAILED: tests::test_multiply"
+        "test tests::test_multiply ... FAILED",
+        "panicked at 'assertion failed",
+        "src/lib.rs:15:9"
       ]
     },
     {
