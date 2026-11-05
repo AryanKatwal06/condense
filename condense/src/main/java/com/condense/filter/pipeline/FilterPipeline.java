@@ -14,9 +14,13 @@ import java.util.Objects;
  * If any stage returns a {@link StageResult#shortCircuit()} flag as {@code true},
  * execution stops immediately and the short-circuited output is returned.
  *
- * <p>The pipeline operates with a fail-open philosophy: if any stage throws an unchecked
- * exception during {@link FilterStage#process}, the error is logged as a warning and the
- * pipeline continues with the previous stage's output.
+ * <p>The pipeline operates with a fail-open philosophy: if a stage throws during
+ * {@link FilterStage#process}, the failure is recorded as a
+ * {@link FilterIncident} and a {@link PipelineExecutionException} aborts the walk.
+ * {@code PipelineBackedFilter} catches that exception and falls back to
+ * {@code FilterResult#fallbackPassthrough}, so the caller sees either the fully
+ * completed pipeline output or the original raw command output — never a partially
+ * filtered result with diagnostics silently dropped.
  */
 public class FilterPipeline {
 
@@ -69,8 +73,9 @@ public class FilterPipeline {
     /**
      * Executes all stages in sequence on the given input text.
      *
-     * <p>If any stage throws an exception, it is caught, logged, and execution continues
-     * with the current intermediate text (fail-open).
+     * <p>If any stage throws, the incident is recorded and a
+     * {@link PipelineExecutionException} aborts the walk so the caller can fall
+     * back to raw passthrough (fail-open).
      *
      * @param input   the raw input text
      * @param context contextual metadata
