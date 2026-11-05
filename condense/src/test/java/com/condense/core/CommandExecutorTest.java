@@ -226,6 +226,25 @@ class CommandExecutorTest {
             .isFalse();
     }
 
+    @Test
+    void nonInteractiveStdinIsNeverProbedWithAvailable() {
+        // available() on a stream already held by a blocked reader waits on that
+        // monitor, so probing a piped or harness System.in would deadlock the proxy.
+        assertThat(CommandExecutor.availableForInteractiveCheck(System.in, false))
+            .as("piped stdin must not be probed with available()")
+            .isEqualTo(-1);
+
+        var hostile = new ByteArrayInputStream(new byte[0]) {
+            @Override
+            public synchronized int available() {
+                throw new AssertionError("available() must not be called on a non-System.in stream");
+            }
+        };
+        assertThat(CommandExecutor.availableForInteractiveCheck(hostile, true))
+            .as("test-owned streams must never be probed")
+            .isEqualTo(-1);
+    }
+
     private static CommandExecutor executorWithStdin(String content) {
         ByteArrayInputStream stdin = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
         return new CommandExecutor(ProcessIo.SYSTEM, stdin);

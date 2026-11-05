@@ -244,8 +244,14 @@ public class CommandExecutor {
      * nobody is sending.
      */
     private void forwardStdin(Process process) {
+        boolean consolePresent = System.console() != null;
+        // Only probe available() for a real interactive terminal. On a pipe or a
+        // test harness the same System.in stream may already be held by a blocked
+        // reader thread, and BufferedInputStream.available() waits on that monitor,
+        // which would deadlock the proxy instead of forwarding input.
+        int available = availableForInteractiveCheck(stdinSource, consolePresent);
         boolean interactiveEmptyConsole = shouldCloseStdinImmediately(
-            stdinSource, System.console() != null, stdinAvailable(stdinSource));
+            stdinSource, consolePresent, available);
         if (interactiveEmptyConsole) {
             closeQuietly(process.getOutputStream());
             return;
@@ -276,6 +282,20 @@ public class CommandExecutor {
      */
     static boolean shouldCloseStdinImmediately(InputStream source, boolean consolePresent, int available) {
         return source == System.in && consolePresent && available == 0;
+    }
+
+    /**
+     * Probes buffered keystrokes only when stdin really belongs to an interactive
+     * terminal. Calling {@link InputStream#available()} is not safe on a shared
+     * stream: {@code BufferedInputStream.available()} takes the same monitor a
+     * blocked reader holds, so probing a piped or harness {@code System.in} would
+     * hang the proxy. {@code -1} means "do not consult available()".
+     */
+    static int availableForInteractiveCheck(InputStream source, boolean consolePresent) {
+        if (source != System.in || !consolePresent) {
+            return -1;
+        }
+        return stdinAvailable(source);
     }
 
     private static int stdinAvailable(InputStream source) {
