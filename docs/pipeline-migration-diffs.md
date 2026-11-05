@@ -102,3 +102,16 @@ reason here. Unexplained golden edits fail review.
 | wget/typical | Stage 2 P0-4: `tail_lines` truncation notice replaced with the standard 1-based range marker |
 | grep/typical | Stage 2 P1-2: small search results now pass through as actual matched lines (previously a count-only summary); the fixture is below the 40-line compression threshold so the row is exempt `too_small` |
 | find/typical | Stage 2 P1-2: small find results now pass through as actual paths (previously an extension-count summary); the row is exempt `too_small`. Large results prepend a count header and use a bounded 60/20 head/tail window with the standard range omission marker |
+
+## Changes that do not move locked bytes
+
+These Stage 2 changes alter behavior outside the corpus, so no golden file moved.
+
+| Area | What changed |
+|---|---|
+| P0-2 test alignment | `ComposedPipelineIntegrationTest` now asserts the fidelity guard's raw passthrough for cargo panics and Gradle compiler diagnostics, including the recorded apply-fallback incident, instead of the lossy summary that the guard correctly rejects |
+| P0-3 follow-up | The interactive empty-console check consults `available()` only for the real `System.in` behind a console. A piped or harness `System.in` is no longer probed, because `BufferedInputStream.available()` waits on the monitor a blocked reader already holds |
+| P0-5 tee and MCP expand | `TeeMode.OMISSIONS` dumps raw output on failure or when filtering omitted content; tee files are capped at 5 MiB with an explicit truncation marker, rotated to the newest 50, and restricted to owner read/write where POSIX permissions exist. The MCP `expand` tool returns a bounded 1-based line range confined to `{dataDir}/tee` |
+| P0-6 workflows and hooks | Every bundled Python hook analyzer now uses the same strict environment-assignment identifier rule as `CompoundCommandAnalyzer`, and three unresolvable GitHub Action pins were replaced with commits that the GitHub API resolves |
+| P1-5 documentation | `FilterPipeline` Javadoc describes the `PipelineExecutionException` abort and raw-passthrough contract, and the README savings headline is labelled as an observed estimate subject to the published estimator bound |
+
