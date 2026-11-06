@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "effective_date": "2026-09-01",
+  "effective_date": "2026-11-06",
   "default_model": "claude-3-5-sonnet-20241022",
   "models": [
     {
@@ -12,7 +12,7 @@
       "output_cost_per_million": 15.00,
       "cache_read_cost_per_million": 0.30,
       "cache_write_cost_per_million": 3.75,
-      "effective_date": "2024-10-22",
+      "effective_date": "2026-11-06",
       "source_url": "https://www.anthropic.com/pricing"
     },
     {
@@ -24,7 +24,7 @@
       "output_cost_per_million": 4.00,
       "cache_read_cost_per_million": 0.08,
       "cache_write_cost_per_million": 1.00,
-      "effective_date": "2024-11-04",
+      "effective_date": "2026-11-06",
       "source_url": "https://www.anthropic.com/pricing"
     },
     {
@@ -36,7 +36,7 @@
       "output_cost_per_million": 75.00,
       "cache_read_cost_per_million": 1.50,
       "cache_write_cost_per_million": 18.75,
-      "effective_date": "2024-03-01",
+      "effective_date": "2026-11-06",
       "source_url": "https://www.anthropic.com/pricing"
     },
     {
@@ -48,7 +48,7 @@
       "output_cost_per_million": 10.00,
       "cache_read_cost_per_million": 1.25,
       "cache_write_cost_per_million": 2.50,
-      "effective_date": "2024-11-20",
+      "effective_date": "2026-11-06",
       "source_url": "https://openai.com/api/pricing"
     },
     {
@@ -60,7 +60,7 @@
       "output_cost_per_million": 0.60,
       "cache_read_cost_per_million": 0.075,
       "cache_write_cost_per_million": 0.15,
-      "effective_date": "2024-07-18",
+      "effective_date": "2026-11-06",
       "source_url": "https://openai.com/api/pricing"
     },
     {
@@ -72,7 +72,7 @@
       "output_cost_per_million": 60.00,
       "cache_read_cost_per_million": 7.50,
       "cache_write_cost_per_million": 15.00,
-      "effective_date": "2024-12-17",
+      "effective_date": "2026-11-06",
       "source_url": "https://openai.com/api/pricing"
     },
     {
@@ -84,7 +84,7 @@
       "output_cost_per_million": 4.40,
       "cache_read_cost_per_million": 0.55,
       "cache_write_cost_per_million": 1.10,
-      "effective_date": "2024-09-12",
+      "effective_date": "2026-11-06",
       "source_url": "https://openai.com/api/pricing"
     },
     {
@@ -96,7 +96,7 @@
       "output_cost_per_million": 5.00,
       "cache_read_cost_per_million": 0.3125,
       "cache_write_cost_per_million": 1.25,
-      "effective_date": "2024-09-24",
+      "effective_date": "2026-11-06",
       "source_url": "https://ai.google.dev/pricing"
     },
     {
@@ -108,7 +108,7 @@
       "output_cost_per_million": 0.30,
       "cache_read_cost_per_million": 0.01875,
       "cache_write_cost_per_million": 0.075,
-      "effective_date": "2024-09-24",
+      "effective_date": "2026-11-06",
       "source_url": "https://ai.google.dev/pricing"
     },
     {
@@ -120,7 +120,7 @@
       "output_cost_per_million": 0.28,
       "cache_read_cost_per_million": 0.014,
       "cache_write_cost_per_million": 0.14,
-      "effective_date": "2024-12-26",
+      "effective_date": "2026-11-06",
       "source_url": "https://api-docs.deepseek.com/quick_start/pricing"
     },
     {
@@ -132,7 +132,7 @@
       "output_cost_per_million": 2.19,
       "cache_read_cost_per_million": 0.14,
       "cache_write_cost_per_million": 0.55,
-      "effective_date": "2025-01-20",
+      "effective_date": "2026-11-06",
       "source_url": "https://api-docs.deepseek.com/quick_start/pricing"
     }
   ]
