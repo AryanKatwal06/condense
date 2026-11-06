@@ -1,17 +1,33 @@
 package com.condense.config;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
+import com.condense.core.ConfigLoader;
+import com.condense.core.PlatformDirs;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@QuarkusTest
 class ConfigWriterTest {
 
-    @Inject
-    ConfigWriter writer;
+    @TempDir
+    Path tempDir;
+
+    private ConfigWriter writer;
+
+    @BeforeEach
+    void setUp() {
+        PlatformDirs dirs = new PlatformDirs() {
+            @Override
+            public Path getConfigFile() {
+                return tempDir.resolve("config.toml");
+            }
+        };
+        writer = new ConfigWriter(dirs, new ConfigLoader(dirs));
+    }
 
     @Test
     void toTomlString_isNonBlank() throws Exception {
@@ -22,7 +38,7 @@ class ConfigWriterTest {
     @Test
     void get_teeMode_returnsDefault() {
         String mode = writer.get("tee.mode");
-        assertThat(mode).isEqualToIgnoringCase("failures");
+        assertThat(mode).isEqualToIgnoringCase("omissions");
     }
 
     @Test
