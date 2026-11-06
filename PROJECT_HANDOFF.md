@@ -116,7 +116,7 @@ CLI args
       → StreamingProxy.shouldStream()  STREAM / LIVE_RAW vs CAPTURE (derived, no flag)
            STREAM / LIVE_RAW → StreamingProxy.run()  print as lines arrive
            CAPTURE           → CommandExecutor.execute() then FilterStrategy.apply()
-      → TeeWriter.maybeDump()          raw output spill per TeeMode (unchanged)
+      → TeeWriter.maybeDump()          raw output spill per TeeMode (default OMISSIONS)
       → print filtered output          skipped when StreamingProxy already printed
       → TrackingRepository.insert()    synchronous, fail-open, after stdout flush
       → return the child's exit code
@@ -1077,6 +1077,8 @@ Condense stands with permanent, reproducible superiority over Zap across all 8 t
 6. **Platform Parity**: Full continuous verification across Linux, macOS, and Windows with native PATHEXT and process group management.
 7. **Deterministic Privacy & Trust**: Air-gapped default, zero phone-home without double opt-in, cryptographic preview hashes.
 8. **Supply Chain & Provenance**: Pinned benchmark failure corpus (`failure-corpus.json`), SLSA provenance, signed artifacts, and zero documentation drift (`DocumentationDriftTest`).
+
+**Stage 2 and Stage 3 hardening.** The pipeline now prefers diagnostic fidelity over maximum compression. `FidelityGuard` runs after every filter and fails open to raw passthrough when a `file:line` compiler diagnostic, uncaught exception or panic, test failure, or unified diff hunk would be lost; the same guard applies to `explain()` and to rendering. `TeeMode.OMISSIONS` is the default, so a successful command that omits content still writes the complete raw output to a bounded tee file, and the path-confined MCP `expand` tool can return a bounded line range from it. Small source files, JSON configs, matched `grep`/`find` lines, and diffs therefore survive intact, which means savings claims are calibrated as up to 60–90% on high-volume streams rather than a promise for every command.
 
 Filter/IR schema is at **1**; SQLite schema is at **3**; application version is **1.0.1**.
 
