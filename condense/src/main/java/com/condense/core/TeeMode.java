@@ -7,9 +7,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Controls when Condense saves raw command output to a tee file.
  *
  * <ul>
- *   <li>{@link #FAILURES} — save only when the command exits non-zero (default)</li>
+ *   <li>{@link #FAILURES} — save only when the command exits non-zero</li>
  *   <li>{@link #ALWAYS} — always save raw output</li>
- *   <li>{@link #OMISSIONS} — save on failure or whenever filtering dropped content</li>
+ *   <li>{@link #OMISSIONS} — save on failure or whenever filtering dropped content (default)</li>
  *   <li>{@link #NEVER} — never save raw output</li>
  * </ul>
  */
@@ -22,7 +22,7 @@ public enum TeeMode {
 
     @JsonCreator
     public static TeeMode fromString(String value) {
-        if (value == null || value.isBlank()) return FAILURES;
+        if (value == null || value.isBlank()) return OMISSIONS;
         return switch (value.trim().toUpperCase()) {
             case "ALWAYS"   -> ALWAYS;
             case "NEVER"    -> NEVER;

@@ -19,7 +19,7 @@ import java.util.List;
  *
  * [tee]
  * enabled = true
- * mode = "failures"
+ * mode = "omissions"
  * </pre>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -43,7 +43,7 @@ public record CondenseConfig(
     public static CondenseConfig defaults() {
         return new CondenseConfig(
             new HooksConfig(List.of()),
-            new TeeConfig(true, TeeMode.FAILURES),
+            new TeeConfig(true, TeeMode.OMISSIONS),
             java.util.Map.of(),
             new AnalyticsConfig("claude-3-5-sonnet-20241022")
         );
@@ -111,12 +111,12 @@ public record CondenseConfig(
     ) {
         /** No-arg constructor for Jackson deserialization. */
         public TeeConfig() {
-            this(true, TeeMode.FAILURES);
+            this(true, TeeMode.OMISSIONS);
         }
 
         @Override
         public TeeMode mode() {
-            return mode != null ? mode : TeeMode.FAILURES;
+            return mode != null ? mode : TeeMode.OMISSIONS;
         }
     }
 

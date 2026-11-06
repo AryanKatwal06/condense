@@ -17,23 +17,46 @@ class ConfigLoaderTest {
     ConfigLoader loader;
 
     @Test
-    void returnsDefaultsWhenNoConfigFileExists() {
-        // In the test environment no config file should exist yet.
-        // Even if it does, defaults must not be null.
-        var config = loader.load();
+    void returnsDefaultsWhenNoConfigFileExists() throws IOException {
+        // Use an isolated PlatformDirs so a developer's real config cannot leak in.
+        Path missing = Files.createTempDirectory("condense-no-config")
+            .resolve("config.toml");
+        ConfigLoader isolated = new ConfigLoader(new PlatformDirs() {
+            @Override
+            public Path getConfigFile() {
+                return missing;
+            }
+        });
+
+        var config = isolated.load();
         assertThat(config).isNotNull();
         assertThat(config.tee()).isNotNull();
         assertThat(config.tee().enabled()).isTrue();
-        assertThat(config.tee().mode()).isEqualTo(TeeMode.FAILURES);
+        assertThat(config.tee().mode()).isEqualTo(TeeMode.OMISSIONS);
         assertThat(config.hooks()).isNotNull();
         assertThat(config.hooks().excludeCommands()).isNotNull();
+    }
+
+    @Test
+    void injectedLoaderReturnsUsableConfig() {
+        var config = loader.load();
+        assertThat(config).isNotNull();
+        assertThat(config.tee()).isNotNull();
+        assertThat(config.hooks()).isNotNull();
     }
 
     @Test
     void defaultTeeConfigHasCorrectValues() {
         var tee = CondenseConfig.defaults().tee();
         assertThat(tee.enabled()).isTrue();
-        assertThat(tee.mode()).isEqualTo(TeeMode.FAILURES);
+        assertThat(tee.mode()).isEqualTo(TeeMode.OMISSIONS);
+    }
+
+    @Test
+    void omissionRecoveryIsTheDefaultTeeMode() {
+        assertThat(CondenseConfig.defaults().tee().mode()).isEqualTo(TeeMode.OMISSIONS);
+        assertThat(new CondenseConfig.TeeConfig().mode()).isEqualTo(TeeMode.OMISSIONS);
+        assertThat(new CondenseConfig.TeeConfig(true, null).mode()).isEqualTo(TeeMode.OMISSIONS);
     }
 
     @Test

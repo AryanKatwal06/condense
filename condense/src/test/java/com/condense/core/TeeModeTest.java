@@ -21,10 +21,15 @@ class TeeModeTest {
         "never,    NEVER",
         "NEVER,    NEVER",
         "garbage,  FAILURES",
-        ",         FAILURES"
+        ",         OMISSIONS"
     })
     void fromStringIsCaseInsensitiveWithSaneDefault(String input, TeeMode expected) {
         assertThat(TeeMode.fromString(input)).isEqualTo(expected);
+    }
+
+    @Test
+    void blankModeFallsBackToOmissions() {
+        assertThat(TeeMode.fromString("   ")).isEqualTo(TeeMode.OMISSIONS);
     }
 
     @Test

@@ -343,9 +343,10 @@ Example configuration:
 exclude_commands = []
 
 [tee]
-# Save raw output on command failure for AI inspection
-# Options: "failures" | "always" | "never"
-mode = "failures"
+# Save raw output on failure or whenever filtering omits content, so the AI
+# can recover the full output through the MCP expand tool when needed
+# Options: "omissions" | "failures" | "always" | "never"
+mode = "omissions"
 
 [commands.pytest]
 max_failures = 10

@@ -23,8 +23,8 @@ import java.util.Set;
 /**
  * Saves raw command output to a file when the tee system is active.
  *
- * <p>When a command fails, or when {@code tee.mode = "omissions"} is configured and
- * the filter dropped content (explicit omission markers or at least a 2x token
+ * <p>When a command fails, or when the default {@link TeeMode#OMISSIONS} mode sees
+ * that the filter dropped content (explicit omission markers or at least a 2x token
  * reduction), the AI may need the complete unfiltered output. Rather than
  * re-executing the command, Condense saves the raw output to a file and appends the
  * file path to the filtered output. The AI can then read that file directly, for
