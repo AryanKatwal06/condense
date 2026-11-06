@@ -74,6 +74,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Filter Pipeline Architecture & Hardening**: Introduced composable `FilterPipeline` abstraction with fail-open stage error handling, core strategy library, and hardened GraalVM reflection configuration.
 - **Test Lifecycle Isolation**: Added defensive `<exclude>**/*IT.java</exclude>` configuration to `maven-surefire-plugin` with documented rationale, guarding against native integration tests running during unit test execution under broadened CLI test selectors.
 
+## [1.0.1] — 2026-11-06
+
+### Changed
+- **Fidelity-first output handling.** Unified git diffs keep their hunk headers and surrounding context instead of collapsing to changed lines alone. `FidelityGuard` now detects when a filtered result would drop declared critical signal and falls back to the raw output rather than publishing a lossy summary.
+- **Recoverable tee defaults.** The default tee mode is `omissions`, so truncated regions are written to disk and can be recovered after the fact. Tee storage rotates at 50 files, caps each file at 5 MiB with an explicit truncation marker, and restricts POSIX permissions to `0600`.
+- **MCP `expand` tool.** Agents can read a bounded 1-based line range from any tee file under the Condense data directory without shelling out to `cat`.
+- **Piped and redirected stdin forwarding.** Commands that read from a pipe or a redirected file now receive the caller's stdin, so filters and proxies behave the same whether input arrives from a terminal, a pipe, or a file.
+- **Wider reading thresholds.** `cat` accepts larger files before truncating, and the opt-in JSON skeleton view uses a wider threshold with 1-based line-range markers that map cleanly back to the source.
+- **Matched line and path preservation.** `grep` keeps every matched line together with its file and line reference, and `find` preserves the matched paths instead of summarizing them away.
+- **Strict hook parsing across every agent.** All 13 bundled hook templates now accept only strict POSIX environment-assignment syntax, so shell exports, aliases, and unrelated prefixes are no longer mistaken for `KEY=value` pairs.
+
 ## [1.0.0] — 2026-08-24
 
 ### Fixed
