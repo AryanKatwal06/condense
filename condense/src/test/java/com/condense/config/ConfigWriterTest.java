@@ -49,7 +49,7 @@ class ConfigWriterTest {
         assertThat(value).isEqualTo("always");
 
         // Reset to avoid polluting other tests
-        writer.set("tee.mode", "failures");
+        writer.set("tee.mode", "omissions");
     }
 
     @Test
@@ -67,7 +67,7 @@ class ConfigWriterTest {
     void reset_restoresDefaults() throws Exception {
         writer.set("tee.mode", "never");
         writer.reset();
-        assertThat(writer.get("tee.mode")).isEqualTo("failures");
+        assertThat(writer.get("tee.mode")).isEqualTo("omissions");
     }
 
     @Test

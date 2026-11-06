@@ -63,7 +63,7 @@ public class ConfigWriter {
      * <p>Supported keys:
      * <ul>
      *   <li>{@code tee.enabled} — "true" or "false"</li>
-     *   <li>{@code tee.mode} — "failures", "always", or "never"</li>
+     *   <li>{@code tee.mode} — "omissions", "failures", "always", or "never"</li>
      *   <li>{@code hooks.exclude_commands} — comma-separated command list</li>
      * </ul>
      *
