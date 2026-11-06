@@ -25,6 +25,18 @@ function normalizeName(raw: string): string {
   return s;
 }
 
+const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
+
+function isEnvAssignment(token: string): boolean {
+  let s = String(token).trim();
+  if (s.length >= 2 &&
+      ((s.startsWith('"') && s.endsWith('"')) ||
+       (s.startsWith("'") && s.endsWith("'")))) {
+    s = s.slice(1, -1);
+  }
+  return ENV_ASSIGNMENT.test(s);
+}
+
 function analyzeCommand(cmd: string, condenseSet: Set<string>): { deny: boolean; matched: string[] } {
   const chars: string[] = [];
   for (let i = 0; i < cmd.length; i++) {
@@ -141,7 +153,7 @@ function analyzeCommand(cmd: string, condenseSet: Set<string>): { deny: boolean;
         if (/^(<|>|>>|2>|1>|2>&1|&>)$/.test(w) && idx < words.length) idx++;
         continue;
       }
-      if (w.includes("=") && !w.startsWith("=")) {
+      if (isEnvAssignment(w)) {
         idx++;
         continue;
       }
@@ -166,7 +178,7 @@ function analyzeCommand(cmd: string, condenseSet: Set<string>): { deny: boolean;
             if (["-u", "-C", "-g"].includes(opt) && idx < words.length && !words[idx].startsWith("-")) {
               idx++;
             }
-          } else if (opt.includes("=") && !opt.startsWith("=")) {
+          } else if (isEnvAssignment(opt)) {
             idx++;
           } else {
             break;
