@@ -7,20 +7,24 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * An ordered sequence of {@link FilterStage} instances executed in series.
+ * An immutable, ordered sequence of {@link FilterStage} instances executed in series.
  *
  * <p>A pipeline receives input text, executes each stage sequentially, and returns
  * the final transformed output string.
  * If any stage returns a {@link StageResult#shortCircuit()} flag as {@code true},
  * execution stops immediately and the short-circuited output is returned.
  *
- * <p>The pipeline operates with a fail-open philosophy: if a stage throws during
- * {@link FilterStage#process}, the failure is recorded as a
- * {@link FilterIncident} and a {@link PipelineExecutionException} aborts the walk.
- * {@code PipelineBackedFilter} catches that exception and falls back to
- * {@code FilterResult#fallbackPassthrough}, so the caller sees either the fully
- * completed pipeline output or the original raw command output — never a partially
- * filtered result with diagnostics silently dropped.
+ * <p>Failure handling is fail-open at the pipeline boundary. If a stage throws an
+ * unchecked exception or a {@code RegexTimeoutException}, the failure is recorded as
+ * a {@link FilterIncident} and pipeline execution aborts immediately by throwing a
+ * {@link PipelineExecutionException}. {@code PipelineBackedFilter} catches that
+ * exception (through {@code ProxyService}) and falls back to raw unfiltered command
+ * output while preserving the child process {@code stderr} and exit status.
+ *
+ * <p>Because the walk aborts on the first failing stage, the caller sees either the
+ * fully completed pipeline output or the original raw command output. Partial stage
+ * output is never returned, exceptions are never swallowed per stage, and execution
+ * never continues with the previous stage's output.
  */
 public class FilterPipeline {
 
@@ -73,9 +77,10 @@ public class FilterPipeline {
     /**
      * Executes all stages in sequence on the given input text.
      *
-     * <p>If any stage throws, the incident is recorded and a
-     * {@link PipelineExecutionException} aborts the walk so the caller can fall
-     * back to raw passthrough (fail-open).
+     * <p>If any stage throws an unchecked exception or a {@code RegexTimeoutException},
+     * the incident is recorded and a {@link PipelineExecutionException} aborts the
+     * walk immediately. The caller then falls back to raw passthrough (fail-open), so
+     * no partially filtered output is exposed and diagnostics are not silently lost.
      *
      * @param input   the raw input text
      * @param context contextual metadata

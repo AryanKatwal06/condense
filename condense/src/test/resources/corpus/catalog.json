@@ -233,7 +233,7 @@
     },
     {
       "id": "git-diff/stat",
-      "command": "git diff",
+      "command": "git diff --stat",
       "fixture": "fixtures/git-diff/stat.txt",
       "exit_code": 0,
       "savings_floor": 0,
