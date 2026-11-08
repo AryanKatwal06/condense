@@ -13,12 +13,12 @@ jobs:
     name: Native 3,000-run soak and performance baselines
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@v4
 
       - name: Set up GraalVM JDK 21
-        uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1.6.8
+        uses: graalvm/setup-graalvm@v1
         with:
-          java-version: 21
+          java-version: '21'
           distribution: graalvm-community
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: maven
@@ -44,7 +44,7 @@ jobs:
             --no-transfer-progress -B
 
       - name: Upload rolling soak and benchmark artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/upload-artifact@v4
         with:
           name: rolling-performance-baselines
           path: |
