@@ -18,6 +18,13 @@ public final class StageInventoryWriter {
 
     public static final String RESOURCE = "/META-INF/condense/stage-inventory.json";
 
+    /**
+     * Generated alongside {@code GeneratedStageRegistry} so the inventory survives
+     * build environments that prune non-class files from the output directory.
+     */
+    static final String GENERATED_CLASS =
+        "com.condense.filter.pipeline.config.GeneratedStageInventory";
+
     private StageInventoryWriter() {}
 
     public static void main(String[] args) throws Exception {
@@ -56,11 +63,26 @@ public final class StageInventoryWriter {
     }
 
     public static String readInventory() throws Exception {
+        String generated = readGeneratedInventory();
+        if (generated != null) {
+            return generated;
+        }
         try (InputStream in = StageInventoryWriter.class.getResourceAsStream(RESOURCE)) {
             if (in == null) {
-                throw new IllegalStateException(RESOURCE + " is missing");
+                throw new IllegalStateException(
+                    RESOURCE + " is missing and " + GENERATED_CLASS + " was not generated");
             }
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    private static String readGeneratedInventory() {
+        try {
+            Class<?> generated = Class.forName(GENERATED_CLASS);
+            Object json = generated.getField("JSON").get(null);
+            return json instanceof String text && !text.isBlank() ? text : null;
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            return null;
         }
     }
 

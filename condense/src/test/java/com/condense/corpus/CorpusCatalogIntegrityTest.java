@@ -47,6 +47,11 @@ class CorpusCatalogIntegrityTest {
         "8df10395026330b699a77607b11ebf64432dce7c",
         "4cec3d8",
         "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "f70bc8032f90a104502824a54bcb94b6f01715bc",
+        "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+        "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        "2dfa2011c5b2a0f1489bf9e433881c92c1631f88",
+        "9000827ccba6bdab643e8b6fd33ac0654aef8333",
         "actions/checkout@v7"
     );
 

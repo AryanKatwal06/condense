@@ -190,6 +190,9 @@
                         <configuration>
                             <mainClass>com.condense.filter.pipeline.config.BuiltinDefinitionValidator</mainClass>
                             <classpathScope>compile</classpathScope>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.basedir}/src/main/resources</additionalClasspathElement>
+                            </additionalClasspathElements>
                         </configuration>
                     </execution>
                     <execution>
@@ -201,6 +204,9 @@
                         <configuration>
                             <mainClass>com.condense.read.LanguageDefinitionValidator</mainClass>
                             <classpathScope>compile</classpathScope>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.basedir}/src/main/resources</additionalClasspathElement>
+                            </additionalClasspathElements>
                         </configuration>
                     </execution>
                     <execution>
@@ -212,6 +218,9 @@
                         <configuration>
                             <mainClass>com.condense.filter.pipeline.config.StageInventoryWriter</mainClass>
                             <classpathScope>compile</classpathScope>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.basedir}/src/main/resources</additionalClasspathElement>
+                            </additionalClasspathElements>
                         </configuration>
                     </execution>
                     <execution>
@@ -223,6 +232,9 @@
                         <configuration>
                             <mainClass>com.condense.discover.DiscoverDefinitionValidator</mainClass>
                             <classpathScope>compile</classpathScope>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.basedir}/src/main/resources</additionalClasspathElement>
+                            </additionalClasspathElements>
                         </configuration>
                     </execution>
                 </executions>
