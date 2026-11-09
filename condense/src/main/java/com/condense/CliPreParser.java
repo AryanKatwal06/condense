@@ -19,6 +19,7 @@ public final class CliPreParser {
         "completion",
         "update",
         "mcp",
+        "expand",
         "uninstall",
         "session",
         "report",

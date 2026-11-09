@@ -11,6 +11,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CliPreParserTest {
 
     @Test
+    void routesExpandToCondenseSubcommand() {
+        CliPreParser.PreParseResult result =
+            CliPreParser.parse("expand", "sample.txt", "10", "20");
+
+        assertThat(result.isSubcommand()).isTrue();
+        assertThat(result.condenseArgs()).containsExactly("expand", "sample.txt", "10", "20");
+        assertThat(result.childArgs()).isEmpty();
+    }
+
+    @Test
     void treatsBypassAsSubcommandAndKeepsChildArguments() {
         CliPreParser.PreParseResult result =
             CliPreParser.parse("bypass", "git", "log", "-n", "5");

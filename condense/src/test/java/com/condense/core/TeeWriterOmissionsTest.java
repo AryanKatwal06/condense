@@ -7,6 +7,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,36 @@ class TeeWriterOmissionsTest {
 
         assertThat(saved).isNotNull();
         assertThat(Files.exists(saved)).isTrue();
+    }
+
+    @Test
+    void omissionsModeSavesWhenOutputCapTerminatedExecution() {
+        ExecutionResult capped = new ExecutionResult(
+            0, "partial output", "", 3L, TerminationReason.OUTPUT_CAP);
+
+        Path saved = writer(TeeMode.OMISSIONS).maybeDump("large command", capped, null);
+
+        assertThat(saved).isNotNull();
+        assertThat(Files.exists(saved)).isTrue();
+    }
+
+    @Test
+    void omissionsModeSavesFidelityFallbackIncident() {
+        FilterResult fallback = new FilterResult("raw", 100, 100, false,
+            List.of(com.condense.filter.pipeline.FilterIncident.fidelityFallback("git diff", "dropped")));
+
+        Path saved = writer(TeeMode.OMISSIONS)
+            .maybeDump("git diff", new ExecutionResult(0, "raw output", "", 3L), fallback);
+
+        assertThat(saved).isNotNull();
+    }
+
+    @Test
+    void omissionsModeSavesWhenCharacterReductionIsSignificant() {
+        ExecutionResult raw = new ExecutionResult(0, "x".repeat(1000), "", 3L);
+        FilterResult filtered = new FilterResult("short", 100, 90, true);
+
+        assertThat(writer(TeeMode.OMISSIONS).maybeDump("command", raw, filtered)).isNotNull();
     }
 
     @Test
@@ -154,6 +186,21 @@ class TeeWriterOmissionsTest {
         assertThat(saved).isNotNull();
         assertThat(Files.getPosixFilePermissions(saved))
             .isEqualTo(Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+    }
+
+    @Test
+    void appliesOwnerOnlyAclOnWindows() throws Exception {
+        Assumptions.assumeTrue(System.getProperty("os.name", "")
+            .toLowerCase(java.util.Locale.ROOT).contains("win"), "Windows ACLs are not available");
+        Path saved = writer(TeeMode.FAILURES)
+            .maybeDump("windows-secret", new ExecutionResult(1, "secret", "", 1L), null);
+        assertThat(saved).isNotNull();
+
+        var view = Files.getFileAttributeView(saved, AclFileAttributeView.class);
+        assertThat(view).isNotNull();
+        var owner = Files.getOwner(saved);
+        assertThat(view.getAcl()).isNotEmpty()
+            .allSatisfy(entry -> assertThat(entry.principal()).isEqualTo(owner));
     }
 
     private long teeFiles() {

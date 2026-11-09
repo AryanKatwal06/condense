@@ -29,9 +29,17 @@ class ExpandToolTest {
     }
 
     @Test
-    void toolsListIncludesExpand() {
+    void toolsListIncludesExpandWithCompleteSchema() {
         JsonNode result = handlers.dispatch("tools/list", null);
-        assertThat(result.toString()).contains("\"name\":\"expand\"");
+        JsonNode expand = result.path("tools").findParents("name").stream()
+            .filter(tool -> "expand".equals(tool.path("name").asText()))
+            .findFirst().orElseThrow();
+        JsonNode schema = expand.path("inputSchema");
+        assertThat(schema.path("properties").has("tee_file")).isTrue();
+        assertThat(schema.path("properties").has("tee_path")).isTrue();
+        assertThat(schema.path("properties").has("start_line")).isTrue();
+        assertThat(schema.path("properties").has("end_line")).isTrue();
+        assertThat(schema.path("anyOf").isArray()).isTrue();
     }
 
     @Test
@@ -48,6 +56,18 @@ class ExpandToolTest {
         assertThat(report.get("lines_returned").asInt()).isEqualTo(3);
         assertThat(report.get("total_lines").asInt()).isEqualTo(10);
         assertThat(report.get("truncated").asBoolean()).isFalse();
+    }
+
+    @Test
+    void expandReadsLinesFiftyThroughSixtyInclusively() throws Exception {
+        Path tee = writeTee("fifty.txt", 100);
+        JsonNode report = report(callExpand(tee, 50, 60));
+        assertThat(report.get("start_line").asInt()).isEqualTo(50);
+        assertThat(report.get("end_line").asInt()).isEqualTo(60);
+        assertThat(report.get("lines_returned").asInt()).isEqualTo(11);
+        assertThat(report.get("content").asText())
+            .isEqualTo("line-50\nline-51\nline-52\nline-53\nline-54\nline-55\n"
+                + "line-56\nline-57\nline-58\nline-59\nline-60\n");
     }
 
     @Test
@@ -80,35 +100,72 @@ class ExpandToolTest {
     }
 
     @Test
-    void expandRejectsNonPositiveStartLine() throws Exception {
+    void expandClampsNonPositiveStartLineToOne() throws Exception {
         Path tee = writeTee("bad.txt", 4);
-        JsonNode result = callExpand(tee, 0, 2);
-        assertThat(result.path("isError").asBoolean()).isTrue();
-        assertThat(result.get("content").get(0).get("text").asText()).contains(">= 1");
+        JsonNode report = report(callExpand(tee, 0, 2));
+        assertThat(report.get("start_line").asInt()).isEqualTo(1);
+        assertThat(report.get("end_line").asInt()).isEqualTo(2);
     }
 
     @Test
-    void expandRejectsReversedRange() throws Exception {
+    void expandClampsReversedRangeToStartLine() throws Exception {
         Path tee = writeTee("bad.txt", 4);
-        JsonNode result = callExpand(tee, 3, 1);
-        assertThat(result.path("isError").asBoolean()).isTrue();
+        JsonNode report = report(callExpand(tee, 3, 1));
+        assertThat(report.get("start_line").asInt()).isEqualTo(3);
+        assertThat(report.get("end_line").asInt()).isEqualTo(3);
+        assertThat(report.get("content").asText()).isEqualTo("line-3\n");
     }
 
     @Test
-    void expandRejectsOversizedWindow() throws Exception {
-        Path tee = writeTee("big.txt", 4);
-        JsonNode result = callExpand(tee, 1, 600);
-        assertThat(result.path("isError").asBoolean()).isTrue();
-        assertThat(result.get("content").get(0).get("text").asText()).contains("500");
+    void expandClampsOversizedWindowToFiveHundredLines() throws Exception {
+        Path tee = writeTee("big.txt", 600);
+        JsonNode report = report(callExpand(tee, 1, 600));
+        assertThat(report.get("lines_returned").asInt()).isEqualTo(500);
+        assertThat(report.get("end_line").asInt()).isEqualTo(500);
     }
 
     @Test
-    void expandRequiresAllArguments() {
+    void expandAcceptsTeePathAliasAndBareFilename() throws Exception {
+        Path tee = writeTee("alias.txt", 4);
+        JsonNode result = handlers.dispatch("tools/call", params("expand", """
+            {"tee_path":"alias.txt","start_line":2,"end_line":3}
+            """));
+        assertThat(report(result).get("content").asText()).isEqualTo("line-2\nline-3\n");
+    }
+
+    @Test
+    void expandRejectsTraversalAndDecoyTeeDirectory() throws Exception {
+        Path decoy = tempDir.resolve("tee").resolve("secret.txt");
+        Files.createDirectories(decoy.getParent());
+        Files.writeString(decoy, "SECRET");
+        for (String path : new String[] {"../../etc/passwd", "..\\\\..\\\\Windows\\\\win.ini", decoy.toString()}) {
+            JsonNode result = callExpand(Path.of(path), 1, 1);
+            assertThat(result.path("isError").asBoolean()).isTrue();
+            assertThat(result.get("content").get(0).get("text").asText()).doesNotContain("SECRET");
+        }
+    }
+
+    @Test
+    void expandRejectsSymlink() throws Exception {
+        Path tee = writeTee("real.txt", 2);
+        Path link = teeDir.resolve("link.txt");
+        try {
+            Files.createSymbolicLink(link, tee);
+        } catch (UnsupportedOperationException | java.io.IOException | SecurityException e) {
+            return;
+        }
+        assertThat(callExpand(link, 1, 1).path("isError").asBoolean()).isTrue();
+    }
+
+    @Test
+    void expandDefaultsLineBoundsWhenOmitted() throws Exception {
+        writeTee("defaults.txt", 4);
         JsonNode result = handlers.dispatch("tools/call",
-            params("expand", """
-                {"tee_file":"%s"}""".formatted(escape(teeDir.resolve("x.txt")))));
-        assertThat(result.path("isError").asBoolean()).isTrue();
-        assertThat(result.get("content").get(0).get("text").asText()).contains("required");
+            params("expand", "{\"tee_file\":\"defaults.txt\"}"));
+        assertThat(result.path("isError").asBoolean(false)).isFalse();
+        JsonNode report = report(result);
+        assertThat(report.get("start_line").asInt()).isEqualTo(1);
+        assertThat(report.get("end_line").asInt()).isEqualTo(4);
     }
 
     private Path writeTee(String name, int lines) throws Exception {

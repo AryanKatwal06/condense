@@ -90,7 +90,7 @@ public class McpCommand implements Callable<Integer> {
     private void printDefaultSnippet() {
         System.out.println("Condense MCP Server");
         System.out.println("===================");
-        System.out.println("Tools: run, explain, read, discover, propose");
+        System.out.println("Tools: run, explain, read, discover, propose, expand");
         System.out.println("Resources: condense://gain, condense://gain/trend, condense://doctor");
         System.out.println();
         System.out.println("Supported clients: claude-desktop, claude-code, cursor, windsurf,");

@@ -14,6 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryFlag;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -107,13 +112,34 @@ public class TeeWriter {
         boolean shouldSave = switch (tee.mode()) {
             case ALWAYS   -> true;
             case FAILURES -> !result.succeeded();
-            case OMISSIONS -> !result.succeeded() || filterOmittedContent(filtered);
+            case OMISSIONS -> !result.succeeded()
+                || result.termination() == TerminationReason.OUTPUT_CAP
+                || filterOmittedContent(filtered)
+                || hasSignificantCharacterReduction(result, filtered)
+                || hasFallbackIncident(filtered);
             case NEVER    -> false;
         };
 
         if (!shouldSave) return null;
 
         return dump(command, result);
+    }
+
+    private static boolean hasSignificantCharacterReduction(
+            ExecutionResult raw, FilterResult filtered) {
+        if (raw == null || filtered == null || !filtered.wasFiltered()) {
+            return false;
+        }
+        long rawChars = (long) raw.readStdout().length() + raw.readStderr().length();
+        return rawChars >= 200 && (long) filtered.output().length() * 2 <= rawChars;
+    }
+
+    private static boolean hasFallbackIncident(FilterResult filtered) {
+        return filtered != null && filtered.incidents().stream().anyMatch(incident ->
+            com.condense.filter.pipeline.FilterIncident.KIND_FIDELITY_GUARD_FALLBACK.equals(incident.kind())
+                || com.condense.filter.pipeline.FilterIncident.KIND_APPLY_FALLBACK.equals(incident.kind())
+                || com.condense.filter.pipeline.FilterIncident.KIND_IR_FALLBACK.equals(incident.kind())
+                || com.condense.filter.pipeline.FilterIncident.KIND_STAGE_EXCEPTION.equals(incident.kind()));
     }
 
     /**
@@ -149,6 +175,15 @@ public class TeeWriter {
     private Path dump(String command, ExecutionResult result) {
         try {
             Path teeDir = platformDirs.getDataDir().resolve("tee");
+            Files.createDirectories(teeDir);
+            if (Files.isSymbolicLink(teeDir)) {
+                log.warnf("Refusing to write tee file through symlink directory %s", teeDir);
+                return null;
+            }
+            if (!restrictDirectoryToOwner(teeDir)) {
+                log.warnf("Refusing to write raw tee output without owner-only directory permissions: %s", teeDir);
+                return null;
+            }
             String hash = ProjectFingerprint.of(command).substring(0, 8);
             long ts = CondenseClock.epochSeconds();
             String filename = hash + "-" + ts + ".txt";
@@ -193,7 +228,11 @@ public class TeeWriter {
                 }
             }, ".condense-tee-", ".tmp");
 
-            restrictToOwner(file);
+            if (!restrictToOwner(file)) {
+                Files.deleteIfExists(file);
+                log.warnf("Removed tee file because owner-only permissions could not be enforced: %s", file);
+                return null;
+            }
             rotateTeeFiles(teeDir);
 
             log.debugf("Tee file written: %s", file);
@@ -252,14 +291,76 @@ public class TeeWriter {
      * Sets owner read/write only. Silently skipped on non-POSIX file systems
      * (for example Windows).
      */
-    private static void restrictToOwner(Path file) {
+    private static boolean restrictToOwner(Path file) {
         try {
             Files.setPosixFilePermissions(file,
                 Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+            return true;
         } catch (UnsupportedOperationException ignored) {
-            // Non-POSIX file system - nothing to restrict.
+            // Keep the requested File fallback. On Windows, also clear inherited ACEs.
+            java.io.File target = file.toFile();
+            boolean restricted = target.setReadable(false, false)
+                && target.setReadable(true, true)
+                && target.setWritable(false, false)
+                && target.setWritable(true, true);
+            return isWindows() ? restrictWindowsAcl(file, false) : restricted;
         } catch (IOException e) {
-            log.debugf("Could not set 0600 on tee file %s: %s", file, e.getMessage());
+            log.warnf("Could not set 0600 on tee file %s: %s", file, e.getMessage());
+            return false;
+        }
+    }
+
+    private static boolean restrictDirectoryToOwner(Path directory) {
+        try {
+            Files.setPosixFilePermissions(directory, Set.of(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE));
+            return true;
+        } catch (UnsupportedOperationException ignored) {
+            java.io.File target = directory.toFile();
+            boolean restricted = target.setReadable(false, false)
+                && target.setReadable(true, true)
+                && target.setWritable(false, false)
+                && target.setWritable(true, true)
+                && target.setExecutable(false, false)
+                && target.setExecutable(true, true);
+            if (isWindows()) {
+                return restrictWindowsAcl(directory, true);
+            }
+            if (!restricted) {
+                log.warnf("Could not restrict tee directory permissions to owner only: %s", directory);
+            }
+            return restricted;
+        } catch (IOException e) {
+            log.warnf("Could not restrict tee directory permissions: %s", e.getMessage());
+            return false;
+        }
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("win");
+    }
+
+    /** Replaces inherited Windows ACLs with access granted only to the current owner. */
+    private static boolean restrictWindowsAcl(Path path, boolean directory) {
+        try {
+            AclFileAttributeView view = Files.getFileAttributeView(path, AclFileAttributeView.class);
+            if (view == null) {
+                return false;
+            }
+            AclEntry.Builder entry = AclEntry.newBuilder()
+                .setType(AclEntryType.ALLOW)
+                .setPrincipal(Files.getOwner(path))
+                .setPermissions(Set.of(AclEntryPermission.values()));
+            if (directory) {
+                entry.setFlags(AclEntryFlag.FILE_INHERIT, AclEntryFlag.DIRECTORY_INHERIT);
+            }
+            view.setAcl(List.of(entry.build()));
+            return true;
+        } catch (IOException | UnsupportedOperationException | SecurityException e) {
+            log.warnf("Could not apply owner-only ACL to %s: %s", path, e.getMessage());
+            return false;
         }
     }
 

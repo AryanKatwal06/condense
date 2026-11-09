@@ -7,7 +7,7 @@ import com.condense.core.Mappers;
 import com.condense.core.PlatformDirs;
 import com.condense.core.ProjectFingerprint;
 import com.condense.core.ProxyService;
-import com.condense.core.SafePathValidator;
+import com.condense.core.TeeFileReader;
 import com.condense.core.TrackingRepository;
 import com.condense.doctor.DoctorService;
 import com.condense.explain.ExplainService;
@@ -26,10 +26,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -345,85 +341,46 @@ public class McpHandlers {
         return value(McpMessages.ToolResult.ok(compact(report)));
     }
 
-    private static final int MAX_EXPAND_LINES = 500;
-    private static final int MAX_EXPAND_CONTENT_BYTES = 32 * 1024;
-
     private JsonNode callExpand(JsonNode args) {
-        String teeFile = text(args, "tee_file");
-        if (teeFile == null) {
-            return value(McpMessages.ToolResult.error("expand.tee_file is required"));
+        String teeText = text(args, "tee_file");
+        if (teeText == null) {
+            teeText = text(args, "tee_path");
+        }
+        if (teeText == null) {
+            return value(McpMessages.ToolResult.error("expand.tee_file or expand.tee_path is required"));
         }
         Integer start = intArg(args, "start_line");
         Integer end = intArg(args, "end_line");
-        if (start == null || end == null) {
-            if (!args.hasNonNull("start_line") || !args.hasNonNull("end_line")) {
-                return value(McpMessages.ToolResult.error(
-                    "expand.start_line and expand.end_line are required"));
-            }
-            return value(McpMessages.ToolResult.error(
-                "expand.start_line and expand.end_line must be integers"));
+        if ((args.hasNonNull("start_line") && start == null)
+            || (args.hasNonNull("end_line") && end == null)) {
+            return value(McpMessages.ToolResult.error("expand line bounds must be integers"));
         }
-        if (start < 1) {
-            return value(McpMessages.ToolResult.error("expand.start_line must be >= 1"));
+        TeeFileReader.Result result;
+        try {
+            result = TeeFileReader.read(Path.of(teeText), teeDataDir(), start, end);
+        } catch (RuntimeException e) {
+            return value(McpMessages.ToolResult.error("expand.tee_file is not a valid path"));
         }
-        if (end < start) {
-            return value(McpMessages.ToolResult.error("expand.end_line must be >= expand.start_line"));
+        if (!result.ok()) {
+            return value(McpMessages.ToolResult.error(result.error()));
         }
-        if ((long) end - start + 1 > MAX_EXPAND_LINES) {
-            return value(McpMessages.ToolResult.error(
-                "expand window is limited to " + MAX_EXPAND_LINES + " lines"));
-        }
-        Path root = teeRoot();
-        SafePathValidator.ContainmentResult containment =
-            SafePathValidator.containReadable(Path.of(teeFile), root);
-        if (!containment.contained()) {
-            return value(McpMessages.ToolResult.error(
-                "expand.tee_file must resolve to a regular file inside the condense tee directory"));
-        }
-        Path file = containment.realFile();
-
-        StringBuilder content = new StringBuilder();
-        int total = 0;
-        int collected = 0;
-        int lastLine = start - 1;
-        boolean contentTruncated = false;
-        try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                total++;
-                if (total < start || total > end) {
-                    continue;
-                }
-                int extra = line.length() + 1;
-                if (content.length() + extra > MAX_EXPAND_CONTENT_BYTES) {
-                    contentTruncated = true;
-                    continue;
-                }
-                content.append(line).append('\n');
-                collected++;
-                lastLine = total;
-            }
-        } catch (IOException e) {
-            return value(McpMessages.ToolResult.error("expand failed to read tee file"));
-        }
-
         ObjectNode report = McpMessages.RPC.createObjectNode();
-        report.put("tee_file", file.toString());
-        report.put("start_line", start);
-        report.put("end_line", lastLine);
-        report.put("total_lines", total);
-        report.put("lines_returned", collected);
-        report.put("truncated", contentTruncated);
-        report.put("content", content.toString());
+        report.put("tee_file", result.file().toString());
+        report.put("start_line", result.startLine());
+        report.put("end_line", result.endLine());
+        report.put("total_lines", result.totalLines());
+        report.put("lines_returned", result.linesReturned());
+        report.put("truncated", result.truncated());
+        report.put("content", result.content());
         return value(McpMessages.ToolResult.ok(compact(report)));
     }
 
-    private Path teeRoot() {
+    private Path teeDataDir() {
         PlatformDirs dirs = platformDirs;
         if (dirs == null) {
             dirs = new PlatformDirs();
         }
-        return dirs.resolveDataDir().resolve("tee");
+        return dirs.getDataDir();
     }
 
     private static Integer intArg(JsonNode args, String field) {
@@ -564,14 +521,16 @@ public class McpHandlers {
         schema.put("type", "object");
         ObjectNode props = schema.putObject("properties");
         props.putObject("tee_file").put("type", "string")
-            .put("description", "Path to a raw-output tee file inside the condense tee directory.");
+            .put("description", "Tee filename or path inside the condense tee directory.");
+        props.putObject("tee_path").put("type", "string")
+            .put("description", "Alias for tee_file.");
         props.putObject("start_line").put("type", "integer").put("minimum", 1)
-            .put("description", "First line to return, 1-based.");
+            .put("description", "First line to return, 1-based; defaults to 1.");
         props.putObject("end_line").put("type", "integer").put("minimum", 1)
-            .put("description", "Last line to return, inclusive.");
-        required(schema, "tee_file");
-        required(schema, "start_line");
-        required(schema, "end_line");
+            .put("description", "Last line to return, inclusive; defaults to at most 100 lines.");
+        ArrayNode alternatives = schema.putArray("anyOf");
+        alternatives.addObject().putArray("required").add("tee_file");
+        alternatives.addObject().putArray("required").add("tee_path");
         schema.put("additionalProperties", false);
         return schema;
     }

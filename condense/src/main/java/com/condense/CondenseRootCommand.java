@@ -27,6 +27,7 @@ import java.util.List;
         com.condense.CompletionCommand.class,
         com.condense.update.UpdateCommand.class,
         com.condense.commands.McpCommand.class,
+        com.condense.commands.ExpandCommand.class,
         com.condense.uninstall.UninstallCommand.class,
         com.condense.session.SessionCommand.class,
         com.condense.session.ReportCommand.class,
