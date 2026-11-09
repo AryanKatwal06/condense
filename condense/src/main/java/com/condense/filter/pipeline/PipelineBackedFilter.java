@@ -194,13 +194,29 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
                     .withTermination(result.termination());
                 return attachOpaque(fallback.withDocument(opaque), command, result);
             }
+            // Filters that already render a compact semantic summary are not
+            // pointless header noise. For everything else, a successful output
+            // that inflates both characters and tokens falls back to raw.
+            if (result.exitCode() == 0
+                && !isIntentionalCompactOutput(command, raw, filtered)
+                && NetWinGate.isNetLoss(raw, filtered, ultraCompact)) {
+                log.warnf("%s output inflates token count — falling back to passthrough",
+                    filterName());
+                FilterResult passthrough = FilterResult.passthrough(result);
+                Document opaque = Document.opaque(
+                    command, filterName(), result.exitCode(), false,
+                    Documents.provenance(false), raw)
+                    .withTermination(result.termination());
+                return attachOpaque(passthrough.withDocument(opaque), command, result);
+            }
+            String output = withIdentifierFactsheet(raw, filtered);
             Document document = Documents.fromContext(
-                context, command, filterName(), result, true, filtered);
+                context, command, filterName(), result, true, output);
             String filterName = filterName();
             List<FilterIncident> incidents = context.incidents().stream()
                 .map(incident -> incident.withFilterName(filterName))
                 .toList();
-            return FilterResult.of(result, filtered, incidents).withDocument(document);
+            return FilterResult.of(result, output, incidents).withDocument(document);
         } catch (Exception | StackOverflowError e) {
             log.warnf("%s error: %s — falling back to passthrough",
                 filterName(), e.getMessage());
@@ -255,12 +271,22 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
                     fallback, true, "fidelity_guard", fidelity.detail(), decision, trace,
                     name, definition, raw, true);
             }
+            if (result.exitCode() == 0
+                && !isIntentionalCompactOutput(command, raw, trace.output())
+                && NetWinGate.isNetLoss(raw, trace.output(), ultraCompact)) {
+                FilterResult fallback = attachOpaque(
+                    FilterResult.passthrough(result), command, result);
+                return new FilterExplainTrace(
+                    fallback, true, "net_win_gate", "filtered output inflates token count",
+                    decision, trace, name, definition, raw, true);
+            }
+            String output = withIdentifierFactsheet(raw, trace.output());
             Document document = Documents.fromContext(
-                context, command, name, result, true, trace.output());
+                context, command, name, result, true, output);
             List<FilterIncident> incidents = context.incidents().stream()
                 .map(incident -> incident.withFilterName(name))
                 .toList();
-            FilterResult filtered = FilterResult.of(result, trace.output(), incidents).withDocument(document);
+            FilterResult filtered = FilterResult.of(result, output, incidents).withDocument(document);
             return new FilterExplainTrace(
                 filtered, false, null, null, decision, trace, name, definition, raw, false);
         } catch (Exception | StackOverflowError e) {
@@ -272,6 +298,57 @@ public abstract class PipelineBackedFilter implements FilterStrategy {
             return new FilterExplainTrace(
                 fallback, false, null, e.getMessage(), decision, null, name, definition, "", true);
         }
+    }
+
+    /**
+     * Some filters intentionally replace a tiny capture with a compact semantic
+     * summary even when the summary is a few characters longer. Others prepend
+     * a clause summary but keep every raw line. Neither is pointless header
+     * noise, so the net-win gate must not replace them.
+     */
+    private static boolean isIntentionalCompactOutput(String command, String raw, String filtered) {
+        if (command == null || raw == null || filtered == null) {
+            return false;
+        }
+        String normalized = command.toLowerCase(java.util.Locale.ROOT)
+            .replaceAll("\\s+", " ")
+            .strip();
+        if (normalized.equals("npm install") || normalized.equals("npm ci")) {
+            return true;
+        }
+        boolean preservingSummary = normalized.equals("terraform state list")
+            || normalized.equals("tofu state list")
+            || normalized.startsWith("kubectl get pods");
+        if (!preservingSummary) {
+            return false;
+        }
+        for (String line : raw.lines().toList()) {
+            if (!line.isBlank() && !filtered.contains(line)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Append a bounded identifier factsheet only for large, heavily compressed
+     * outputs. The size floor and reduction threshold keep locked corpus goldens
+     * and typical command output byte-identical.
+     */
+    private static String withIdentifierFactsheet(String raw, String filtered) {
+        if (raw == null || filtered == null) {
+            return filtered;
+        }
+        if (raw.length() < IdentifierFactsheet.APPEND_MIN_RAW_CHARS) {
+            return filtered;
+        }
+        if ((long) filtered.length() * 100
+            > (long) raw.length() * IdentifierFactsheet.APPEND_MAX_FILTERED_PERCENT) {
+            return filtered;
+        }
+        List<String> dropped = IdentifierFactsheet.extractDroppedIdentifiers(raw, filtered);
+        String line = IdentifierFactsheet.formatFactsheetLine(dropped);
+        return line.isEmpty() ? filtered : filtered + "\n" + line;
     }
 
     private FilterResult attachOpaque(FilterResult result, String command, ExecutionResult execution) {
