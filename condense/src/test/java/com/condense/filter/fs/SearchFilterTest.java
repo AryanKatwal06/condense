@@ -41,7 +41,7 @@ class SearchFilterTest extends FilterTestSupport {
     }
 
     @Test
-    void grepLargeResultKeepsHeaderAndBoundedWindow() {
+    void grepLargeResultKeepsHeaderAndBoundedMatches() {
         String content = grepLines(100);
 
         FilterResult result = grep.apply("grep foo", success(content), config, 0, false);
@@ -50,9 +50,9 @@ class SearchFilterTest extends FilterTestSupport {
         assertThat(result.output())
             .contains("100 match(es) in 1 file(s)")
             .contains("src/app.js:1: error foo1")
-            .contains("... (20 lines omitted: lines 61..80 of 100) ...")
-            .contains("src/app.js:100: error foo100")
-            .contains("src/app.js:81: error foo81");
+            .contains("src/app.js:12: error foo12")
+            .contains("... (88 matches omitted) ...")
+            .doesNotContain("src/app.js:13:");
     }
 
     @Test
@@ -74,17 +74,17 @@ class SearchFilterTest extends FilterTestSupport {
     }
 
     @Test
-    void findLargeResultKeepsHeaderAndBoundedWindow() {
+    void findLargeResultKeepsPathsAndExtensionCounts() {
         String content = findPaths(100);
 
         FilterResult result = find.apply("find .", success(content), config, 0, false);
 
         assertCompressed(result);
         assertThat(result.output())
+            .contains("src/main/java/com/example/: File1.java")
+            .contains("File100.java")
             .contains("100 result(s)")
-            .contains("src/main/java/com/example/File1.java")
-            .contains("... (20 lines omitted: lines 61..80 of 100) ...")
-            .contains("src/main/java/com/example/File100.java");
+            .contains(".java: 100");
     }
 
     @Test

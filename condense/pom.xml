@@ -114,9 +114,6 @@
                         <arg>-processor</arg>
                         <arg>com.condense.codegen.StageRegistryProcessor</arg>
                     </compilerArgs>
-                    <additionalClasspathElements>
-                        <additionalClasspathElement>${project.build.directory}/processor-classes</additionalClasspathElement>
-                    </additionalClasspathElements>
                 </configuration>
             </plugin>
             <plugin>

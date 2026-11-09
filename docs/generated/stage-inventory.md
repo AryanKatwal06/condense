@@ -15,6 +15,7 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `docker_ps` | `docker_ps`, `docker-ps` | RESHAPE | `com.condense.filter.strategy.DockerPsStage` |
 | `eslint_json` | `eslint_json` | RESHAPE | `com.condense.filter.stage.EsLintJsonStage` |
 | `eslint_text` | `eslint_text` | RESHAPE | `com.condense.filter.stage.EsLintTextStage` |
+| `find_summary` | `find_summary` | RESHAPE | `com.condense.filter.stage.FindSummaryStage` |
 | `format_report` | `format_report`, `format-report` | RESHAPE | `com.condense.filter.strategy.FormatReportStage` |
 | `gh_summary` | `gh_summary` | RESHAPE | `com.condense.filter.stage.GhSummaryStage` |
 | `git_add_summary` | `git_add_summary` | RESHAPE | `com.condense.filter.stage.GitAddSummaryStage` |
@@ -27,6 +28,7 @@ Generated from `@DeclarativeStage`. Do not edit by hand.
 | `go_test_summary` | `go_test_summary`, `go-test-summary` | RESHAPE | `com.condense.filter.stage.GoTestSummaryStage` |
 | `golangci_summary` | `golangci_summary` | RESHAPE | `com.condense.filter.stage.GolangciSummaryStage` |
 | `gradle_summary` | `gradle_summary` | RESHAPE | `com.condense.filter.stage.GradleSummaryStage` |
+| `grep_summary` | `grep_summary` | RESHAPE | `com.condense.filter.stage.GrepSummaryStage` |
 | `grouping` | `grouping`, `group` | RESHAPE | `com.condense.filter.strategy.GroupingStrategy` |
 | `head_tail` | `head_tail`, `head-tail` | REDUCE | `com.condense.filter.strategy.HeadTailStage` |
 | `jest_summary` | `jest_summary` | RESHAPE | `com.condense.filter.stage.JestSummaryStage` |

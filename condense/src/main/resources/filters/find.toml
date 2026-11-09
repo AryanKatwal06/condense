@@ -2,13 +2,10 @@ schema_version = 1
 name = "find"
 commands = ["find"]
 
-# Small results pass through verbatim from FindFilter so the actual paths stay
-# visible. Larger results prepend a count header and then use this bounded
-# head/tail window (60 + 20 lines) with an explicit line-range omission marker.
+# FindSummaryStage preserves visible paths, bounds large result sets, and
+# appends an extension breakdown.
 [[stages]]
-strategy = "head_tail"
-head = 60
-tail = 20
+strategy = "find_summary"
 
 [[tests]]
 id = "small-result-keeps-paths"
