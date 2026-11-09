@@ -31,7 +31,7 @@ jobs:
           cache-dependency-path: condense/pom.xml
 
       - name: Run Maven test suite
-        run: ./mvnw test --no-transfer-progress -B
+        run: bash ./mvnw test --no-transfer-progress -B
 
       - name: Publish Surefire results
         if: always()
