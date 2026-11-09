@@ -14,6 +14,7 @@ public record FilterIncident(
 ) {
     public static final String KIND_STAGE_EXCEPTION = "stage_exception";
     public static final String KIND_APPLY_FALLBACK = "apply_fallback";
+    public static final String KIND_FIDELITY_GUARD_FALLBACK = "fidelity_guard_fallback";
     public static final String KIND_IR_FALLBACK = "ir_fallback";
     public static final String KIND_MACHINE_UI_VERSION = "machine_ui_version";
     public static final String KIND_BINLOG_VERSION = "binlog_version";
@@ -30,6 +31,15 @@ public record FilterIncident(
 
     public static FilterIncident applyFallback(String filterName, String detail) {
         return new FilterIncident(KIND_APPLY_FALLBACK, filterName, null, true, detail);
+    }
+
+    /**
+     * Dedicated fidelity-guard fallback. Existing apply-level fallbacks keep
+     * {@link #KIND_APPLY_FALLBACK} so persisted incident consumers and tests
+     * remain compatible.
+     */
+    public static FilterIncident fidelityFallback(String filterName, String detail) {
+        return new FilterIncident(KIND_FIDELITY_GUARD_FALLBACK, filterName, null, true, detail);
     }
 
     public static FilterIncident irFallback(String stageName, String detail) {

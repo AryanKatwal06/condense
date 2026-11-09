@@ -2,6 +2,8 @@ package com.condense.filter.pipeline;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FidelityGuardTest {
@@ -158,5 +160,111 @@ class FidelityGuardTest {
         FidelityGuard.Verdict verdict = guard.check("git diff", 0, raw, raw);
 
         assertThat(verdict.passed()).isTrue();
+    }
+
+    @Test
+    void findsCompilerAndExceptionAtTailOfLargeLog() {
+        StringBuilder raw = new StringBuilder();
+        String progress = "progress: compiled one more source file\n";
+        while (raw.length() < 1_000_000) {
+            raw.append(progress);
+        }
+        raw.append("src/main/java/com/condense/App.java:412: error: incompatible types\n");
+        raw.append("Exception in thread \"main\" java.lang.IllegalStateException: Fatal build error\n");
+
+        assertThat(raw.length()).isGreaterThan(FidelityGuard.MAX_INSPECTION_CHARS);
+
+        FidelityGuard.Verdict verdict = guard.check(
+            "mvn compile", 1, raw.toString(), "Compiled 15,000 lines");
+
+        assertThat(verdict.passed()).isFalse();
+        assertThat(verdict.failures()).anyMatch(f -> f.contains("App.java:412"));
+        assertThat(verdict.failures()).anyMatch(f -> f.contains("Exception in thread"));
+    }
+
+    @Test
+    void headAndTailSampleKeepsBothEnds() {
+        String raw = "HEAD-MARKER\n" + "x".repeat(1_000_000) + "\nTAIL-MARKER\n";
+
+        String sample = FidelityGuard.sampleHeadAndTail(raw);
+
+        assertThat(sample).contains("HEAD-MARKER").contains("TAIL-MARKER");
+        assertThat(sample.length()).isLessThanOrEqualTo(FidelityGuard.MAX_INSPECTION_CHARS + 1);
+    }
+
+    @Test
+    void rejectsMisleadingCleanSummariesOnNonZeroExit() {
+        String raw = "internal linker error: undefined reference to main\n";
+
+        for (String filtered : List.of("ok", "all tests passed", "0 errors", "")) {
+            FidelityGuard.Verdict verdict = guard.check("cc main.c", 1, raw, filtered);
+            assertThat(verdict.passed())
+                .as("filtered output '%s' must be rejected", filtered)
+                .isFalse();
+        }
+    }
+
+    @Test
+    void rejectsDroppedTerraformDestructivePlan() {
+        String raw = "Plan: 2 to add, 1 to change, 3 to destroy.\n"
+            + "# aws_db_instance.prod must be replaced\n";
+
+        FidelityGuard.Verdict verdict = guard.check(
+            "terraform plan", 0, raw, "Plan summary: changes detected");
+
+        assertThat(verdict.passed()).isFalse();
+        assertThat(verdict.failures()).anyMatch(f -> f.contains("terraform destructive plan"));
+        assertThat(verdict.failures()).anyMatch(f -> f.contains("terraform replacement"));
+    }
+
+    @Test
+    void rejectsDroppedSqlErrors() {
+        String raw = "ERROR:  relation \"users\" does not exist\n"
+            + "FATAL:  database connection terminated\n";
+
+        FidelityGuard.Verdict verdict = guard.check("psql -f migrate.sql", 1, raw, "Query executed");
+
+        assertThat(verdict.passed()).isFalse();
+        assertThat(verdict.failures()).anyMatch(f -> f.contains("relation \"users\" does not exist"));
+        assertThat(verdict.failures()).anyMatch(f -> f.contains("database connection terminated"));
+    }
+
+    @Test
+    void rejectsDroppedSecurityAdvisory() {
+        String raw = "Found vulnerability CVE-2026-12345 in dependency\n";
+
+        FidelityGuard.Verdict verdict = guard.check("trivy fs .", 0, raw, "Scan complete");
+
+        assertThat(verdict.passed()).isFalse();
+        assertThat(verdict.failures()).contains("security advisory dropped CVE-2026-12345");
+    }
+
+    @Test
+    void diffStatCountSummaryIsAllowed() {
+        String raw = "diff --git a/src/App.java b/src/App.java\n"
+            + "@@ -10,3 +10,3 @@\n"
+            + "-return null;\n"
+            + "+return Optional.empty();\n";
+
+        FidelityGuard.Verdict verdict = guard.check(
+            "git diff --stat", 0, raw,
+            " src/App.java | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n");
+
+        assertThat(verdict.passed()).isTrue();
+    }
+
+    @Test
+    void extractCriticalSignalsReadsTailWindow() {
+        StringBuilder raw = new StringBuilder();
+        while (raw.length() < FidelityGuard.MAX_INSPECTION_CHARS + 1024) {
+            raw.append("benign progress line\n");
+        }
+        raw.append("src/main/java/com/condense/App.java:412: error: incompatible types\n");
+        raw.append("Found vulnerability CVE-2026-12345 in dependency\n");
+
+        List<String> signals = FidelityGuard.extractCriticalSignals("mvn compile", raw.toString(), 1);
+
+        assertThat(signals).anyMatch(s -> s.contains("App.java:412"));
+        assertThat(signals).contains("cve:CVE-2026-12345");
     }
 }
