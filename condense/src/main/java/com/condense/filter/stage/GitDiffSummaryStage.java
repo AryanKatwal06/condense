@@ -53,7 +53,9 @@ public final class GitDiffSummaryStage implements FilterStage {
         // git diff --stat -p still contains a patch and must never lose it.
         boolean unified = hasUnifiedDiffHeaders(text)
             && !(statRequested && !text.contains("diff --git "));
-        String output = unified ? unifiedOutput(text) : statOutput(text, context);
+        String output = unified
+            ? (context != null && context.ultraCompact() ? compactDiffSummary(text) : unifiedOutput(text))
+            : statOutput(text, context);
         if (output.isBlank()) {
             output = "no changes";
         }
@@ -82,19 +84,36 @@ public final class GitDiffSummaryStage implements FilterStage {
     /**
      * True when the raw text is a unified patch rather than a stat table.
      */
-    static boolean hasUnifiedDiffHeaders(String text) {
+    public static boolean hasUnifiedDiffHeaders(String text) {
         if (text == null || text.isBlank()) {
             return false;
         }
+        boolean hunk = false;
+        boolean oldFile = false;
+        boolean newFile = false;
         for (String line : text.lines().toList()) {
-            if (line.startsWith("diff --git ")
-                || line.startsWith("@@ ")
-                || line.startsWith("--- ")
-                || line.startsWith("+++ ")) {
-                return true;
+            hunk |= line.startsWith("diff --git ") || line.startsWith("@@ ")
+                || line.startsWith("Binary files ");
+            oldFile |= line.startsWith("--- ");
+            newFile |= line.startsWith("+++ ");
+        }
+        return hunk || (oldFile && newFile);
+    }
+
+    public static String compactDiffSummary(String text) {
+        int additions = 0;
+        int deletions = 0;
+        for (String line : (text != null ? text : "").lines().toList()) {
+            if (line.startsWith("+++") || line.startsWith("---")) {
+                continue;
+            }
+            if (line.startsWith("+")) {
+                additions++;
+            } else if (line.startsWith("-")) {
+                deletions++;
             }
         }
-        return false;
+        return "+" + additions + " / -" + deletions + " lines";
     }
 
     private String statOutput(String text, FilterContext context) {
@@ -144,21 +163,20 @@ public final class GitDiffSummaryStage implements FilterStage {
                 }
                 List<String> body = lines.subList(i + 1, end);
                 candidates.add(new Candidate(line, i + 1));
-                int keptHead = Math.min(HUNK_HEAD_LINES, body.size());
-                for (int b = 0; b < keptHead; b++) {
-                    candidates.add(new Candidate(body.get(b), i + 2 + b));
-                }
-                if (body.size() > HUNK_HEAD_LINES + HUNK_TAIL_LINES) {
-                    int omitted = body.size() - HUNK_HEAD_LINES - HUNK_TAIL_LINES;
+                boolean[] keep = selectHunkLines(body);
+                int b = 0;
+                while (b < body.size()) {
+                    if (keep[b]) {
+                        candidates.add(new Candidate(body.get(b), i + 2 + b));
+                        b++;
+                        continue;
+                    }
+                    int omittedStart = b;
+                    while (b < body.size() && !keep[b]) {
+                        b++;
+                    }
                     candidates.add(new Candidate(
-                        "... (" + omitted + " hunk lines omitted) ...", end));
-                    for (int b = body.size() - HUNK_TAIL_LINES; b < body.size(); b++) {
-                        candidates.add(new Candidate(body.get(b), i + 2 + b));
-                    }
-                } else {
-                    for (int b = keptHead; b < body.size(); b++) {
-                        candidates.add(new Candidate(body.get(b), i + 2 + b));
-                    }
+                        "... (" + (b - omittedStart) + " hunk lines omitted) ...", i + 1 + b));
                 }
                 i = end;
                 continue;
@@ -189,6 +207,76 @@ public final class GitDiffSummaryStage implements FilterStage {
             out.add("... (" + omitted + " diff lines omitted) ...");
         }
         return String.join("\n", out);
+    }
+
+    private static boolean[] selectHunkLines(List<String> body) {
+        int budget = HUNK_HEAD_LINES + HUNK_TAIL_LINES;
+        boolean[] keep = new boolean[body.size()];
+        if (body.size() <= budget) {
+            java.util.Arrays.fill(keep, true);
+            return keep;
+        }
+
+        List<Integer> changes = new ArrayList<>();
+        for (int i = 0; i < body.size(); i++) {
+            if (isChangeLine(body.get(i))) {
+                changes.add(i);
+            }
+        }
+        int selected = 0;
+        if (changes.size() <= budget) {
+            for (int index : changes) {
+                keep[index] = true;
+                selected++;
+            }
+        } else {
+            int headChanges = HUNK_HEAD_LINES;
+            int tailChanges = HUNK_TAIL_LINES;
+            for (int i = 0; i < headChanges; i++) {
+                keep[changes.get(i)] = true;
+                selected++;
+            }
+            for (int i = changes.size() - tailChanges; i < changes.size(); i++) {
+                keep[changes.get(i)] = true;
+                selected++;
+            }
+        }
+        // Favor the immediate context around changes before filling the remaining
+        // window with the conventional head/tail sample.
+        for (int distance = 1; distance <= 2 && selected < budget; distance++) {
+            for (int i = 0; i < body.size() && selected < budget; i++) {
+                if (keep[i]) {
+                    for (int neighbor : new int[] {i - distance, i + distance}) {
+                        if (selected < budget && neighbor >= 0 && neighbor < body.size()
+                            && !keep[neighbor] && !isChangeLine(body.get(neighbor))) {
+                            keep[neighbor] = true;
+                            selected++;
+                        }
+                    }
+                }
+            }
+        }
+        int headKept = 0;
+        for (int i = 0; i < body.size() && selected < budget
+            && headKept < HUNK_HEAD_LINES; i++) {
+            if (!keep[i]) {
+                keep[i] = true;
+                selected++;
+                headKept++;
+            }
+        }
+        for (int i = body.size() - 1; i >= 0 && selected < budget; i--) {
+            if (!keep[i]) {
+                keep[i] = true;
+                selected++;
+            }
+        }
+        return keep;
+    }
+
+    private static boolean isChangeLine(String line) {
+        return (line.startsWith("+") && !line.startsWith("+++"))
+            || (line.startsWith("-") && !line.startsWith("---"));
     }
 
     private static boolean isPlumbing(String line) {

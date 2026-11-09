@@ -28,6 +28,12 @@ public class GitDiffFilter extends PipelineBackedFilter {
         if (!result.succeeded() && result.readStdout().isBlank()) {
             return FilterResult.passthrough(result);
         }
+        String raw = result.readStdout();
+        if (result.succeeded() && ultraCompact
+            && com.condense.filter.stage.GitDiffSummaryStage.hasUnifiedDiffHeaders(raw)) {
+            return FilterResult.of(result,
+                com.condense.filter.stage.GitDiffSummaryStage.compactDiffSummary(raw));
+        }
         return null;
     }
 

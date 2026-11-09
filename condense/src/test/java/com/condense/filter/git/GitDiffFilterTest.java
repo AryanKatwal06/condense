@@ -95,6 +95,22 @@ class GitDiffFilterTest extends FilterTestSupport {
     }
 
     @Test
+    void fileModeHeadersArePreserved() {
+        String raw = "diff --git a/new.txt b/new.txt\nnew file mode 100644\n"
+            + "--- /dev/null\n+++ b/new.txt\n@@ -0,0 +1 @@\n+created\n"
+            + "diff --git a/old.txt b/old.txt\ndeleted file mode 100644\n"
+            + "--- a/old.txt\n+++ /dev/null\n@@ -1 +0,0 @@\n-removed\n";
+
+        FilterResult result = filter.apply("git diff", success(raw), config, 0, false);
+
+        assertThat(result.output())
+            .contains("new file mode 100644")
+            .contains("deleted file mode 100644")
+            .contains("+created")
+            .contains("-removed");
+    }
+
+    @Test
     void oversizedHunk_keepsHeadAndTailWithOmissionMarker() {
         String body = IntStream.range(0, 200)
             .mapToObj(i -> "+line" + i)
