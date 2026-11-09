@@ -5,9 +5,12 @@ import com.condense.ir.JsonRenderer;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -153,6 +156,41 @@ public class ProxyService {
 
         record(commandStr, filtered, result);
         return new Outcome(result, filtered, teePath, alreadyPrinted);
+    }
+
+    /**
+     * Execute one command without consulting the filter registry. Raw stdout and
+     * stderr go to the matching streams and the child's own exit code is returned.
+     * The argv is launched directly, so no shell quoting or injection is possible.
+     */
+    public Outcome bypass(List<String> args, PrintStream out, PrintStream err) throws Exception {
+        if (args == null || args.isEmpty()) {
+            throw new IllegalArgumentException("command is required");
+        }
+        List<String> argList = List.copyOf(args);
+        String commandStr = String.join(" ", argList);
+
+        ExecutionResult result = executor.execute(argList, CommandExecutor.resolveProxyTimeout());
+        FilterResult filtered = FilterResult.passthrough(result);
+
+        copy(result.stdoutFile(), out);
+        copy(result.stderrFile(), err);
+
+        record(commandStr, filtered, result);
+        return new Outcome(result, filtered, null, out != null);
+    }
+
+    private static void copy(Path file, PrintStream target) {
+        if (file == null || target == null) {
+            return;
+        }
+        try (InputStream in = Files.newInputStream(file)) {
+            in.transferTo(target);
+        } catch (IOException ignored) {
+            // A closed or failing output stream must not change the child exit code.
+        } finally {
+            target.flush();
+        }
     }
 
     private void record(String commandStr, FilterResult filtered, ExecutionResult result) {

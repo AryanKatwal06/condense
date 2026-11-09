@@ -28,6 +28,14 @@ public class CondenseMain implements QuarkusApplication {
             .setUnmatchedArgumentsAllowed(true)
             .setStopAtPositional(true);
 
+        // Bypass must accept the child command's own flags (git log -n 5) verbatim,
+        // so its parser stops treating tokens as options after the first positional.
+        CommandLine bypass = cmd.getSubcommands().get("bypass");
+        if (bypass != null) {
+            bypass.setStopAtPositional(true);
+            bypass.setUnmatchedArgumentsAllowed(true);
+        }
+
         int exitCode;
         if (preParsed.isSubcommand()) {
             exitCode = cmd.execute(args);

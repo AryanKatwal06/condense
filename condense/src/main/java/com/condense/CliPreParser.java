@@ -21,7 +21,8 @@ public final class CliPreParser {
         "mcp",
         "uninstall",
         "session",
-        "report"
+        "report",
+        "bypass"
     );
 
     public record PreParseResult(
@@ -35,6 +36,13 @@ public final class CliPreParser {
     public static PreParseResult parse(String... args) {
         if (args == null || args.length == 0) {
             return new PreParseResult(List.of(), List.of(), false);
+        }
+
+        // A bypass token before any literal "--" wins even when the rest contains
+        // one, because that delimiter usually belongs to the bypassed command
+        // (cargo test -- --nocapture) rather than to condense itself.
+        if (isBypassSubcommand(args)) {
+            return new PreParseResult(List.of(args), List.of(), true);
         }
 
         // Check if there is an explicit "--" delimiter
@@ -92,6 +100,27 @@ public final class CliPreParser {
         }
 
         return new PreParseResult(condenseArgs, childArgs, false);
+    }
+
+    /**
+     * Whether the first non-flag token (after condense's own flags) is the
+     * {@code bypass} subcommand. Stops at a literal {@code --} so
+     * {@code condense -- bypass ...} still proxies an executable named bypass.
+     */
+    private static boolean isBypassSubcommand(String[] args) {
+        int i = 0;
+        while (i < args.length) {
+            String arg = args[i];
+            if (arg == null || "--".equals(arg)) {
+                return false;
+            }
+            if (isCondenseFlag(arg)) {
+                i += requiresArgument(arg) && i + 1 < args.length ? 2 : 1;
+                continue;
+            }
+            return "bypass".equalsIgnoreCase(arg);
+        }
+        return false;
     }
 
     private static boolean isCondenseFlag(String arg) {
