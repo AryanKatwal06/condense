@@ -127,10 +127,30 @@ public class CommandExecutor {
 
     public ExecutionResult execute(List<String> args, Duration timeout)
             throws IOException, InterruptedException {
-        return execute(args, timeout, null);
+        return execute(args, timeout, (StreamListener) null);
+    }
+
+    /**
+     * Run with an explicitly supplied stdin source, leaving the executor's default
+     * in place for later calls. Useful for callers that hold a request body or a
+     * test-owned stream instead of the process {@code System.in}.
+     */
+    public ExecutionResult execute(List<String> args, InputStream stdin)
+            throws IOException, InterruptedException {
+        return execute(args, DEFAULT_TIMEOUT, null, stdin);
+    }
+
+    public ExecutionResult execute(List<String> args, Duration timeout, InputStream stdin)
+            throws IOException, InterruptedException {
+        return execute(args, timeout, null, stdin);
     }
 
     public ExecutionResult execute(List<String> args, Duration timeout, StreamListener listener)
+            throws IOException, InterruptedException {
+        return execute(args, timeout, listener, stdinSource);
+    }
+
+    ExecutionResult execute(List<String> args, Duration timeout, StreamListener listener, InputStream stdin)
             throws IOException, InterruptedException {
 
         if (args == null || args.isEmpty()) {
@@ -147,7 +167,7 @@ public class CommandExecutor {
 
         long startMs = System.currentTimeMillis();
         Process process = io.start(pb);
-        forwardStdin(process);
+        Thread stdinFeeder = forwardStdin(process, stdin);
         activeProcesses.add(process);
 
         try {
@@ -221,6 +241,7 @@ public class CommandExecutor {
                 reason
             );
         } finally {
+            awaitStdinFeeder(process, stdinFeeder, stdin == System.in);
             activeProcesses.remove(process);
             destroyedByShutdown.remove(process);
         }
@@ -235,45 +256,76 @@ public class CommandExecutor {
     }
 
     /**
-     * Forward our stdin source to the child process stdin in {@value #STDIN_CHUNK_BYTES}-byte
-     * chunks and close the child stdin once the source reaches EOF, so piped and redirected
-     * input reaches commands that read it.
+     * Forward the supplied stdin source to the child process stdin in
+     * {@value #STDIN_CHUNK_BYTES}-byte chunks and close the child stdin once the
+     * source reaches EOF, so piped and redirected input reaches commands that read it.
      *
      * <p>An interactive terminal session that has not buffered any keystrokes gets an immediate
      * EOF instead so commands like {@code git add -p} cannot hang the proxy waiting for input
      * nobody is sending.
+     *
+     * @return the feeder thread, or {@code null} when child stdin was closed eagerly
      */
-    private void forwardStdin(Process process) {
+    private static Thread forwardStdin(Process process, InputStream stdin) {
+        InputStream source = stdin == null ? System.in : stdin;
         boolean consolePresent = System.console() != null;
         // Only probe available() for a real interactive terminal. On a pipe or a
         // test harness the same System.in stream may already be held by a blocked
         // reader thread, and BufferedInputStream.available() waits on that monitor,
         // which would deadlock the proxy instead of forwarding input.
-        int available = availableForInteractiveCheck(stdinSource, consolePresent);
+        int available = availableForInteractiveCheck(source, consolePresent);
         boolean interactiveEmptyConsole = shouldCloseStdinImmediately(
-            stdinSource, consolePresent, available);
+            source, consolePresent, available);
         if (interactiveEmptyConsole) {
             closeQuietly(process.getOutputStream());
-            return;
+            return null;
         }
         OutputStream sink = process.getOutputStream();
-        boolean ownedSource = stdinSource != System.in;
-        startDrainThread("condense-stdin", () -> {
+        boolean ownedSource = source != System.in;
+        return startDrainThread("condense-stdin", () -> {
             try {
                 byte[] chunk = new byte[STDIN_CHUNK_BYTES];
                 int read;
-                while ((read = stdinSource.read(chunk)) != -1) {
+                while ((read = source.read(chunk)) != -1) {
                     sink.write(chunk, 0, read);
+                    // Process stdin is buffered. Flush so a child waiting for input
+                    // sees each chunk before the source reaches EOF.
+                    sink.flush();
                 }
             } catch (IOException ignored) {
                 // The child may exit before consuming all stdin - a broken pipe is harmless.
             } finally {
                 closeQuietly(sink);
                 if (ownedSource) {
-                    closeQuietly(stdinSource);
+                    closeQuietly(source);
                 }
             }
         });
+    }
+
+    /**
+     * Release the child stdin pipe and give the feeder a bounded window to finish.
+     * A feeder reading an idle {@code System.in} must never keep {@code execute}
+     * waiting, so the interactive stream only gets a short join before the daemon
+     * virtual thread is abandoned.
+     */
+    static void awaitStdinFeeder(Process process, Thread feeder, boolean systemIn) {
+        if (process != null) {
+            closeQuietly(process.getOutputStream());
+        }
+        if (feeder == null) {
+            return;
+        }
+        try {
+            feeder.join(systemIn ? 100 : 1_000);
+            if (feeder.isAlive()) {
+                feeder.interrupt();
+                feeder.join(systemIn ? 100 : 100);
+            }
+        } catch (InterruptedException e) {
+            feeder.interrupt();
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**

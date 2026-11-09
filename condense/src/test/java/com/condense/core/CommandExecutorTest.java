@@ -7,10 +7,15 @@ import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
 import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -243,6 +248,31 @@ class CommandExecutorTest {
         assertThat(CommandExecutor.availableForInteractiveCheck(hostile, true))
             .as("test-owned streams must never be probed")
             .isEqualTo(-1);
+    }
+
+    @Test
+    void capsOversizedStdoutWithoutDeadlock(@TempDir Path tempDir) throws Exception {
+        Path blob = tempDir.resolve("oversize.txt");
+        byte[] meg = new byte[1024 * 1024];
+        Arrays.fill(meg, (byte) 'A');
+        try (OutputStream out = Files.newOutputStream(blob)) {
+            for (int i = 0; i < 12; i++) {
+                out.write(meg);
+                out.write('\n');
+            }
+        }
+        List<String> args = WindowsCommandResolver.isWindows()
+            ? List.of("cmd", "/c", "type \"" + blob.toAbsolutePath() + "\"")
+            : List.of("sh", "-c", "cat '" + blob.toAbsolutePath() + "'");
+
+        ExecutionResult result = executor.execute(args, Duration.ofSeconds(60));
+
+        assertThat(result.termination()).isEqualTo(TerminationReason.OUTPUT_CAP);
+        // The child is destroyed as soon as the cap trips, so the reaped status is
+        // platform dependent. The bounded capture and termination reason are the contract.
+        assertThat(Files.size(result.stdoutFile()))
+            .isLessThanOrEqualTo(CommandExecutor.MAX_STREAM_BYTES);
+        result.cleanup();
     }
 
     private static CommandExecutor executorWithStdin(String content) {
